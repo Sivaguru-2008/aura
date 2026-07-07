@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aura"
+version = "0.1.0"
+description = "AURA — Clinical Intelligence Copilot (epistemic AI for radiology)"
+requires-python = ">=3.10"
+readme = "README.md"
+
+[tool.setuptools]
+# Namespace-style: every top-level dir is importable in dev via the src path.
+py-modules = []
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests", "services", "gateway"]
+addopts = "-q"
+
+[tool.aura]
+# Central config surface. Engines read defaults from here via aura_common.config.
+fusion_backend = "quantum"        # "quantum" | "classical"
+abstention_conformal_size = 3     # abstain if the 90% conformal set has > N labels
+ood_energy_threshold = 1.5

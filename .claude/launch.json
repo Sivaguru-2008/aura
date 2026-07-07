@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "aura",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd aura && py -m aura_cli serve %PORT%"],
+      "port": 8000,
+      "autoPort": true
+    }
+  ]
+}

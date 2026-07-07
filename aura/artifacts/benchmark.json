@@ -1,0 +1,20 @@
+{
+  "n_eval": 100,
+  "temperature": 0.7725,
+  "quantum": {
+    "accuracy": 0.96,
+    "nll": 0.0925,
+    "ece": 0.02,
+    "brier": 0.0597,
+    "conformal_coverage": 0.92,
+    "conformal_set_size": 0.94
+  },
+  "classical": {
+    "accuracy": 0.93,
+    "nll": 0.4877,
+    "ece": 0.2755,
+    "brier": 0.2035,
+    "conformal_coverage": 0.92,
+    "conformal_set_size": 0.98
+  }
+}

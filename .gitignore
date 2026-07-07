@@ -1,0 +1,16 @@
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# runtime state (regenerated on first run) — keep trained .npz models so
+# judges can serve without training
+aura/artifacts/aura.db
+
+# editor/os noise
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

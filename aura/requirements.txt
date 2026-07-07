@@ -1,0 +1,18 @@
+# AURA P0 — pinned to what the offline demo needs.
+# The environment already ships torch/torchvision; they are optional here
+# (the vision engine uses a numpy feature model + occlusion saliency so the
+# demo runs on CPU with no model downloads). PennyLane powers real quantum fusion.
+numpy>=1.26
+scipy>=1.11
+scikit-learn>=1.3
+pennylane>=0.35
+fastapi>=0.110
+uvicorn>=0.27
+pydantic>=2.6
+jinja2>=3.1
+pillow>=10.0
+python-multipart>=0.0.9
+SQLAlchemy>=2.0
+aiosqlite>=0.19
+httpx>=0.27
+pytest>=8.0

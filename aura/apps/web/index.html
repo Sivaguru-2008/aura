@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AURA — the copilot that knows what it doesn't know</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='6' fill='%234be1c3'/%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%234be1c3' stroke-opacity='.35' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body data-view="landing">
+
+<!-- context-aware lighting that follows the cursor -->
+<div id="halo" aria-hidden="true"></div>
+
+<!-- ======================= LANDING ======================= -->
+<main id="landing">
+
+  <nav id="topbar">
+    <div class="brand"><span class="brand-core"></span><span class="brand-word">AURA</span></div>
+    <div class="top-right">
+      <span class="sys-chip" id="sys-chip"><i class="dot"></i><span id="sys-chip-text">locating gateway…</span></span>
+      <button class="btn-ghost" data-launch data-magnetic>Enter console</button>
+    </div>
+  </nav>
+
+  <!-- HERO — intelligence forming -->
+  <section id="hero" data-scene="hero" data-hue="172">
+    <canvas id="hero-field" aria-hidden="true"></canvas>
+    <div class="hero-inner">
+      <p class="eyebrow reveal">ADAPTIVE · UNCERTAINTY-AWARE · REASONING ASSISTANT</p>
+      <h1 id="hero-h1" class="reveal" aria-label="It knows what it doesn't know.">
+        <span class="w">It</span> <span class="w">knows</span> <span class="w">what</span><br>
+        <span class="w">it</span> <span class="w acc">doesn&rsquo;t</span> <span class="w acc">know.</span>
+      </h1>
+      <p class="hero-sub reveal">A clinical copilot whose product is not a diagnosis.
+        It is calibrated doubt, the evidence you&rsquo;re missing, and the next best step —
+        with a statistical guarantee behind every claim.</p>
+      <div class="hero-cta reveal">
+        <button class="btn-core" data-launch data-magnetic><span>Enter the console</span></button>
+        <span class="hero-hint">or scroll — watch the system think</span>
+      </div>
+    </div>
+    <div class="scroll-cue" aria-hidden="true"><span></span></div>
+  </section>
+
+  <!-- PIPELINE — scroll-choreographed assembly -->
+  <section id="pipeline" data-scene="pipeline" data-hue="205">
+    <div class="pin-space">
+      <div class="pin">
+        <header class="scene-head">
+          <p class="eyebrow">SEVEN ENGINES · ONE EVENT BUS</p>
+          <h2>Intelligence, forming.</h2>
+        </header>
+        <div class="pipe-stage-wrap">
+          <svg id="pipe-svg" viewBox="0 0 1000 300" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+          <div class="pipe-caption">
+            <div class="pipe-glyph" aria-hidden="true">
+              <svg viewBox="-60 -60 120 120"><path id="pipe-glyph-path" d=""/></svg>
+            </div>
+            <div class="pipe-text">
+              <div class="pipe-index mono" id="pipe-index">01 / 07</div>
+              <h3 id="pipe-title">Vision</h3>
+              <p id="pipe-desc">Reads the study and reports observations — never conclusions.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BENCHMARK — scientific instrumentation -->
+  <section id="benchmark" data-scene="benchmark" data-hue="258">
+    <header class="scene-head">
+      <p class="eyebrow">QUANTUM FUSION VS CLASSICAL BASELINE</p>
+      <h2>Measured, not claimed.</h2>
+      <p class="scene-sub">Every number below is read live from this machine&rsquo;s benchmark artifact — not a slide.</p>
+    </header>
+    <div class="bench-rig reveal" id="bench-rig">
+      <div class="bench-col" data-side="quantum">
+        <div class="bench-col-head mono"><i class="q-dot"></i>QUANTUM · 8 QUBITS</div>
+        <div class="gauge" id="gauge-q"></div>
+        <div class="meters" id="meters-q"></div>
+      </div>
+      <div class="bench-scope">
+        <div class="scope-title mono">RELIABILITY SCOPE — CONFIDENCE vs REALITY</div>
+        <canvas id="scope"></canvas>
+        <div class="scope-legend mono">
+          <span><i class="lg q"></i>quantum</span>
+          <span><i class="lg c"></i>classical</span>
+          <span><i class="lg d"></i>perfect calibration</span>
+        </div>
+      </div>
+      <div class="bench-col" data-side="classical">
+        <div class="bench-col-head mono"><i class="c-dot"></i>CLASSICAL · BAYES POE</div>
+        <div class="gauge" id="gauge-c"></div>
+        <div class="meters" id="meters-c"></div>
+      </div>
+    </div>
+    <p class="bench-verdict reveal" id="bench-verdict"></p>
+  </section>
+
+  <!-- SAFETY — tension -->
+  <section id="safety" data-scene="safety" data-hue="4">
+    <div class="pin-space">
+      <div class="pin">
+        <div class="safety-vignette" aria-hidden="true"></div>
+        <header class="scene-head">
+          <p class="eyebrow danger">WHEN THE EVIDENCE ISN&rsquo;T THERE</p>
+          <h2 id="safety-h2">It refuses to guess.</h2>
+        </header>
+        <div class="safety-stage">
+          <canvas id="ecg" aria-hidden="true"></canvas>
+          <div class="safety-readout">
+            <div class="conf-block">
+              <span class="lbl mono">CALIBRATED CONFIDENCE</span>
+              <span class="conf-num mono" id="conf-num">0.93</span>
+            </div>
+            <div class="conf-block">
+              <span class="lbl mono">90% CONFIDENCE SET</span>
+              <div class="conf-chips" id="safety-chips"></div>
+            </div>
+          </div>
+          <div class="abstain-slab" id="abstain-slab" aria-live="polite">
+            <div class="slab-line mono">THRESHOLD BREACHED</div>
+            <div class="slab-big">AURA abstains.</div>
+            <p class="slab-sub">The case is escalated to a human — carrying its full uncertainty report,
+              not a silent wrong answer. Conformal prediction guarantees the truth sits in that set
+              9 times out of 10. That guarantee is the product.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LAUNCH PORTAL -->
+  <section id="launchpad" data-scene="launch" data-hue="172">
+    <canvas id="portal-canvas" aria-hidden="true"></canvas>
+    <div class="portal-core">
+      <p class="eyebrow">THE SYSTEM IS LIVE BEHIND THIS POINT</p>
+      <h2>Six engines. One judgment.<br>Zero silent failures.</h2>
+      <button class="btn-core big" data-launch data-magnetic><span>Launch AURA</span></button>
+      <p class="portal-sub mono" id="portal-sub">gateway · quantum fusion · conformal safety · live cases</p>
+    </div>
+    <footer class="land-foot mono">AURA — built for the judges who ask “but is it calibrated?”</footer>
+  </section>
+</main>
+
+<!-- ======================= WARP (launch sequence) ======================= -->
+<div id="warp" hidden aria-hidden="true">
+  <canvas id="warp-canvas"></canvas>
+  <pre class="warp-boot mono" id="boot-lines"></pre>
+  <div class="warp-flash" id="warp-flash"></div>
+</div>
+
+<!-- ======================= CONSOLE ======================= -->
+<div id="console" hidden>
+  <canvas id="c-ambient" aria-hidden="true"></canvas>
+
+  <header class="c-top">
+    <div class="brand"><span class="brand-core"></span><span class="brand-word">AURA</span><em>console</em></div>
+    <div class="c-chips mono" id="c-chips"></div>
+    <div class="c-right">
+      <span class="c-clock mono" id="c-clock">--:--:--</span>
+      <button class="btn-ghost" id="btn-exit">&larr; surface</button>
+    </div>
+  </header>
+
+  <div class="c-body">
+    <aside class="c-rail">
+      <div class="rail-head mono"><span>WORKLIST</span><span id="rail-count"></span></div>
+      <button id="btn-sim" class="btn-core slim" data-magnetic><span>+ simulate live study</span></button>
+      <div id="sim-picker" hidden></div>
+      <ol id="worklist"></ol>
+    </aside>
+
+    <main class="c-main" id="c-main">
+      <!-- intelligence forming (pipeline running) -->
+      <div id="case-forming" hidden>
+        <canvas id="forming-canvas"></canvas>
+        <pre class="forming-text mono" id="forming-text"></pre>
+      </div>
+
+      <div class="c-grid" id="c-grid">
+
+        <section class="panel p-xray" data-tilt id="panel-xray">
+          <header><h4>Study</h4>
+            <div class="p-tools">
+              <button id="tg-sal" class="tg">saliency</button>
+              <button id="tg-reg" class="tg on">findings</button>
+            </div>
+          </header>
+          <div class="xray-stage">
+            <canvas id="xray"></canvas>
+            <canvas id="xray-sal"></canvas>
+            <div id="xray-regions"></div>
+          </div>
+          <footer class="p-foot mono" id="xray-meta"></footer>
+          <div class="similar mono" id="similar-row"></div>
+        </section>
+
+        <section class="panel p-evidence" data-tilt id="panel-evidence">
+          <header><h4>Evidence &rarr; reasoning</h4><span class="p-hint mono">hover a node · counterfactuals live</span></header>
+          <div class="ev-stage">
+            <svg id="ev-svg" viewBox="0 0 560 420" preserveAspectRatio="xMidYMid meet"></svg>
+            <div id="ev-tip" class="tip mono" hidden></div>
+          </div>
+        </section>
+
+        <section class="panel p-safety" data-tilt id="panel-safety">
+          <header><h4>Safety</h4><span id="safety-flag" class="flag mono"></span></header>
+          <div id="abstain-banner" class="abstain-banner" hidden></div>
+          <div class="dials" id="dials"></div>
+          <div class="conformal">
+            <span class="lbl mono" id="conf-lbl">CONFORMAL SET</span>
+            <div class="conf-chips" id="conf-chips"></div>
+          </div>
+        </section>
+
+        <section class="panel p-posterior" data-tilt id="panel-posterior">
+          <header><h4>Calibrated differential</h4><span class="p-hint mono" id="post-backend"></span></header>
+          <div id="post-bars"></div>
+        </section>
+
+        <section class="panel p-recs" data-tilt id="panel-recs">
+          <header><h4>Next best evidence</h4><span class="p-hint mono">ranked by information gain / cost·risk</span></header>
+          <ol id="recs"></ol>
+        </section>
+
+        <section class="panel p-report" data-tilt id="panel-report">
+          <header><h4>Grounded report</h4>
+            <div class="p-tools" id="fb-tools">
+              <button class="tg" data-verdict="accept">accept</button>
+              <button class="tg" data-verdict="edit">edit</button>
+              <button class="tg" data-verdict="reject">reject</button>
+              <button id="btn-sign" class="btn-core slim" data-magnetic><span>sign</span></button>
+            </div>
+          </header>
+          <div id="report-body"></div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="toast" class="mono" hidden></div>
+
+<script src="/static/js/fx.js"></script>
+<script src="/static/js/landing.js"></script>
+<script src="/static/js/console.js"></script>
+<script src="/static/js/main.js"></script>
+</body>
+</html>
