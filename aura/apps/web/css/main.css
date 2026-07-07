@@ -562,6 +562,9 @@ h1, h2, h3 { font-weight: 560; letter-spacing: -0.02em; }
 
 /* ============ reduced motion ============ */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
+  *, *::before, *::after {
+    animation-duration: 0.001s !important; transition-duration: 0.001s !important;
+    animation-delay: 0s !important; transition-delay: 0s !important;
+  }
   html { scroll-behavior: auto; }
 }
