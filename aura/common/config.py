@@ -20,6 +20,11 @@ DB_PATH = ARTIFACTS / "aura.db"
 @dataclass(frozen=True)
 class Settings:
     fusion_backend: str = "quantum"          # "quantum" | "classical"
+    # Vision backbone: "features" (numpy fallback), "densenet_mimic" (real
+    # MIMIC-CXR DenseNet-121), or "timm" (fine-tuned EfficientNetV2/ConvNeXt/Swin).
+    vision_backend: str = "features"
+    vision_arch: str = "densenet121"         # timm arch key when vision_backend=timm
+    vision_weights: str = "densenet121-res224-mimic_ch"   # torchxrayvision weight tag
     n_qubits: int = 8                        # evidence-vector width
     n_layers: int = 3                        # VQC depth
     n_shots: int = 512                       # finite-shot readout (uncertainty)
@@ -55,6 +60,9 @@ def get_settings() -> Settings:
 
     return Settings(
         fusion_backend=pick("fusion_backend", str, base.fusion_backend),
+        vision_backend=pick("vision_backend", str, base.vision_backend),
+        vision_arch=pick("vision_arch", str, base.vision_arch),
+        vision_weights=pick("vision_weights", str, base.vision_weights),
         n_qubits=pick("n_qubits", int, base.n_qubits),
         n_layers=pick("n_layers", int, base.n_layers),
         n_shots=pick("n_shots", int, base.n_shots),

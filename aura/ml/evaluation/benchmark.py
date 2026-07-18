@@ -73,8 +73,29 @@ def run(n_samples: int = 500) -> dict:
         "quantum": _eval_backend(q_logits, yte, s.conformal_coverage, cal.temperature),
         "classical": _eval_backend(c_logits, yte, s.conformal_coverage),
     }
+
+    # Full clinical evaluation suite (AUROC/AUPRC/sens/spec/PPV/NPV/F1/calibration).
+    from ml.evaluation.metrics import evaluate, print_report
+
+    Pq = np.array([softmax(r / cal.temperature) for r in q_logits])
+    Pc = np.array([softmax(r) for r in c_logits])
+    full = {"quantum": evaluate(Pq, yte), "classical": evaluate(Pc, yte)}
+
+    # Include the extra backends when they are trained.
+    from services.fusion.ensemble import DeepEnsemble
+    from services.fusion.learnable import LearnableFusion
+    ens, lrn = DeepEnsemble.load(), LearnableFusion.load()
+    if ens is not None:
+        full["ensemble"] = evaluate(
+            np.array([softmax(ens.logits(x) / cal.temperature) for x in Xte]), yte)
+    if lrn is not None:
+        full["learnable"] = evaluate(
+            np.array([softmax(lrn.logits(x) / cal.temperature) for x in Xte]), yte)
+
+    result["metrics_full"] = full
     (ARTIFACTS / "benchmark.json").write_text(json.dumps(result, indent=2))
     _print_table(result)
+    print_report(full["quantum"], title="Quantum backend — full clinical metrics")
     return result
 
 

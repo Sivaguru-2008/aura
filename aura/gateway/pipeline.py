@@ -24,10 +24,12 @@ from services.explain import ExplainEngine
 from services.fusion import FusionEngine
 from services.fusion.evidence import encode, to_evidence_items
 from services.memory import MemoryEngine
+from services.reasoning import ClinicalReasoner
 from services.recommend import RecommendEngine
 from services.report import ReportEngine
 from services.safety import SafetyEngine
 from services.vision import VisionEngine
+from schemas.clinical import Finding
 
 
 class Pipeline:
@@ -40,6 +42,7 @@ class Pipeline:
         self.safety = SafetyEngine()
         self.explain = ExplainEngine()
         self.recommend = RecommendEngine()
+        self.reasoner = ClinicalReasoner()
         self.report = ReportEngine()
         self.memory = memory or MemoryEngine()
 
@@ -79,8 +82,15 @@ class Pipeline:
         # 5) Missing-evidence recommendations
         recommendations = self.recommend.recommend(self.fusion.model, x)
 
-        # 6) Report
-        report = self.report.compose(vision, safety, recommendations)
+        # 6) Clinical reasoning — fuse imaging with labs/symptoms/history + guidelines.
+        findings_map = {fs.finding: fs.probability for fs in vision.findings}
+        imaging_prior = {p.diagnosis: p.probability for p in safety.predictions}
+        reasoning = self.reasoner.reason(
+            study.study_id, findings_map, imaging_prior, study.priors, study.multimodal
+        )
+
+        # 7) Report (grounded in findings, safety, recommendations, and reasoning)
+        report = self.report.compose(vision, safety, recommendations, reasoning)
 
         # 7) Memory index (for similarity/priors)
         self.memory.index(case_id, vision.embedding, safety.top.value)
@@ -99,8 +109,10 @@ class Pipeline:
             fusion=fusion,
             safety=safety,
             explanation=explanation,
+            reasoning=reasoning,
             recommendations=recommendations,
             report=report,
+            multimodal=study.multimodal,
             ground_truth=study.ground_truth,
         )
         await self.bus.publish(ev.CASE_READY, case_id=case_id, study_id=study.study_id,

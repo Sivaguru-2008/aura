@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="utf-8"?>
+<p:sldLayout xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" showMasterSp="0" type="blank" preserve="1">
+  <p:cSld name="Blank">
+    <p:spTree>
+      <p:nvGrpSpPr>
+        <p:cNvPr id="1" name=""/>
+        <p:cNvGrpSpPr/>
+        <p:nvPr/>
+      </p:nvGrpSpPr>
+      <p:grpSpPr>
+        <a:xfrm>
+          <a:off x="0" y="0"/>
+          <a:ext cx="0" cy="0"/>
+          <a:chOff x="0" y="0"/>
+          <a:chExt cx="0" cy="0"/>
+        </a:xfrm>
+      </p:grpSpPr>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="7" name="Rectangle 6"/>
+          <p:cNvSpPr>
+            <a:spLocks noChangeArrowheads="1"/>
+          </p:cNvSpPr>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr bwMode="white">
+          <a:xfrm>
+            <a:off x="0" y="6705600"/>
+            <a:ext cx="9144000" cy="152400"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst/>
+          </a:prstGeom>
+          <a:solidFill>
+            <a:srgbClr val="FFFFFF"/>
+          </a:solidFill>
+          <a:ln w="9525" cap="flat" cmpd="sng" algn="ctr">
+            <a:noFill/>
+            <a:prstDash val="solid"/>
+            <a:miter lim="800000"/>
+            <a:headEnd type="none" w="med" len="med"/>
+            <a:tailEnd type="none" w="med" len="med"/>
+          </a:ln>
+          <a:effectLst/>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr vert="horz" wrap="none" lIns="91440" tIns="45720" rIns="91440" bIns="45720" anchor="ctr" compatLnSpc="1"/>
+          <a:lstStyle/>
+          <a:p>
+            <a:endParaRPr kumimoji="0" lang="en-US"/>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="8" name="Rectangle 7"/>
+          <p:cNvSpPr>
+            <a:spLocks noChangeArrowheads="1"/>
+          </p:cNvSpPr>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr bwMode="white">
+          <a:xfrm>
+            <a:off x="0" y="0"/>
+            <a:ext cx="9144000" cy="155448"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst/>
+          </a:prstGeom>
+          <a:solidFill>
+            <a:srgbClr val="FFFFFF"/>
+          </a:solidFill>
+          <a:ln w="9525" cap="flat" cmpd="sng" algn="ctr">
+            <a:noFill/>
+            <a:prstDash val="solid"/>
+            <a:miter lim="800000"/>
+            <a:headEnd type="none" w="med" len="med"/>
+            <a:tailEnd type="none" w="med" len="med"/>
+          </a:ln>
+          <a:effectLst/>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr vert="horz" wrap="none" lIns="91440" tIns="45720" rIns="91440" bIns="45720" anchor="ctr" compatLnSpc="1"/>
+          <a:lstStyle/>
+          <a:p>
+            <a:endParaRPr kumimoji="0" lang="en-US"/>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="10" name="Rectangle 9"/>
+          <p:cNvSpPr>
+            <a:spLocks noChangeArrowheads="1"/>
+          </p:cNvSpPr>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr bwMode="white">
+          <a:xfrm>
+            <a:off x="8991600" y="0"/>
+            <a:ext cx="152400" cy="6858000"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst/>
+          </a:prstGeom>
+          <a:solidFill>
+            <a:srgbClr val="FFFFFF"/>
+          </a:solidFill>
+          <a:ln w="9525" cap="flat" cmpd="sng" algn="ctr">
+            <a:noFill/>
+            <a:prstDash val="solid"/>
+            <a:miter lim="800000"/>
+            <a:headEnd type="none" w="med" len="med"/>
+            <a:tailEnd type="none" w="med" len="med"/>
+          </a:ln>
+          <a:effectLst/>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr vert="horz" wrap="none" lIns="91440" tIns="45720" rIns="91440" bIns="45720" anchor="ctr" compatLnSpc="1"/>
+          <a:lstStyle/>
+          <a:p>
+            <a:endParaRPr kumimoji="0" lang="en-US"/>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="9" name="Rectangle 8"/>
+          <p:cNvSpPr>
+            <a:spLocks noChangeArrowheads="1"/>
+          </p:cNvSpPr>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr bwMode="white">
+          <a:xfrm>
+            <a:off x="0" y="0"/>
+            <a:ext cx="152400" cy="6858000"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst/>
+          </a:prstGeom>
+          <a:solidFill>
+            <a:srgbClr val="FFFFFF"/>
+          </a:solidFill>
+          <a:ln w="9525" cap="flat" cmpd="sng" algn="ctr">
+            <a:noFill/>
+            <a:prstDash val="solid"/>
+            <a:miter lim="800000"/>
+            <a:headEnd type="none" w="med" len="med"/>
+            <a:tailEnd type="none" w="med" len="med"/>
+          </a:ln>
+          <a:effectLst/>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr vert="horz" wrap="none" lIns="91440" tIns="45720" rIns="91440" bIns="45720" anchor="ctr" compatLnSpc="1"/>
+          <a:lstStyle/>
+          <a:p>
+            <a:endParaRPr kumimoji="0" lang="en-US"/>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="5" name="Rectangle 4"/>
+          <p:cNvSpPr>
+            <a:spLocks noChangeArrowheads="1"/>
+          </p:cNvSpPr>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr bwMode="auto">
+          <a:xfrm>
+            <a:off x="146304" y="6391656"/>
+            <a:ext cx="8833104" cy="309563"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst/>
+          </a:prstGeom>
+          <a:solidFill>
+            <a:schemeClr val="accent3"/>
+          </a:solidFill>
+          <a:ln w="9525" cap="flat" cmpd="sng" algn="ctr">
+            <a:noFill/>
+            <a:prstDash val="solid"/>
+            <a:miter lim="800000"/>
+            <a:headEnd type="none" w="med" len="med"/>
+            <a:tailEnd type="none" w="med" len="med"/>
+          </a:ln>
+          <a:effectLst/>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr vert="horz" wrap="none" lIns="91440" tIns="45720" rIns="91440" bIns="45720" anchor="ctr" compatLnSpc="1"/>
+          <a:lstStyle/>
+          <a:p>
+            <a:endParaRPr kumimoji="0" lang="en-US"/>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="6" name="Rectangle 5"/>
+          <p:cNvSpPr>
+            <a:spLocks noChangeArrowheads="1"/>
+          </p:cNvSpPr>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr bwMode="auto">
+          <a:xfrm>
+            <a:off x="152400" y="158496"/>
+            <a:ext cx="8833104" cy="6547104"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst/>
+          </a:prstGeom>
+          <a:noFill/>
+          <a:ln w="9525" cap="flat" cmpd="sng" algn="ctr">
+            <a:solidFill>
+              <a:schemeClr val="accent3">
+                <a:shade val="75000"/>
+              </a:schemeClr>
+            </a:solidFill>
+            <a:prstDash val="solid"/>
+            <a:miter lim="800000"/>
+            <a:headEnd type="none" w="med" len="med"/>
+            <a:tailEnd type="none" w="med" len="med"/>
+          </a:ln>
+          <a:effectLst/>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr vert="horz" wrap="none" lIns="91440" tIns="45720" rIns="91440" bIns="45720" anchor="ctr" compatLnSpc="1"/>
+          <a:lstStyle/>
+          <a:p>
+            <a:endParaRPr kumimoji="0" lang="en-US" dirty="0"/>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="2" name="Date Placeholder 1"/>
+          <p:cNvSpPr>
+            <a:spLocks noGrp="1"/>
+          </p:cNvSpPr>
+          <p:nvPr>
+            <p:ph type="dt" sz="half" idx="10"/>
+          </p:nvPr>
+        </p:nvSpPr>
+        <p:spPr/>
+        <p:txBody>
+          <a:bodyPr/>
+          <a:lstStyle/>
+          <a:p>
+            <a:fld id="{F7088B4A-5E74-4E7B-8C78-CA63012A9A2F}" type="datetimeFigureOut">
+              <a:rPr lang="en-US" smtClean="0"/>
+              <a:t>6/25/2026</a:t>
+            </a:fld>
+            <a:endParaRPr lang="en-IN"/>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="3" name="Footer Placeholder 2"/>
+          <p:cNvSpPr>
+            <a:spLocks noGrp="1"/>
+          </p:cNvSpPr>
+          <p:nvPr>
+            <p:ph type="ftr" sz="quarter" idx="11"/>
+          </p:nvPr>
+        </p:nvSpPr>
+        <p:spPr/>
+        <p:txBody>
+          <a:bodyPr/>
+          <a:lstStyle/>
+          <a:p>
+            <a:endParaRPr lang="en-IN"/>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="4" name="Slide Number Placeholder 3"/>
+          <p:cNvSpPr>
+            <a:spLocks noGrp="1"/>
+          </p:cNvSpPr>
+          <p:nvPr>
+            <p:ph type="sldNum" sz="quarter" idx="12"/>
+          </p:nvPr>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="4267200" y="6324600"/>
+            <a:ext cx="609600" cy="441324"/>
+          </a:xfrm>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr/>
+          <a:lstStyle>
+            <a:lvl1pPr>
+              <a:defRPr>
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF"/>
+                </a:solidFill>
+              </a:defRPr>
+            </a:lvl1pPr>
+          </a:lstStyle>
+          <a:p>
+            <a:fld id="{D965746A-2488-49FC-9F89-55910A74292D}" type="slidenum">
+              <a:rPr lang="en-IN" smtClean="0"/>
+              <a:t>‹#›</a:t>
+            </a:fld>
+            <a:endParaRPr lang="en-IN"/>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree>
+  </p:cSld>
+  <p:clrMapOvr>
+    <a:masterClrMapping/>
+  </p:clrMapOvr>
+  <p:transition>
+    <p:fade/>
+  </p:transition>
+</p:sldLayout>

@@ -161,6 +161,53 @@ def make_dataset(n: int, seed: int = 7) -> list[Sample]:
     return out
 
 
+def make_multimodal(dx: Diagnosis, rng: np.random.Generator):
+    """Plausible labs/symptoms/history correlated with the diagnosis.
+
+    Lets the clinical reasoning engine actually fire in the demo (guideline rules
+    key off BNP, WBC, procalcitonin, symptoms, and history). Deliberately noisy so
+    reasoning must weigh, not memorize.
+    """
+    from schemas.contracts import (
+        ClinicalHistory, LabPanel, MultimodalContext, Symptoms,
+    )
+    labs, sym, hist = LabPanel(), Symptoms(), ClinicalHistory()
+    labs.wbc = round(float(rng.normal(7.5, 1.5)), 1)
+    labs.spo2 = round(float(rng.normal(97, 1.5)), 0)
+
+    if dx == Diagnosis.PNEUMONIA:
+        sym.fever = rng.random() < 0.85
+        sym.productive_cough = rng.random() < 0.8
+        labs.wbc = round(float(rng.normal(15, 2.5)), 1)
+        labs.crp = round(float(rng.uniform(60, 180)), 0)
+        labs.procalcitonin = round(float(rng.uniform(0.5, 4.0)), 2)
+        labs.spo2 = round(float(rng.normal(93, 2)), 0)
+    elif dx == Diagnosis.HEART_FAILURE:
+        sym.dyspnea = True
+        sym.orthopnea = rng.random() < 0.75
+        labs.bnp = round(float(rng.uniform(500, 2500)), 0)
+        labs.spo2 = round(float(rng.normal(92, 2)), 0)
+        hist.heart_failure = rng.random() < 0.5
+    elif dx == Diagnosis.COPD:
+        hist.copd = True
+        hist.smoking_pack_years = round(float(rng.uniform(20, 60)), 0)
+        sym.dyspnea = rng.random() < 0.7
+        labs.bnp = round(float(rng.uniform(20, 120)), 0)
+    elif dx == Diagnosis.MALIGNANCY:
+        hist.smoking_pack_years = round(float(rng.uniform(15, 70)), 0)
+        hist.prior_cancer = rng.random() < 0.4
+        sym.hemoptysis = rng.random() < 0.35
+    elif dx == Diagnosis.PNEUMOTHORAX:
+        sym.acute_onset = True
+        sym.pleuritic_chest_pain = rng.random() < 0.85
+        sym.dyspnea = rng.random() < 0.7
+        labs.spo2 = round(float(rng.normal(93, 3)), 0)
+
+    if rng.random() < 0.1:                          # incidental immunosuppression
+        hist.immunosuppression = True
+    return MultimodalContext(labs=labs, symptoms=sym, history=hist)
+
+
 def make_ood_sample(seed: int = 99) -> np.ndarray:
     """An out-of-distribution image (structured noise, wrong modality look)."""
     rng = np.random.default_rng(seed)

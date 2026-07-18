@@ -4,9 +4,8 @@
     {
       "name": "aura",
       "runtimeExecutable": "cmd",
-      "runtimeArgs": ["/c", "cd aura && py -m aura_cli serve %PORT%"],
-      "port": 8000,
-      "autoPort": true
+      "runtimeArgs": ["/c", "cd /d aura && set PYTHONUTF8=1 && \"E:\\AURA\\venv\\Scripts\\python.exe\" -m aura_cli serve 8000"],
+      "port": 8000
     }
   ]
 }

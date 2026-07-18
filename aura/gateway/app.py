@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from common.config import DB_PATH, ensure_dirs, get_settings
-from ml.data import IMG, make_sample
+from ml.data import IMG, make_multimodal, make_sample
 from schemas.clinical import DIAGNOSES, Diagnosis
 from schemas.contracts import StudyInput, StructuredPriors
 from services.models import ModelRegistry
@@ -140,7 +140,8 @@ async def simulate_study(payload: dict = Body(default={})):
     idx = store().count() + 1
     study = StudyInput(
         study_id=f"STU-LIVE-{idx}", image=[float(v) for v in s.image.flatten()],
-        image_shape=(IMG, IMG), priors=s.priors, ground_truth=s.diagnosis,
+        image_shape=(IMG, IMG), priors=s.priors,
+        multimodal=make_multimodal(s.diagnosis, rng), ground_truth=s.diagnosis,
     )
     case_id = f"CASE-LIVE-{idx}"
     bundle = await pipeline().run(study, case_id=case_id)

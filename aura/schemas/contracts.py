@@ -39,6 +39,44 @@ class StructuredPriors(BaseModel):
     immunocompromised: bool = False
 
 
+class LabPanel(BaseModel):
+    """De-identified lab values. None = not resulted (missing, not zero)."""
+    wbc: Optional[float] = None            # x10^9/L  (>11 leukocytosis)
+    neutrophil_pct: Optional[float] = None
+    crp: Optional[float] = None            # mg/L    (inflammation)
+    procalcitonin: Optional[float] = None  # ng/mL   (bacterial)
+    bnp: Optional[float] = None            # pg/mL   (>400 cardiac)
+    troponin: Optional[float] = None       # ng/L
+    d_dimer: Optional[float] = None        # ng/mL
+    spo2: Optional[float] = None           # %
+
+
+class Symptoms(BaseModel):
+    dyspnea: bool = False
+    productive_cough: bool = False
+    fever: bool = False
+    pleuritic_chest_pain: bool = False
+    hemoptysis: bool = False
+    orthopnea: bool = False
+    acute_onset: bool = False
+
+
+class ClinicalHistory(BaseModel):
+    copd: bool = False
+    heart_failure: bool = False
+    prior_cancer: bool = False
+    recent_surgery: bool = False
+    immunosuppression: bool = False
+    smoking_pack_years: float = 0.0
+
+
+class MultimodalContext(BaseModel):
+    """Non-imaging evidence the reasoning engine fuses with the image posterior."""
+    labs: LabPanel = Field(default_factory=LabPanel)
+    symptoms: Symptoms = Field(default_factory=Symptoms)
+    history: ClinicalHistory = Field(default_factory=ClinicalHistory)
+
+
 class StudyInput(BaseModel):
     study_id: str
     modality: Modality = Modality.CXR
@@ -46,6 +84,8 @@ class StudyInput(BaseModel):
     image: list[float] = Field(default_factory=list)
     image_shape: tuple[int, int] = (64, 64)
     priors: StructuredPriors = Field(default_factory=StructuredPriors)
+    # Optional non-imaging evidence (labs / symptoms / history).
+    multimodal: Optional[MultimodalContext] = None
     # Optional ground-truth diagnosis — present only for synthetic/seed data.
     ground_truth: Optional[Diagnosis] = None
 
@@ -130,11 +170,16 @@ class SafetyAssessment(BaseModel):
     # Conformal prediction set at the configured coverage (e.g. 90%).
     conformal_set: list[Diagnosis]
     conformal_coverage: float
-    epistemic_uncertainty: float               # ensemble/MC-dropout variance proxy
-    aleatoric_uncertainty: float
-    ood_energy: float
-    is_ood: bool
-    abstained: bool
+    conformal_method: str = "marginal"         # "marginal" | "mondrian" (class-conditional)
+    epistemic_uncertainty: float = 0.0         # ensemble top-class disagreement (std)
+    aleatoric_uncertainty: float = 0.0
+    epistemic_mi: float = 0.0                  # mutual information / BALD (bits)
+    predictive_entropy: float = 0.0            # total predictive entropy (bits)
+    uncertainty_method: str = "input_perturbation"   # or "deep_ensemble"
+    n_ensemble: int = 0
+    ood_energy: float = 0.0
+    is_ood: bool = False
+    abstained: bool = False
     abstention_reason: AbstentionReason = AbstentionReason.NONE
     model_version: str = ""
 
@@ -144,9 +189,14 @@ class SafetyAssessment(BaseModel):
 # --------------------------------------------------------------------------- #
 class Explanation(BaseModel):
     study_id: str
-    # Occlusion saliency heatmap, flattened, same shape as the input image.
+    # Primary saliency heatmap (Grad-CAM++ for the CNN, occlusion otherwise),
+    # flattened, same shape as the input image. Existing consumers read this.
     saliency: list[float] = Field(default_factory=list)
     saliency_shape: tuple[int, int] = (64, 64)
+    # Additional attribution maps keyed by method name (grad_cam, grad_cam++,
+    # integrated_gradients, smoothgrad, occlusion) — each flattened to saliency_shape.
+    saliency_methods: dict[str, list[float]] = Field(default_factory=dict)
+    saliency_target: str = ""                  # finding the maps localize
     # Shapley-style contribution of each evidence node to the top diagnosis.
     evidence_attribution: dict[str, float] = Field(default_factory=dict)
     # Counterfactual: "if this evidence were removed, top prob changes by ..."
@@ -168,6 +218,36 @@ class Recommendation(BaseModel):
 
 
 # --------------------------------------------------------------------------- #
+# Clinical reasoning
+# --------------------------------------------------------------------------- #
+class ReasoningStep(BaseModel):
+    """One evidence-grounded inference: a statement, the evidence it rests on, its
+    effect on the differential (log-likelihood-ratio per diagnosis), and a citation."""
+    statement: str
+    evidence: list[str] = Field(default_factory=list)
+    effect: dict[Diagnosis, float] = Field(default_factory=dict)   # log-LR nudges
+    guideline: str = ""
+    modality: str = ""                         # "imaging" | "labs" | "symptoms" | "history"
+
+
+class DifferentialItem(BaseModel):
+    diagnosis: Diagnosis
+    probability: float
+    supporting: list[str] = Field(default_factory=list)
+    opposing: list[str] = Field(default_factory=list)
+
+
+class ReasoningTrace(BaseModel):
+    study_id: str
+    prior_posterior: dict[Diagnosis, float] = Field(default_factory=dict)
+    adjusted_posterior: dict[Diagnosis, float] = Field(default_factory=dict)
+    steps: list[ReasoningStep] = Field(default_factory=list)
+    differential: list[DifferentialItem] = Field(default_factory=list)
+    guideline_citations: list[str] = Field(default_factory=list)
+    model_version: str = "reasoning-v1"
+
+
+# --------------------------------------------------------------------------- #
 # Report
 # --------------------------------------------------------------------------- #
 class ReportDraft(BaseModel):
@@ -175,6 +255,8 @@ class ReportDraft(BaseModel):
     findings_text: str
     impression_text: str
     recommendation_text: str
+    differential_text: str = ""                 # ranked alternatives with evidence
+    confidence_text: str = ""                   # calibrated confidence + why
     # Every sentence maps to the evidence nodes that grounded it.
     grounding: dict[str, list[str]] = Field(default_factory=dict)
     generator: str = "structured+template"
@@ -212,7 +294,9 @@ class CaseBundle(BaseModel):
     fusion: Optional[FusionResult] = None
     safety: Optional[SafetyAssessment] = None
     explanation: Optional[Explanation] = None
+    reasoning: Optional[ReasoningTrace] = None
     recommendations: list[Recommendation] = Field(default_factory=list)
     report: Optional[ReportDraft] = None
+    multimodal: Optional[MultimodalContext] = None
     ground_truth: Optional[Diagnosis] = None
     created_at: datetime = Field(default_factory=_now)

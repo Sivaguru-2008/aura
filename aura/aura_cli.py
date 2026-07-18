@@ -1,14 +1,17 @@
 """AURA command-line entry point.
 
-    py -m aura_cli train [n]     fit vision detectors + fusion models + calibration
-    py -m aura_cli bench [n]     quantum-vs-classical fusion benchmark
-    py -m aura_cli serve [port]  start gateway + dashboard
-    py -m aura_cli demo          train (if needed) then serve
+    py -m aura_cli train [n]       fit vision detectors + fusion models + calibration
+    py -m aura_cli train-cnn [arch] fine-tune a CNN vision backbone on GPU (timm)
+    py -m aura_cli bench [n]       quantum-vs-classical fusion benchmark + full metrics
+    py -m aura_cli serve [port]    start gateway + dashboard
+    py -m aura_cli demo            train (if needed) then serve
 
-Run from the aura/ directory.
+Run from the aura/ directory.  train-cnn arch ∈ {densenet121, efficientnetv2,
+convnext, swin}; pass a manifest CSV via AURA_CNN_MANIFEST to train on real CXRs.
 """
 from __future__ import annotations
 
+import os
 import sys
 
 from common.config import ARTIFACTS
@@ -23,6 +26,13 @@ def cmd_train(argv: list[str]) -> None:
     from ml.training import train_vision, train_fusion
     train_vision.run(n)
     train_fusion.run(n)
+
+
+def cmd_train_cnn(argv: list[str]) -> None:
+    from ml.training.train_cnn import run, TrainConfig
+    arch = argv[0] if argv else "densenet121"
+    manifest = os.environ.get("AURA_CNN_MANIFEST")
+    run(manifest=manifest, synthetic=manifest is None, cfg=TrainConfig(arch=arch))
 
 
 def cmd_bench(argv: list[str]) -> None:
@@ -52,7 +62,7 @@ def main() -> None:
         print(__doc__)
         return
     cmd, argv = sys.argv[1], sys.argv[2:]
-    dispatch = {"train": cmd_train, "bench": cmd_bench,
+    dispatch = {"train": cmd_train, "train-cnn": cmd_train_cnn, "bench": cmd_bench,
                 "serve": cmd_serve, "demo": cmd_demo}
     if cmd not in dispatch:
         print(__doc__)

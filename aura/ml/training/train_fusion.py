@@ -50,6 +50,23 @@ def train_classical(X, y, epochs=400, lr=0.3, l2=1e-3, seed=7):
     return W, b
 
 
+def train_ensemble(X, y, k=5, seed=7):
+    """Deep ensemble: k heads, each on a bootstrap resample with its own seed.
+
+    Bootstrap + seed variation is what makes the members disagree off-distribution,
+    which is exactly the signal `SafetyEngine` reads as epistemic uncertainty.
+    """
+    n = len(y)
+    Ws, bs = [], []
+    for m in range(k):
+        rng = np.random.default_rng(seed + 1000 * (m + 1))
+        idx = rng.integers(0, n, size=n)               # bootstrap resample
+        Wm, bm = train_classical(X[idx], y[idx], seed=seed + m + 1)
+        Ws.append(Wm)
+        bs.append(bm)
+    return np.stack(Ws), np.stack(bs)
+
+
 # --------------------------------------------------------------------------- #
 # Quantum variational circuit — PennyLane + torch backprop.
 # --------------------------------------------------------------------------- #
@@ -118,6 +135,15 @@ def run(n_samples: int = 700) -> dict:
     Wc, bc = train_classical(Xtr, ytr)
     np.savez(ARTIFACTS / "fusion_classical.npz", W=Wc, b=bc)
 
+    print(f"[train] fitting deep ensemble ({s.ensemble_size} members) ...")
+    Ws, bs = train_ensemble(Xtr, ytr, k=s.ensemble_size, seed=s.seed)
+    np.savez(ARTIFACTS / "fusion_ensemble.npz", Ws=Ws, bs=bs)
+
+    print("[train] fitting learnable attention-gated fusion ...")
+    from services.fusion.learnable import train_learnable
+    A, cvec, Wl, bl = train_learnable(Xtr, ytr, seed=s.seed)
+    np.savez(ARTIFACTS / "fusion_learnable.npz", A=A, c=cvec, W=Wl, b=bl)
+
     print(f"[train] training quantum VQC ({s.n_qubits} qubits, {s.n_layers} layers) ...")
     theta, Wq, bq = train_quantum(Xtr, ytr, s.n_qubits, s.n_layers)
     np.savez(ARTIFACTS / "fusion_quantum.npz", theta=theta, W=Wq, b=bq,
@@ -137,6 +163,11 @@ def run(n_samples: int = 700) -> dict:
     om, osd = ood_stats(cal_logits, T)
     Calibration(temperature=T, conformal_qhat=qhat, coverage=s.conformal_coverage,
                 ood_mean=om, ood_std=osd, ece=ece).save()
+
+    # Class-conditional (Mondrian) conformal thresholds on the calibration split.
+    from services.safety.uncertainty import mondrian_qhats
+    mq = mondrian_qhats(cal_probs, ycal, s.conformal_coverage, N_DX)
+    np.save(ARTIFACTS / "conformal_mondrian.npy", mq)
 
     # ---- Held-out metrics for the registry. ----
     def metrics(logits, y):

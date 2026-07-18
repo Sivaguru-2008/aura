@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="utf-8"?>
+<p:sld xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" showMasterSp="0">
+  <p:cSld>
+    <p:bg>
+      <p:bgPr>
+        <a:blipFill dpi="0" rotWithShape="1">
+          <a:blip r:embed="rId2">
+            <a:lum/>
+          </a:blip>
+          <a:srcRect/>
+          <a:stretch>
+            <a:fillRect/>
+          </a:stretch>
+        </a:blipFill>
+        <a:effectLst/>
+      </p:bgPr>
+    </p:bg>
+    <p:spTree>
+      <p:nvGrpSpPr>
+        <p:cNvPr id="1" name=""/>
+        <p:cNvGrpSpPr/>
+        <p:nvPr/>
+      </p:nvGrpSpPr>
+      <p:grpSpPr>
+        <a:xfrm>
+          <a:off x="0" y="0"/>
+          <a:ext cx="0" cy="0"/>
+          <a:chOff x="0" y="0"/>
+          <a:chExt cx="0" cy="0"/>
+        </a:xfrm>
+      </p:grpSpPr>
+      <p:pic>
+        <p:nvPicPr>
+          <p:cNvPr id="1027" name="Picture 3" descr="C:\Users\Admin\Downloads\1764679326535-Photoroom.png"/>
+          <p:cNvPicPr>
+            <a:picLocks noChangeAspect="1" noChangeArrowheads="1"/>
+          </p:cNvPicPr>
+          <p:nvPr/>
+        </p:nvPicPr>
+        <p:blipFill>
+          <a:blip r:embed="rId3"/>
+          <a:srcRect/>
+          <a:stretch>
+            <a:fillRect/>
+          </a:stretch>
+        </p:blipFill>
+        <p:spPr bwMode="auto">
+          <a:xfrm>
+            <a:off x="7072322" y="-214314"/>
+            <a:ext cx="2071678" cy="2071678"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst/>
+          </a:prstGeom>
+          <a:noFill/>
+        </p:spPr>
+      </p:pic>
+      <p:pic>
+        <p:nvPicPr>
+          <p:cNvPr id="7" name="Picture 6" descr="RIT white logo.png"/>
+          <p:cNvPicPr>
+            <a:picLocks noChangeAspect="1"/>
+          </p:cNvPicPr>
+          <p:nvPr/>
+        </p:nvPicPr>
+        <p:blipFill>
+          <a:blip r:embed="rId4" cstate="print"/>
+          <a:stretch>
+            <a:fillRect/>
+          </a:stretch>
+        </p:blipFill>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="1" y="0"/>
+            <a:ext cx="5000628" cy="1291197"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst/>
+          </a:prstGeom>
+        </p:spPr>
+      </p:pic>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="8" name="Rectangle 7"/>
+          <p:cNvSpPr/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="0" y="5072074"/>
+            <a:ext cx="3071833" cy="477054"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst/>
+          </a:prstGeom>
+          <a:noFill/>
+          <a:ln>
+            <a:noFill/>
+          </a:ln>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr wrap="square" lIns="91440" tIns="45720" rIns="91440" bIns="45720">
+            <a:spAutoFit/>
+          </a:bodyPr>
+          <a:lstStyle/>
+          <a:p>
+            <a:pPr algn="ctr"/>
+            <a:r>
+              <a:rPr lang="en-US" sz="2500" b="1" cap="none" spc="300" dirty="0" smtClean="0">
+                <a:ln w="11430" cmpd="sng">
+                  <a:noFill/>
+                  <a:prstDash val="solid"/>
+                  <a:miter lim="800000"/>
+                </a:ln>
+                <a:solidFill>
+                  <a:schemeClr val="bg1"/>
+                </a:solidFill>
+                <a:effectLst>
+                  <a:glow rad="45500">
+                    <a:schemeClr val="accent1">
+                      <a:satMod val="220000"/>
+                      <a:alpha val="35000"/>
+                    </a:schemeClr>
+                  </a:glow>
+                </a:effectLst>
+                <a:latin typeface="Arial" pitchFamily="34" charset="0"/>
+                <a:cs typeface="Arial" pitchFamily="34" charset="0"/>
+              </a:rPr>
+              <a:t>Presented by</a:t>
+            </a:r>
+            <a:endParaRPr lang="en-US" sz="2500" b="1" cap="none" spc="300" dirty="0">
+              <a:ln w="11430" cmpd="sng">
+                <a:noFill/>
+                <a:prstDash val="solid"/>
+                <a:miter lim="800000"/>
+              </a:ln>
+              <a:solidFill>
+                <a:schemeClr val="bg1"/>
+              </a:solidFill>
+              <a:effectLst>
+                <a:glow rad="45500">
+                  <a:schemeClr val="accent1">
+                    <a:satMod val="220000"/>
+                    <a:alpha val="35000"/>
+                  </a:schemeClr>
+                </a:glow>
+              </a:effectLst>
+              <a:latin typeface="Arial" pitchFamily="34" charset="0"/>
+              <a:cs typeface="Arial" pitchFamily="34" charset="0"/>
+            </a:endParaRPr>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+      <p:pic>
+        <p:nvPicPr>
+          <p:cNvPr id="1029" name="Picture 5" descr="C:\Users\Admin\Downloads\IBM_logo.svg.png"/>
+          <p:cNvPicPr>
+            <a:picLocks noChangeAspect="1" noChangeArrowheads="1"/>
+          </p:cNvPicPr>
+          <p:nvPr/>
+        </p:nvPicPr>
+        <p:blipFill>
+          <a:blip r:embed="rId5" cstate="print">
+            <a:lum bright="40000"/>
+          </a:blip>
+          <a:srcRect/>
+          <a:stretch>
+            <a:fillRect/>
+          </a:stretch>
+        </p:blipFill>
+        <p:spPr bwMode="auto">
+          <a:xfrm>
+            <a:off x="6588224" y="5885112"/>
+            <a:ext cx="1285884" cy="480868"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst/>
+          </a:prstGeom>
+          <a:noFill/>
+        </p:spPr>
+      </p:pic>
+      <p:pic>
+        <p:nvPicPr>
+          <p:cNvPr id="1030" name="Picture 6" descr="C:\Users\Admin\Downloads\logo-nqm.png"/>
+          <p:cNvPicPr>
+            <a:picLocks noChangeAspect="1" noChangeArrowheads="1"/>
+          </p:cNvPicPr>
+          <p:nvPr/>
+        </p:nvPicPr>
+        <p:blipFill>
+          <a:blip r:embed="rId6">
+            <a:lum bright="70000" contrast="-70000"/>
+          </a:blip>
+          <a:srcRect/>
+          <a:stretch>
+            <a:fillRect/>
+          </a:stretch>
+        </p:blipFill>
+        <p:spPr bwMode="auto">
+          <a:xfrm>
+            <a:off x="5214942" y="5572140"/>
+            <a:ext cx="1000132" cy="1106813"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst/>
+          </a:prstGeom>
+          <a:noFill/>
+        </p:spPr>
+      </p:pic>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="17" name="Rectangle 16"/>
+          <p:cNvSpPr/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="142876" y="5572140"/>
+            <a:ext cx="4500562" cy="477054"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst/>
+          </a:prstGeom>
+          <a:noFill/>
+          <a:ln>
+            <a:noFill/>
+          </a:ln>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr wrap="square" lIns="91440" tIns="45720" rIns="91440" bIns="45720">
+            <a:spAutoFit/>
+          </a:bodyPr>
+          <a:lstStyle/>
+          <a:p>
+            <a:pPr algn="ctr"/>
+            <a:r>
+              <a:rPr lang="en-US" sz="2500" b="1" cap="none" spc="300" dirty="0" smtClean="0">
+                <a:ln w="11430" cmpd="sng">
+                  <a:noFill/>
+                  <a:prstDash val="solid"/>
+                  <a:miter lim="800000"/>
+                </a:ln>
+                <a:solidFill>
+                  <a:schemeClr val="bg1"/>
+                </a:solidFill>
+                <a:effectLst>
+                  <a:glow rad="45500">
+                    <a:schemeClr val="accent1">
+                      <a:satMod val="220000"/>
+                      <a:alpha val="35000"/>
+                    </a:schemeClr>
+                  </a:glow>
+                </a:effectLst>
+                <a:latin typeface="Arial" pitchFamily="34" charset="0"/>
+                <a:cs typeface="Arial" pitchFamily="34" charset="0"/>
+              </a:rPr>
+              <a:t>Sivaguru R.M</a:t>
+            </a:r>
+            <a:endParaRPr lang="en-US" sz="2500" b="1" cap="none" spc="300" dirty="0">
+              <a:ln w="11430" cmpd="sng">
+                <a:noFill/>
+                <a:prstDash val="solid"/>
+                <a:miter lim="800000"/>
+              </a:ln>
+              <a:solidFill>
+                <a:schemeClr val="bg1"/>
+              </a:solidFill>
+              <a:effectLst>
+                <a:glow rad="45500">
+                  <a:schemeClr val="accent1">
+                    <a:satMod val="220000"/>
+                    <a:alpha val="35000"/>
+                  </a:schemeClr>
+                </a:glow>
+              </a:effectLst>
+              <a:latin typeface="Arial" pitchFamily="34" charset="0"/>
+              <a:cs typeface="Arial" pitchFamily="34" charset="0"/>
+            </a:endParaRPr>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr id="18" name="Rectangle 17"/>
+          <p:cNvSpPr/>
+          <p:nvPr/>
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="142844" y="6000768"/>
+            <a:ext cx="4929222" cy="477054"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst/>
+          </a:prstGeom>
+          <a:noFill/>
+          <a:ln>
+            <a:noFill/>
+          </a:ln>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr wrap="square" lIns="91440" tIns="45720" rIns="91440" bIns="45720">
+            <a:spAutoFit/>
+          </a:bodyPr>
+          <a:lstStyle/>
+          <a:p>
+            <a:pPr algn="ctr"/>
+            <a:r>
+              <a:rPr lang="en-US" sz="2500" b="1" cap="none" spc="300" dirty="0" smtClean="0">
+                <a:ln w="11430" cmpd="sng">
+                  <a:noFill/>
+                  <a:prstDash val="solid"/>
+                  <a:miter lim="800000"/>
+                </a:ln>
+                <a:solidFill>
+                  <a:schemeClr val="bg1"/>
+                </a:solidFill>
+                <a:effectLst>
+                  <a:glow rad="45500">
+                    <a:schemeClr val="accent1">
+                      <a:satMod val="220000"/>
+                      <a:alpha val="35000"/>
+                    </a:schemeClr>
+                  </a:glow>
+                </a:effectLst>
+                <a:latin typeface="Arial" pitchFamily="34" charset="0"/>
+                <a:cs typeface="Arial" pitchFamily="34" charset="0"/>
+              </a:rPr>
+              <a:t>Rajalakshmi Institute of Technology</a:t>
+            </a:r>
+            <a:endParaRPr lang="en-US" sz="2500" b="1" cap="none" spc="300" dirty="0">
+              <a:ln w="11430" cmpd="sng">
+                <a:noFill/>
+                <a:prstDash val="solid"/>
+                <a:miter lim="800000"/>
+              </a:ln>
+              <a:solidFill>
+                <a:schemeClr val="bg1"/>
+              </a:solidFill>
+              <a:effectLst>
+                <a:glow rad="45500">
+                  <a:schemeClr val="accent1">
+                    <a:satMod val="220000"/>
+                    <a:alpha val="35000"/>
+                  </a:schemeClr>
+                </a:glow>
+              </a:effectLst>
+              <a:latin typeface="Arial" pitchFamily="34" charset="0"/>
+              <a:cs typeface="Arial" pitchFamily="34" charset="0"/>
+            </a:endParaRPr>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+      <p:pic>
+        <p:nvPicPr>
+          <p:cNvPr id="10" name="Picture 9"/>
+          <p:cNvPicPr>
+            <a:picLocks noChangeAspect="1"/>
+          </p:cNvPicPr>
+          <p:nvPr/>
+        </p:nvPicPr>
+        <p:blipFill>
+          <a:blip r:embed="rId7">
+            <a:extLst>
+              <a:ext uri="{28A0092B-C50C-407E-A947-70E740481C1C}">
+                <a14:useLocalDpi xmlns:a14="http://schemas.microsoft.com/office/drawing/2010/main" val="0"/>
+              </a:ext>
+            </a:extLst>
+          </a:blip>
+          <a:stretch>
+            <a:fillRect/>
+          </a:stretch>
+        </p:blipFill>
+        <p:spPr>
+          <a:xfrm>
+            <a:off x="8028384" y="5763447"/>
+            <a:ext cx="866775" cy="714375"/>
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst/>
+          </a:prstGeom>
+        </p:spPr>
+      </p:pic>
+    </p:spTree>
+  </p:cSld>
+  <p:clrMapOvr>
+    <a:masterClrMapping/>
+  </p:clrMapOvr>
+  <p:transition>
+    <p:fade/>
+  </p:transition>
+  <p:timing>
+    <p:tnLst>
+      <p:par>
+        <p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot"/>
+      </p:par>
+    </p:tnLst>
+  </p:timing>
+</p:sld>

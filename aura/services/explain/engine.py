@@ -64,15 +64,49 @@ class ExplainEngine:
             counterfactual[name] = round(p - base_p, 4)   # signed change if removed
         return attribution, counterfactual
 
+    def _top_finding(self, vision_engine, img: np.ndarray):
+        base = vision_engine.score_findings(img)
+        return max(base, key=base.get)
+
+    def visual_explanations(self, vision_engine, img: np.ndarray):
+        """Return (primary_map, {method: map}, target_finding, method_label).
+
+        With a CNN backbone: the full gradient suite (Grad-CAM, Grad-CAM++,
+        Integrated Gradients, SmoothGrad) plus occlusion as a cross-check, with
+        Grad-CAM++ as the primary overlay. Without one: occlusion only.
+        """
+        top_finding = self._top_finding(vision_engine, img)
+        backbone = getattr(vision_engine, "backbone", None)
+        if backbone is not None:
+            from services.explain import methods as M
+
+            # Gradient methods only in the live path (each is 1–30 passes); the
+            # 100+-pass occlusion map stays available via methods.occlusion for
+            # the model-agnostic cross-check / the feature model.
+            maps = M.all_methods(backbone, img, top_finding, out_size=IMG)
+            primary = maps.get("grad_cam++", maps.get("grad_cam"))
+            if primary is None:
+                primary = self.occlusion_saliency(vision_engine, img)
+                maps["occlusion"] = primary
+            label = "grad_cam++"
+            return primary, maps, top_finding, label
+        sal = self.occlusion_saliency(vision_engine, img)
+        return sal, {"occlusion": sal}, top_finding, "occlusion"
+
     def explain(self, study_id: str, vision_engine, img: np.ndarray,
                 fusion_model, x: np.ndarray, top: Diagnosis) -> Explanation:
-        sal = self.occlusion_saliency(vision_engine, img)
+        primary, maps, target, label = self.visual_explanations(vision_engine, img)
         attribution, counterfactual = self.evidence_attribution(fusion_model, x, top)
         return Explanation(
             study_id=study_id,
-            saliency=[round(float(v), 4) for v in sal.flatten()],
+            saliency=[round(float(v), 4) for v in np.asarray(primary).flatten()],
             saliency_shape=(IMG, IMG),
+            saliency_methods={
+                k: [round(float(v), 4) for v in np.asarray(m).flatten()]
+                for k, m in maps.items()
+            },
+            saliency_target=target.value,
             evidence_attribution=attribution,
             counterfactuals=counterfactual,
-            method="occlusion+leave-one-out",
+            method=f"{label}+leave-one-out",
         )

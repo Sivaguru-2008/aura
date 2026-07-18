@@ -36,35 +36,75 @@ _FINDING_REGION: dict[Finding, tuple[float, float, float, float]] = {
 class VisionEngine:
     """weights: {Finding: array(N_FEAT+1)} logistic weights over standardized feats+bias.
     mean/std: feature standardization vectors (length N_FEAT).
+
+    ``backbone`` (optional): a production CNN (``services.vision.cnn.CXRBackbone``).
+    When present, findings and embeddings come from the CNN; findings the CNN does
+    not cover (e.g. hyperinflation, absent from MIMIC labels) fall back to the
+    feature model, so ``score_findings`` always returns the full finding set. The
+    call stays a pure, deterministic callable, keeping occlusion saliency valid.
     """
 
     def __init__(self, weights: dict[Finding, np.ndarray] | None = None,
-                 mean: np.ndarray | None = None, std: np.ndarray | None = None):
+                 mean: np.ndarray | None = None, std: np.ndarray | None = None,
+                 backbone=None):
         self.weights = weights
         self.mean = mean if mean is not None else np.zeros(N_FEAT)
         self.std = std if std is not None else np.ones(N_FEAT)
-        self.model_version = MODEL_VERSION
+        self.backbone = backbone
+        self.model_version = backbone.model_version if backbone is not None else MODEL_VERSION
 
     @classmethod
     def load(cls, path: Path | None = None) -> "VisionEngine":
         path = path or (ARTIFACTS / "vision.npz")
+        weights = mean = std = None
         if path.exists():
             d = np.load(path, allow_pickle=True)
-            w = {Finding(k): d[k] for k in d.files if k not in ("_mean", "_std")}
-            return cls(weights=w, mean=d["_mean"], std=d["_std"])
-        return cls()
+            weights = {Finding(k): d[k] for k in d.files if k not in ("_mean", "_std")}
+            mean, std = d["_mean"], d["_std"]
+        backbone = cls._maybe_backbone()
+        return cls(weights=weights, mean=mean, std=std, backbone=backbone)
+
+    @staticmethod
+    def _maybe_backbone():
+        """Build the configured CNN backbone, or None to keep the feature path."""
+        from common.config import get_settings
+
+        kind = get_settings().vision_backend
+        if kind in (None, "", "features"):
+            return None
+        from services.vision.cnn import get_backbone
+
+        s = get_settings()
+        if kind == "densenet_mimic":
+            return get_backbone("densenet_mimic", weights=s.vision_weights)
+        if kind == "timm":
+            return get_backbone("timm", arch=s.vision_arch)
+        return None
 
     def _std_feats(self, img: np.ndarray) -> np.ndarray:
         f = extract_features(img)
         x = np.array([f[n] for n in FEATURE_NAMES], dtype=float)
         return (x - self.mean) / self.std
 
-    def score_findings(self, img: np.ndarray) -> dict[Finding, float]:
-        """Pure callable used both for serving and for occlusion saliency."""
+    def _feature_scores(self, img: np.ndarray) -> dict[Finding, float]:
+        """Findings from the numpy feature model (trained logistic or heuristic)."""
         if self.weights is None:
             return self._fallback_scores(img)
         xs = np.append(self._std_feats(img), 1.0)
         return {f: float(sigmoid(float(np.dot(w, xs)))) for f, w in self.weights.items()}
+
+    def score_findings(self, img: np.ndarray) -> dict[Finding, float]:
+        """Pure callable used both for serving and for occlusion saliency.
+
+        With a CNN backbone: CNN findings, with feature-model fill for any finding
+        the CNN doesn't predict. Without one: the feature model alone.
+        """
+        if self.backbone is None:
+            return self._feature_scores(img)
+        cnn = self.backbone.score_findings(img)
+        scores = self._feature_scores(img)          # baseline for uncovered findings
+        scores.update(cnn)                            # CNN wins where it has a label
+        return {f: scores[f] for f in Finding}
 
     def _fallback_scores(self, img: np.ndarray) -> dict[Finding, float]:
         """Untrained heuristic so the engine is never dead. Uses raw features."""
@@ -81,7 +121,13 @@ class VisionEngine:
         }
 
     def embedding(self, img: np.ndarray) -> np.ndarray:
-        """Compact evidence embedding: raw feature vector, used by memory/similarity."""
+        """Evidence embedding used by memory/similarity.
+
+        CNN backbone -> pooled deep features (1024-d for DenseNet); otherwise the
+        raw hand-feature vector. Either way a fixed-width vector cosine can rank.
+        """
+        if self.backbone is not None:
+            return self.backbone.embedding(img)
         return feature_vector(img)
 
     def analyze(self, study_id: str, img: np.ndarray) -> VisionResult:

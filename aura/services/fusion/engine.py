@@ -11,6 +11,7 @@ from common.config import get_settings
 from schemas.contracts import FusionResult, StructuredPriors, VisionResult
 from services.fusion.classical import ClassicalFusion
 from services.fusion.evidence import encode
+from services.fusion.learnable import LearnableFusion
 from services.fusion.quantum import QuantumFusion
 
 
@@ -20,16 +21,23 @@ class FusionEngine:
         self.requested = backend or s.fusion_backend
         self.quantum = QuantumFusion.load()
         self.classical = ClassicalFusion.load()
+        self.learnable = LearnableFusion.load()
         self.backend = self._resolve()
 
     def _resolve(self) -> str:
         if self.requested == "quantum" and self.quantum is not None:
             return "quantum"
+        if self.requested == "learnable" and self.learnable is not None:
+            return "learnable"
         return "classical"
 
     @property
     def model(self):
-        return self.quantum if self.backend == "quantum" else self.classical
+        return {
+            "quantum": self.quantum,
+            "learnable": self.learnable,
+            "classical": self.classical,
+        }.get(self.backend, self.classical)
 
     def is_trained(self) -> bool:
         return self.model is not None

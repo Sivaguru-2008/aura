@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from ml.data import make_dataset, make_ood_sample, IMG
+from ml.data import make_dataset, make_multimodal, make_ood_sample, IMG
 from schemas.contracts import StudyInput, StructuredPriors
 from gateway.pipeline import Pipeline
 from gateway.storage import Store
@@ -17,6 +17,7 @@ async def seed(store: Store, pipeline: Pipeline, n: int = 12, seed: int = 202) -
         return store.count()
 
     samples = make_dataset(n, seed=seed)
+    rng = np.random.default_rng(seed)
     created = 0
     for i, s in enumerate(samples):
         study = StudyInput(
@@ -24,6 +25,7 @@ async def seed(store: Store, pipeline: Pipeline, n: int = 12, seed: int = 202) -
             image=[float(v) for v in s.image.flatten()],
             image_shape=(IMG, IMG),
             priors=s.priors,
+            multimodal=make_multimodal(s.diagnosis, rng),
             ground_truth=s.diagnosis,
         )
         bundle = await pipeline.run(study, case_id=f"CASE-{1000 + i}")

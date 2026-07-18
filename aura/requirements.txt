@@ -16,3 +16,16 @@ SQLAlchemy>=2.0
 aiosqlite>=0.19
 httpx>=0.27
 pytest>=8.0
+
+# --- Optional: production CNN vision stack (GPU) ---------------------------- #
+# Not needed for the offline numpy demo. Install these (into a CUDA torch env)
+# to enable vision_backend={densenet_mimic,timm}, Grad-CAM, real-CXR (DICOM) intake,
+# and the GPU training harness. torch/torchvision must be a CUDA build for GPU use.
+#   torch>=2.2            # CUDA build, e.g. cu128 for Blackwell GPUs
+#   torchvision>=0.17
+#   torchxrayvision>=1.2  # genuine DenseNet-121 MIMIC-CXR weights
+#   timm>=1.0             # EfficientNetV2 / ConvNeXt / Swin backbones
+#   albumentations>=2.0   # training augmentation
+#   opencv-python-headless
+#   pydicom>=2.4          # DICOM intake
+#   tensorboard>=2.15     # training logs
