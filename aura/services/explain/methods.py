@@ -153,15 +153,27 @@ def occlusion(score_fn, img: np.ndarray, finding: Finding,
 
 
 def all_methods(backbone, img: np.ndarray, finding: Finding,
-                out_size: int = 64) -> dict[str, np.ndarray]:
-    """Compute every gradient-based method for one finding. Robust to per-method failure."""
-    out: dict[str, np.ndarray] = {}
-    for name, fn in (
+                out_size: int = 64, include_scorecam: bool = False) -> dict[str, np.ndarray]:
+    """Compute the attribution methods for one finding. Robust to per-method failure.
+
+    ``include_scorecam`` adds gradient-free Score-CAM. It is off by default because
+    Score-CAM forwards one masked input per activation channel (heavier than the
+    gradient methods); the explain/overlay path turns it on, the live serve path
+    leaves it off to keep latency unchanged.
+    """
+    methods = [
         ("grad_cam", lambda: grad_cam(backbone, img, finding, plusplus=False, out_size=out_size)),
         ("grad_cam++", lambda: grad_cam(backbone, img, finding, plusplus=True, out_size=out_size)),
         ("integrated_gradients", lambda: integrated_gradients(backbone, img, finding, out_size=out_size)),
         ("smoothgrad", lambda: smoothgrad(backbone, img, finding, out_size=out_size)),
-    ):
+    ]
+    if include_scorecam:
+        from services.explain.scorecam import score_cam
+        methods.append(
+            ("score_cam", lambda: score_cam(backbone, img, finding, out_size=out_size))
+        )
+    out: dict[str, np.ndarray] = {}
+    for name, fn in methods:
         try:
             out[name] = fn()
         except Exception as e:  # never let one method sink the explanation

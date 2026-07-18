@@ -1,0 +1,197 @@
+{
+  "study_id": "sample",
+  "case_id": "CASE-sample",
+  "generated_at": "2026-07-18T18:24:53+00:00",
+  "patient_summary": {
+    "demographics": "age unknown, sex unknown",
+    "risk_flags": [],
+    "labs": {},
+    "symptoms": [],
+    "history": [],
+    "modality": "CXR",
+    "study_id": "sample"
+  },
+  "vision_findings": [
+    {
+      "finding": "Pleural effusion",
+      "key": "pleural_effusion",
+      "probability": 0.9826,
+      "present": true,
+      "region": [
+        0.72,
+        0.1,
+        0.92,
+        0.9
+      ]
+    },
+    {
+      "finding": "Consolidation",
+      "key": "consolidation",
+      "probability": 0.962,
+      "present": true,
+      "region": [
+        0.15,
+        0.08,
+        0.75,
+        0.92
+      ]
+    },
+    {
+      "finding": "Airspace opacity",
+      "key": "opacity",
+      "probability": 0.8406,
+      "present": true,
+      "region": [
+        0.15,
+        0.08,
+        0.75,
+        0.92
+      ]
+    },
+    {
+      "finding": "Cardiomegaly",
+      "key": "cardiomegaly",
+      "probability": 0.8085,
+      "present": true,
+      "region": [
+        0.42,
+        0.34,
+        0.82,
+        0.66
+      ]
+    },
+    {
+      "finding": "Pulmonary nodule",
+      "key": "nodule",
+      "probability": 0.4193,
+      "present": false,
+      "region": [
+        0.15,
+        0.08,
+        0.75,
+        0.92
+      ]
+    },
+    {
+      "finding": "Hyperinflation",
+      "key": "hyperinflation",
+      "probability": 0.4106,
+      "present": false,
+      "region": [
+        0.12,
+        0.06,
+        0.86,
+        0.94
+      ]
+    },
+    {
+      "finding": "Pneumothorax",
+      "key": "pneumothorax",
+      "probability": 0.1747,
+      "present": false,
+      "region": [
+        0.15,
+        0.08,
+        0.75,
+        0.92
+      ]
+    }
+  ],
+  "confidence": {
+    "top_diagnosis": "Chronic obstructive pulmonary disease",
+    "top_probability": 0.9878,
+    "ci_low": 0.9443,
+    "ci_high": 1.0,
+    "epistemic_uncertainty": 0.0375,
+    "aleatoric_uncertainty": 0.3463,
+    "predictive_entropy": 0.901,
+    "uncertainty_method": "deep_ensemble",
+    "abstained": false,
+    "abstention_reason": "none"
+  },
+  "calibration": {
+    "conformal_set": [
+      "Chronic obstructive pulmonary disease"
+    ],
+    "conformal_coverage": 0.9,
+    "conformal_method": "mondrian",
+    "out_of_distribution": false,
+    "ood_energy_z": 1.0661,
+    "temperature": 0.7725,
+    "reported_ece": 0.0147
+  },
+  "differential_diagnosis": [
+    {
+      "diagnosis": "Chronic obstructive pulmonary disease",
+      "probability": 0.988,
+      "supporting": [],
+      "opposing": []
+    },
+    {
+      "diagnosis": "Pneumothorax",
+      "probability": 0.0097,
+      "supporting": [],
+      "opposing": []
+    },
+    {
+      "diagnosis": "Suspicious pulmonary malignancy",
+      "probability": 0.0014,
+      "supporting": [
+        "nodule"
+      ],
+      "opposing": []
+    },
+    {
+      "diagnosis": "No acute cardiopulmonary abnormality",
+      "probability": 0.0009,
+      "supporting": [],
+      "opposing": [
+        "nodule"
+      ]
+    }
+  ],
+  "evidence_used": [
+    "Pleural effusion (p=0.98)",
+    "Consolidation (p=0.96)",
+    "Airspace opacity (p=0.84)",
+    "Cardiomegaly (p=0.81)",
+    "nodule"
+  ],
+  "evidence_missing": [
+    "nodule indeterminate (p=0.42)",
+    "hyperinflation indeterminate (p=0.41)",
+    "pneumothorax indeterminate (p=0.17)"
+  ],
+  "recommended_tests": [
+    {
+      "action": "acquire_lateral_view",
+      "test": "Acquire lateral chest view",
+      "expected_info_gain_bits": 0.1048,
+      "cost": "low",
+      "risk": "none",
+      "utility": 0.0117,
+      "rationale": "A lateral projection disambiguates airspace opacity from pleural fluid. Expected value of information 0.012 (loss units); reduces diagnostic uncertainty ~36%."
+    }
+  ],
+  "risk_level": {
+    "level": "LOW-MODERATE",
+    "rationale": "Chronic obstructive pulmonary disease at 99% calibrated confidence"
+  },
+  "clinical_impression": "Impression: findings most consistent with chronic obstructive pulmonary disease (calibrated probability 99%). 90% mondrian confidence set: Chronic obstructive pulmonary disease.",
+  "findings_text": "Findings: Pleural effusion (p=0.98); Consolidation (p=0.96); Airspace opacity (p=0.84); Cardiomegaly (p=0.81).",
+  "limitations": [
+    "Automated decision support only \u2014 not a substitute for a radiologist's read.",
+    "DenseNet-121 trained on MIMIC-CXR; performance may degrade on out-of-distribution equipment, projections, or populations.",
+    "Ground-truth training labels were derived from free-text reports by a rule-based labeler and inherit its error modes.",
+    "Findings localize regions of interest; they are observations, not tissue diagnoses."
+  ],
+  "model_version": {
+    "vision": "vision-cxr-densenet121-production",
+    "fusion": "quantum:fusion-vqc-v1",
+    "safety": "safety-v2",
+    "reasoning": "reasoning-v1",
+    "report": "structured+reasoning"
+  },
+  "inference_time_s": 5.5294,
+  "ground_truth": null
+}

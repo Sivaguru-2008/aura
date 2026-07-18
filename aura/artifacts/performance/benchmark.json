@@ -1,0 +1,67 @@
+{
+  "torch_version": "2.11.0+cu128",
+  "cuda_available": true,
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.10",
+  "model": "DenseNet121CXR (7-finding multilabel)",
+  "input_shape": [
+    1,
+    1,
+    224,
+    224
+  ],
+  "cpu_latency": {
+    "mean_ms": 83.171,
+    "p50_ms": 80.017,
+    "p95_ms": 107.134,
+    "min_ms": 67.34,
+    "max_ms": 108.201,
+    "throughput_img_per_s": 12.02
+  },
+  "memory_after_cpu": {
+    "process_rss_mb": null
+  },
+  "gpu_latency": {
+    "mean_ms": 29.102,
+    "p50_ms": 26.147,
+    "p95_ms": 42.86,
+    "min_ms": 22.116,
+    "max_ms": 45.741,
+    "throughput_img_per_s": 34.36
+  },
+  "batch_throughput": {
+    "1": {
+      "img_per_s": 26.45,
+      "ms_per_batch": 37.804
+    },
+    "8": {
+      "img_per_s": 300.62,
+      "ms_per_batch": 26.612
+    },
+    "16": {
+      "img_per_s": 524.28,
+      "ms_per_batch": 30.518
+    },
+    "32": {
+      "img_per_s": 618.13,
+      "ms_per_batch": 51.769
+    },
+    "64": {
+      "img_per_s": 571.43,
+      "ms_per_batch": 112.0
+    }
+  },
+  "mixed_precision": {
+    "available": true,
+    "fp32_ms_per_batch": 25.648,
+    "amp_fp16_ms_per_batch": 31.167,
+    "speedup": 0.823
+  },
+  "memory": {
+    "gpu_peak_mb": 693.45,
+    "gpu_reserved_mb": 1283.46,
+    "gpu_name": "NVIDIA GeForce RTX 5050 Laptop GPU",
+    "process_rss_mb": null
+  },
+  "single_image_throughput_img_per_s": 34.36
+}
