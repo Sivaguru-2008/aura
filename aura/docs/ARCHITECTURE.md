@@ -193,7 +193,7 @@ independently deployable, versioned, and replaceable behind a typed contract
 | 5 | `explain` | Grad-CAM++/attention maps, evidence attribution (Shapley over evidence nodes), counterfactuals | Captum, custom | GPU/CPU |
 | 6 | `safety` | Calibration (temp scaling), conformal prediction sets, OOD detection, abstention policy, drift monitors | scikit-learn, custom | CPU |
 | 7 | `recommend` | Missing-evidence detection + expected-information-gain ranking of next tests | Bayesian VoI over evidence graph | CPU |
-| 8 | `report` | Structured findings JSON → clinician report; strictly grounded (template + LLM polish, de-identified) | Claude API / local LLM adapter | CPU |
+| 8 | `report` | Structured findings JSON → clinician report; strictly grounded (template + LLM polish, de-identified) | LLM API / local LLM adapter | CPU |
 | 9 | `memory` | Longitudinal patient timeline, prior registration & delta, case-similarity retrieval, open-recommendation tracking | Qdrant, SimpleITK | CPU |
 | 10 | `models` | Model registry, versioning, canary rollout, feedback-driven retraining queue | MLflow | control plane |
 | 11 | `web` | Doctor dashboard | Next.js 14, TypeScript, Tailwind, shadcn/ui | CDN/edge |

@@ -97,7 +97,7 @@ h1, h2, h3 { font-weight: 560; letter-spacing: -0.02em; }
   box-shadow: inset 0 0 0 1px var(--hair2);
   transition: color 0.3s, box-shadow 0.3s, transform 0.5s var(--spring);
 }
-.btn-ghost:hover { color: var(--ink); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3); }
+.btn-ghost:hover { transform: scale(1.04); color: var(--ink); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3); }
 
 /* brand */
 .brand { display: flex; align-items: center; gap: 10px; font-weight: 640; letter-spacing: 0.14em; font-size: 15px; }
