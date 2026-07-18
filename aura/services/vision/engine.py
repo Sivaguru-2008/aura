@@ -55,14 +55,28 @@ class VisionEngine:
 
     @classmethod
     def load(cls, path: Path | None = None) -> "VisionEngine":
+        # Check if our trained production model exists. If so, load it automatically.
+        from common.config import ARTIFACTS
+        best_model_path = ARTIFACTS / "best_model.pt"
+        backbone = None
+        if best_model_path.exists():
+            try:
+                from ml.vision_cxr.inference import VisionModel
+                backbone = VisionModel(str(best_model_path))
+            except Exception as e:
+                print(f"[VisionEngine] failed to load production backbone from {best_model_path}: {e}")
+        
+        if backbone is None:
+            backbone = cls._maybe_backbone()
+
         path = path or (ARTIFACTS / "vision.npz")
         weights = mean = std = None
         if path.exists():
             d = np.load(path, allow_pickle=True)
             weights = {Finding(k): d[k] for k in d.files if k not in ("_mean", "_std")}
             mean, std = d["_mean"], d["_std"]
-        backbone = cls._maybe_backbone()
         return cls(weights=weights, mean=mean, std=std, backbone=backbone)
+
 
     @staticmethod
     def _maybe_backbone():
@@ -142,3 +156,7 @@ class VisionEngine:
             embedding=[round(float(v), 5) for v in self.embedding(img)],
             model_version=self.model_version,
         )
+
+    def predict(self, img: np.ndarray, study_id: str = "default") -> VisionResult:
+        """Alias for analyze to satisfy predictability of prediction invocation."""
+        return self.analyze(study_id, img)
