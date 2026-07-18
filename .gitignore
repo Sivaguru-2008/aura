@@ -14,3 +14,13 @@ aura/artifacts/aura.db
 .idea/
 Thumbs.db
 .DS_Store
+
+# large datasets, zip archives, and manifests
+archive.zip
+mimic_cxr_data/
+manifest.jsonl
+
+# deep learning checkpoints / tensorboard logs
+aura/artifacts/*.pt
+aura/artifacts/tb/
+

@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import numpy as np
-from fastapi import Body, FastAPI, HTTPException, Request
+from fastapi import Body, FastAPI, HTTPException, Request, UploadFile, File
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -149,6 +149,40 @@ async def simulate_study(payload: dict = Body(default={})):
     store().audit("case.analyzed", "case", case_id,
                   detail={"top": bundle.safety.top.value})
     return {"case_id": case_id}
+
+
+@app.post("/v1/studies/upload")
+async def upload_study(file: UploadFile = File(...)):
+    """Upload a custom image (PNG/JPG/DICOM), save it temporarily, run it through the pipeline live."""
+    import tempfile
+    import os
+    
+    suffix = Path(file.filename).suffix
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        tmp.write(await file.read())
+        tmp_path = tmp.name
+
+    try:
+        from services.vision.io import study_from_cxr
+        study = study_from_cxr(tmp_path)
+        
+        idx = store().count() + 1
+        case_id = f"CASE-UPLOAD-{idx}"
+        study.study_id = f"STU-UPLOAD-{idx}"
+        
+        bundle = await pipeline().run(study, case_id=case_id)
+        store().save_case(bundle)
+        store().audit("case.uploaded", "case", case_id, detail={"top": bundle.safety.top.value})
+        
+        return {"case_id": case_id}
+    except Exception as e:
+        raise HTTPException(500, f"Failed to process custom image: {str(e)}")
+    finally:
+        try:
+            os.remove(tmp_path)
+        except Exception:
+            pass
+
 
 
 @app.get("/v1/cases/{case_id}/similar")

@@ -102,6 +102,13 @@ window.CONSOLE = (() => {
       const b = e.target.closest("[data-dx]");
       if (b) { picker.hidden = true; simulate(b.dataset.dx); }
     });
+    // upload
+    $("btn-upload").addEventListener("click", () => { $("input-file").click(); });
+    $("input-file").addEventListener("change", (e) => {
+      if (e.target.files && e.target.files[0]) {
+        uploadImage(e.target.files[0]);
+      }
+    });
   }
 
   /* ================= worklist ================= */
@@ -536,6 +543,50 @@ window.CONSOLE = (() => {
       toast("simulation failed — gateway offline?");
     }
   }
+
+  async function uploadImage(file) {
+    const overlay = $("case-forming");
+    const txt = $("forming-text");
+    overlay.hidden = false;
+    txt.innerHTML = "";
+    const f = new Field($("forming-canvas"), { count: 160, hue: 172, mode: "collapse", size: 1.6, speed: 1.1 });
+    f.start();
+    // staged boot text while the real pipeline runs
+    let alive = true;
+    (async () => {
+      for (const line of FORM_STAGES) {
+        if (!alive) return;
+        txt.innerHTML += `<span class="ok">▸</span> ${line}\n`;
+        await wait(REDUCED ? 30 : 340);
+      }
+    })();
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const d = await api("/v1/studies/upload", {
+        method: "POST",
+        headers: { "x-aura-user": "clinician" },
+        body: fd,
+      });
+      const cases = await api("/v1/cases");
+      S.cases = cases.cases || [];
+      const h = await api("/v1/health").catch(() => null);
+      if (h) renderChips(h);
+      await wait(REDUCED ? 0 : 900); // let the convergence land
+      alive = false;
+      overlay.hidden = true; f.destroy();
+      renderWorklist();
+      S.current = null;
+      selectCase(d.case_id, { first: true });
+      toast(`${d.case_id} uploaded and analyzed live`);
+    } catch (err) {
+      alive = false; overlay.hidden = true; f.destroy();
+      toast("upload failed — gateway offline or bad file?");
+    } finally {
+      $("input-file").value = "";
+    }
+  }
+
 
   return { boot };
 })();
