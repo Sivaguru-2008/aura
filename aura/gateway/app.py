@@ -39,9 +39,24 @@ async def lifespan(app: FastAPI):
     state["registry"] = ModelRegistry()
     if not pipeline.fusion.is_trained():
         print("[gateway] WARNING: fusion model not trained; run `aura_cli train`.")
-    n = await seed(store, pipeline)
+    # Data source: real MIMIC-CXR by default; set AURA_DATA_SOURCE=synthetic to
+    # fall back to the legacy synthetic seeder (kept for offline/dev use).
+    import os
+    source = os.environ.get("AURA_DATA_SOURCE", "mimic").lower()
+    if source == "mimic":
+        try:
+            from mimic.seed import seed_mimic
+            n = await seed_mimic(store, pipeline)
+            if n == 0:                       # corpus absent -> graceful fallback
+                print("[gateway] MIMIC-CXR unavailable; falling back to synthetic seed.")
+                n = await seed(store, pipeline)
+        except Exception as e:               # never block startup on data issues
+            print(f"[gateway] MIMIC seed failed ({e}); falling back to synthetic.")
+            n = await seed(store, pipeline)
+    else:
+        n = await seed(store, pipeline)
     print(f"[gateway] ready — {store.count()} cases in worklist "
-          f"(fusion backend: {pipeline.fusion.backend}).")
+          f"(source: {source}, fusion backend: {pipeline.fusion.backend}).")
     yield
 
 

@@ -214,4 +214,4 @@ def make_ood_sample(seed: int = 99) -> np.ndarray:
     img = rng.random((IMG, IMG)).astype(np.float32)
     yy, xx = np.mgrid[0:IMG, 0:IMG]
     img += 0.5 * np.sin(xx * 1.7) * np.cos(yy * 1.3)       # high-freq grid, unlike a CXR
-    return np.clip((img - img.min()) / (img.ptp() + 1e-9), 0, 1)
+    return np.clip((img - img.min()) / (np.ptp(img) + 1e-9), 0, 1)
