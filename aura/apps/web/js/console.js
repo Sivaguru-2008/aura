@@ -104,6 +104,7 @@ window.CONSOLE = (() => {
     });
     // upload
     $("btn-upload").addEventListener("click", () => { $("input-file").click(); });
+    $("btn-history").addEventListener("click", () => { window.open("/history", "_blank"); });
     $("input-file").addEventListener("change", (e) => {
       if (e.target.files && e.target.files[0]) {
         uploadImage(e.target.files[0]);
@@ -637,7 +638,7 @@ window.CONSOLE = (() => {
       renderWorklist();
       S.current = null;
       selectCase(d.case_id, { first: true });
-      toast(`${d.case_id} uploaded and analyzed live`);
+      toast(`${d.case_id} analyzed! <a href="/history#/case/${d.case_id}/image" target="_blank" style="color:var(--cyan);text-decoration:underline">View Film Page</a> | <a href="/history#/case/${d.case_id}/report" target="_blank" style="color:var(--cyan);text-decoration:underline">View Report Page</a>`);
     } catch (err) {
       alive = false;
       const rejected = err && err.status === 422 && err.detail && err.detail.error === "not_a_cxr";

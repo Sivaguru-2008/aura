@@ -137,10 +137,10 @@ window.FX = (() => {
   function toast(msg) {
     const t = document.getElementById("toast");
     if (!t) return;
-    t.hidden = false; t.textContent = msg;
+    t.hidden = false; t.innerHTML = msg;
     requestAnimationFrame(() => t.classList.add("show"));
     clearTimeout(toastT);
-    toastT = setTimeout(() => t.classList.remove("show"), 2600);
+    toastT = setTimeout(() => t.classList.remove("show"), 3600); // slightly longer timeout for reading links
   }
 
   /* ============================================================

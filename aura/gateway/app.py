@@ -284,3 +284,13 @@ def index():
 def console_route():
     """Deep link into the console — same SPA, which boots straight into /app."""
     return index()
+
+
+@app.get("/history")
+def history_route():
+    """Deep link into the history & report portal."""
+    idx = WEB_DIR / "history.html"
+    if idx.exists():
+        return FileResponse(str(idx))
+    return JSONResponse({"message": "History page not found."}, status_code=404)
+

@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AURA — Upload History & Grounded Reports</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='6' fill='%234be1c3'/%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%234be1c3' stroke-opacity='.35' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/css/main.css?v=3">
+<link rel="stylesheet" href="/static/css/history.css?v=3">
+</head>
+<body data-view="history-list">
+
+<!-- ambient light that follows the cursor -->
+<div id="halo" aria-hidden="true"></div>
+<canvas id="c-ambient" aria-hidden="true"></canvas>
+
+<!-- Topbar Navigation -->
+<header class="h-top no-print">
+  <div class="brand"><span class="brand-core"></span><span class="brand-word">AURA</span><em>portal</em></div>
+  <nav class="h-nav">
+    <a href="#/" class="nav-link active" id="nav-history">History Archive</a>
+    <a href="/app" class="nav-link">Console</a>
+    <a href="/" class="nav-link">Landing</a>
+  </nav>
+  <div class="h-right">
+    <span class="h-clock mono" id="h-clock">--:--:--</span>
+  </div>
+</header>
+
+<!-- Main Container -->
+<main class="h-container">
+
+  <!-- ================= VIEW 1: HISTORY LIST ================= -->
+  <section id="view-history-list" class="h-view">
+    <div class="view-header">
+      <div>
+        <p class="eyebrow">UPLOAD ARCHIVE</p>
+        <h2>Intake History</h2>
+        <p class="scene-sub">Chronological history of all chest radiograph films uploaded for clinical intelligence processing.</p>
+      </div>
+      <div class="filter-controls">
+        <input type="text" id="history-search" class="h-search" placeholder="Search by case ID or diagnosis...">
+        <select id="history-filter-state" class="h-select">
+          <option value="all">All States</option>
+          <option value="signed">Signed</option>
+          <option value="abstained">Abstained</option>
+          <option value="within-envelope">Within Envelope</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Grid Container -->
+    <div class="history-grid" id="history-grid">
+      <!-- Cards dynamically populated -->
+      <div class="loading-state mono">indexing archive...</div>
+    </div>
+    
+    <div id="empty-state" class="empty-state" hidden>
+      <div class="empty-icon">📂</div>
+      <h3>No uploaded cases found</h3>
+      <p>Go to the <a href="/app">Console</a>, upload a custom chest X-ray image, and it will appear here in the history log.</p>
+    </div>
+  </section>
+
+  <!-- ================= VIEW 2: IMAGE VIEW ================= -->
+  <section id="view-image" class="h-view" hidden>
+    <div class="view-header">
+      <div class="back-nav">
+        <a href="#/" class="btn-back mono">&larr; Back to History</a>
+      </div>
+      <div class="title-row">
+        <h2 id="img-case-title">Case Image View</h2>
+        <div class="view-switcher">
+          <span class="view-switch-lbl mono">Switch View:</span>
+          <button class="btn-switch active">Image Viewer</button>
+          <button class="btn-switch" id="btn-goto-report">Clinical Report</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="img-viewer-layout">
+      <!-- Left side: Interactive Canvas -->
+      <div class="img-stage-card">
+        <header class="card-head">
+          <h4 class="mono" id="img-meta-id">STU-UPLOAD-X · CXR 64x64</h4>
+          <div class="p-tools">
+            <button id="img-tg-sal" class="tg">saliency</button>
+            <button id="img-tg-reg" class="tg on">findings</button>
+          </div>
+        </header>
+        <div class="xray-stage-wrap">
+          <canvas id="img-xray"></canvas>
+          <canvas id="img-xray-sal"></canvas>
+          <div id="img-xray-regions"></div>
+        </div>
+        <footer class="p-foot mono" id="img-priors-bar">Age: -- · Sex: -- · Smoker: --</footer>
+      </div>
+
+      <!-- Right side: Clinical Details & Observations -->
+      <div class="img-details-card">
+        <div class="detail-section">
+          <h3 class="section-title mono">Patient priors</h3>
+          <div class="priors-grid" id="img-priors-grid">
+            <!-- Dynamic Prior List -->
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3 class="section-title mono">Vision observations</h3>
+          <p class="section-sub-desc">Intake features and bounding boxes identified by the neural feature engine.</p>
+          <ol class="findings-list" id="img-findings-list">
+            <!-- Dynamic Findings list -->
+          </ol>
+        </div>
+
+        <div class="detail-section">
+          <h3 class="section-title mono">Safety envelope</h3>
+          <div class="safety-indicator-card" id="img-safety-card">
+            <!-- Dynamic safety state -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= VIEW 3: REPORT VIEW ================= -->
+  <section id="view-report" class="h-view" hidden>
+    <div class="view-header no-print">
+      <div class="back-nav">
+        <a href="#/" class="btn-back mono">&larr; Back to History</a>
+      </div>
+      <div class="title-row">
+        <h2 id="rep-case-title">Case Clinical Report</h2>
+        <div class="view-switcher">
+          <span class="view-switch-lbl mono">Switch View:</span>
+          <button class="btn-switch" id="btn-goto-image">Image Viewer</button>
+          <button class="btn-switch active">Clinical Report</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Clinical Report Document Sheet -->
+    <div class="report-document-sheet">
+      <!-- Report Header -->
+      <header class="rep-doc-header">
+        <div class="rep-doc-brand">
+          <span class="brand-core"></span>
+          <div>
+            <h3>AURA CLINICAL INTEGRITY SYSTEM</h3>
+            <span class="mono text-muted">CALIBRATED CLINICAL DECISION SUPPORT</span>
+          </div>
+        </div>
+        <div class="rep-doc-status-badge mono" id="rep-doc-state">UNSIGNED</div>
+      </header>
+
+      <!-- Case Demographics & Telemetry Grid -->
+      <div class="rep-doc-meta-grid">
+        <div class="meta-item">
+          <span class="meta-lbl mono">CASE REFERENCE</span>
+          <span class="meta-val" id="rep-val-case">CASE-UPLOAD-X</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-lbl mono">STUDY ID</span>
+          <span class="meta-val" id="rep-val-study">STU-UPLOAD-X</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-lbl mono">ACQUISITION DATE</span>
+          <span class="meta-val" id="rep-val-date">2026-07-19 10:00 UTC</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-lbl mono">PATIENT PROFILE</span>
+          <span class="meta-val" id="rep-val-profile">Age 64, Female</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-lbl mono">FUSION ENGINE</span>
+          <span class="meta-val" id="rep-val-engine">PennyLane Q1 (8 qubits)</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-lbl mono">CALIBRATION STANDARD</span>
+          <span class="meta-val">Split-Conformal (Coverage 90%)</span>
+        </div>
+      </div>
+
+      <!-- Main Report content grid -->
+      <div class="rep-doc-grid">
+        <!-- Left Column: Grounded Texts -->
+        <div class="rep-doc-main-col">
+          <div class="rep-doc-section">
+            <h4 class="rep-section-title mono">1. Clinical Findings</h4>
+            <div id="rep-body-findings" class="rep-text-block">--</div>
+            <div class="rep-grounding-tag mono" id="rep-ground-findings">grounded in: --</div>
+          </div>
+
+          <div class="rep-doc-section">
+            <h4 class="rep-section-title mono">2. Diagnostic Impression</h4>
+            <div id="rep-body-impression" class="rep-text-block font-important">--</div>
+            <div class="rep-grounding-tag mono" id="rep-ground-impression">grounded in: --</div>
+          </div>
+
+          <div class="rep-doc-section">
+            <h4 class="rep-section-title mono">3. Recommendations</h4>
+            <div id="rep-body-recommendation" class="rep-text-block">--</div>
+            <div class="rep-grounding-tag mono" id="rep-ground-recommendation">grounded in: --</div>
+          </div>
+        </div>
+
+        <!-- Right Column: Graphs, Calibration, and Safety Dials -->
+        <div class="rep-doc-sidebar-col">
+          <!-- Calibrated Differential -->
+          <div class="rep-sidebar-panel">
+            <h4 class="panel-title mono">Calibrated Differential</h4>
+            <div id="rep-diff-bars" class="rep-bars-container">
+              <!-- Bars populate dynamically -->
+            </div>
+          </div>
+
+          <!-- Conformal Set -->
+          <div class="rep-sidebar-panel">
+            <h4 class="panel-title mono" id="rep-conformal-title">90% Conformal Set</h4>
+            <div id="rep-conformal-chips" class="rep-conformal-chips-wrap">
+              <!-- Chips populate dynamically -->
+            </div>
+            <p class="panel-caption">The true diagnosis is statistically guaranteed to reside in the set above 9 times out of 10 under i.i.d. conditions.</p>
+          </div>
+
+          <!-- Calibration Metrics -->
+          <div class="rep-sidebar-panel">
+            <h4 class="panel-title mono">Statistical Calibration</h4>
+            <div class="rep-dials-grid">
+              <div class="rep-dial-item">
+                <div class="rep-dial-gauge" id="rep-dial-epi"></div>
+                <span class="mono">EPISTEMIC</span>
+              </div>
+              <div class="rep-dial-item">
+                <div class="rep-dial-gauge" id="rep-dial-ale"></div>
+                <span class="mono">ALEATORIC</span>
+              </div>
+              <div class="rep-dial-item">
+                <div class="rep-dial-gauge" id="rep-dial-ood"></div>
+                <span class="mono">OOD ENERGY</span>
+              </div>
+            </div>
+            <div class="safety-desc-box mono" id="rep-safety-status-box">
+              WITHIN ENVELOPE
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Report Footer: Signature block and export actions -->
+      <footer class="rep-doc-footer">
+        <div class="rep-signature-block">
+          <div class="sig-line" id="rep-sig-line">
+            <button class="btn-core" id="rep-btn-sign"><span>Sign Diagnostic Report</span></button>
+          </div>
+          <span class="mono text-muted">SIGNING CLINICIAN / ELECTRONIC SIGNATURE</span>
+        </div>
+        
+        <div class="rep-actions-block no-print">
+          <button class="btn-ghost" id="rep-btn-export">&#8681; Export Text</button>
+          <button class="btn-ghost" id="rep-btn-print">&#128438; Print Report</button>
+        </div>
+      </footer>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast" class="mono" hidden></div>
+
+<!-- Framework scripts -->
+<script src="/static/js/fx.js?v=3"></script>
+<script src="/static/js/history.js?v=3"></script>
+</body>
+</html>
