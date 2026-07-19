@@ -270,7 +270,12 @@ window.FX = (() => {
   /* ---------------- api helpers ---------------- */
   async function api(path, opts) {
     const r = await fetch(path, opts);
-    if (!r.ok) throw new Error(`${r.status} ${path}`);
+    if (!r.ok) {
+      const err = new Error(`${r.status} ${path}`);
+      err.status = r.status;
+      try { err.detail = (await r.json()).detail; } catch { err.detail = null; }
+      throw err;
+    }
     return r.json();
   }
 

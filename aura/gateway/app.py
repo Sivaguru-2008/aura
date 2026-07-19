@@ -168,28 +168,47 @@ async def simulate_study(payload: dict = Body(default={})):
 
 @app.post("/v1/studies/upload")
 async def upload_study(file: UploadFile = File(...)):
-    """Upload a custom image (PNG/JPG/DICOM), save it temporarily, run it through the pipeline live."""
+    """Upload a chest radiograph (PNG/JPG/DICOM) and analyze it live.
+
+    The X-ray intake gate runs first: anything that is not a chest radiograph is
+    rejected with 422 and a named reason — no case is created for junk uploads.
+    Valid films go through the full trained pipeline; if the film sits outside
+    the training distribution the safety engine abstains rather than guessing.
+    """
     import tempfile
     import os
-    
-    suffix = Path(file.filename).suffix
+
+    suffix = Path(file.filename or "upload").suffix
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         tmp.write(await file.read())
         tmp_path = tmp.name
 
     try:
+        from services.vision.xray_gate import validate_cxr
+        gate = validate_cxr(tmp_path)
+        if not gate.ok:
+            store().audit("case.upload_rejected", "study", file.filename or "upload",
+                          detail={"reason": gate.reason})
+            raise HTTPException(422, {"error": "not_a_cxr", "reason": gate.reason,
+                                      "checks": gate.checks})
+
         from services.vision.io import study_from_cxr
         study = study_from_cxr(tmp_path)
-        
+
         idx = store().count() + 1
         case_id = f"CASE-UPLOAD-{idx}"
         study.study_id = f"STU-UPLOAD-{idx}"
-        
+
         bundle = await pipeline().run(study, case_id=case_id)
         store().save_case(bundle)
-        store().audit("case.uploaded", "case", case_id, detail={"top": bundle.safety.top.value})
-        
+        store().audit("case.uploaded", "case", case_id,
+                      detail={"top": bundle.safety.top.value,
+                              "abstained": bundle.safety.abstained,
+                              "gate_checks": gate.checks})
+
         return {"case_id": case_id}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(500, f"Failed to process custom image: {str(e)}")
     finally:

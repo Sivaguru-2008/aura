@@ -544,6 +544,18 @@ window.CONSOLE = (() => {
     }
   }
 
+  const UPLOAD_STAGES = [
+    "receiving radiograph …",
+    "X-ray intake gate — grayscale · tonal depth · chest anatomy",
+    "vision engine reading film",
+    "encoding 8 evidence channels",
+    "entangling qubits — fusion posterior",
+    "conformal calibration · OOD sweep",
+    "counterfactual attribution",
+    "ranking next-best evidence",
+    "grounding report",
+  ];
+
   async function uploadImage(file) {
     const overlay = $("case-forming");
     const txt = $("forming-text");
@@ -551,10 +563,10 @@ window.CONSOLE = (() => {
     txt.innerHTML = "";
     const f = new Field($("forming-canvas"), { count: 160, hue: 172, mode: "collapse", size: 1.6, speed: 1.1 });
     f.start();
-    // staged boot text while the real pipeline runs
+    // staged boot text while the real gate + pipeline run
     let alive = true;
     (async () => {
-      for (const line of FORM_STAGES) {
+      for (const line of UPLOAD_STAGES) {
         if (!alive) return;
         txt.innerHTML += `<span class="ok">▸</span> ${line}\n`;
         await wait(REDUCED ? 30 : 340);
@@ -580,8 +592,17 @@ window.CONSOLE = (() => {
       selectCase(d.case_id, { first: true });
       toast(`${d.case_id} uploaded and analyzed live`);
     } catch (err) {
-      alive = false; overlay.hidden = true; f.destroy();
-      toast("upload failed — gateway offline or bad file?");
+      alive = false;
+      const rejected = err && err.status === 422 && err.detail && err.detail.error === "not_a_cxr";
+      if (rejected) {
+        // the intake gate refused the file — show why, on the overlay, in red
+        txt.innerHTML += `<span class="bad">✕ REJECTED — not a chest X-ray</span>\n<span class="bad">  ${err.detail.reason}</span>\n<span class="bad">  no case was created</span>`;
+        await wait(REDUCED ? 400 : 2600);
+        toast(`upload rejected — ${err.detail.reason}`);
+      } else {
+        toast("upload failed — gateway offline or bad file?");
+      }
+      overlay.hidden = true; f.destroy();
     } finally {
       $("input-file").value = "";
     }

@@ -531,6 +531,7 @@ h1, h2, h3 { font-weight: 560; letter-spacing: -0.02em; }
 #forming-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .forming-text { position: relative; z-index: 2; font-size: 12.5px; line-height: 2.1; letter-spacing: 0.1em; color: var(--dim); min-width: 320px; }
 .forming-text .ok { color: var(--cyan); }
+.forming-text .bad { color: var(--red); }
 
 /* toast */
 #toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px); z-index: 200;
