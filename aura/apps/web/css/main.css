@@ -532,6 +532,18 @@ h1, h2, h3 { font-weight: 560; letter-spacing: -0.02em; }
 .forming-text { position: relative; z-index: 2; font-size: 12.5px; line-height: 2.1; letter-spacing: 0.1em; color: var(--dim); min-width: 320px; }
 .forming-text .ok { color: var(--cyan); }
 .forming-text .bad { color: var(--red); }
+.forming-text .dim-meas { color: var(--dim); opacity: 0.75; font-size: 11px; line-height: 1.7; }
+
+/* uploaded-film thumbnail beside the staged boot text */
+#forming-preview { position: relative; z-index: 2; max-width: 150px; max-height: 190px;
+  margin-right: 34px; border-radius: 10px; object-fit: contain;
+  border: 1px solid rgba(75, 225, 195, 0.45); box-shadow: 0 0 28px rgba(75, 225, 195, 0.25);
+  animation: capIn 0.5s var(--ease) backwards; }
+
+/* drop-a-film-here affordance on the upload button */
+#btn-upload.dropping { box-shadow: 0 0 0 2px var(--cyan), 0 0 30px rgba(75, 225, 195, 0.55);
+  transform: scale(1.03); }
+#btn-upload.dropping span::after { content: " — drop film here"; }
 
 /* toast */
 #toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px); z-index: 200;

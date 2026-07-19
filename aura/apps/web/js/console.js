@@ -109,6 +109,24 @@ window.CONSOLE = (() => {
         uploadImage(e.target.files[0]);
       }
     });
+    // drag a film anywhere onto the console to analyze it
+    const root = $("console");
+    ["dragenter", "dragover"].forEach((evt) => root.addEventListener(evt, (e) => {
+      if (![...(e.dataTransfer?.types || [])].includes("Files")) return;
+      e.preventDefault();
+      $("btn-upload").classList.add("dropping");
+    }));
+    root.addEventListener("dragleave", (e) => {
+      if (!e.relatedTarget || !root.contains(e.relatedTarget)) $("btn-upload").classList.remove("dropping");
+    });
+    root.addEventListener("drop", (e) => {
+      e.preventDefault();
+      $("btn-upload").classList.remove("dropping");
+      const f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) uploadImage(f);
+    });
+    // report export
+    $("btn-export").addEventListener("click", exportReport);
   }
 
   /* ================= worklist ================= */
@@ -556,11 +574,40 @@ window.CONSOLE = (() => {
     "grounding report",
   ];
 
+  // human-readable rendering of the intake gate's measurements
+  const GATE_CHECK_LABEL = {
+    mean_saturation: ["color saturation", (v) => `${v.toFixed(3)} (max 0.080)`],
+    colored_fraction: ["colored pixels", (v) => `${(v * 100).toFixed(1)}% (max 10%)`],
+    aspect_ratio: ["aspect ratio", (v) => `${v.toFixed(2)} (0.40–2.50)`],
+    gray_std: ["tonal range", (v) => `${v.toFixed(3)} (min 0.040)`],
+    tonal_entropy_bits: ["tonal entropy", (v) => `${v.toFixed(2)} bits (min 4.00)`],
+    center_ratio: ["mediastinum brightness", (v) => `${v.toFixed(2)}× lungs (min 1.05)`],
+    column_variation: ["chest column profile", (v) => `${v.toFixed(3)} (min 0.090)`],
+    modality: ["dicom modality", (v) => `${v}`],
+    body_part: ["dicom body part", (v) => `${v}`],
+  };
+
+  function gateCheckLines(checks) {
+    if (!checks) return "";
+    return Object.entries(checks)
+      .filter(([k]) => GATE_CHECK_LABEL[k])
+      .map(([k, v]) => {
+        const [lbl, fmt] = GATE_CHECK_LABEL[k];
+        return `  ${lbl.padEnd(24)} ${fmt(v)}`;
+      }).join("\n");
+  }
+
   async function uploadImage(file) {
     const overlay = $("case-forming");
     const txt = $("forming-text");
+    const prev = $("forming-preview");
     overlay.hidden = false;
     txt.innerHTML = "";
+    let prevUrl = null;
+    if (file.type && file.type.startsWith("image/")) {
+      prevUrl = URL.createObjectURL(file);
+      prev.src = prevUrl; prev.hidden = false;
+    } else { prev.hidden = true; }
     const f = new Field($("forming-canvas"), { count: 160, hue: 172, mode: "collapse", size: 1.6, speed: 1.1 });
     f.start();
     // staged boot text while the real gate + pipeline run
@@ -595,9 +642,12 @@ window.CONSOLE = (() => {
       alive = false;
       const rejected = err && err.status === 422 && err.detail && err.detail.error === "not_a_cxr";
       if (rejected) {
-        // the intake gate refused the file — show why, on the overlay, in red
-        txt.innerHTML += `<span class="bad">✕ REJECTED — not a chest X-ray</span>\n<span class="bad">  ${err.detail.reason}</span>\n<span class="bad">  no case was created</span>`;
-        await wait(REDUCED ? 400 : 2600);
+        // the intake gate refused the file — show why + what it measured, in red
+        txt.innerHTML += `<span class="bad">✕ REJECTED — not a chest X-ray</span>\n<span class="bad">  ${err.detail.reason}</span>\n`;
+        const lines = gateCheckLines(err.detail.checks);
+        if (lines) txt.innerHTML += `<span class="dim-meas">gate measurements:\n${lines}</span>\n`;
+        txt.innerHTML += `<span class="bad">  no case was created</span>`;
+        await wait(REDUCED ? 400 : 3800);
         toast(`upload rejected — ${err.detail.reason}`);
       } else {
         toast("upload failed — gateway offline or bad file?");
@@ -605,7 +655,52 @@ window.CONSOLE = (() => {
       overlay.hidden = true; f.destroy();
     } finally {
       $("input-file").value = "";
+      const prevEl = $("forming-preview");
+      prevEl.hidden = true; prevEl.removeAttribute("src");
+      if (prevUrl) URL.revokeObjectURL(prevUrl);
     }
+  }
+
+  /* ================= report export ================= */
+  function exportReport() {
+    const b = S.current && S.bundles.get(S.current);
+    if (!b || !b.report) { toast("no report loaded to export"); return; }
+    const s = b.safety || {};
+    const dxLabel = (d) => DX_LABEL[d] || d || "—";
+    const lines = [
+      "AURA GROUNDED REPORT",
+      "=".repeat(56),
+      `case         ${b.case_id}`,
+      `study        ${b.study_id}`,
+      `state        ${b.state}`,
+      `exported     ${new Date().toISOString()}`,
+      `fusion       ${(b.fusion && b.fusion.backend) || "—"} · conformal coverage ${Math.round((s.conformal_coverage || 0.9) * 100)}%`,
+      "",
+      "FINDINGS",
+      b.report.findings_text || "—",
+      "",
+      "IMPRESSION",
+      b.report.impression_text || "—",
+      "",
+      "RECOMMENDATION",
+      b.report.recommendation_text || "—",
+      "",
+      "SAFETY ASSESSMENT",
+      `top diagnosis        ${dxLabel(s.top)} (p=${s.top_probability ?? "—"})`,
+      `conformal set        [${(s.conformal_set || []).map(dxLabel).join(", ")}] · ${s.conformal_method || "—"}`,
+      `epistemic / aleatoric ${s.epistemic_uncertainty ?? "—"} / ${s.aleatoric_uncertainty ?? "—"}`,
+      `ood energy (z)       ${s.ood_energy ?? "—"}`,
+      `abstained            ${s.abstained ? `YES — ${s.abstention_reason}` : "no"}`,
+      "",
+      "Generated by AURA. Decision support only — not a medical diagnosis.",
+    ];
+    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${b.case_id}_report.txt`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast(`${b.case_id} report downloaded`);
   }
 
 
