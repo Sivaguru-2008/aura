@@ -67,6 +67,10 @@ app = FastAPI(title="AURA Clinical Intelligence Copilot", version="0.1.0",
 @app.middleware("http")
 async def audit_mw(request: Request, call_next):
     resp = await call_next(request)
+    # Dashboard assets must revalidate on every load — stale cached JS leaves
+    # buttons rendered by fresh HTML with no handlers bound.
+    if request.url.path == "/" or request.url.path.startswith(("/app", "/static")):
+        resp.headers["Cache-Control"] = "no-cache"
     if request.method in ("POST", "PUT", "DELETE") and "store" in state:
         try:
             state["store"].audit(
