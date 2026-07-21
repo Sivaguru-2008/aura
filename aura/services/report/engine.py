@@ -63,6 +63,24 @@ class ReportEngine:
     def __init__(self):
         self.model_version = "report-v2"
 
+    @staticmethod
+    def _reasoning_fired(reasoning: ReasoningTrace | None) -> bool:
+        """True when the clinical reasoner actually applied ≥1 guideline rule."""
+        return bool(reasoning is not None and reasoning.steps)
+
+    def _final_top(self, safety: SafetyAssessment,
+                   reasoning: ReasoningTrace | None) -> tuple[Diagnosis, float]:
+        """The diagnosis + probability the impression states.
+
+        The reasoning-adjusted posterior when the reasoner fired (multimodal
+        evidence present), else the imaging-calibrated safety top — so imaging-only
+        cases are unchanged and multimodal cases show the final validated call.
+        """
+        if self._reasoning_fired(reasoning) and reasoning.adjusted_posterior:
+            top = max(reasoning.adjusted_posterior, key=reasoning.adjusted_posterior.get)
+            return top, float(reasoning.adjusted_posterior[top])
+        return safety.top, float(safety.top_probability)
+
     def compose(self, vision: VisionResult, safety: SafetyAssessment,
                 recommendations: list[Recommendation],
                 reasoning: ReasoningTrace | None = None) -> ReportDraft:
@@ -82,20 +100,28 @@ class ReportEngine:
                              "within normal limits.")
             grounding.setdefault("findings", []).append("no_positive_findings")
 
-        # ---- Impression: safety-calibrated top diagnosis. ----
+        # ---- Impression: the final validated posterior. ----
+        # When the clinical reasoner fired on real labs/symptoms/history it produces
+        # an adjusted posterior that can revise the imaging-only diagnosis; the
+        # impression must reflect that final posterior so it never contradicts the
+        # differential built from the same reasoning (audit F10). With no multimodal
+        # evidence the reasoner is inert (adjusted == imaging prior), so this path is
+        # identical to the previous safety-top behaviour.
+        top_dx, top_prob = self._final_top(safety, reasoning)
         if safety.abstained:
             impression_text = "Impression: " + _ABSTENTION_TEXT.get(
                 safety.abstention_reason, "Automated impression withheld.")
             grounding["impression"] = ["abstained:" + safety.abstention_reason.value]
         else:
-            label = DIAGNOSIS_LABELS[safety.top]
+            label = DIAGNOSIS_LABELS[top_dx]
             dx_set = ", ".join(DIAGNOSIS_LABELS[d] for d in safety.conformal_set)
+            reasoned = " after clinical correlation" if self._reasoning_fired(reasoning) else ""
             impression_text = (
-                f"Impression: findings most consistent with {label.lower()} "
-                f"(calibrated probability {safety.top_probability:.0%}). "
+                f"Impression: findings most consistent with {label.lower()}{reasoned} "
+                f"(calibrated probability {top_prob:.0%}). "
                 f"{int(safety.conformal_coverage * 100)}% {safety.conformal_method} "
                 f"confidence set: {dx_set}.")
-            grounding["impression"] = [safety.top.value] + [d.value for d in safety.conformal_set]
+            grounding["impression"] = [top_dx.value] + [d.value for d in safety.conformal_set]
 
         # ---- Differential: alternatives with their supporting/opposing evidence. ----
         differential_text = ""

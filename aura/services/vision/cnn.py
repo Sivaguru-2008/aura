@@ -123,7 +123,7 @@ class CXRBackbone:
             self._finding_index = {f: i for i, f in enumerate(TIMM_HEAD_FINDINGS)}
             sd = state_dict_path or (ARTIFACTS / "vision_cnn.pt")
             if Path(sd).exists():
-                state = torch.load(sd, map_location=self.device)
+                state = torch.load(sd, map_location=self.device, weights_only=True)  # safe unpickler (audit §11.5)
                 self.model.load_state_dict(state.get("model", state), strict=False)
                 self.model_version = state.get("version", self.model_version)
         else:

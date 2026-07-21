@@ -62,24 +62,55 @@ def load_cxr(path: str | Path) -> np.ndarray:
     return load_image(path)
 
 
+#: Default grid the CXR intake produces. 224 == the DenseNet-121 input resolution,
+#: so the film reaches the CNN at full fidelity (audit F5). Overridable via
+#: ``AURA_IMAGE_GRID`` for callers that deliberately want a smaller stored image.
+DEFAULT_GRID = 224
+
+
+def _resize_grid(full: np.ndarray, grid: int) -> np.ndarray:
+    """Downscale ``full`` to ``grid``×``grid`` with anti-aliasing.
+
+    Uses OpenCV ``INTER_AREA`` (area averaging) — the correct kernel for
+    *downscaling*, which integrates every source pixel instead of point-sampling a
+    sparse lattice. The previous ``linspace`` index-selection kept only ``grid**2``
+    of ~millions of pixels and dropped the rest, erasing thin structures like a
+    pneumothorax pleural line or a small nodule before the CNN ever saw them
+    (audit F5). Falls back to stride sampling only if OpenCV is unavailable.
+    """
+    if full.shape[:2] == (grid, grid):
+        return full
+    try:
+        import cv2
+
+        interp = cv2.INTER_AREA if min(full.shape[:2]) >= grid else cv2.INTER_LINEAR
+        return cv2.resize(full.astype(np.float32), (grid, grid), interpolation=interp)
+    except ImportError:                          # numpy-only fallback (offline demo)
+        rows = np.linspace(0, full.shape[0] - 1, grid).astype(int)
+        cols = np.linspace(0, full.shape[1] - 1, grid).astype(int)
+        return full[np.ix_(rows, cols)]
+
+
 def study_from_cxr(
     path: str | Path,
     study_id: str | None = None,
     priors: StructuredPriors | None = None,
-    grid: int = 64,
+    grid: int | None = None,
 ) -> StudyInput:
     """Build a StudyInput from a real radiograph.
 
-    The full image drives the CNN (it resizes internally to 224); a ``grid``x``grid``
-    downscale is stored in ``image``/``image_shape`` so the existing overlay/feature
-    fallbacks keep working. This is the PACS -> pipeline seam.
+    The film is area-averaged down to ``grid``×``grid`` (default 224 = the CNN's
+    native input) and that image both drives the CNN and is stored in
+    ``image``/``image_shape``, so saliency is computed on exactly what the model
+    saw. This is the PACS -> pipeline seam. A smaller ``grid`` may be requested to
+    shrink the stored bundle, at the cost of fidelity for small findings.
     """
-    import numpy as _np
+    if grid is None:
+        import os
+        grid = int(os.environ.get("AURA_IMAGE_GRID", DEFAULT_GRID))
 
     full = load_cxr(path)
-    rows = _np.linspace(0, full.shape[0] - 1, grid).astype(int)
-    cols = _np.linspace(0, full.shape[1] - 1, grid).astype(int)
-    small = full[_np.ix_(rows, cols)]
+    small = _resize_grid(full, grid)
     return StudyInput(
         study_id=study_id or Path(path).stem,
         modality=Modality.CXR,

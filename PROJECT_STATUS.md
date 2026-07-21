@@ -14,7 +14,7 @@
 | ⚪ | **Designed, not built** — specified in the docs, no code yet |
 | 🔭 | **Vision** — needs fault-tolerant hardware or real-world scale; product must never depend on it |
 
-The honest one-liner: **the classical reasoning pipeline end-to-end is real and running; one of six quantum services (evidence fusion) is real; the other five quantum services are designed but not implemented; everything is trained on synthetic data with no tests yet.**
+The honest one-liner: **the classical reasoning pipeline end-to-end is real and running; one of six quantum services (evidence fusion) is real; the other five quantum services are designed but not implemented; the vision model is a real MIMIC-CXR-trained DenseNet-121 and the fusion stack now trains and calibrates on the real MIMIC evidence distribution (audit F1); the repository ships a pytest suite (117+ tests).**
 
 ---
 
@@ -24,7 +24,7 @@ The honest one-liner: **the classical reasoning pipeline end-to-end is real and 
 |---|---|---|---|
 | FastAPI gateway + `/v1` API | ✅ | health, cases, case detail, feedback, sign, simulate, similar, models, admin | [`aura/gateway/app.py`](aura/gateway/app.py) |
 | Pipeline orchestration (7 engines, event bus) | ✅ | in-process, event-emitting, contract-typed | [`aura/gateway/pipeline.py`](aura/gateway/pipeline.py) |
-| Vision → findings | 🟡 | per-finding **logistic regressions over hand-crafted features** (not a CNN) | [`aura/services/vision/engine.py`](aura/services/vision/engine.py) |
+| Vision → findings | ✅ | **fine-tuned DenseNet-121** (MIMIC-CXR, per-study labels) with a hand-feature fallback; per-finding temperature calibration applied at serving | [`aura/services/vision/engine.py`](aura/services/vision/engine.py) |
 | Evidence encoding (8 channels) | ✅ | vision + priors → [0,1]⁸ vector | [`aura/services/fusion/evidence.py`](aura/services/fusion/evidence.py) |
 | **Quantum fusion (Q1)** | ✅ | 8-qubit PennyLane VQC + linear head; shot-noise `posterior_std` | [`aura/services/fusion/quantum.py`](aura/services/fusion/quantum.py) |
 | Classical fusion twin | ✅ | Bayesian product-of-experts (the honest baseline) | [`aura/services/fusion/classical.py`](aura/services/fusion/classical.py) |

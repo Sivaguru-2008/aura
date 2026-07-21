@@ -1,0 +1,47 @@
+[
+  {
+    "service": "vision",
+    "name": "vision-cxr-region-v1",
+    "version": "1.0",
+    "status": "active",
+    "metrics": {
+      "note": "region-feature detectors"
+    }
+  },
+  {
+    "service": "fusion",
+    "name": "fusion-vqc-v1",
+    "version": "1.0",
+    "status": "active",
+    "backend": "quantum",
+    "metrics": {
+      "accuracy": 0.9643,
+      "nll": 0.0908,
+      "ece": 0.0159
+    }
+  },
+  {
+    "service": "fusion",
+    "name": "fusion-poe-v1",
+    "version": "1.0",
+    "status": "canary",
+    "backend": "classical",
+    "metrics": {
+      "accuracy": 0.9357,
+      "nll": 0.364,
+      "ece": 0.1916
+    }
+  },
+  {
+    "service": "safety",
+    "name": "safety-v1",
+    "version": "1.0",
+    "status": "active",
+    "calibration": {
+      "temperature": 0.7725,
+      "conformal_qhat": 0.0542,
+      "coverage": 0.9,
+      "ece": 0.0147
+    }
+  }
+]

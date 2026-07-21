@@ -33,7 +33,7 @@ state: dict = {}
 async def lifespan(app: FastAPI):
     ensure_dirs()
     store = Store(DB_PATH)
-    pipeline = Pipeline()
+    pipeline = Pipeline(store=store)          # store handle enables online ACI (F9)
     state["store"] = store
     state["pipeline"] = pipeline
     state["registry"] = ModelRegistry()
@@ -66,21 +66,46 @@ app = FastAPI(title="AURA Clinical Intelligence Copilot", version="0.1.0",
 
 @app.middleware("http")
 async def audit_mw(request: Request, call_next):
+    # Security gate runs *before* the handler for mutating methods: opt-in auth,
+    # authorization, and rate limiting (all inert unless configured). A rejection
+    # here is itself audited, then returned, so blocked calls are attributable.
+    if request.method in ("POST", "PUT", "DELETE"):
+        from gateway.security import enforce
+        try:
+            enforce(request)
+        except HTTPException as exc:
+            _safe_audit(action=f"blocked {request.method} {request.url.path}",
+                        actor=request.headers.get("x-aura-user", "anonymous"),
+                        entity_type="http", detail={"status": exc.status_code})
+            return JSONResponse(exc.detail if isinstance(exc.detail, dict)
+                                else {"error": exc.detail}, status_code=exc.status_code)
+
     resp = await call_next(request)
     # Dashboard assets must revalidate on every load — stale cached JS leaves
     # buttons rendered by fresh HTML with no handlers bound.
     if request.url.path == "/" or request.url.path.startswith(("/app", "/static")):
         resp.headers["Cache-Control"] = "no-cache"
     if request.method in ("POST", "PUT", "DELETE") and "store" in state:
-        try:
-            state["store"].audit(
-                action=f"{request.method} {request.url.path}",
-                actor=request.headers.get("x-aura-user", "anonymous"),
-                entity_type="http",
-            )
-        except Exception:
-            pass
+        _safe_audit(action=f"{request.method} {request.url.path}",
+                    actor=request.headers.get("x-aura-user", "anonymous"),
+                    entity_type="http")
     return resp
+
+
+def _safe_audit(**kw) -> None:
+    """Write an audit row, logging (never swallowing) a failure.
+
+    An audit log that can silently fail to write is not an audit log (audit
+    §10.9). We still must not let an audit failure sink the request, so the write
+    is guarded — but the failure is surfaced to the server log instead of a bare
+    ``except: pass``.
+    """
+    if "store" not in state:
+        return
+    try:
+        state["store"].audit(**kw)
+    except Exception as e:                       # pragma: no cover - storage failure
+        print(f"[audit] FAILED to write audit row {kw!r}: {e}")
 
 
 def store() -> Store:
@@ -125,7 +150,32 @@ def feedback(case_id: str, payload: dict = Body(...)):
     store().add_feedback(case_id, diagnosis, verdict, correction)
     store().audit("feedback.recorded", "case", case_id,
                   detail={"verdict": verdict, "correction": correction})
-    return {"ok": True, "stats": store().feedback_stats()}
+
+    # Module 8: fold the confirmed outcome into the online conformal threshold so
+    # coverage self-corrects under covariate shift. Runs on the local SQLite log.
+    aci_info = None
+    if get_settings().aci_enabled and b.safety is not None:
+        aci_info = _record_conformal_outcome(b, diagnosis)
+
+    return {"ok": True, "stats": store().feedback_stats(), "conformal": aci_info}
+
+
+def _record_conformal_outcome(bundle, confirmed_diagnosis: str) -> dict | None:
+    """Map a confirmed diagnosis to its calibrated posterior + index, run ACI."""
+    try:
+        true_idx = [d.value for d in DIAGNOSES].index(confirmed_diagnosis)
+    except ValueError:
+        return None                       # unknown label — skip the update
+    # Calibrated posterior AURA emitted for this case, aligned to DIAGNOSES order.
+    by_dx = {p.diagnosis: p.probability for p in bundle.safety.predictions}
+    probs = [float(by_dx.get(d, 0.0)) for d in DIAGNOSES]
+    info = store().record_outcome(
+        bundle.case_id, probs, true_idx, true_diagnosis=confirmed_diagnosis
+    )
+    store().audit("conformal.updated", "case", bundle.case_id,
+                  detail={"qhat": info["qhat"], "covered": info["covered"],
+                          "localized_coverage": info["localized_coverage"]})
+    return info
 
 
 @app.post("/v1/cases/{case_id}/report/sign")
@@ -181,10 +231,18 @@ async def upload_study(file: UploadFile = File(...)):
     """
     import tempfile
     import os
+    from gateway.security import validate_upload_name, read_capped
+
+    # Type allowlist (extension + declared MIME) and a hard size cap enforced while
+    # streaming, so a hostile upload can neither smuggle a non-image type nor
+    # exhaust memory (audit §11.5). These layer in front of the content-based gate.
+    validate_upload_name(file.filename, file.content_type)
+    max_bytes = int(get_settings().max_upload_mb * 1024 * 1024)
+    payload = await read_capped(file, max_bytes)
 
     suffix = Path(file.filename or "upload").suffix
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        tmp.write(await file.read())
+        tmp.write(payload)
         tmp_path = tmp.name
 
     try:
@@ -214,7 +272,11 @@ async def upload_study(file: UploadFile = File(...)):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(500, f"Failed to process custom image: {str(e)}")
+        # Never echo internal exception text (it can leak filesystem paths). Log
+        # server-side; return an opaque error id to the client (audit §10.9/11.5).
+        print(f"[upload] processing failed for {file.filename!r}: {e!r}")
+        raise HTTPException(500, {"error": "processing_failed",
+                                  "reason": "the uploaded image could not be processed"})
     finally:
         try:
             os.remove(tmp_path)

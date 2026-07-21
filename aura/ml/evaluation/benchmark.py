@@ -19,6 +19,7 @@ from services.safety.calibration import (
     Calibration,
     expected_calibration_error,
     fit_conformal,
+    fit_temperature,
 )
 from ml.training.dataset import build_evidence_dataset, make_splits
 
@@ -60,37 +61,64 @@ def run(n_samples: int = 500) -> dict:
         raise RuntimeError("Fusion models not trained. Run `aura_cli train` first.")
     cal = Calibration.load()
 
-    # Fresh evaluation split (different seed so it's genuinely held out).
-    _, _, te = make_splits(n_samples, seed=s.seed + 101)
-    Xte, yte = build_evidence_dataset(te)
+    # Calibration split — each backend fits *its own* temperature here so the
+    # comparison is fair. The previous benchmark temperature-scaled the quantum
+    # backend but left classical at T=1.0, which is what produced the inflated
+    # "13.8× better calibrated" ECE gap (audit F6). A calibration method must be
+    # applied equally to both models or the calibration comparison is meaningless.
+    #
+    # Evaluate on the SAME distribution the fusion models were trained on (audit
+    # F1): real MIMIC held-out evidence when the corpus is present, else synthetic.
+    eval_source = "synthetic"
+    real = None
+    if s.fusion_train_source == "mimic":
+        from ml.training.dataset import real_evidence_splits
+        real = real_evidence_splits(n=min(600, s.fusion_train_n), split="validate",
+                                    seed=s.seed + 101)
+    if real is not None:
+        Xtr_, ytr_, Xcal, ycal, Xte, yte = real
+        eval_source = "mimic-cxr"
+    else:
+        _, cal_split, te = make_splits(n_samples, seed=s.seed + 101)
+        Xcal, ycal = build_evidence_dataset(cal_split)
+        Xte, yte = build_evidence_dataset(te)
 
     q_logits = np.array([q.logits(x) for x in Xte])
     c_logits = np.array([c.logits(x) for x in Xte])
 
+    T_q = fit_temperature(np.array([q.logits(x) for x in Xcal]), ycal)
+    T_c = fit_temperature(np.array([c.logits(x) for x in Xcal]), ycal)
+
     result = {
         "n_eval": len(yte),
-        "temperature": round(cal.temperature, 4),
-        "quantum": _eval_backend(q_logits, yte, s.conformal_coverage, cal.temperature),
-        "classical": _eval_backend(c_logits, yte, s.conformal_coverage),
+        "eval_data": eval_source,
+        "temperature": round(T_q, 4),
+        "temperature_quantum": round(T_q, 4),
+        "temperature_classical": round(T_c, 4),
+        "quantum": _eval_backend(q_logits, yte, s.conformal_coverage, T_q),
+        "classical": _eval_backend(c_logits, yte, s.conformal_coverage, T_c),
     }
 
     # Full clinical evaluation suite (AUROC/AUPRC/sens/spec/PPV/NPV/F1/calibration).
     from ml.evaluation.metrics import evaluate, print_report
 
-    Pq = np.array([softmax(r / cal.temperature) for r in q_logits])
-    Pc = np.array([softmax(r) for r in c_logits])
+    Pq = np.array([softmax(r / T_q) for r in q_logits])
+    Pc = np.array([softmax(r / T_c) for r in c_logits])
     full = {"quantum": evaluate(Pq, yte), "classical": evaluate(Pc, yte)}
 
-    # Include the extra backends when they are trained.
+    # Include the extra backends when they are trained — each with its own
+    # temperature fit on the calibration split (fair comparison, audit F6).
     from services.fusion.ensemble import DeepEnsemble
     from services.fusion.learnable import LearnableFusion
     ens, lrn = DeepEnsemble.load(), LearnableFusion.load()
     if ens is not None:
+        T_e = fit_temperature(np.array([ens.logits(x) for x in Xcal]), ycal)
         full["ensemble"] = evaluate(
-            np.array([softmax(ens.logits(x) / cal.temperature) for x in Xte]), yte)
+            np.array([softmax(ens.logits(x) / T_e) for x in Xte]), yte)
     if lrn is not None:
+        T_l = fit_temperature(np.array([lrn.logits(x) for x in Xcal]), ycal)
         full["learnable"] = evaluate(
-            np.array([softmax(lrn.logits(x) / cal.temperature) for x in Xte]), yte)
+            np.array([softmax(lrn.logits(x) / T_l) for x in Xte]), yte)
 
     result["metrics_full"] = full
     (ARTIFACTS / "benchmark.json").write_text(json.dumps(result, indent=2))
@@ -110,7 +138,10 @@ def _print_table(r: dict) -> None:
         ("conformal set size", q["conformal_set_size"], c["conformal_set_size"], "lower"),
     ]
     print("\n  Quantum vs classical evidence fusion "
-          f"(n={r['n_eval']}, held-out)\n")
+          f"(n={r['n_eval']}, held-out)")
+    print(f"  Each backend temperature-scaled on its own calibration split "
+          f"(T_q={r.get('temperature_quantum', r['temperature'])}, "
+          f"T_c={r.get('temperature_classical', 1.0)}) — fair comparison.\n")
     print(f"  {'metric':<22}{'quantum':>10}{'classical':>12}   better")
     print("  " + "-" * 56)
     for name, qv, cv, better in rows:

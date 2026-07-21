@@ -8,7 +8,9 @@ from __future__ import annotations
 import numpy as np
 from scipy.ndimage import uniform_filter
 
-from ml.data import IMG, REGIONS, _px
+# Grid/anatomy primitives come from the dependency-free common layer, not the
+# synthetic-data module — keeps the serving path free of an ml/ import (audit §11.3).
+from common.anatomy import IMG, REGIONS, _px, resize_to
 
 FEATURE_NAMES = [
     "right_lung_bright",
@@ -29,14 +31,9 @@ def _region_mean(img: np.ndarray, region) -> float:
     return float(img[r0:r1, c0:c1].mean())
 
 
-def _resize_to(img: np.ndarray, side: int = IMG) -> np.ndarray:
-    """Nearest-neighbour resize so any input maps to the model grid (no PIL dep)."""
-    img = np.asarray(img, dtype=np.float32)
-    if img.shape == (side, side):
-        return img
-    rows = (np.linspace(0, img.shape[0] - 1, side)).astype(int)
-    cols = (np.linspace(0, img.shape[1] - 1, side)).astype(int)
-    return img[np.ix_(rows, cols)]
+# Backward-compatible alias — the implementation now lives in common.anatomy so it
+# is shared without a cross-service import. Kept so existing callers keep working.
+_resize_to = resize_to
 
 
 def extract_features(img: np.ndarray) -> dict[str, float]:

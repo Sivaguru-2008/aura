@@ -1,0 +1,35 @@
+{
+  "captured_utc": "2026-07-19T17:56:47.101006+00:00",
+  "seed": 7,
+  "python_version": "3.12.10",
+  "python_executable": "E:\\AURA\\venv\\Scripts\\python.exe",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "AMD64 Family 25 Model 117 Stepping 2, AuthenticAMD",
+  "machine": "AMD64",
+  "cpu_count": 16,
+  "packages": {
+    "numpy": "2.4.4",
+    "scipy": "1.18.0",
+    "sklearn": "1.9.0",
+    "matplotlib": "3.11.1",
+    "pandas": "3.0.3",
+    "torch": "2.11.0+cu128"
+  },
+  "git_commit": "cf8356bf2dca597ac1f542d73992bd0840ee8803",
+  "git_branch": "main",
+  "git_dirty": true,
+  "ram_total_gb": 16.44,
+  "torch_cuda_available": true,
+  "cuda_version": "12.8",
+  "cudnn_version": 91900,
+  "gpu": "NVIDIA GeForce RTX 5050 Laptop GPU",
+  "artifact_sha256": {
+    "fusion_quantum.npz": "830640d15075cdc2c7c4143748dc7d937599ea6cf870b47f4cf384d2dd46a3b2",
+    "fusion_classical.npz": "7b7992468934198aa055258205c97d54e16d8dd8cb31026b67991422605f0abf",
+    "fusion_ensemble.npz": "9532d0146481f343bfd142267ec376875b6c0f25ccde25f01d8534e2649fd43c",
+    "fusion_learnable.npz": "37db42aa5c15f0ee8325369e9b44ad667b1ac19aba0411a658f0c7d72855d219",
+    "safety.npz": "8174edf8bf4ed72b980fcab61daa634c8cc37d23b096166b665b210127398942",
+    "vision.npz": "a9018ce326dd0aae458750bf40964a05d821ad0e4830936e3206bb0b7c787786",
+    "benchmark.json": "a5e27bb0df0edc9ce9c719012169c986e64bcd27243d9e53c1fc73c08a8ec1b9"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "labels": [
+    "opacity",
+    "consolidation",
+    "pleural_effusion",
+    "cardiomegaly",
+    "nodule",
+    "pneumothorax",
+    "hyperinflation"
+  ],
+  "model": "E:\\AURA\\aura-main\\aura\\artifacts\\retrain_v2\\best_model.pt",
+  "per_finding": {
+    "opacity": {
+      "platt_a": 0.7796,
+      "platt_b": -1.0218,
+      "threshold": 0.27
+    },
+    "consolidation": {
+      "platt_a": 0.9272,
+      "platt_b": -3.1279,
+      "threshold": 0.17
+    },
+    "pleural_effusion": {
+      "platt_a": 0.8379,
+      "platt_b": -1.2998,
+      "threshold": 0.3
+    },
+    "cardiomegaly": {
+      "platt_a": 0.8949,
+      "platt_b": -1.8595,
+      "threshold": 0.24
+    },
+    "nodule": {
+      "platt_a": 0.6919,
+      "platt_b": -2.0497,
+      "threshold": 0.1
+    },
+    "pneumothorax": {
+      "platt_a": 0.4958,
+      "platt_b": -2.6054,
+      "threshold": 0.1
+    },
+    "hyperinflation": {
+      "platt_a": 0.7581,
+      "platt_b": -2.5691,
+      "threshold": 0.17
+    }
+  },
+  "test_macro": {
+    "ece_raw": 0.2117,
+    "ece_platt": 0.0337,
+    "f1_raw": 0.3676,
+    "f1_platt": 0.3868,
+    "auroc": 0.8139
+  }
+}

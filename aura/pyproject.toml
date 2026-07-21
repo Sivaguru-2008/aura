@@ -21,5 +21,7 @@ addopts = "-q"
 [tool.aura]
 # Central config surface. Engines read defaults from here via aura_common.config.
 fusion_backend = "quantum"        # "quantum" | "classical"
-abstention_conformal_size = 3     # abstain if the 90% conformal set has > N labels
+abstention_conformal_size = 4     # abstain if the 90% conformal set has > N labels
+                                  # (recalibrated to the real MIMIC distribution — audit F1/F8)
 ood_energy_threshold = 1.5
+low_confidence_threshold = 0.30   # abstain if top calibrated prob below (real-dist operating point)

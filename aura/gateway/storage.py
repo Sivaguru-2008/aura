@@ -54,6 +54,38 @@ class FeedbackRow(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
+class ConformalStateRow(Base):
+    """Persisted Adaptive Conformal Inference (ACI) state — one row per stream.
+
+    ``stream`` is "global" for the marginal q̂, or a class name for a Mondrian-ACI
+    hybrid. The whole ACIState (q̂, α, γ, t, rolling window) lives in ``state`` as
+    JSON so the online coverage guarantee survives process restarts on the edge box.
+    """
+    __tablename__ = "conformal_state"
+    stream: Mapped[str] = mapped_column(String, primary_key=True, default="global")
+    state: Mapped[dict] = mapped_column(JSON, default=dict)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+
+
+class OutcomeRow(Base):
+    """Confirmed patient outcomes — the ground-truth stream that drives ACI.
+
+    Append-only log of (case, emitted set, confirmed diagnosis, coverage hit/miss)
+    so the adaptation is auditable and replayable."""
+    __tablename__ = "outcomes"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    case_id: Mapped[str] = mapped_column(String, index=True)
+    true_diagnosis: Mapped[str] = mapped_column(String, default="")
+    covered: Mapped[bool] = mapped_column(Boolean, default=False)
+    qhat_after: Mapped[float] = mapped_column(Float, default=0.0)
+    localized_coverage: Mapped[float] = mapped_column(Float, default=0.0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+
+
 class AuditRow(Base):
     __tablename__ = "audit_log"          # append-only by convention
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -140,6 +172,59 @@ class Store:
             for r in rows:
                 counts[r.verdict] = counts.get(r.verdict, 0) + 1
             return {"total": len(rows), "by_verdict": counts}
+
+    # ---- adaptive conformal inference (Module 8) ----
+    def load_aci_state(self, stream: str = "global") -> dict | None:
+        """Return the persisted ACIState row (as a plain dict) or None if unset."""
+        with Session(self.engine) as ses:
+            row = ses.get(ConformalStateRow, stream)
+            return dict(row.state) if row and row.state else None
+
+    def save_aci_state(self, state_row: dict, stream: str = "global") -> None:
+        with Session(self.engine) as ses:
+            row = ses.get(ConformalStateRow, stream)
+            if row is None:
+                row = ConformalStateRow(stream=stream)
+                ses.add(row)
+            row.state = state_row
+            row.updated_at = datetime.now(timezone.utc)
+            ses.commit()
+
+    def record_outcome(self, case_id: str, probs, true_index: int,
+                       true_diagnosis: str = "", stream: str = "global") -> dict:
+        """Fold one confirmed outcome into the online ACI threshold and persist it.
+
+        This is the offline-tracking hook: called whenever a clinician confirms a
+        case's diagnosis (see the feedback endpoint). Loads q̂, runs the ACI step,
+        writes q̂ back plus an append-only OutcomeRow. Returns the transition
+        telemetry so the caller can surface the live coverage. Import of the ACI
+        engine is local to keep ``storage`` free of a service dependency at import.
+        """
+        from common.config import get_settings
+        from services.safety.aci import AdaptiveConformalInference, ACIState
+
+        s = get_settings()
+        row = self.load_aci_state(stream)
+        if row is not None:
+            aci = AdaptiveConformalInference(state=ACIState.from_row(row))
+        else:
+            aci = AdaptiveConformalInference(
+                coverage=s.conformal_coverage, gamma=s.aci_gamma, window=s.aci_window
+            )
+
+        info = aci.update(probs, true_index)
+        self.save_aci_state(aci.state.to_row(), stream=stream)
+
+        with Session(self.engine) as ses:
+            ses.add(OutcomeRow(
+                case_id=case_id,
+                true_diagnosis=true_diagnosis,
+                covered=info["covered"],
+                qhat_after=info["qhat"],
+                localized_coverage=info["localized_coverage"],
+            ))
+            ses.commit()
+        return info
 
     # ---- audit ----
     def audit(self, action: str, entity_type: str = "", entity_id: str = "",

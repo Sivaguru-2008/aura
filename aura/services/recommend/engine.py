@@ -26,6 +26,7 @@ from common.mathx import entropy, softmax
 from schemas.clinical import DIAGNOSES, Diagnosis
 from schemas.contracts import Recommendation
 from services.fusion.evidence import EVIDENCE_CHANNELS
+from services.recommend.causal import CausalDependencyGraph, JointEIGSelector
 
 _COST_W = {"low": 1.0, "medium": 2.0, "high": 4.0}
 _RISK_W = {"none": 1.0, "low": 1.5, "medium": 2.5}
@@ -66,7 +67,29 @@ class RecommendEngine:
         self.min_gain = min_gain          # min EVOI (loss units) to bother recommending
         self.budget = budget              # total cost·risk budget for a panel
         self.max_panel = max_panel
-        self.model_version = "recommend-evoi-v1"
+        self.model_version = "recommend-evoi-v2-causal"
+        # Module 14: chained-MI selector — O(K·N) joint EIG, no 2^N enumeration.
+        self._causal = JointEIGSelector(CausalDependencyGraph())
+
+    # ---- chained-MI joint EIG (Module 14) -------------------------------- #
+    def _marginal_eigs(self, fusion_model, x: np.ndarray, channels: list[str]) -> dict[str, float]:
+        """Single-test EIG I(Y; X_c) per channel — computed *once*, O(N)."""
+        out: dict[str, float] = {}
+        for c in channels:
+            _, eig = self._evoi_and_eig(fusion_model, x, [c])
+            out[c] = float(eig)
+        return out
+
+    def causal_joint_eig(self, fusion_model, x: np.ndarray, channels: list[str]) -> float:
+        """Redundancy-aware joint EIG over an ordered channel set via the chain rule.
+
+        Replaces ``_evoi_and_eig(..., union)[1]`` (which enumerates 2^|union|
+        outcomes) with Σ marginal-novel contributions under the causal graph. The
+        independent sum ``Σ I(Y;X_c)`` is an upper bound; this discounts the
+        double-counted, causally-explained overlap.
+        """
+        marg = self._marginal_eigs(fusion_model, x, channels)
+        return self._causal.joint_eig(channels, marg)
 
     # ---- posterior + risk helpers ---------------------------------------- #
     def _posterior(self, fusion_model, x: np.ndarray) -> np.ndarray:
@@ -115,18 +138,26 @@ class RecommendEngine:
 
         Joint EVOI over the union of channels handles redundancy: a second test
         that resolves already-resolved evidence adds ~0 and is skipped.
+
+        Returns ``(chosen, channels, spent, panel_evoi)``. Panel state is a
+        **local** here, never an instance attribute: the engine is a process-wide
+        singleton served concurrently from FastAPI's threadpool, so per-request
+        state on ``self`` was a genuine data race between interleaved requests
+        (audit §11.9). Threading it through the return value makes ``recommend``
+        re-entrant and thread-safe.
         """
         chosen, used_channels, spent = [], set(), 0.0
+        panel_evoi = 0.0
         remaining = list(singles)
         while remaining and len(chosen) < self.max_panel:
-            best, best_ratio = None, 0.0
+            best, best_ratio, best_marginal = None, 0.0, 0.0
             for item in remaining:
                 cost = _COST_W[item["cost"]] * _RISK_W[item["risk"]]
                 if spent + cost > self.budget:
                     continue
                 union = sorted(used_channels | set(item["channels"]))
                 joint_evoi, _ = self._evoi_and_eig(fusion_model, x, union)
-                marginal = joint_evoi - self._panel_evoi
+                marginal = joint_evoi - panel_evoi
                 ratio = marginal / cost
                 if ratio > best_ratio:
                     best, best_ratio, best_marginal = item, ratio, marginal
@@ -135,9 +166,9 @@ class RecommendEngine:
             chosen.append(best)
             used_channels |= set(best["channels"])
             spent += _COST_W[best["cost"]] * _RISK_W[best["risk"]]
-            self._panel_evoi += best_marginal
+            panel_evoi += best_marginal
             remaining.remove(best)
-        return chosen, sorted(used_channels), spent
+        return chosen, sorted(used_channels), spent, panel_evoi
 
     def recommend(self, fusion_model, x: np.ndarray) -> list[Recommendation]:
         x = np.asarray(x, dtype=float)
@@ -168,23 +199,23 @@ class RecommendEngine:
             )
 
         # Build the best multi-test panel and surface it if it beats every single.
-        self._panel_evoi = 0.0
-        panel, channels, spent = self._greedy_panel(fusion_model, x, singles)
+        # Panel EVOI is a local (thread-safe) — see _greedy_panel.
+        panel, channels, spent, panel_evoi = self._greedy_panel(fusion_model, x, singles)
         if len(panel) > 1:
             names = ", ".join(p["display"].lower() for p in panel)
             best_single = max((r.utility for r in recs), default=0.0)
-            panel_utility = self._panel_evoi / max(spent, 1e-6)
+            panel_utility = panel_evoi / max(spent, 1e-6)
             if panel_utility > best_single:
                 recs.insert(0, Recommendation(
                     action="acquire_panel:" + "+".join(p["action"] for p in panel),
                     display=f"Diagnostic panel: {names}",
-                    expected_info_gain=round(float(self._evoi_and_eig(fusion_model, x, channels)[1]), 4),
+                    expected_info_gain=round(self.causal_joint_eig(fusion_model, x, channels), 4),
                     cost_tier="high" if spent > 4 else "medium",
                     risk_tier="low",
                     utility=round(float(panel_utility), 4),
                     rationale=(
                         f"Jointly-optimal panel (greedy EVOI, budget {self.budget:.0f}): "
-                        f"total EVOI {self._panel_evoi:.3f} loss units at cost {spent:.1f}, "
+                        f"total EVOI {panel_evoi:.3f} loss units at cost {spent:.1f}, "
                         f"chosen to avoid redundant tests."
                     ),
                 ))

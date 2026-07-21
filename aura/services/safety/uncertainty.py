@@ -122,30 +122,65 @@ def reliability_curve(P: np.ndarray, y: np.ndarray, bins: int = 10) -> dict:
 # --------------------------------------------------------------------------- #
 # Mondrian (class-conditional) conformal prediction
 # --------------------------------------------------------------------------- #
+def min_calibration_count(coverage: float) -> int:
+    """Smallest per-class calibration count for a *non-degenerate* conformal q̂.
+
+    The split-conformal quantile level is ``ceil((n+1)·coverage)/n``. When that is
+    ``≥ 1`` the "higher" quantile collapses onto the **maximum** nonconformity score
+    — a degenerate threshold that makes the class appear in almost every prediction
+    set (audit F7: malignancy q̂ = 0.9889 → malignancy in ~78 % of sets). This
+    returns the smallest ``n`` for which the level is strictly ``< 1`` (e.g. 19 at
+    90 % coverage), so below it we must defer to the pooled marginal threshold.
+    """
+    n = 1
+    while np.ceil((n + 1) * coverage) / n >= 1.0:
+        n += 1
+        if n > 10_000:                          # coverage → 1 pathological guard
+            break
+    return n
+
+
 def mondrian_qhats(probs: np.ndarray, labels: np.ndarray, coverage: float,
                    n_classes: int) -> np.ndarray:
     """Per-class split-conformal thresholds on nonconformity s = 1 - p[true].
 
     Guarantees ~coverage *within each class* (conditional), unlike the single
-    marginal quantile. Classes unseen in calibration fall back to the marginal.
+    marginal quantile. A class only gets its own threshold when it has enough
+    calibration points for a **non-degenerate** quantile (``>= min_calibration_count``);
+    otherwise — and for classes unseen in calibration — it falls back to the pooled
+    marginal threshold, so no class saturates to its maximum score (audit F7).
     """
     probs = np.asarray(probs, dtype=float)
     labels = np.asarray(labels, dtype=int)
     scores = 1.0 - probs[np.arange(len(labels)), labels]
     marginal = _quantile_hi(scores, coverage)
+    if marginal is None:                        # even the pooled set is tiny
+        marginal = float(scores.max()) if len(scores) else 1.0
+    min_n = min_calibration_count(coverage)
     qhats = np.full(n_classes, marginal, dtype=float)
     for c in range(n_classes):
         m = labels == c
-        if m.sum() >= 10:                       # enough to estimate a class quantile
-            qhats[c] = _quantile_hi(scores[m], coverage)
+        if m.sum() >= min_n:                    # enough for a valid class quantile
+            q = _quantile_hi(scores[m], coverage)
+            if q is not None:
+                qhats[c] = q
     return qhats
 
 
-def _quantile_hi(scores: np.ndarray, coverage: float) -> float:
+def _quantile_hi(scores: np.ndarray, coverage: float) -> float | None:
+    """Upper split-conformal quantile of ``scores``, or ``None`` if degenerate.
+
+    Returns ``None`` when there are too few points for the target coverage level to
+    be a genuine order statistic (the level would be ``>= 1`` and the quantile would
+    collapse onto the maximum score) — the caller then falls back to a pooled
+    threshold instead of a saturated, class-inflating one (audit F7).
+    """
     n = len(scores)
     if n == 0:
-        return 1.0
-    level = min(1.0, np.ceil((n + 1) * coverage) / n)
+        return None
+    level = np.ceil((n + 1) * coverage) / n
+    if level >= 1.0:
+        return None
     return float(np.quantile(scores, level, method="higher"))
 
 

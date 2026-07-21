@@ -9,7 +9,7 @@ import asyncio
 from ml.vision_cxr.config import TrainConfig
 from ml.vision_cxr.dataset import build_loaders
 from ml.vision_cxr.model import DenseNet121CXR
-from ml.vision_cxr.losses import MultiLabelLoss
+from ml.vision_cxr.losses import MultiLabelLoss, RegularizedMultiLabelLoss
 from ml.vision_cxr.validate import evaluate_model
 from ml.vision_cxr.checkpoint import save_model_checkpoint, save_best_model, load_model_checkpoint
 from ml.vision_cxr.utils import set_seed, HistoryLogger, plot_training_history
@@ -17,18 +17,24 @@ from ml.vision_cxr.utils import set_seed, HistoryLogger, plot_training_history
 def train_one_epoch(model, dataloader, optimizer, loss_fn, scaler, device, grad_clip):
     model.train()
     total_loss = 0.0
-    
+    # Detect the TV-regularised criterion (returns (loss, parts) and needs features).
+    regularized = isinstance(loss_fn, RegularizedMultiLabelLoss)
+
     for inputs, targets in dataloader:
         inputs = inputs.to(device, non_blocking=True)
         targets = targets.to(device, non_blocking=True)
-        
+
         optimizer.zero_grad(set_to_none=True)
-        
+
         # Mixed precision forward pass
         with torch.cuda.amp.autocast(enabled=(scaler is not None)):
-            logits = model(inputs)
-            loss = loss_fn(logits, targets)
-            
+            if regularized:
+                logits, feats = model(inputs, return_features=True)
+                loss, _parts = loss_fn(logits, targets, feats)   # BCE + λ·TV(features)
+            else:
+                logits = model(inputs)
+                loss = loss_fn(logits, targets)
+
         # Scaling and backward
         if scaler:
             scaler.scale(loss).backward()
@@ -115,16 +121,31 @@ def main():
     parser.add_argument("--no-amp", action="store_true", help="Disable mixed precision training.")
     parser.add_argument("--validate-only", action="store_true", help="Run validation only.")
     parser.add_argument("--resume", action="store_true", help="Resume from last checkpoint if exists.")
+    parser.add_argument("--out-dir", type=str, default=None,
+                        help="Artifact dir for this run (default: shared ARTIFACTS). "
+                             "Use a fresh dir to avoid overwriting the served model.")
+    parser.add_argument("--num-workers", type=int, default=0,
+                        help="Dataloader workers. >0 overlaps JPEG decode with GPU compute.")
+    parser.add_argument("--use-sampler", action="store_true",
+                        help="Also oversample rare positives. NOT recommended: stacking this "
+                             "with pos_weight over-corrects imbalance (audit F5).")
+    parser.add_argument("--no-post-val", action="store_true",
+                        help="Skip the end-to-end pipeline check after training.")
     args = parser.parse_args()
-    
-    config = TrainConfig(
+
+    cfg_kw = dict(
         epochs=args.epochs,
         batch_size=args.batch,
         lr=args.lr,
         patience=args.patience,
         amp=not args.no_amp,
-        limit=args.limit
+        limit=args.limit,
+        num_workers=args.num_workers,
+        use_sampler=args.use_sampler,
     )
+    if args.out_dir:
+        cfg_kw["out_dir"] = args.out_dir
+    config = TrainConfig(**cfg_kw)
     
     set_seed(config.seed)
     
@@ -146,7 +167,15 @@ def main():
         pw = np.clip(neg / np.clip(pos, 1.0, None), 0.1, 20.0)
         pos_weight = torch.tensor(pw, dtype=torch.float32, device=config.device)
         
-    loss_fn = MultiLabelLoss(pos_weight=pos_weight)
+    # TV-regularised loss (Module 2): penalise high-frequency noise in the latent
+    # feature maps so Grad-CAM++ locks onto anatomy. λ from config (0 disables TV).
+    try:
+        from common.config import get_settings
+        tv_weight = get_settings().vision_tv_weight
+    except Exception:
+        tv_weight = 1e-4
+    loss_fn = RegularizedMultiLabelLoss(pos_weight=pos_weight, tv_weight=tv_weight)
+    print(f"[Train] TV feature regularisation weight λ={tv_weight:g}")
     scaler = torch.cuda.amp.GradScaler(enabled=(config.amp and config.device == "cuda"))
     
     # 4. Resume training if requested
@@ -216,9 +245,11 @@ def main():
             
     tb_writer.close()
     print(f"[Train] Training completed! Best Macro-AUROC: {best_macro_auroc:.4f}")
-    
+    print(f"[Train] Artifacts written to: {config.out_dir}")
+
     # 6. Post-training validation and integration check
-    run_post_training_validation(config)
+    if not args.no_post_val:
+        run_post_training_validation(config)
 
 if __name__ == "__main__":
     main()

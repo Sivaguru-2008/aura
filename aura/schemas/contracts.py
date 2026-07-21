@@ -141,6 +141,12 @@ class FusionResult(BaseModel):
     evidence_vector: list[float] = Field(default_factory=list)
     n_shots: int = 0
     model_version: str = ""
+    # Conflict-resolution (Wasserstein tie-breaker) telemetry. Defaults keep the
+    # field backward-compatible with bundles written before Module 5 landed.
+    resolved_backend: str = ""                 # backend actually trusted after tie-break
+    conflict_distance: float = 0.0             # EMD(VQC, PoE) on the severity axis
+    conflict_threshold: float = 0.0            # dynamic τ used for the decision
+    fallback_triggered: bool = False           # True when the PoE fallback fired
     created_at: datetime = Field(default_factory=_now)
 
 

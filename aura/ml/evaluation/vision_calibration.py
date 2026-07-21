@@ -33,6 +33,11 @@ from ml.evaluation.clinical_eval import binary_ece, load_validation
 
 FINDING_NAMES = [f.value for f in FINDINGS]
 CAL_DIR = ARTIFACTS / "calibration"
+#: Compact, serving-consumable calibration (per-finding temperatures) that
+#: ``ml.vision_cxr.inference.VisionModel`` loads and applies at inference. Written
+#: by ``run_calibration`` so the calibration that is *computed* is also the one
+#: that is *applied* (audit: "per-finding calibration computed and not applied").
+SERVING_CAL_PATH = ARTIFACTS / "vision_serving_calibration.json"
 
 
 def _sigmoid(z):
@@ -79,23 +84,58 @@ def fit_temperature_binary(logits_c: np.ndarray, y_c: np.ndarray) -> float:
     return float(np.exp(res.x))
 
 
+def fit_platt_binary(logits_c: np.ndarray, y_c: np.ndarray) -> tuple[float, float]:
+    """Per-finding Platt scaling: fit (a, b) minimizing binary NLL of
+    sigmoid(a·logit + b).
+
+    Strictly more expressive than temperature scaling (which is the special case
+    b=0, a=1/T): the intercept ``b`` corrects a prevalence/base-rate shift and the
+    slope ``a`` corrects confidence *and its sign* — important here because the
+    nodule head is near-chance, so an affine correction calibrates it where a pure
+    temperature cannot. Fit by L-BFGS-B on the 2-D NLL.
+    """
+    from scipy.optimize import minimize
+
+    f = np.asarray(logits_c, float)
+    y = np.asarray(y_c, float)
+
+    def nll(params):
+        a, b = params
+        p = np.clip(_sigmoid(a * f + b), 1e-9, 1 - 1e-9)
+        return float(-np.mean(y * np.log(p) + (1 - y) * np.log(1 - p)))
+
+    res = minimize(nll, x0=np.array([1.0, 0.0]), method="L-BFGS-B",
+                   bounds=[(-10.0, 10.0), (-10.0, 10.0)])
+    a, b = float(res.x[0]), float(res.x[1])
+    return a, b
+
+
 def temperature_scaling(logits: np.ndarray, Y: np.ndarray) -> dict:
-    """Fit per-finding temperatures on a calibration half, evaluate on the other."""
+    """Fit per-finding Platt scaling (a, b) on a calibration half, evaluate on the
+    other, and also record the temperature-only fit for reference.
+
+    (Name kept for backward compatibility; the applied calibration is now the more
+    expressive Platt form. ``temperatures`` is still emitted so existing readers and
+    plots keep working.)
+    """
     n = len(Y)
     rng = np.random.default_rng(7)
     idx = rng.permutation(n)
     cut = n // 2
     cal, test = idx[:cut], idx[cut:]
-    out = {"per_finding": {}, "temperatures": {}}
+    out = {"per_finding": {}, "temperatures": {}, "platt": {}}
     ece_before, ece_after = [], []
     for c, name in enumerate(FINDING_NAMES):
         T = fit_temperature_binary(logits[cal, c], Y[cal, c])
+        a, b = fit_platt_binary(logits[cal, c], Y[cal, c])
         p_before = _sigmoid(logits[test, c])
-        p_after = _sigmoid(logits[test, c] / T)
+        p_after = _sigmoid(a * logits[test, c] + b)
         eb = binary_ece(p_before, Y[test, c])
         ea = binary_ece(p_after, Y[test, c])
         out["temperatures"][name] = round(T, 4)
-        out["per_finding"][name] = {"T": round(T, 4), "ece_before": round(eb, 4),
+        out["platt"][name] = {"a": round(a, 4), "b": round(b, 4)}
+        out["per_finding"][name] = {"T": round(T, 4), "platt_a": round(a, 4),
+                                    "platt_b": round(b, 4), "ece_before": round(eb, 4),
                                     "ece_after": round(ea, 4)}
         ece_before.append(eb); ece_after.append(ea)
     out["mean_ece_before"] = round(float(np.mean(ece_before)), 4)
@@ -304,6 +344,9 @@ def run_calibration(limit: Optional[int] = None, make_plots: bool = True,
 
     plots = _plots(logits, probs, Y, temp, out_dir / "plots") if make_plots else {}
 
+    # Emit the compact serving calibration the vision backbone applies at inference.
+    _write_serving_calibration(temp, n_images=int(len(Y)))
+
     report = {
         "n_images": int(len(Y)),
         "temperature_scaling": temp,
@@ -319,6 +362,23 @@ def run_calibration(limit: Optional[int] = None, make_plots: bool = True,
                                               encoding="utf-8")
     _summary_md(report, out_dir / "CALIBRATION_SUMMARY.md")
     return report
+
+
+def _write_serving_calibration(temp: dict, n_images: int) -> None:
+    """Persist per-finding Platt (a, b) — the calibration VisionModel applies —
+    plus the temperature fit for reference, in the compact serving form."""
+    payload = {
+        "method": "per_finding_platt",
+        "n_images": n_images,
+        "per_finding_platt": {n: {"a": float(temp["platt"][n]["a"]),
+                                  "b": float(temp["platt"][n]["b"])} for n in FINDING_NAMES},
+        "per_finding_temperature": {n: float(temp["temperatures"][n]) for n in FINDING_NAMES},
+        "mean_ece_before": temp["mean_ece_before"],
+        "mean_ece_after": temp["mean_ece_after"],
+    }
+    SERVING_CAL_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    print(f"[calibrate] serving calibration written -> {SERVING_CAL_PATH.name} "
+          f"(mean ECE {temp['mean_ece_before']} -> {temp['mean_ece_after']})")
 
 
 def _summary_md(rep: dict, path: Path) -> None:

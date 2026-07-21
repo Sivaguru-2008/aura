@@ -1,0 +1,55 @@
+{
+  "labels": [
+    "opacity",
+    "consolidation",
+    "pleural_effusion",
+    "cardiomegaly",
+    "nodule",
+    "pneumothorax",
+    "hyperinflation"
+  ],
+  "per_finding": {
+    "opacity": {
+      "platt_a": 0.399,
+      "platt_b": -1.2046,
+      "threshold": 0.19
+    },
+    "consolidation": {
+      "platt_a": 0.5492,
+      "platt_b": -3.5184,
+      "threshold": 0.1
+    },
+    "pleural_effusion": {
+      "platt_a": 0.5638,
+      "platt_b": -1.8545,
+      "threshold": 0.24
+    },
+    "cardiomegaly": {
+      "platt_a": 0.9004,
+      "platt_b": -2.406,
+      "threshold": 0.17
+    },
+    "nodule": {
+      "platt_a": -0.2305,
+      "platt_b": -2.7894,
+      "threshold": 0.07
+    },
+    "pneumothorax": {
+      "platt_a": 0.2648,
+      "platt_b": -3.047,
+      "threshold": 0.09
+    },
+    "hyperinflation": {
+      "platt_a": 0.8544,
+      "platt_b": -2.8588,
+      "threshold": 0.15
+    }
+  },
+  "test_macro": {
+    "ece_before": 0.3382,
+    "ece_after": 0.0363,
+    "f1_before": 0.2592,
+    "f1_after": 0.2631,
+    "auroc": 0.6549
+  }
+}

@@ -25,23 +25,11 @@ import numpy as np
 from schemas.clinical import Diagnosis, Finding
 from schemas.contracts import StructuredPriors
 
-IMG = 64  # image side length
-
-# Anatomical regions in normalized (row0, col0, row1, col1) coordinates.
-REGIONS: dict[str, tuple[float, float, float, float]] = {
-    "right_lung": (0.15, 0.08, 0.75, 0.44),
-    "left_lung": (0.15, 0.56, 0.75, 0.92),
-    "right_apex": (0.12, 0.12, 0.32, 0.42),
-    "left_apex": (0.12, 0.58, 0.32, 0.88),
-    "heart": (0.42, 0.34, 0.82, 0.66),
-    "right_cp_angle": (0.72, 0.10, 0.92, 0.40),
-    "left_cp_angle": (0.72, 0.60, 0.92, 0.90),
-}
-
-
-def _px(region: tuple[float, float, float, float]) -> tuple[int, int, int, int]:
-    r0, c0, r1, c1 = region
-    return (int(r0 * IMG), int(c0 * IMG), int(r1 * IMG), int(c1 * IMG))
+# The grid + anatomy primitives now live in the dependency-free ``common`` layer so
+# request-serving ``services/`` code no longer has to import this synthetic-data
+# module (fixes the ml→services layering violation). Re-exported here to keep
+# ``ml.data.IMG`` / ``REGIONS`` / ``_px`` a stable public API.
+from common.anatomy import IMG, REGIONS, _px  # noqa: F401  (re-export)
 
 
 @dataclass

@@ -1,6 +1,6 @@
 {
   "task": "multilabel_findings",
-  "model_path": "E:\\AURA\\aura\\aura\\artifacts\\best_model.pt",
+  "model_path": "E:\\AURA\\aura-main\\aura\\artifacts\\best_model.pt",
   "n_images": 2099,
   "labels": [
     "opacity",
@@ -12,248 +12,242 @@
     "hyperinflation"
   ],
   "prevalence": {
-    "opacity": 1430,
-    "consolidation": 832,
-    "pleural_effusion": 1169,
-    "cardiomegaly": 872,
-    "nodule": 542,
-    "pneumothorax": 249,
-    "hyperinflation": 415
+    "opacity": 496,
+    "consolidation": 120,
+    "pleural_effusion": 524,
+    "cardiomegaly": 284,
+    "nodule": 95,
+    "pneumothorax": 63,
+    "hyperinflation": 120
   },
-  "inference_seconds": 9.476,
-  "throughput_img_per_s": 221.51,
+  "inference_seconds": 7.243,
+  "throughput_img_per_s": 289.78,
   "macro": {
-    "auroc": 0.7019,
-    "auprc": 0.5582,
-    "f1": 0.5472,
-    "sensitivity": 0.5841,
-    "specificity": 0.7187,
-    "precision": 0.5276,
-    "accuracy": 0.7035,
-    "brier": 0.2019,
-    "ece": 0.1465
+    "auroc": 0.821,
+    "auprc": 0.3576,
+    "f1": 0.3679,
+    "sensitivity": 0.6926,
+    "specificity": 0.7684,
+    "precision": 0.2638,
+    "accuracy": 0.7723,
+    "brier": 0.1484,
+    "ece": 0.1999
   },
   "micro": {
-    "f1": 0.6228,
-    "accuracy": 0.7035,
-    "brier": 0.2019
+    "f1": 0.437,
+    "accuracy": 0.7723,
+    "brier": 0.1484
   },
   "per_label": {
     "opacity": {
-      "accuracy": 0.696,
-      "precision": 0.8653,
-      "recall": 0.6559,
-      "sensitivity": 0.6559,
-      "specificity": 0.7818,
-      "f1": 0.7462,
-      "npv": 0.5153,
-      "brier": 0.2006,
-      "ece": 0.162,
-      "support": 1430,
+      "accuracy": 0.6451,
+      "precision": 0.3648,
+      "recall": 0.6774,
+      "sensitivity": 0.6774,
+      "specificity": 0.6351,
+      "f1": 0.4742,
+      "npv": 0.8642,
+      "brier": 0.215,
+      "ece": 0.2125,
+      "support": 496,
       "confusion_matrix": [
         [
-          523,
-          146
+          1018,
+          585
         ],
         [
-          492,
-          938
+          160,
+          336
         ]
       ],
-      "auroc": 0.776,
-      "auprc": 0.8781
+      "auroc": 0.7117,
+      "auprc": 0.4159
     },
     "consolidation": {
-      "accuracy": 0.6303,
-      "precision": 0.5224,
-      "recall": 0.7849,
-      "sensitivity": 0.7849,
-      "specificity": 0.5288,
-      "f1": 0.6273,
-      "npv": 0.7892,
-      "brier": 0.247,
-      "ece": 0.1783,
-      "support": 832,
+      "accuracy": 0.6689,
+      "precision": 0.1261,
+      "recall": 0.8083,
+      "sensitivity": 0.8083,
+      "specificity": 0.6604,
+      "f1": 0.2182,
+      "npv": 0.9827,
+      "brier": 0.2062,
+      "ece": 0.3085,
+      "support": 120,
       "confusion_matrix": [
         [
-          670,
-          597
+          1307,
+          672
         ],
         [
-          179,
-          653
+          23,
+          97
         ]
       ],
-      "auroc": 0.7226,
-      "auprc": 0.605
+      "auroc": 0.8069,
+      "auprc": 0.2003
     },
     "pleural_effusion": {
-      "accuracy": 0.7065,
-      "precision": 0.7322,
-      "recall": 0.7459,
-      "sensitivity": 0.7459,
-      "specificity": 0.657,
-      "f1": 0.739,
-      "npv": 0.6729,
-      "brier": 0.1982,
-      "ece": 0.0743,
-      "support": 1169,
+      "accuracy": 0.7975,
+      "precision": 0.5599,
+      "recall": 0.8836,
+      "sensitivity": 0.8836,
+      "specificity": 0.7689,
+      "f1": 0.6854,
+      "npv": 0.952,
+      "brier": 0.1383,
+      "ece": 0.1328,
+      "support": 524,
       "confusion_matrix": [
         [
-          611,
-          319
+          1211,
+          364
         ],
         [
-          297,
-          872
+          61,
+          463
         ]
       ],
-      "auroc": 0.7762,
-      "auprc": 0.825
+      "auroc": 0.9002,
+      "auprc": 0.7025
     },
     "cardiomegaly": {
-      "accuracy": 0.6827,
-      "precision": 0.5905,
-      "recall": 0.7706,
-      "sensitivity": 0.7706,
-      "specificity": 0.6202,
-      "f1": 0.6687,
-      "npv": 0.7919,
-      "brier": 0.2167,
-      "ece": 0.1268,
-      "support": 872,
+      "accuracy": 0.7289,
+      "precision": 0.3147,
+      "recall": 0.8521,
+      "sensitivity": 0.8521,
+      "specificity": 0.7096,
+      "f1": 0.4596,
+      "npv": 0.9684,
+      "brier": 0.168,
+      "ece": 0.2213,
+      "support": 284,
       "confusion_matrix": [
         [
-          761,
-          466
+          1288,
+          527
         ],
         [
-          200,
-          672
+          42,
+          242
         ]
       ],
-      "auroc": 0.7432,
-      "auprc": 0.632
+      "auroc": 0.8617,
+      "auprc": 0.4756
     },
     "nodule": {
-      "accuracy": 0.6041,
-      "precision": 0.2612,
-      "recall": 0.2915,
-      "sensitivity": 0.2915,
-      "specificity": 0.7129,
-      "f1": 0.2755,
-      "npv": 0.743,
-      "brier": 0.2535,
-      "ece": 0.2058,
-      "support": 542,
+      "accuracy": 0.8504,
+      "precision": 0.1185,
+      "recall": 0.3579,
+      "sensitivity": 0.3579,
+      "specificity": 0.8738,
+      "f1": 0.178,
+      "npv": 0.9663,
+      "brier": 0.1119,
+      "ece": 0.2076,
+      "support": 95,
       "confusion_matrix": [
         [
-          1110,
-          447
+          1751,
+          253
         ],
         [
-          384,
-          158
+          61,
+          34
         ]
       ],
-      "auroc": 0.4848,
-      "auprc": 0.2587
+      "auroc": 0.729,
+      "auprc": 0.1648
     },
     "pneumothorax": {
-      "accuracy": 0.829,
-      "precision": 0.2746,
-      "recall": 0.2691,
-      "sensitivity": 0.2691,
-      "specificity": 0.9043,
-      "f1": 0.2718,
-      "npv": 0.9019,
-      "brier": 0.1354,
-      "ece": 0.1126,
-      "support": 249,
+      "accuracy": 0.8537,
+      "precision": 0.096,
+      "recall": 0.4603,
+      "sensitivity": 0.4603,
+      "specificity": 0.8659,
+      "f1": 0.1589,
+      "npv": 0.9811,
+      "brier": 0.0996,
+      "ece": 0.1492,
+      "support": 63,
       "confusion_matrix": [
         [
-          1673,
-          177
+          1763,
+          273
         ],
         [
-          182,
-          67
+          34,
+          29
         ]
       ],
-      "auroc": 0.6375,
-      "auprc": 0.2162
+      "auroc": 0.8254,
+      "auprc": 0.1139
     },
     "hyperinflation": {
-      "accuracy": 0.7756,
-      "precision": 0.4472,
-      "recall": 0.5711,
-      "sensitivity": 0.5711,
-      "specificity": 0.826,
-      "f1": 0.5016,
-      "npv": 0.8866,
-      "brier": 0.162,
-      "ece": 0.1657,
-      "support": 415,
+      "accuracy": 0.8618,
+      "precision": 0.2665,
+      "recall": 0.8083,
+      "sensitivity": 0.8083,
+      "specificity": 0.8651,
+      "f1": 0.4008,
+      "npv": 0.9867,
+      "brier": 0.0998,
+      "ece": 0.1677,
+      "support": 120,
       "confusion_matrix": [
         [
-          1391,
-          293
+          1712,
+          267
         ],
         [
-          178,
-          237
+          23,
+          97
         ]
       ],
-      "auroc": 0.7727,
-      "auprc": 0.4924
+      "auroc": 0.9118,
+      "auprc": 0.43
     }
   },
   "bootstrap_ci": {
-    "n_bootstrap": 1000,
+    "n_bootstrap": 500,
     "macro_auroc_ci95": [
-      0.6883,
-      0.7161
+      0.8089,
+      0.833
     ],
     "macro_auprc_ci95": [
-      0.5436,
-      0.5767
+      0.3412,
+      0.3846
     ],
     "per_label_auroc_ci95": {
       "opacity": [
-        0.7548,
-        0.7958
+        0.6869,
+        0.7366
       ],
       "consolidation": [
-        0.7008,
-        0.7436
+        0.7722,
+        0.838
       ],
       "pleural_effusion": [
-        0.7573,
-        0.7951
+        0.8882,
+        0.913
       ],
       "cardiomegaly": [
-        0.7203,
-        0.7656
+        0.8418,
+        0.8793
       ],
       "nodule": [
-        0.4562,
-        0.5152
+        0.6806,
+        0.7741
       ],
       "pneumothorax": [
-        0.598,
-        0.6784
+        0.7785,
+        0.8648
       ],
       "hyperinflation": [
-        0.7468,
-        0.7964
+        0.8839,
+        0.9354
       ]
     }
   },
-  "plots": {
-    "roc_curves": "E:\\AURA\\aura\\aura\\artifacts\\evaluation\\plots\\roc_curves.png",
-    "pr_curves": "E:\\AURA\\aura\\aura\\artifacts\\evaluation\\plots\\pr_curves.png",
-    "calibration": "E:\\AURA\\aura\\aura\\artifacts\\evaluation\\plots\\calibration.png",
-    "confidence_histograms": "E:\\AURA\\aura\\aura\\artifacts\\evaluation\\plots\\confidence_histograms.png",
-    "confusion_matrices": "E:\\AURA\\aura\\aura\\artifacts\\evaluation\\plots\\confusion_matrices.png"
-  }
+  "plots": {}
 }

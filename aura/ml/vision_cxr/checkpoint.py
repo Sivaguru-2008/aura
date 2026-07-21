@@ -33,7 +33,12 @@ def save_best_model(config, model, epoch, best_metric):
 
 def load_model_checkpoint(checkpoint_path, model, optimizer=None, scheduler=None, scaler=None, device="cpu"):
     """Loads a model checkpoint and resumes optimizer, scheduler, and scaler states."""
-    checkpoint = torch.load(checkpoint_path, map_location=device)
+    # weights_only=False is required to restore optimizer/scheduler/scaler state
+    # (not plain tensors). This is a training-only resume path that loads a
+    # checkpoint this same process wrote — not an untrusted artifact — so the safe
+    # unpickler is not applicable here (cf. the serving load in inference.py which
+    # uses weights_only=True). See audit §11.5.
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
     model.load_state_dict(checkpoint["model_state_dict"])
     
     if optimizer and "optimizer_state_dict" in checkpoint:

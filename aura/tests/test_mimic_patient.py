@@ -69,12 +69,23 @@ def test_to_study_input_loads_real_image():
     pt = next(p for p in iter_patients("validate", limit=20) if p.n_studies >= 1)
     si = pt.to_study_input(-1)
     assert isinstance(si, StudyInput)
-    assert si.image_shape == (64, 64)
-    assert len(si.image) == 64 * 64
+    # Full-fidelity intake: the film is area-averaged to the CNN's native 224 grid
+    # (audit F5) rather than the old 64×64 point-subsample that erased small findings.
+    assert si.image_shape == (224, 224)
+    assert len(si.image) == 224 * 224
     assert 0.0 <= min(si.image) and max(si.image) <= 1.0
     assert isinstance(si.ground_truth, Diagnosis)
     # not a constant image (real content)
     assert max(si.image) - min(si.image) > 0.1
+
+
+@needs_data
+def test_to_study_input_grid_is_overridable():
+    """A caller may still request a smaller stored grid explicitly."""
+    pt = next(p for p in iter_patients("validate", limit=20) if p.n_studies >= 1)
+    si = pt.to_study_input(-1, grid=64)
+    assert si.image_shape == (64, 64)
+    assert len(si.image) == 64 * 64
 
 
 @needs_data

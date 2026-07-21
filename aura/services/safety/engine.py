@@ -75,9 +75,45 @@ class SafetyEngine:
             "n": 0,
         }
 
-    def assess(self, study_id: str, x: np.ndarray, fusion_model) -> SafetyAssessment:
-        logits = fusion_model.logits(x)
-        probs = self.calibrated_posterior(logits)
+    def assess(self, study_id: str, x: np.ndarray, fusion_model,
+               resolved_logits: np.ndarray | None = None,
+               aci_qhat: float | None = None,
+               final_posterior: np.ndarray | None = None) -> SafetyAssessment:
+        """Assess an evidence vector's trustworthiness.
+
+        ``resolved_logits`` — when the fusion conflict guard (Module 5) overrides
+        the default backend, the pipeline passes the *resolved* backend's logits
+        here so the calibrated posterior, the ranked predictions, the conformal set
+        and the abstention decision all reflect the **validated** diagnosis the
+        clinician is shown — never the discarded one (audit F2). When ``None`` the
+        default fusion model's logits are used, preserving the original behaviour.
+
+        ``final_posterior`` — the *reasoning-adjusted* calibrated posterior (Module
+        7). When the clinical reasoner has folded labs/symptoms/history into the
+        imaging posterior, that final posterior is validated here so the ranked
+        predictions, conformal set, abstention decision and top diagnosis all
+        reflect the diagnosis the clinician is actually shown (audit F10). It is an
+        already-calibrated probability vector, so temperature scaling is skipped for
+        it. ``None`` keeps the imaging-only posterior — unchanged imaging behaviour.
+
+        ``aci_qhat`` — the online Adaptive-Conformal-Inference threshold persisted
+        from confirmed outcomes (Module 8). When supplied it drives the conformal
+        set so the coverage guarantee self-corrects under distribution shift
+        instead of using a frozen split-conformal q̂ (audit F9). ``None`` keeps the
+        static threshold, so standalone/offline callers are unchanged.
+
+        Temperature scaling is monotonic, so ``safety.top`` always equals the
+        resolved fusion top — the impression can no longer contradict the guard.
+        OOD energy stays on the default backend, whose energy statistics were
+        calibrated on that backend (keeping the detector calibrated — audit F8).
+        """
+        ood_logits = fusion_model.logits(x)
+        logits = ood_logits if resolved_logits is None else np.asarray(resolved_logits, dtype=float)
+        if final_posterior is not None:
+            probs = np.asarray(final_posterior, dtype=float)
+            probs = probs / max(float(probs.sum()), 1e-12)     # already calibrated
+        else:
+            probs = self.calibrated_posterior(logits)
         n_dx = len(DIAGNOSES)
         log2n = float(np.log2(n_dx))
 
@@ -105,21 +141,31 @@ class SafetyEngine:
             )
 
         # Conformal set: class-conditional (Mondrian) when available, else marginal.
+        # ACI (Module 8) supplies an online, distribution-shift-robust marginal
+        # threshold when persisted outcomes exist; it also acts as a floor on the
+        # per-class Mondrian thresholds so a class can never be *tighter* than the
+        # globally adaptive guarantee.
+        marginal_qhat = self.cal.conformal_qhat if aci_qhat is None else float(aci_qhat)
         if self.mondrian_qhats is not None and len(self.mondrian_qhats) == n_dx:
-            keep = mondrian_set(probs, self.mondrian_qhats)
+            qhats = self.mondrian_qhats
+            if aci_qhat is not None:
+                qhats = np.maximum(self.mondrian_qhats, float(aci_qhat))
+            keep = mondrian_set(probs, qhats)
             conformal_set = [DIAGNOSES[i] for i in keep]
-            conformal_method = "mondrian"
+            conformal_method = "mondrian+aci" if aci_qhat is not None else "mondrian"
         else:
             conformal_set = [
                 DIAGNOSES[i] for i in range(n_dx)
-                if (1.0 - probs[i]) <= self.cal.conformal_qhat
+                if (1.0 - probs[i]) <= marginal_qhat
             ]
             if not conformal_set:
                 conformal_set = [DIAGNOSES[int(order[0])]]
-            conformal_method = "marginal"
+            conformal_method = "marginal+aci" if aci_qhat is not None else "marginal"
 
-        # OOD via energy z-score against in-distribution stats.
-        e = energy_score(logits, self.cal.temperature)
+        # OOD via energy z-score against in-distribution stats. Computed on the
+        # default backend's logits, matching the backend the OOD statistics were
+        # calibrated on (so a conflict-guard fallback never mis-scores OOD).
+        e = energy_score(ood_logits, self.cal.temperature)
         z = (e - self.cal.ood_mean) / self.cal.ood_std
         is_ood = bool(z > self.settings.ood_energy_threshold)
 

@@ -17,6 +17,11 @@ class TrainConfig:
         self.seed = kwargs.get("seed", 7)
         self.amp = kwargs.get("amp", True)
         self.grad_clip = kwargs.get("grad_clip", 1.0)
+        # Dataloader workers (0 = main thread; >0 overlaps JPEG decode with GPU).
+        self.num_workers = kwargs.get("num_workers", 0)
+        # Imbalance is corrected once, via pos_weight. Opt in to also oversample
+        # rare positives (not recommended — see audit F5).
+        self.use_sampler = kwargs.get("use_sampler", False)
         
         # Device
         self.device = kwargs.get("device", "cuda" if os.environ.get("AURA_DEVICE") == "cuda" else None)

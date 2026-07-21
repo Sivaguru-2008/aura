@@ -93,12 +93,13 @@ class Patient:
     # ------------------------------------------------------------------ #
     # StudyInput adapter — the seam into the untouched pipeline
     # ------------------------------------------------------------------ #
-    def to_study_input(self, study_index: int = -1, grid: int = 64) -> StudyInput:
+    def to_study_input(self, study_index: int = -1, grid: int | None = None) -> StudyInput:
         """Emit a pipeline-ready :class:`StudyInput` for one study on the timeline.
 
         Loads the real radiograph via the existing ``services.vision.io`` seam,
         attaches this patient's priors and the report-derived ground-truth label.
-        ``study_index=-1`` selects the most recent study.
+        ``study_index=-1`` selects the most recent study. ``grid=None`` (default)
+        uses the intake's full-fidelity grid (224 — audit F5).
         """
         from services.vision.io import study_from_cxr  # lazy: pulls numpy/PIL
 
@@ -122,7 +123,7 @@ class Patient:
         si.multimodal = self.multimodal_context()
         return si
 
-    def iter_study_inputs(self, grid: int = 64) -> Iterator[StudyInput]:
+    def iter_study_inputs(self, grid: int | None = None) -> Iterator[StudyInput]:
         """Yield a :class:`StudyInput` for every study, in chronological order."""
         for i in range(self.n_studies):
             try:

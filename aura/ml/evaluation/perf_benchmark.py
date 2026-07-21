@@ -45,7 +45,7 @@ def _build_model(device: str):
     model = DenseNet121CXR(num_classes=len(FINDINGS))
     ckpt = ARTIFACTS / "best_model.pt"
     if ckpt.exists():
-        state = torch.load(str(ckpt), map_location=device)
+        state = torch.load(str(ckpt), map_location=device, weights_only=True)  # safe unpickler (audit §11.5)
         model.load_state_dict(state.get("model_state_dict", state))
     return model.to(device).eval()
 

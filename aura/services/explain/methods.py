@@ -131,9 +131,9 @@ def occlusion(score_fn, img: np.ndarray, finding: Finding,
               window: int = 12, stride: int = 6, out_size: int = 64,
               baseline_val: float = 0.18) -> np.ndarray:
     """Model-agnostic occlusion saliency for one finding (works without gradients)."""
-    from services.vision.features import _resize_to
+    from common.anatomy import resize_to
 
-    g = _resize_to(img, out_size).astype(float).copy()
+    g = resize_to(img, out_size).astype(float).copy()
     base_p = score_fn(g)[finding]
     sal = np.zeros((out_size, out_size))
     cnt = np.zeros((out_size, out_size))

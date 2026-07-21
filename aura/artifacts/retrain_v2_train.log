@@ -1,0 +1,28 @@
+[Dataset] Loading train samples from mimic_cxr_aug_train.csv...
+[Dataset] Loading validation samples from mimic_cxr_aug_validate.csv...
+[Dataset] Train samples: 259038, Val samples: 2099
+[Dataset] weighted sampler: OFF (pos_weight only)
+[Train] TV feature regularisation weight λ=0.0001
+[Train] Starting training on cuda (AMP=True)...
+Epoch 00/15 | Train Loss: 0.9924 | Val Loss: 0.9689 | Macro-AUROC: 0.7848 | Time: 1258.0s
+[Checkpoint] Saved new best model to best_model.pt (Macro-AUROC: 0.7848)
+Epoch 01/15 | Train Loss: 0.9378 | Val Loss: 0.9462 | Macro-AUROC: 0.7859 | Time: 1086.4s
+[Checkpoint] Saved new best model to best_model.pt (Macro-AUROC: 0.7859)
+Epoch 02/15 | Train Loss: 0.9151 | Val Loss: 0.9213 | Macro-AUROC: 0.8003 | Time: 1365.2s
+[Checkpoint] Saved new best model to best_model.pt (Macro-AUROC: 0.8003)
+Epoch 03/15 | Train Loss: 0.8947 | Val Loss: 0.9166 | Macro-AUROC: 0.8097 | Time: 1564.3s
+[Checkpoint] Saved new best model to best_model.pt (Macro-AUROC: 0.8097)
+Epoch 04/15 | Train Loss: 0.8817 | Val Loss: 0.8964 | Macro-AUROC: 0.8119 | Time: 1054.3s
+[Checkpoint] Saved new best model to best_model.pt (Macro-AUROC: 0.8119)
+Epoch 05/15 | Train Loss: 0.8674 | Val Loss: 0.9173 | Macro-AUROC: 0.8104 | Time: 1144.1s
+Epoch 06/15 | Train Loss: 0.8541 | Val Loss: 0.9278 | Macro-AUROC: 0.8143 | Time: 7498.9s
+[Checkpoint] Saved new best model to best_model.pt (Macro-AUROC: 0.8143)
+Epoch 07/15 | Train Loss: 0.8379 | Val Loss: 0.9113 | Macro-AUROC: 0.8210 | Time: 1531.4s
+[Checkpoint] Saved new best model to best_model.pt (Macro-AUROC: 0.8210)
+Epoch 08/15 | Train Loss: 0.8234 | Val Loss: 0.9357 | Macro-AUROC: 0.8172 | Time: 1120.2s
+Epoch 09/15 | Train Loss: 0.8064 | Val Loss: 0.9330 | Macro-AUROC: 0.8162 | Time: 1889.1s
+Epoch 10/15 | Train Loss: 0.7907 | Val Loss: 0.9590 | Macro-AUROC: 0.8161 | Time: 1371.3s
+Epoch 11/15 | Train Loss: 0.7735 | Val Loss: 0.9590 | Macro-AUROC: 0.8168 | Time: 1233.1s
+[Train] Early stopping triggered at epoch 11 (No improvement for 4 epochs)
+[Train] Training completed! Best Macro-AUROC: 0.8210
+[Train] Artifacts written to: E:\AURA\aura-main\aura\artifacts\retrain_v2

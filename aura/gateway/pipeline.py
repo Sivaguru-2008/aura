@@ -11,9 +11,10 @@ from __future__ import annotations
 import numpy as np
 
 from common import eventbus as ev
+from common.config import get_settings
 from common.eventbus import EventBus
 from common.mathx import entropy, softmax
-from schemas.clinical import Diagnosis
+from schemas.clinical import DIAGNOSES, Diagnosis
 from schemas.contracts import (
     CaseBundle,
     CaseState,
@@ -35,7 +36,8 @@ from schemas.clinical import Finding
 class Pipeline:
     """Holds one instance of each engine (loaded models) and runs cases through them."""
 
-    def __init__(self, bus: EventBus | None = None, memory: MemoryEngine | None = None):
+    def __init__(self, bus: EventBus | None = None, memory: MemoryEngine | None = None,
+                 store=None):
         self.bus = bus or EventBus()
         self.vision = VisionEngine.load()
         self.fusion = FusionEngine()
@@ -45,6 +47,23 @@ class Pipeline:
         self.reasoner = ClinicalReasoner()
         self.report = ReportEngine()
         self.memory = memory or MemoryEngine()
+        # Optional persistence handle — lets serving read the online Adaptive
+        # Conformal Inference threshold (Module 8) the feedback endpoint updates.
+        # None for standalone/test construction, so those paths stay unchanged.
+        self.store = store
+
+    def _aci_qhat(self) -> float | None:
+        """Current online ACI threshold, or None when ACI is off / no store / unset."""
+        s = get_settings()
+        if self.store is None or not getattr(s, "aci_enabled", False):
+            return None
+        try:
+            row = self.store.load_aci_state()
+            if not row:
+                return None
+            return float(row.get("qhat"))
+        except Exception:
+            return None
 
     def _priority(self, top: Diagnosis, safety) -> float:
         """Worklist priority: urgent + confident floats up; abstained flagged high too."""
@@ -71,28 +90,45 @@ class Pipeline:
         evidence = to_evidence_items(x, study.priors)
         await self.bus.publish(ev.FUSION_COMPLETED, study_id=study.study_id)
 
-        # 3) Safety (calibration, conformal, OOD, abstention)
-        safety = self.safety.assess(study.study_id, x, self.fusion.model)
+        # 3) Clinical reasoning — fuse the calibrated imaging posterior with
+        # labs/symptoms/history + guideline likelihood ratios, BEFORE safety, so the
+        # posterior that safety validates is the *final* one shown to the clinician
+        # (audit F10). With no multimodal evidence the reasoner is inert and the
+        # adjusted posterior equals the imaging posterior — imaging behaviour is
+        # unchanged. The conflict-guard-resolved logits feed this (audit F2).
+        resolved_logits = self.fusion.resolved_logits(x, fusion)
+        imaging_probs = self.safety.calibrated_posterior(resolved_logits)
+        imaging_prior = {d: float(imaging_probs[i]) for i, d in enumerate(DIAGNOSES)}
+        findings_map = {fs.finding: fs.probability for fs in vision.findings}
+        reasoning = self.reasoner.reason(
+            study.study_id, findings_map, imaging_prior, study.priors, study.multimodal
+        )
+        final_posterior = None
+        if reasoning.steps:                      # reasoner actually changed the call
+            final_posterior = np.array(
+                [reasoning.adjusted_posterior.get(d, 0.0) for d in DIAGNOSES], dtype=float
+            )
 
-        # 4) Explainability
+        # 4) Safety (calibration, conformal, OOD, abstention) on the FINAL posterior.
+        # Also folds in the online ACI threshold (audit F9).
+        safety = self.safety.assess(
+            study.study_id, x, self.fusion.model,
+            resolved_logits=resolved_logits, aci_qhat=self._aci_qhat(),
+            final_posterior=final_posterior,
+        )
+
+        # 5) Explainability
         explanation = self.explain.explain(
             study.study_id, self.vision, img, self.fusion.model, x, safety.top
         )
 
-        # 5) Missing-evidence recommendations
+        # 6) Missing-evidence recommendations
         recommendations = self.recommend.recommend(self.fusion.model, x)
 
-        # 6) Clinical reasoning — fuse imaging with labs/symptoms/history + guidelines.
-        findings_map = {fs.finding: fs.probability for fs in vision.findings}
-        imaging_prior = {p.diagnosis: p.probability for p in safety.predictions}
-        reasoning = self.reasoner.reason(
-            study.study_id, findings_map, imaging_prior, study.priors, study.multimodal
-        )
-
-        # 7) Report (grounded in findings, safety, recommendations, and reasoning)
+        # 8) Report (grounded in findings, safety, recommendations, and reasoning)
         report = self.report.compose(vision, safety, recommendations, reasoning)
 
-        # 7) Memory index (for similarity/priors)
+        # 9) Memory index (for similarity/priors)
         self.memory.index(case_id, vision.embedding, safety.top.value)
 
         state = CaseState.ABSTAINED if safety.abstained else CaseState.READY

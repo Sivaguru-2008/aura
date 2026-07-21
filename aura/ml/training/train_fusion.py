@@ -26,7 +26,11 @@ from services.safety.calibration import (
     fit_temperature,
     ood_stats,
 )
-from ml.training.dataset import build_evidence_dataset, make_splits
+from ml.training.dataset import (
+    build_evidence_dataset,
+    make_splits,
+    real_evidence_splits,
+)
 
 N_DX = len(DIAGNOSES)
 
@@ -125,11 +129,31 @@ def run(n_samples: int = 700) -> dict:
     ensure_dirs()
     s = get_settings()
     t0 = time.time()
-    print(f"[train] generating {n_samples} synthetic studies + vision features ...")
-    tr, cal, te = make_splits(n_samples, seed=s.seed)
-    Xtr, ytr = build_evidence_dataset(tr)
-    Xcal, ycal = build_evidence_dataset(cal)
-    Xte, yte = build_evidence_dataset(te)
+
+    # Prefer REAL MIMIC evidence (real DenseNet over real films + report diagnoses)
+    # so the fusion model trains on the exact distribution it serves (audit F1).
+    # Falls back to the synthetic world — still through the trained backbone — when
+    # the corpus is absent (CI / offline demo).
+    data_source = "synthetic"
+    real = None
+    if s.fusion_train_source == "mimic":
+        # Cap the common classes so the naturally-skewed real distribution still
+        # teaches fusion the rare-but-dangerous labels (pneumothorax, malignancy).
+        cap = max(60, s.fusion_train_n // N_DX)
+        print(f"[train] building fusion evidence from real MIMIC-CXR studies "
+              f"(target n={s.fusion_train_n}, per-class cap {cap}) ...")
+        real = real_evidence_splits(n=s.fusion_train_n, split="train", seed=s.seed,
+                                    per_class_cap=cap)
+    if real is not None:
+        Xtr, ytr, Xcal, ycal, Xte, yte = real
+        data_source = "mimic-cxr"
+        print(f"[train] real evidence set: train={len(ytr)} cal={len(ycal)} test={len(yte)}")
+    else:
+        print(f"[train] generating {n_samples} synthetic studies + vision features ...")
+        tr, cal, te = make_splits(n_samples, seed=s.seed)
+        Xtr, ytr = build_evidence_dataset(tr)
+        Xcal, ycal = build_evidence_dataset(cal)
+        Xte, yte = build_evidence_dataset(te)
 
     print("[train] fitting classical product-of-experts fusion ...")
     Wc, bc = train_classical(Xtr, ytr)
@@ -170,37 +194,46 @@ def run(n_samples: int = 700) -> dict:
     np.save(ARTIFACTS / "conformal_mondrian.npy", mq)
 
     # ---- Held-out metrics for the registry. ----
-    def metrics(logits, y):
-        P = np.array([softmax(r / T) for r in logits])
+    # Each backend is scored at *its own* fitted temperature. Applying the quantum
+    # backend's T to the classical logits (the previous behaviour) understated the
+    # classical calibration and produced the inflated headline ECE gap (audit F6).
+    T_q = fit_temperature(_quantum_logits(theta, Wq, bq, Xcal, s.n_qubits, s.n_layers), ycal)
+    T_c = fit_temperature(_classical_logits(Wc, bc, Xcal), ycal)
+
+    def metrics(logits, y, temperature):
+        P = np.array([softmax(r / temperature) for r in logits])
         acc = float((P.argmax(1) == y).mean())
         nll = float(-np.log(np.clip(P[np.arange(len(y)), y], 1e-12, 1)).mean())
         return {"accuracy": round(acc, 4), "nll": round(nll, 4),
-                "ece": round(expected_calibration_error(P, y), 4)}
+                "ece": round(expected_calibration_error(P, y), 4),
+                "temperature": round(float(temperature), 4)}
 
-    q_metrics = metrics(_quantum_logits(theta, Wq, bq, Xte, s.n_qubits, s.n_layers), yte)
-    c_metrics = metrics(_classical_logits(Wc, bc, Xte), yte)
+    q_metrics = metrics(_quantum_logits(theta, Wq, bq, Xte, s.n_qubits, s.n_layers), yte, T_q)
+    c_metrics = metrics(_classical_logits(Wc, bc, Xte), yte, T_c)
 
     registry = [
         {"service": "vision", "name": "vision-cxr-region-v1", "version": "1.0",
          "status": "active", "metrics": {"note": "region-feature detectors"}},
         {"service": "fusion", "name": "fusion-vqc-v1", "version": "1.0",
          "status": "active" if backend == "quantum" else "canary",
-         "backend": "quantum", "metrics": q_metrics},
+         "backend": "quantum", "metrics": q_metrics, "train_data": data_source},
         {"service": "fusion", "name": "fusion-poe-v1", "version": "1.0",
          "status": "active" if backend == "classical" else "canary",
-         "backend": "classical", "metrics": c_metrics},
+         "backend": "classical", "metrics": c_metrics, "train_data": data_source},
         {"service": "safety", "name": "safety-v1", "version": "1.0", "status": "active",
          "calibration": {"temperature": round(T, 4), "conformal_qhat": round(qhat, 4),
-                         "coverage": s.conformal_coverage, "ece": round(ece, 4)}},
+                         "coverage": s.conformal_coverage, "ece": round(ece, 4),
+                         "train_data": data_source}},
     ]
     (ARTIFACTS / "registry.json").write_text(json.dumps(registry, indent=2))
 
     dt = time.time() - t0
-    print(f"[train] done in {dt:.1f}s  |  temperature={T:.3f}  ECE={ece:.3f}  qhat={qhat:.3f}")
+    print(f"[train] done in {dt:.1f}s  |  source={data_source}  temperature={T:.3f}  "
+          f"ECE={ece:.3f}  qhat={qhat:.3f}")
     print(f"[train] quantum test  : {q_metrics}")
     print(f"[train] classical test: {c_metrics}")
     return {"quantum": q_metrics, "classical": c_metrics, "temperature": T,
-            "ece": ece, "qhat": qhat, "seconds": round(dt, 1)}
+            "ece": ece, "qhat": qhat, "seconds": round(dt, 1), "data_source": data_source}
 
 
 if __name__ == "__main__":

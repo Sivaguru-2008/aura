@@ -114,7 +114,9 @@ class Trainer:
         import torch
         if not (self.cfg.resume and self.last_path.exists()):
             return
-        s = torch.load(self.last_path, map_location=self.device)
+        # weights_only=False: restores optimizer/scheduler state from a checkpoint
+        # this process wrote (trusted, training-only resume — audit §11.5).
+        s = torch.load(self.last_path, map_location=self.device, weights_only=False)
         self.model.load_state_dict(s["model"])
         self.opt.load_state_dict(s["optimizer"])
         self.sched.load_state_dict(s["scheduler"])

@@ -1,0 +1,57 @@
+{
+  "run": "20260719T175647Z",
+  "seed": 7,
+  "coverage": 0.9,
+  "stages": {},
+  "errors": {},
+  "n_eval": 100,
+  "temperatures": {
+    "quantum_shipped": 0.7724745698147952,
+    "classical_fair": 0.3082890429262826
+  },
+  "backends": [
+    "quantum",
+    "classical_raw",
+    "classical_fair",
+    "ensemble",
+    "learnable"
+  ],
+  "outputs": {
+    "csv": [
+      "confidence_scores.csv",
+      "ground_truth.csv",
+      "predictions.csv"
+    ],
+    "plots": [
+      "bootstrap_accuracy_diff.pdf",
+      "bootstrap_accuracy_diff.png",
+      "confusion_classical_fair.pdf",
+      "confusion_classical_fair.png",
+      "confusion_quantum.pdf",
+      "confusion_quantum.png",
+      "pr_curves.pdf",
+      "pr_curves.png",
+      "prediction_set_size.pdf",
+      "prediction_set_size.png",
+      "reliability_diagram.pdf",
+      "reliability_diagram.png",
+      "roc_curves.pdf",
+      "roc_curves.png"
+    ],
+    "metrics": [
+      "bootstrap_acc_classical_fair.npy",
+      "bootstrap_acc_classical_raw.npy",
+      "bootstrap_acc_ensemble.npy",
+      "bootstrap_acc_learnable.npy",
+      "bootstrap_acc_quantum.npy",
+      "claim_verdicts.json",
+      "metrics.json",
+      "proba_classical_fair.npy",
+      "proba_classical_raw.npy",
+      "proba_ensemble.npy",
+      "proba_learnable.npy",
+      "proba_quantum.npy",
+      "statistics.json"
+    ]
+  }
+}

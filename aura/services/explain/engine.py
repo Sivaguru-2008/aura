@@ -3,12 +3,11 @@ from __future__ import annotations
 
 import numpy as np
 
+from common.anatomy import IMG, resize_to as _resize_to
 from common.mathx import softmax
 from schemas.clinical import DIAGNOSES, Diagnosis
 from schemas.contracts import Explanation
 from services.fusion.evidence import EVIDENCE_CHANNELS
-from services.vision.features import _resize_to
-from ml.data import IMG
 
 
 class ExplainEngine:

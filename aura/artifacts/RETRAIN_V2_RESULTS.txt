@@ -1,0 +1,5 @@
+AURA retrain_v2 RESULTS  (model epoch 7, n=2099 per-study val)
+  macro AUROC 0.8210 (CI 0.8083-0.8332)  vs baseline 0.6665  [IMPROVED]
+  macro AUPRC 0.3576 vs 0.2140 | F1 0.3679 vs 0.2549
+  ECE raw 0.1999 vs 0.3370 | ECE+Platt 0.0337 vs 0.0363
+  open the HTML report:  E:\AURA\aura-main\aura\artifacts\evaluation_retrain_v2\index.html
