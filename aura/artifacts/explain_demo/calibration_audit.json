@@ -1,0 +1,83 @@
+{
+  "n_val": 2099,
+  "macro_ece": {
+    "raw": 0.1838,
+    "served": 0.0952,
+    "full": 0.0181
+  },
+  "per_finding": {
+    "opacity": {
+      "n_pos": 594,
+      "ece_raw": 0.1651,
+      "ece_served": 0.1298,
+      "ece_full": 0.031,
+      "served_threshold": 0.1376,
+      "served_fires": 887,
+      "full_threshold": 0.2743,
+      "full_fires": 887
+    },
+    "consolidation": {
+      "n_pos": 118,
+      "ece_raw": 0.309,
+      "ece_served": 0.0469,
+      "ece_full": 0.0164,
+      "served_threshold": 0.1492,
+      "served_fires": 161,
+      "full_threshold": 0.1985,
+      "full_fires": 136
+    },
+    "pleural_effusion": {
+      "n_pos": 524,
+      "ece_raw": 0.1325,
+      "ece_served": 0.2636,
+      "ece_full": 0.0283,
+      "served_threshold": 0.0,
+      "served_fires": 2099,
+      "full_threshold": 0.2854,
+      "full_fires": 751
+    },
+    "cardiomegaly": {
+      "n_pos": 415,
+      "ece_raw": 0.1587,
+      "ece_served": 0.0928,
+      "ece_full": 0.0218,
+      "served_threshold": 0.2573,
+      "served_fires": 423,
+      "full_threshold": 0.22,
+      "full_fires": 688
+    },
+    "nodule": {
+      "n_pos": 98,
+      "ece_raw": 0.2058,
+      "ece_served": 0.0453,
+      "ece_full": 0.0087,
+      "served_threshold": 0.5,
+      "served_fires": 3,
+      "full_threshold": 0.1495,
+      "full_fires": 114
+    },
+    "pneumothorax": {
+      "n_pos": 65,
+      "ece_raw": 0.1481,
+      "ece_served": 0.0309,
+      "ece_full": 0.0048,
+      "served_threshold": 0.5,
+      "served_fires": 0,
+      "full_threshold": 0.1692,
+      "full_fires": 68
+    },
+    "hyperinflation": {
+      "n_pos": 120,
+      "ece_raw": 0.1675,
+      "ece_served": 0.0571,
+      "ece_full": 0.0159,
+      "served_threshold": 0.5,
+      "served_fires": 0,
+      "full_threshold": 0.1351,
+      "full_fires": 243
+    }
+  },
+  "served_calibration_n_fit": 16,
+  "full_calibration_n_fit": 2099,
+  "note": "BEFORE/AFTER of fixing the calibration-clobber bug. served = the OLD degenerate fit (n=16, written by run_calibration(limit=3) in tests, backup vision_serving_calibration.n16.bak.json); full = the CURRENT served calibration (validated full-val fit, n=2099). Root cause fixed in ml/evaluation/vision_calibration.py: production serving write is now gated to canonical runs."
+}

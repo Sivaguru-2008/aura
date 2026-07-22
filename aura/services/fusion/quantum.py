@@ -69,3 +69,17 @@ class QuantumFusion:
     def logits(self, x: np.ndarray) -> np.ndarray:
         """Raw logits — used by the safety engine for OOD energy scoring."""
         return self.W @ self._expectations(x) + self.b
+
+    def probs(self, x: np.ndarray) -> np.ndarray:
+        """Get the joint probability distribution of the n_qubits measurement basis states."""
+        if not hasattr(self, "_probs_circuit"):
+            from services.fusion.device import make_probs_qnode
+            self._probs_circuit = make_probs_qnode(self.n_qubits, self.n_layers, interface="numpy")
+        p = self._probs_circuit(x, self.theta)
+        return np.asarray(p, dtype=float)
+
+    def measurement_entropy(self, x: np.ndarray) -> float:
+        """Calculate the Shannon entropy (in bits) of the joint qubit measurement distribution."""
+        p = self.probs(x)
+        # standard shannon entropy with numerical stabilizer
+        return float(-np.sum(p * np.log2(p + 1e-15)))

@@ -1,0 +1,17 @@
+<!doctype html><meta charset=utf-8><title>AURA v3 (v2-labels) results</title>
+<style>body{font:15px/1.5 system-ui,Segoe UI,Arial;max-width:900px;margin:24px auto;padding:0 16px}
+table{border-collapse:collapse;width:100%;margin:.5em 0}td,th{border:1px solid #ddd;padding:6px 10px;text-align:center}
+th{background:#f3f4f6}.b{display:inline-block;padding:4px 12px;border-radius:6px;background:#16a34a;color:#fff;font-weight:600}
+.note{background:#fef9c3;padding:10px 14px;border-radius:8px}</style>
+<h1>AURA CXR — run A: v3 trained on improved (v2) labels</h1>
+<p>v3 epoch 6, evaluated on 2099 val images. <span class="b">no change</span></p>
+<p><b>Macro AUROC (7):</b> retrain_v2 0.8372 → <b>retrain_v3 0.8365</b> (-0.0007) on v2-labels.
+v3 calibrated ECE 0.031.</p>
+<div class="note">Both models scored on the SAME v2 labels (the improved ground truth). v3 was trained on v2,
+retrain_v2 on v1 — so v3 has a mild home-advantage; the cross-label table below controls for it.</div>
+<h2>Per-finding AUROC on v2 labels</h2>
+<table><tr><th style='text-align:left'>finding</th><th>n+</th><th>retrain_v2</th><th>retrain_v3</th><th>Δ</th></tr><tr><td style='text-align:left'>opacity</td><td>594</td><td>0.752</td><td><b>0.754</b></td><td style='color:#666'>+0.002</td></tr><tr><td style='text-align:left'>consolidation</td><td>118</td><td>0.815</td><td><b>0.822</b></td><td style='color:#16a34a'>+0.008</td></tr><tr><td style='text-align:left'>pleural_effusion</td><td>524</td><td>0.902</td><td><b>0.899</b></td><td style='color:#dc2626'>-0.003</td></tr><tr><td style='text-align:left'>cardiomegaly</td><td>415</td><td>0.877</td><td><b>0.872</b></td><td style='color:#dc2626'>-0.005</td></tr><tr><td style='text-align:left'>nodule</td><td>98</td><td>0.745</td><td><b>0.743</b></td><td style='color:#666'>-0.002</td></tr><tr><td style='text-align:left'>pneumothorax</td><td>65</td><td>0.858</td><td><b>0.853</b></td><td style='color:#dc2626'>-0.005</td></tr><tr><td style='text-align:left'>hyperinflation</td><td>120</td><td>0.912</td><td><b>0.912</b></td><td style='color:#666'>+0.001</td></tr></table>
+<h2>Cross-label robustness (macro AUROC 7)</h2>
+<table><tr><th>model</th><th>on v1-labels</th><th>on v2-labels</th></tr>
+<tr><td>retrain_v2 (v1-trained)</td><td>0.8210</td><td>0.8372</td></tr>
+<tr><td><b>retrain_v3 (v2-trained)</b></td><td>0.8213</td><td><b>0.8365</b></td></tr></table>

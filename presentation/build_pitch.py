@@ -550,7 +550,7 @@ chip(s, 5.05, 5.50, 2.15, 0.38, "LIVE DEMO ON REQUEST", fill=PALE, lncol=TEAL,
      tcol=TEAL, size=9)
 txt(s, 7.35, 5.55, 2.2, 0.28, "3 commands · 2 minutes · offline", size=8.5,
     color=MUTED, italic=True, anchor=MSO_ANCHOR.MIDDLE)
-cite(s, "Quantum claims graded [Measured / Grounded / Vision] in docs/QUANTUM_STACK.md - nothing on these slides is tier-Vision.", y=6.14)
+cite(s, "Quantum claims graded [Measured / Grounded / Vision] in docs/ARCHITECTURE.md - nothing on these slides is tier-Vision.", y=6.14)
 notes(s, "IMPLEMENTATION & PROOF  ·  1:00\n"
          "The plan we executed: PRD and typed contracts first - six hours - "
          "then the engines, then the recommender, reports and dashboard, then "

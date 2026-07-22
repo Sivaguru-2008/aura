@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AURA — the copilot that knows what it doesn't know</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='6' fill='%234be1c3'/%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%234be1c3' stroke-opacity='.35' stroke-width='2'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="/static/css/main.css?v=3">
+<link rel="stylesheet" href="/static/css/main.css?v=5">
 </head>
 <body data-view="landing">
 
@@ -71,32 +71,33 @@
   <!-- BENCHMARK — scientific instrumentation -->
   <section id="benchmark" data-scene="benchmark" data-hue="258">
     <header class="scene-head">
-      <p class="eyebrow">QUANTUM FUSION VS CLASSICAL BASELINE</p>
+      <p class="eyebrow">AURA VS PUBLISHED DENSENET-121 · MIMIC-CXR</p>
       <h2>Measured, not claimed.</h2>
-      <p class="scene-sub">Every number below is read live from this machine&rsquo;s benchmark artifact — not a slide.</p>
+      <p class="scene-sub">Every number below is read live from this machine&rsquo;s evaluation artifact
+        (<code>aura_cli evaluate</code>) — not a slide, not a placeholder.</p>
     </header>
     <div class="bench-rig reveal" id="bench-rig">
       <div class="bench-col" data-side="quantum">
-        <div class="bench-col-head mono"><i class="q-dot"></i>QUANTUM · 8 QUBITS</div>
+        <div class="bench-col-head mono"><i class="q-dot"></i>AURA · DENSENET-121 (MEASURED)</div>
         <div class="gauge" id="gauge-q"></div>
         <div class="meters" id="meters-q"></div>
       </div>
       <div class="bench-scope">
-        <div class="scope-title mono">RELIABILITY SCOPE — CONFIDENCE vs REALITY</div>
-        <canvas id="scope"></canvas>
+        <div class="scope-title mono">MEASURED ON MIMIC-CXR VALIDATION</div>
+        <canvas id="scope" hidden></canvas>
         <div class="scope-legend mono">
-          <span><i class="lg q"></i>quantum</span>
-          <span><i class="lg c"></i>classical</span>
-          <span><i class="lg d"></i>perfect calibration</span>
+          <span><i class="lg q"></i>AURA (measured)</span>
+          <span><i class="lg c"></i>published baseline</span>
         </div>
       </div>
       <div class="bench-col" data-side="classical">
-        <div class="bench-col-head mono"><i class="c-dot"></i>CLASSICAL · BAYES POE</div>
+        <div class="bench-col-head mono"><i class="c-dot"></i>PUBLISHED DENSENET-121 · MIMIC</div>
         <div class="gauge" id="gauge-c"></div>
         <div class="meters" id="meters-c"></div>
       </div>
     </div>
     <p class="bench-verdict reveal" id="bench-verdict"></p>
+    <div class="provenance reveal" id="label-provenance" hidden></div>
   </section>
 
   <!-- SAFETY — tension -->
@@ -113,7 +114,7 @@
           <div class="safety-readout">
             <div class="conf-block">
               <span class="lbl mono">CALIBRATED CONFIDENCE</span>
-              <span class="conf-num mono" id="conf-num">0.93</span>
+              <span class="conf-num mono" id="conf-num">—</span>
             </div>
             <div class="conf-block">
               <span class="lbl mono">90% CONFIDENCE SET</span>
@@ -169,12 +170,10 @@
     <aside class="c-rail">
       <div class="rail-head mono"><span>WORKLIST</span><span id="rail-count"></span></div>
       <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
-        <button id="btn-sim" class="btn-core slim"><span>+ simulate live study</span></button>
-        <button id="btn-upload" class="btn-core slim"><span>+ upload custom image</span></button>
+        <button id="btn-upload" class="btn-core slim"><span>+ upload chest X-ray</span></button>
         <button id="btn-history" class="btn-ghost" style="border-radius: 8px; font-family: var(--mono); font-size: 12.5px; padding: 8px 18px;">📂 View History & Reports</button>
       </div>
       <input type="file" id="input-file" accept=".png,.jpg,.jpeg,.dcm,.dicom" style="display: none;">
-      <div id="sim-picker" hidden></div>
       <ol id="worklist"></ol>
     </aside>
 
@@ -252,9 +251,9 @@
 
 <div id="toast" class="mono" hidden></div>
 
-<script src="/static/js/fx.js?v=3"></script>
-<script src="/static/js/landing.js?v=3"></script>
-<script src="/static/js/console.js?v=3"></script>
-<script src="/static/js/main.js?v=3"></script>
+<script src="/static/js/fx.js?v=5"></script>
+<script src="/static/js/landing.js?v=5"></script>
+<script src="/static/js/console.js?v=5"></script>
+<script src="/static/js/main.js?v=5"></script>
 </body>
 </html>

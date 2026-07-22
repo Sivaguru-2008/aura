@@ -9,7 +9,7 @@
    route the 1024-d DenseNet embedding through this projection. It is retained as
    the designed extension point for learning the vision→qubit bottleneck jointly
    with the VQC (pair with ``device.make_reuploading_qnode``). Do not document it
-   as active. See ``docs/ARCHITECTURE_REFACTOR.md`` and audit §3.5 / §11.1.
+   as active. See ``docs/ARCHITECTURE.md`` and audit §3.5 / §11.1.
 
 Why this exists
 ---------------

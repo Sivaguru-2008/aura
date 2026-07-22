@@ -110,6 +110,28 @@ def fit_platt_binary(logits_c: np.ndarray, y_c: np.ndarray) -> tuple[float, floa
     return a, b
 
 
+def _best_f1_threshold(p: np.ndarray, y: np.ndarray) -> float:
+    """Operating point that maximises F1 on calibrated probabilities.
+
+    A fixed 0.5 cutoff is wrong once probs are Platt-calibrated to the true 2–18%
+    prevalence — most findings would never fire. This picks the per-finding
+    threshold that best trades precision against recall on the calibration data.
+    """
+    y = np.asarray(y, int)
+    if y.sum() == 0 or y.sum() == len(y):
+        return 0.5
+    best_t, best_f1 = 0.5, -1.0
+    for t in np.unique(np.round(p, 4)):
+        pred = (p >= t).astype(int)
+        tp = int(((pred == 1) & (y == 1)).sum())
+        fp = int(((pred == 1) & (y == 0)).sum())
+        fn = int(((pred == 0) & (y == 1)).sum())
+        f1 = 2 * tp / (2 * tp + fp + fn + 1e-9)
+        if f1 > best_f1:
+            best_f1, best_t = f1, float(t)
+    return best_t
+
+
 def temperature_scaling(logits: np.ndarray, Y: np.ndarray) -> dict:
     """Fit per-finding Platt scaling (a, b) on a calibration half, evaluate on the
     other, and also record the temperature-only fit for reference.
@@ -123,7 +145,7 @@ def temperature_scaling(logits: np.ndarray, Y: np.ndarray) -> dict:
     idx = rng.permutation(n)
     cut = n // 2
     cal, test = idx[:cut], idx[cut:]
-    out = {"per_finding": {}, "temperatures": {}, "platt": {}}
+    out = {"per_finding": {}, "temperatures": {}, "platt": {}, "thresholds": {}}
     ece_before, ece_after = [], []
     for c, name in enumerate(FINDING_NAMES):
         T = fit_temperature_binary(logits[cal, c], Y[cal, c])
@@ -132,11 +154,14 @@ def temperature_scaling(logits: np.ndarray, Y: np.ndarray) -> dict:
         p_after = _sigmoid(a * logits[test, c] + b)
         eb = binary_ece(p_before, Y[test, c])
         ea = binary_ece(p_after, Y[test, c])
+        # F1-optimal operating point on the calibration half's calibrated probs.
+        thr = _best_f1_threshold(_sigmoid(a * logits[cal, c] + b), Y[cal, c])
         out["temperatures"][name] = round(T, 4)
         out["platt"][name] = {"a": round(a, 4), "b": round(b, 4)}
+        out["thresholds"][name] = round(thr, 4)
         out["per_finding"][name] = {"T": round(T, 4), "platt_a": round(a, 4),
-                                    "platt_b": round(b, 4), "ece_before": round(eb, 4),
-                                    "ece_after": round(ea, 4)}
+                                    "platt_b": round(b, 4), "threshold": round(thr, 4),
+                                    "ece_before": round(eb, 4), "ece_after": round(ea, 4)}
         ece_before.append(eb); ece_after.append(ea)
     out["mean_ece_before"] = round(float(np.mean(ece_before)), 4)
     out["mean_ece_after"] = round(float(np.mean(ece_after)), 4)
@@ -327,7 +352,17 @@ def _plots(logits, probs, Y, temp, out_dir: Path) -> dict:
 # --------------------------------------------------------------------------- #
 def run_calibration(limit: Optional[int] = None, make_plots: bool = True,
                     mc_passes: int = 20, out_dir: Optional[Path] = None,
-                    model_path: Optional[str] = None) -> dict:
+                    model_path: Optional[str] = None,
+                    write_serving: Optional[bool] = None) -> dict:
+    # Only a *canonical* run (no explicit out_dir) may overwrite the PRODUCTION
+    # serving calibration. A caller that redirects out_dir (tests, smoke runs,
+    # experiments) gets its serving file written into that dir instead — otherwise
+    # a limit=3 smoke fit silently clobbers the served calibration with a degenerate
+    # 16-image operating point (which is exactly what had happened). `write_serving`
+    # overrides this heuristic explicitly.
+    is_canonical = out_dir is None
+    if write_serving is None:
+        write_serving = is_canonical
     out_dir = Path(out_dir) if out_dir else CAL_DIR
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -345,7 +380,10 @@ def run_calibration(limit: Optional[int] = None, make_plots: bool = True,
     plots = _plots(logits, probs, Y, temp, out_dir / "plots") if make_plots else {}
 
     # Emit the compact serving calibration the vision backbone applies at inference.
-    _write_serving_calibration(temp, n_images=int(len(Y)))
+    # Always writes a copy into out_dir; only touches the PRODUCTION path on a
+    # canonical run (see write_serving gate above).
+    _write_serving_calibration(temp, n_images=int(len(Y)), out_dir=out_dir,
+                               write_production=write_serving)
 
     report = {
         "n_images": int(len(Y)),
@@ -364,21 +402,34 @@ def run_calibration(limit: Optional[int] = None, make_plots: bool = True,
     return report
 
 
-def _write_serving_calibration(temp: dict, n_images: int) -> None:
+def _write_serving_calibration(temp: dict, n_images: int, out_dir: Optional[Path] = None,
+                               write_production: bool = True) -> None:
     """Persist per-finding Platt (a, b) — the calibration VisionModel applies —
-    plus the temperature fit for reference, in the compact serving form."""
+    plus the temperature fit for reference, in the compact serving form.
+
+    Always writes a copy into ``out_dir`` (when given). Only overwrites the
+    PRODUCTION ``SERVING_CAL_PATH`` when ``write_production`` is True, so a redirected
+    (test/smoke) run cannot clobber the served calibration."""
     payload = {
         "method": "per_finding_platt",
         "n_images": n_images,
         "per_finding_platt": {n: {"a": float(temp["platt"][n]["a"]),
                                   "b": float(temp["platt"][n]["b"])} for n in FINDING_NAMES},
         "per_finding_temperature": {n: float(temp["temperatures"][n]) for n in FINDING_NAMES},
+        "per_finding_threshold": {n: float(temp["thresholds"][n]) for n in FINDING_NAMES},
         "mean_ece_before": temp["mean_ece_before"],
         "mean_ece_after": temp["mean_ece_after"],
     }
-    SERVING_CAL_PATH.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    print(f"[calibrate] serving calibration written -> {SERVING_CAL_PATH.name} "
-          f"(mean ECE {temp['mean_ece_before']} -> {temp['mean_ece_after']})")
+    text = json.dumps(payload, indent=2)
+    if out_dir is not None:
+        (Path(out_dir) / SERVING_CAL_PATH.name).write_text(text, encoding="utf-8")
+    if write_production:
+        SERVING_CAL_PATH.write_text(text, encoding="utf-8")
+        print(f"[calibrate] serving calibration written -> {SERVING_CAL_PATH.name} "
+              f"(n={n_images}, mean ECE {temp['mean_ece_before']} -> {temp['mean_ece_after']})")
+    else:
+        print(f"[calibrate] serving calibration NOT written to production "
+              f"(redirected run, n={n_images}); copy in {out_dir}")
 
 
 def _summary_md(rep: dict, path: Path) -> None:

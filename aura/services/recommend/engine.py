@@ -100,6 +100,12 @@ class RecommendEngine:
         return float((p * _SEV).sum() - np.max(p * _SEV))
 
     def _entropy(self, fusion_model, x: np.ndarray) -> float:
+        backend = getattr(fusion_model, "backend", None)
+        model = getattr(fusion_model, "model", fusion_model)
+        if backend == "quantum" and hasattr(model, "measurement_entropy"):
+            return model.measurement_entropy(x)
+        if hasattr(fusion_model, "measurement_entropy"):
+            return fusion_model.measurement_entropy(x)
         return entropy(self._posterior(fusion_model, x))
 
     def _resolvable(self, x: np.ndarray, channels: list[str]) -> list[int]:
@@ -107,7 +113,7 @@ class RecommendEngine:
         return [j for j in idx if 0.08 < x[j] < 0.92]
 
     def _expected_over_outcomes(self, fusion_model, x, idx, fn):
-        """E over 2^|idx| resolved outcomes of fn(posterior(resolved x))."""
+        """E over 2^|idx| resolved outcomes of fn(resolved_x)."""
         total = 0.0
         for outcome in itertools.product([0.0, 1.0], repeat=len(idx)):
             w = 1.0
@@ -118,7 +124,7 @@ class RecommendEngine:
                 xp[j] = val
             if w <= 0:
                 continue
-            total += w * fn(self._posterior(fusion_model, xp))
+            total += w * fn(xp)
         return total
 
     def _evoi_and_eig(self, fusion_model, x, channels):
@@ -127,9 +133,16 @@ class RecommendEngine:
         if not idx:
             return 0.0, 0.0
         p0 = self._posterior(fusion_model, x)
-        r0, h0 = self._bayes_risk(p0), entropy(p0)
-        exp_risk = self._expected_over_outcomes(fusion_model, x, idx, self._bayes_risk)
-        exp_h = self._expected_over_outcomes(fusion_model, x, idx, entropy)
+        r0 = self._bayes_risk(p0)
+        h0 = self._entropy(fusion_model, x)
+        exp_risk = self._expected_over_outcomes(
+            fusion_model, x, idx,
+            lambda xp: self._bayes_risk(self._posterior(fusion_model, xp))
+        )
+        exp_h = self._expected_over_outcomes(
+            fusion_model, x, idx,
+            lambda xp: self._entropy(fusion_model, xp)
+        )
         return max(0.0, r0 - exp_risk), max(0.0, h0 - exp_h)
 
     # ---- panel selection -------------------------------------------------- #

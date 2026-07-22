@@ -55,18 +55,34 @@ class VisionEngine:
 
     @classmethod
     def load(cls, path: Path | None = None) -> "VisionEngine":
-        # Check if our trained production model exists. If so, load it automatically.
+        # PRODUCTION CONTRACT: serve the trained DenseNet-121 at artifacts/best_model.pt
+        # and nothing else. We never substitute another model or fall back to heuristic
+        # feature scores — a missing/broken checkpoint is a hard error, not a silent
+        # downgrade (a fabricated finding on a real patient is worse than an outage).
+        # Set AURA_ALLOW_FALLBACK_VISION=1 for dev/test only.
+        import os
+
         from common.config import ARTIFACTS
         best_model_path = ARTIFACTS / "best_model.pt"
-        backbone = None
+        allow_fallback = os.environ.get("AURA_ALLOW_FALLBACK_VISION", "0") == "1"
+        backbone, load_err = None, None
         if best_model_path.exists():
             try:
                 from ml.vision_cxr.inference import VisionModel
                 backbone = VisionModel(str(best_model_path))
             except Exception as e:
+                load_err = e
                 print(f"[VisionEngine] failed to load production backbone from {best_model_path}: {e}")
-        
+        else:
+            load_err = FileNotFoundError(f"missing trained model: {best_model_path}")
+
         if backbone is None:
+            if not allow_fallback:
+                raise RuntimeError(
+                    f"AURA requires the trained model at {best_model_path} and refuses to "
+                    f"serve substitute/heuristic outputs ({load_err}). Train it "
+                    f"(`aura_cli train-cnn`) or set AURA_ALLOW_FALLBACK_VISION=1 for dev only."
+                )
             backbone = cls._maybe_backbone()
 
         path = path or (ARTIFACTS / "vision.npz")
@@ -116,7 +132,12 @@ class VisionEngine:
         if self.backbone is None:
             return self._feature_scores(img)
         cnn = self.backbone.score_findings(img)
-        scores = self._feature_scores(img)          # baseline for uncovered findings
+        # The production DenseNet-121 covers all findings: return its outputs verbatim,
+        # with NO heuristic feature scores mixed in. Feature-fill is only for a partial
+        # backbone (e.g. torchxrayvision, which lacks hyperinflation) in dev mode.
+        if all(f in cnn for f in Finding):
+            return {f: float(cnn[f]) for f in Finding}
+        scores = self._feature_scores(img)          # baseline for uncovered findings only
         scores.update(cnn)                            # CNN wins where it has a label
         return {f: scores[f] for f in Finding}
 

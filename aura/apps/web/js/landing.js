@@ -133,11 +133,10 @@ window.LANDING = (() => {
     });
   }
 
-  /* ================= BENCHMARK — scientific instrumentation ================= */
-  const FALLBACK_BENCH = {
-    quantum:   { accuracy: 0.96, nll: 0.0925, ece: 0.02,   brier: 0.0597 },
-    classical: { accuracy: 0.93, nll: 0.4877, ece: 0.2755, brier: 0.2035 },
-  };
+  /* ================= BENCHMARK — REAL measured evaluation only ================= */
+  // No fabricated numbers. Everything shown is read from the model card, which is
+  // produced by `aura_cli evaluate` on the served model. Absent -> "—", never a fake.
+  const PUBLISHED_DENSENET_MIMIC = 0.83;   // literature DenseNet-121 on MIMIC-CXR (expert labels)
 
   function gaugeSVG(el, color) {
     el.innerHTML = `<svg viewBox="0 0 190 120">
@@ -146,8 +145,8 @@ window.LANDING = (() => {
       <path class="arc-val" d="M 20 100 A 75 75 0 0 1 170 100" stroke="${color}"/>
       <line class="needle" x1="95" y1="100" x2="95" y2="34" transform="rotate(-90 95 100)"/>
       <circle cx="95" cy="100" r="4" fill="${color}"/>
-      <text class="g-num" x="95" y="88">0%</text>
-      <text class="g-lbl" x="95" y="116">ACCURACY</text>
+      <text class="g-num" x="95" y="88">—</text>
+      <text class="g-lbl" x="95" y="116">AUROC</text>
     </svg>`;
     const ticks = el.querySelector(".ticks");
     for (let i = 0; i <= 10; i++) {
@@ -166,7 +165,7 @@ window.LANDING = (() => {
       set(v) {
         arc.style.strokeDashoffset = L * (1 - v);
         el.querySelector(".needle").setAttribute("transform", `rotate(${-90 + v * 180} 95 100)`);
-        countTo(el.querySelector(".g-num"), v * 100, { dur: 1600, fmt: (x) => x.toFixed(1) + "%" });
+        countTo(el.querySelector(".g-num"), v, { dur: 1600, fmt: (x) => x.toFixed(3) });
       },
     };
   }
@@ -251,41 +250,101 @@ window.LANDING = (() => {
   async function benchmark() {
     const rig = document.getElementById("bench-rig");
     if (!rig) return;
-    let bench = FALLBACK_BENCH;
-    try {
-      const d = await api("/v1/admin/safety");
-      if (d.benchmark && d.benchmark.quantum) bench = d.benchmark;
-    } catch { /* offline — artifact values */ }
 
-    const gq = gaugeSVG(document.getElementById("gauge-q"), "#8b7cf7");
-    const gc = gaugeSVG(document.getElementById("gauge-c"), "#ff5d5d");
-    const q = bench.quantum, c = bench.classical;
-    const maxNll = Math.max(q.nll, c.nll) * 1.15, maxEce = Math.max(q.ece, c.ece) * 1.15, maxBr = Math.max(q.brier, c.brier) * 1.15;
-    document.getElementById("meters-q").innerHTML =
-      meterRow("ECE · calibration error", q.ece, maxEce, true) +
-      meterRow("NLL · surprise", q.nll, maxNll, true) +
-      meterRow("BRIER", q.brier, maxBr, true);
-    document.getElementById("meters-c").innerHTML =
-      meterRow("ECE · calibration error", c.ece, maxEce, false) +
-      meterRow("NLL · surprise", c.nll, maxNll, false) +
-      meterRow("BRIER", c.brier, maxBr, false);
-    const ratio = c.ece / Math.max(q.ece, 1e-6);
-    document.getElementById("bench-verdict").innerHTML =
-      `Same evidence. Same conformal guarantee. The quantum posterior is <b>${ratio.toFixed(1)}× better calibrated</b> — when AURA says ${Math.round(q.accuracy * 100)}%, it means ${Math.round(q.accuracy * 100)}%.`;
+    const gq = gaugeSVG(document.getElementById("gauge-q"), "#4be1c3");
+    const gc = gaugeSVG(document.getElementById("gauge-c"), "#8b7cf7");
+    const verdict = document.getElementById("bench-verdict");
 
-    // fire when instrumentation scrolls into view
+    let card = null;
+    try { card = await api("/v1/model-card"); } catch { /* endpoint absent -> no fake data */ }
+    const ev = card && card.evaluation;
+
+    // No evaluation on record → show nothing fabricated.
+    if (!ev || ev.macro_auroc == null) {
+      verdict.innerHTML =
+        "No evaluation on record for the served model. Run <code>aura_cli evaluate</code> " +
+        "to measure it — this page never shows a number the model has not actually produced.";
+      return;
+    }
+
+    const aura = +ev.macro_auroc;
+    const perf = ev.per_label_auroc || {};
+    const ci = ev.macro_auroc_ci95;
+    const ece = (card.calibration && card.calibration.mean_ece_after != null)
+      ? +card.calibration.mean_ece_after : (ev.macro_ece != null ? +ev.macro_ece : null);
+    const pr = (k) => (perf[k] != null ? +perf[k] : 0);
+
+    const labels = card.labels || {};
+    const getLabel = (k) => labels[k] || k;
+    const qKeys = ["pleural_effusion", "cardiomegaly", "hyperinflation"];
+    const cKeys = ["pneumothorax", "consolidation", "nodule"];
+
+    document.getElementById("meters-q").innerHTML = qKeys
+      .map((k) => meterRow(getLabel(k), pr(k), 1, true))
+      .join("");
+    document.getElementById("meters-c").innerHTML = cKeys
+      .map((k) => meterRow(getLabel(k), pr(k), 1, true))
+      .join("");
+
+    const ciTxt = (ci && ci.length === 2) ? ` (95% CI ${ci[0]}–${ci[1]})` : "";
+    verdict.innerHTML =
+      `Measured on ${card.dataset || "MIMIC-CXR validation"} (n=${ev.n_images}): ` +
+      `macro AUROC <b>${aura.toFixed(3)}</b>${ciTxt}` +
+      (ece != null ? `, calibrated ECE <b>${ece.toFixed(3)}</b>` : "") +
+      `. Published DenseNet-121 on MIMIC ≈ ${PUBLISHED_DENSENET_MIMIC}. ` +
+      `Every number is from <code>aura_cli evaluate</code> — not a claim.`;
+
+    // ---- Known limitations: label provenance + independent cross-check ----
+    // The AUROC is measured against a rule-based report labeler, so it is only as
+    // trustworthy as those labels. Show, from real artifacts, how faithful they are.
+    const prov = card.label_provenance;
+    const panel = document.getElementById("label-provenance");
+    if (panel && prov) {
+      const f2 = (x) => (x == null ? "—" : (+x).toFixed(2));
+      const lg = prov.labeler_vs_gold || {};
+      const xm = prov.cross_model_check || {};
+      const pf = lg.per_finding || {}, xpf = xm.per_finding || {};
+      const rows = Object.keys(pf).map((k) => {
+        const v = pf[k] || {}, xv = xpf[k] || {};
+        return `<tr><td>${getLabel(k)}</td><td>${f2(v.precision)}</td><td>${f2(v.recall)}</td>` +
+               `<td>${f2(v.kappa)}</td><td>${v.gold_positives ?? "—"}</td><td>${f2(xv.cross_auroc)}</td></tr>`;
+      }).join("");
+      panel.hidden = false;
+      panel.innerHTML =
+        `<div class="prov-head"><span class="prov-tag mono">KNOWN LIMITATION · LABEL PROVENANCE</span>` +
+        `<h3>The AUROC is scored against report-derived labels — here is how faithful they are.</h3></div>` +
+        `<p class="prov-lead">Ground truth comes from a <b>rule-based report labeler</b> ` +
+        `(<code>mimic/labeling_v2.py</code>, not the official CheXpert labeler), so the AUROC is only as ` +
+        `good as those labels. We measured them two independent ways:</p>` +
+        `<div class="prov-cards">` +
+          `<div class="prov-card"><div class="prov-k mono">LABELER vs HAND-READ GOLD · n=${prov.gold_n_reports ?? "—"}</div>` +
+            `<div class="prov-big">&kappa; ${f2(lg.macro_cohen_kappa)}</div>` +
+            `<div class="prov-sub">macro F1 ${f2(lg.macro_f1)} · P ${f2(lg.macro_precision)} · R ${f2(lg.macro_recall)}</div>` +
+            `<div class="prov-note">Careful full-text reading, CheXpert conventions. Annotator: LLM assistant, ` +
+            `not a board-certified radiologist — radiologist over-read recommended before publication.</div></div>` +
+          `<div class="prov-card"><div class="prov-k mono">INDEPENDENT MODEL CROSS-CHECK · n=${xm.n_images ?? "—"}</div>` +
+            `<div class="prov-big">AUROC ${f2(xm.mean_cross_auroc)}</div>` +
+            `<div class="prov-sub">vs torchxrayvision (separate labels) · &rho; ${f2(xm.mean_spearman_rho)} · ` +
+            `&kappa; ${f2(xm.macro_kappa_prevalence_matched)}</div>` +
+            `<div class="prov-note">${xm.caveat || ""}</div></div>` +
+        `</div>` +
+        `<details class="prov-details"><summary class="mono">per-finding detail (v2 labeler vs gold · cross-model AUROC)</summary>` +
+          `<table class="prov-table"><thead><tr><th>finding</th><th>P</th><th>R</th><th>&kappa;</th>` +
+          `<th>gold+</th><th>xrv&nbsp;AUROC</th></tr></thead><tbody>${rows}</tbody></table></details>` +
+        `<p class="prov-foot mono">source artifacts: labeler_validation.json · kappa_crosscheck.json</p>`;
+    }
+
     const io = new IntersectionObserver((es) => {
       es.forEach((e) => {
         if (!e.isIntersecting) return;
         io.disconnect();
-        gq.set(q.accuracy); gc.set(c.accuracy);
+        gq.set(aura); gc.set(PUBLISHED_DENSENET_MIMIC);
         rig.querySelectorAll(".meter").forEach((m, i) => {
           setTimeout(() => { m.querySelector(".m-fill").style.width = clamp(+m.dataset.v, 0.02, 1) * 100 + "%"; }, 200 + i * 120);
         });
       });
     }, { threshold: 0.35 });
     io.observe(rig);
-    scope(bench);
   }
 
   /* ================= SAFETY — tension, then the refusal ================= */
@@ -309,7 +368,7 @@ window.LANDING = (() => {
     const slab = document.getElementById("abstain-slab");
     const h2 = document.getElementById("safety-h2");
     const pinEl = sec.querySelector(".pin");
-    const SET = ["Pneumonia", "Heart failure", "Malignancy", "COPD"];
+    const SET = ["Condition A", "Condition B", "Condition C", "Condition D"];
     let tension = 0, abst = false, phase = 0, chipCount = 0;
 
     scene(sec.querySelector(".pin-space"), (p) => {

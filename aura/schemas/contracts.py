@@ -306,3 +306,5 @@ class CaseBundle(BaseModel):
     multimodal: Optional[MultimodalContext] = None
     ground_truth: Optional[Diagnosis] = None
     created_at: datetime = Field(default_factory=_now)
+    dx_labels: dict[str, str] = Field(default_factory=dict)
+    ev_labels: dict[str, str] = Field(default_factory=dict)

@@ -297,7 +297,7 @@ def main() -> None:
     report = verify(paths, sample_images=args.sample)
     md = render_markdown(report)
 
-    out = Path(args.out) if args.out else (Path(__file__).resolve().parent.parent / "docs" / "MIMIC_VERIFICATION_REPORT.md")
+    out = Path(args.out) if args.out else (Path(__file__).resolve().parent.parent.parent / "docs" / "DATASETS.md")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(md, encoding="utf-8")
     log.info("wrote report -> %s", out)

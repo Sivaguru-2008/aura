@@ -1,7 +1,7 @@
 {
   "study_id": "sample",
   "case_id": "CASE-sample",
-  "generated_at": "2026-07-18T18:24:53+00:00",
+  "generated_at": "2026-07-22T12:38:45+00:00",
   "patient_summary": {
     "demographics": "age unknown, sex unknown",
     "risk_flags": [],
@@ -15,7 +15,7 @@
     {
       "finding": "Pleural effusion",
       "key": "pleural_effusion",
-      "probability": 0.9826,
+      "probability": 0.7866,
       "present": true,
       "region": [
         0.72,
@@ -25,33 +25,9 @@
       ]
     },
     {
-      "finding": "Consolidation",
-      "key": "consolidation",
-      "probability": 0.962,
-      "present": true,
-      "region": [
-        0.15,
-        0.08,
-        0.75,
-        0.92
-      ]
-    },
-    {
-      "finding": "Airspace opacity",
-      "key": "opacity",
-      "probability": 0.8406,
-      "present": true,
-      "region": [
-        0.15,
-        0.08,
-        0.75,
-        0.92
-      ]
-    },
-    {
       "finding": "Cardiomegaly",
       "key": "cardiomegaly",
-      "probability": 0.8085,
+      "probability": 0.4402,
       "present": true,
       "region": [
         0.42,
@@ -61,9 +37,21 @@
       ]
     },
     {
-      "finding": "Pulmonary nodule",
-      "key": "nodule",
-      "probability": 0.4193,
+      "finding": "Airspace opacity",
+      "key": "opacity",
+      "probability": 0.2641,
+      "present": false,
+      "region": [
+        0.15,
+        0.08,
+        0.75,
+        0.92
+      ]
+    },
+    {
+      "finding": "Consolidation",
+      "key": "consolidation",
+      "probability": 0.1142,
       "present": false,
       "region": [
         0.15,
@@ -75,7 +63,7 @@
     {
       "finding": "Hyperinflation",
       "key": "hyperinflation",
-      "probability": 0.4106,
+      "probability": 0.0155,
       "present": false,
       "region": [
         0.12,
@@ -87,7 +75,19 @@
     {
       "finding": "Pneumothorax",
       "key": "pneumothorax",
-      "probability": 0.1747,
+      "probability": 0.0144,
+      "present": false,
+      "region": [
+        0.15,
+        0.08,
+        0.75,
+        0.92
+      ]
+    },
+    {
+      "finding": "Pulmonary nodule",
+      "key": "nodule",
+      "probability": 0.0133,
       "present": false,
       "region": [
         0.15,
@@ -98,91 +98,118 @@
     }
   ],
   "confidence": {
-    "top_diagnosis": "Chronic obstructive pulmonary disease",
-    "top_probability": 0.9878,
-    "ci_low": 0.9443,
-    "ci_high": 1.0,
-    "epistemic_uncertainty": 0.0375,
-    "aleatoric_uncertainty": 0.3463,
-    "predictive_entropy": 0.901,
+    "top_diagnosis": "Congestive heart failure",
+    "top_probability": 0.5184,
+    "ci_low": 0.3262,
+    "ci_high": 0.7107,
+    "epistemic_uncertainty": 0.0674,
+    "aleatoric_uncertainty": 0.7849,
+    "predictive_entropy": 2.05,
     "uncertainty_method": "deep_ensemble",
     "abstained": false,
     "abstention_reason": "none"
   },
   "calibration": {
     "conformal_set": [
-      "Chronic obstructive pulmonary disease"
+      "Pneumonia",
+      "Congestive heart failure",
+      "Suspicious pulmonary malignancy",
+      "Pneumothorax"
     ],
     "conformal_coverage": 0.9,
     "conformal_method": "mondrian",
     "out_of_distribution": false,
-    "ood_energy_z": 1.0661,
-    "temperature": 0.7725,
-    "reported_ece": 0.0147
+    "ood_energy_z": -0.3005,
+    "temperature": 0.9386,
+    "reported_ece": 0.0596
   },
   "differential_diagnosis": [
     {
-      "diagnosis": "Chronic obstructive pulmonary disease",
-      "probability": 0.988,
+      "diagnosis": "Congestive heart failure",
+      "probability": 0.5184,
+      "supporting": [
+        "pleural effusion"
+      ],
+      "opposing": []
+    },
+    {
+      "diagnosis": "Suspicious pulmonary malignancy",
+      "probability": 0.1905,
+      "supporting": [],
+      "opposing": []
+    },
+    {
+      "diagnosis": "Pneumonia",
+      "probability": 0.147,
       "supporting": [],
       "opposing": []
     },
     {
       "diagnosis": "Pneumothorax",
-      "probability": 0.0097,
+      "probability": 0.1067,
       "supporting": [],
       "opposing": []
-    },
-    {
-      "diagnosis": "Suspicious pulmonary malignancy",
-      "probability": 0.0014,
-      "supporting": [
-        "nodule"
-      ],
-      "opposing": []
-    },
-    {
-      "diagnosis": "No acute cardiopulmonary abnormality",
-      "probability": 0.0009,
-      "supporting": [],
-      "opposing": [
-        "nodule"
-      ]
     }
   ],
   "evidence_used": [
-    "Pleural effusion (p=0.98)",
-    "Consolidation (p=0.96)",
-    "Airspace opacity (p=0.84)",
-    "Cardiomegaly (p=0.81)",
-    "nodule"
+    "Pleural effusion (p=0.79)",
+    "Cardiomegaly (p=0.44)"
   ],
   "evidence_missing": [
-    "nodule indeterminate (p=0.42)",
-    "hyperinflation indeterminate (p=0.41)",
-    "pneumothorax indeterminate (p=0.17)"
+    "opacity indeterminate (p=0.26)",
+    "consolidation indeterminate (p=0.11)",
+    "cardiomegaly indeterminate (p=0.44)",
+    "4 diagnoses remain in the 90% confidence set \u2014 discriminating evidence would narrow it"
   ],
   "recommended_tests": [
     {
-      "action": "acquire_lateral_view",
-      "test": "Acquire lateral chest view",
-      "expected_info_gain_bits": 0.1048,
+      "action": "retrieve_prior_films",
+      "test": "Retrieve & compare prior films",
+      "expected_info_gain_bits": 0.478,
       "cost": "low",
       "risk": "none",
-      "utility": 0.0117,
-      "rationale": "A lateral projection disambiguates airspace opacity from pleural fluid. Expected value of information 0.012 (loss units); reduces diagnostic uncertainty ~36%."
+      "utility": 0.0111,
+      "rationale": "Temporal stability changes malignancy likelihood markedly. Expected value of information 0.011 (loss units); reduces diagnostic uncertainty ~10%."
+    },
+    {
+      "action": "order_ct_chest",
+      "test": "Order CT chest (low-dose)",
+      "expected_info_gain_bits": 0.4114,
+      "cost": "high",
+      "risk": "low",
+      "utility": 0.0019,
+      "rationale": "CT characterizes nodules and consolidation the frontal film leaves ambiguous. Expected value of information 0.011 (loss units); reduces diagnostic uncertainty ~8%."
+    },
+    {
+      "action": "acquire_lateral_view",
+      "test": "Acquire lateral chest view",
+      "expected_info_gain_bits": 0.8572,
+      "cost": "low",
+      "risk": "none",
+      "utility": 0.0,
+      "rationale": "A lateral projection disambiguates airspace opacity from pleural fluid. Expected value of information 0.000 (loss units); reduces diagnostic uncertainty ~17%."
+    },
+    {
+      "action": "order_bnp_echo",
+      "test": "Order BNP + bedside echo",
+      "expected_info_gain_bits": 0.5857,
+      "cost": "medium",
+      "risk": "none",
+      "utility": 0.0,
+      "rationale": "Confirms or excludes cardiac cause of an enlarged silhouette. Expected value of information 0.000 (loss units); reduces diagnostic uncertainty ~12%."
     }
   ],
   "risk_level": {
-    "level": "LOW-MODERATE",
-    "rationale": "Chronic obstructive pulmonary disease at 99% calibrated confidence"
+    "level": "MODERATE",
+    "rationale": "Congestive heart failure at 52% calibrated confidence"
   },
-  "clinical_impression": "Impression: findings most consistent with chronic obstructive pulmonary disease (calibrated probability 99%). 90% mondrian confidence set: Chronic obstructive pulmonary disease.",
-  "findings_text": "Findings: Pleural effusion (p=0.98); Consolidation (p=0.96); Airspace opacity (p=0.84); Cardiomegaly (p=0.81).",
+  "clinical_impression": "Impression: findings most consistent with congestive heart failure (calibrated probability 52%). 90% mondrian confidence set: Pneumonia, Congestive heart failure, Suspicious pulmonary malignancy, Pneumothorax.",
+  "findings_text": "Findings: Pleural effusion (p=0.79); Cardiomegaly (p=0.44).",
   "limitations": [
     "Automated decision support only \u2014 not a substitute for a radiologist's read.",
     "DenseNet-121 trained on MIMIC-CXR; performance may degrade on out-of-distribution equipment, projections, or populations.",
-    "Ground-truth training labels were derived from free-text reports by a rule-based labeler and inherit its error modes.",
+    "Ground-truth labels come from a rule-based report labeler (not the official CheXpert labeler). Validated against 66 hand-read reports: macro F1 0.89, Cohen's kappa 0.86 vs expert-convention reading.",
+    "Independently cross-checked against torchxrayvision (separate labels) on 700 images: mean cross-model AUROC 0.78; nodule agreement is below chance and is flagged unreliable.",
     "Findings localize regions of interest; they are observations, not tissue diagnoses."
   ],
   "model_version": {
@@ -192,6 +219,6 @@
     "reasoning": "reasoning-v1",
     "report": "structured+reasoning"
   },
-  "inference_time_s": 5.5294,
+  "inference_time_s": 5.8317,
   "ground_truth": null
 }

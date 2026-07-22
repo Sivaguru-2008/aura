@@ -1,0 +1,48 @@
+{
+  "n_cases": 6,
+  "n_as_expected": 6,
+  "cases": [
+    {
+      "name": "real chest X-ray",
+      "path": "E:\\AURA\\datasets\\simhadrisadaram\\mimic-cxr-dataset\\versions\\2\\official_data_iccv_final\\files\\p10\\p10003502\\s50084553\\70d7e600-373c1311-929f5ff9-23ee3621-ff551ff9.jpg",
+      "ok": true,
+      "reason": "accepted",
+      "expect": "ACCEPT"
+    },
+    {
+      "name": "colour photo",
+      "path": "E:\\AURA\\aura-main\\aura\\artifacts\\explain_demo\\ood_probes\\colour_photo.png",
+      "ok": false,
+      "reason": "color content detected \u2014 radiographs are grayscale",
+      "expect": "REJECT"
+    },
+    {
+      "name": "screenshot / text",
+      "path": "E:\\AURA\\aura-main\\aura\\artifacts\\explain_demo\\ood_probes\\screenshot_text.png",
+      "ok": false,
+      "reason": "tonal histogram is too flat for a radiograph (looks like a graphic, document, or screenshot)",
+      "expect": "REJECT"
+    },
+    {
+      "name": "near-solid",
+      "path": "E:\\AURA\\aura-main\\aura\\artifacts\\explain_demo\\ood_probes\\solid.png",
+      "ok": false,
+      "reason": "image is nearly uniform \u2014 no anatomical content",
+      "expect": "REJECT"
+    },
+    {
+      "name": "white noise",
+      "path": "E:\\AURA\\aura-main\\aura\\artifacts\\explain_demo\\ood_probes\\noise.png",
+      "ok": false,
+      "reason": "no chest anatomy detected \u2014 the bright central mediastinum column of a chest film is missing",
+      "expect": "REJECT"
+    },
+    {
+      "name": "colour gradient",
+      "path": "E:\\AURA\\aura-main\\aura\\artifacts\\explain_demo\\ood_probes\\gradient_logo.png",
+      "ok": false,
+      "reason": "color content detected \u2014 radiographs are grayscale",
+      "expect": "REJECT"
+    }
+  ]
+}

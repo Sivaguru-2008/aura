@@ -4,3 +4,23 @@
 [Dataset] weighted sampler: OFF (pos_weight only)
 [Train] TV feature regularisation weight λ=0.0001
 [Train] Starting training on cuda (AMP=True)...
+Epoch 00/15 | Train Loss: 0.9529 | Val Loss: 0.9720 | Macro-AUROC: 0.7923 | Time: 1101.1s
+[Checkpoint] Saved new best model to best_model.pt (Macro-AUROC: 0.7923)
+Epoch 01/15 | Train Loss: 0.8960 | Val Loss: 0.8989 | Macro-AUROC: 0.8088 | Time: 1261.5s
+[Checkpoint] Saved new best model to best_model.pt (Macro-AUROC: 0.8088)
+Epoch 02/15 | Train Loss: 0.8716 | Val Loss: 0.8726 | Macro-AUROC: 0.8193 | Time: 1336.9s
+[Checkpoint] Saved new best model to best_model.pt (Macro-AUROC: 0.8193)
+Epoch 03/15 | Train Loss: 0.8496 | Val Loss: 0.9209 | Macro-AUROC: 0.8141 | Time: 2384.3s
+Epoch 04/15 | Train Loss: 0.8322 | Val Loss: 0.8805 | Macro-AUROC: 0.8215 | Time: 1118.6s
+[Checkpoint] Saved new best model to best_model.pt (Macro-AUROC: 0.8215)
+Epoch 05/15 | Train Loss: 0.8138 | Val Loss: 0.8853 | Macro-AUROC: 0.8245 | Time: 1207.5s
+[Checkpoint] Saved new best model to best_model.pt (Macro-AUROC: 0.8245)
+Epoch 06/15 | Train Loss: 0.7929 | Val Loss: 0.8901 | Macro-AUROC: 0.8365 | Time: 1492.8s
+[Checkpoint] Saved new best model to best_model.pt (Macro-AUROC: 0.8365)
+Epoch 07/15 | Train Loss: 0.7675 | Val Loss: 0.8882 | Macro-AUROC: 0.8353 | Time: 4114.9s
+Epoch 08/15 | Train Loss: 0.7427 | Val Loss: 0.9116 | Macro-AUROC: 0.8365 | Time: 4082.4s
+Epoch 09/15 | Train Loss: 0.7111 | Val Loss: 0.9677 | Macro-AUROC: 0.8294 | Time: 1096.2s
+Epoch 10/15 | Train Loss: 0.6772 | Val Loss: 1.0141 | Macro-AUROC: 0.8303 | Time: 958.2s
+[Train] Early stopping triggered at epoch 10 (No improvement for 4 epochs)
+[Train] Training completed! Best Macro-AUROC: 0.8365
+[Train] Artifacts written to: E:\AURA\aura-main\aura\artifacts\retrain_v3

@@ -73,12 +73,21 @@ def test_evaluate_validation_small(tmp_path):
 
 @mimic
 def test_calibration_small(tmp_path):
-    from ml.evaluation.vision_calibration import run_calibration
+    from ml.evaluation.vision_calibration import run_calibration, SERVING_CAL_PATH
+
+    # A redirected (out_dir given) run must NOT clobber the production serving
+    # calibration — a limit=3 smoke fit would otherwise overwrite it with a
+    # degenerate 16-image operating point (regression guard).
+    before = SERVING_CAL_PATH.read_text(encoding="utf-8") if SERVING_CAL_PATH.exists() else None
 
     rep = run_calibration(limit=3, make_plots=False, mc_passes=2, out_dir=tmp_path)
     assert "temperature_scaling" in rep and "conformal_prediction" in rep
     assert "mc_dropout" in rep and "test_time_augmentation" in rep
     assert (tmp_path / "calibration.json").exists()
+    # serving copy lands in out_dir, not production
+    assert (tmp_path / SERVING_CAL_PATH.name).exists()
+    after = SERVING_CAL_PATH.read_text(encoding="utf-8") if SERVING_CAL_PATH.exists() else None
+    assert after == before, "run_calibration with a custom out_dir must not touch the served calibration"
 
 
 def test_perf_benchmark_smoke(tmp_path):

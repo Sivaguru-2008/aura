@@ -1,0 +1,38 @@
+{
+  "opacity": {
+    "kappa": 0.0,
+    "level": "Slight",
+    "aura_positive_rate": 0.1363,
+    "xrv_positive_rate": 1.0
+  },
+  "consolidation": {
+    "kappa": 0.0,
+    "level": "Slight",
+    "aura_positive_rate": 0.0014,
+    "xrv_positive_rate": 1.0
+  },
+  "pleural_effusion": {
+    "kappa": 0.0,
+    "level": "Slight",
+    "aura_positive_rate": 0.2101,
+    "xrv_positive_rate": 1.0
+  },
+  "cardiomegaly": {
+    "kappa": 0.0,
+    "level": "Slight",
+    "aura_positive_rate": 0.1172,
+    "xrv_positive_rate": 1.0
+  },
+  "nodule": {
+    "kappa": 0.0,
+    "level": "Slight",
+    "aura_positive_rate": 0.0019,
+    "xrv_positive_rate": 1.0
+  },
+  "pneumothorax": {
+    "kappa": 0.0,
+    "level": "Slight",
+    "aura_positive_rate": 0.0,
+    "xrv_positive_rate": 1.0
+  }
+}

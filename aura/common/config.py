@@ -16,6 +16,28 @@ ARTIFACTS = ROOT / "artifacts"                          # trained params, calibr
 DATA = ROOT / "data"
 DB_PATH = ARTIFACTS / "aura.db"
 
+_PRESENT_THR: dict | None = None
+
+
+def finding_present_threshold(finding_value: str, default: float = 0.5) -> float:
+    """Per-finding operating point for the 'present' decision.
+
+    Once vision probabilities are Platt-calibrated (honest, low — matching the
+    2–18% true prevalence), a fixed 0.5 cutoff under-calls every finding. The
+    F1-optimal per-finding thresholds fitted on held-out patients live in
+    ``vision_serving_calibration.json``; fall back to ``default`` when absent so
+    the uncalibrated path is unchanged.
+    """
+    global _PRESENT_THR
+    if _PRESENT_THR is None:
+        import json
+        p = ARTIFACTS / "vision_serving_calibration.json"
+        try:
+            _PRESENT_THR = json.loads(p.read_text()).get("per_finding_threshold", {}) if p.exists() else {}
+        except Exception:
+            _PRESENT_THR = {}
+    return float(_PRESENT_THR.get(finding_value, default))
+
 
 @dataclass(frozen=True)
 class Settings:

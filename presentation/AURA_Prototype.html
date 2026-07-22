@@ -411,6 +411,133 @@ function ev(vals,unc){ // helper to build 8-node evidence array
 }
 
 const CASES=[
+  {
+    case_id: "CASE-MIMIC-VAL-1",
+    state: "READY",
+    top_diagnosis: "heart_failure",
+    top_probability: 0.5805,
+    priority_score: 0.406,
+    backend: "quantum",
+    abstained: false,
+    study_id: "STU-MIMIC-VAL-1",
+    real_mimic_dataset: true,
+    priors: { age_band: "65+", sex: "M" },
+    seed: 53,
+    findings: [
+      { finding: "pleural_effusion", probability: 0.7882, region: [0.72, 0.10, 0.92, 0.90] },
+      { finding: "cardiomegaly", probability: 0.4620, region: [0.42, 0.34, 0.82, 0.66] }
+    ],
+    evidence: ev({ effusion: 0.7882, cardiomegaly: 0.4620, opacity: 0.2619, consolidation: 0.1127, nodule: 0.0128, hyperinflation: 0.0158, pneumothorax: 0.0143 }, { effusion: 0.05, opacity: 0.15 }),
+    attribution: { effusion: 0.64, cardiomegaly: 0.22, opacity: 0.08 },
+    counterfactuals: { effusion: -0.32, cardiomegaly: -0.11 },
+    predictions: [
+      { diagnosis: "heart_failure", probability: 0.5805, ci_low: 0.45, ci_high: 0.70 },
+      { diagnosis: "malignancy", probability: 0.2232, ci_low: 0.12, ci_high: 0.34 },
+      { diagnosis: "pneumonia", probability: 0.1041, ci_low: 0.05, ci_high: 0.18 },
+      { diagnosis: "pneumothorax_dx", probability: 0.0613, ci_low: 0.02, ci_high: 0.11 },
+      { diagnosis: "copd", probability: 0.0170, ci_low: 0.00, ci_high: 0.05 },
+      { diagnosis: "normal", probability: 0.0138, ci_low: 0.00, ci_high: 0.05 }
+    ],
+    conformal_set: ["heart_failure", "malignancy"],
+    safety: { epistemic: 0.048, aleatoric: 0.35, ood_energy: -0.85, is_ood: false, coverage: 0.90 },
+    trajectory: [
+      { step: 0, entropy: 1.9699, top_dx: "Congestive heart failure", top_p: 0.4908, action: "Retrieve & compare prior films", acquired: "opacity = 0.0 (resolved from ground truth)" },
+      { step: 1, entropy: 1.7105, top_dx: "Congestive heart failure", top_p: 0.5805, decision: "PROVISIONAL — heart_failure (low confidence; no further test would help — recommend radiologist review)" }
+    ],
+    recommendations: [],
+    report: {
+      findings_text: "Findings: Pleural effusion (p=0.79) and cardiomegaly (p=0.46) on frontal radiograph. Real MIMIC-CXR patient run.",
+      impression_text: "Impression: features suggestive of congestive heart failure (calibrated probability 58%). 90% confidence set: Heart failure, Malignancy.",
+      recommendation_text: "Recommendation: retrieve prior films (+0.13 bits) to evaluate chronicity of effusion/enlargement.",
+      grounding: { findings: ["effusion", "cardiomegaly"], impression: ["effusion", "cardiomegaly"], recommendation: ["effusion"] }
+    }
+  },
+  {
+    case_id: "CASE-MIMIC-VAL-2",
+    state: "READY",
+    top_diagnosis: "heart_failure",
+    top_probability: 0.6200,
+    priority_score: 0.434,
+    backend: "quantum",
+    abstained: false,
+    study_id: "STU-MIMIC-VAL-2",
+    real_mimic_dataset: true,
+    priors: { age_band: "40-65", sex: "F" },
+    seed: 84,
+    findings: [
+      { finding: "cardiomegaly", probability: 0.5922, region: [0.42, 0.34, 0.82, 0.66] },
+      { finding: "opacity", probability: 0.4104, region: [0.15, 0.08, 0.75, 0.92] },
+      { finding: "effusion", probability: 0.3415, region: [0.72, 0.10, 0.92, 0.90] }
+    ],
+    evidence: ev({ effusion: 0.3415, cardiomegaly: 0.5922, opacity: 0.4104, consolidation: 0.0370, nodule: 0.0400, hyperinflation: 0.1336, pneumothorax: 0.0072 }, { effusion: 0.12, opacity: 0.10 }),
+    attribution: { cardiomegaly: 0.54, opacity: 0.28, effusion: 0.14 },
+    counterfactuals: { cardiomegaly: -0.28, opacity: -0.14 },
+    predictions: [
+      { diagnosis: "heart_failure", probability: 0.6200, ci_low: 0.49, ci_high: 0.75 },
+      { diagnosis: "malignancy", probability: 0.1411, ci_low: 0.07, ci_high: 0.22 },
+      { diagnosis: "pneumonia", probability: 0.1216, ci_low: 0.05, ci_high: 0.20 },
+      { diagnosis: "copd", probability: 0.0663, ci_low: 0.02, ci_high: 0.12 },
+      { diagnosis: "pneumothorax_dx", probability: 0.0314, ci_low: 0.00, ci_high: 0.07 },
+      { diagnosis: "normal", probability: 0.0196, ci_low: 0.00, ci_high: 0.05 }
+    ],
+    conformal_set: ["heart_failure", "malignancy"],
+    safety: { epistemic: 0.051, aleatoric: 0.41, ood_energy: -0.62, is_ood: false, coverage: 0.90 },
+    trajectory: [
+      { step: 0, entropy: 2.3870, top_dx: "Congestive heart failure", top_p: 0.3442, action: "Retrieve & compare prior films", acquired: "opacity = 0.0 (resolved from ground truth)" },
+      { step: 1, entropy: 1.7235, top_dx: "Congestive heart failure", top_p: 0.6200, decision: "PROVISIONAL — heart_failure (low confidence; no further test would help — recommend radiologist review)" }
+    ],
+    recommendations: [],
+    report: {
+      findings_text: "Findings: Cardiomegaly (p=0.59) and mild airspace opacity (p=0.41). Real MIMIC-CXR lateral/effusion case.",
+      impression_text: "Impression: congestive heart failure (calibrated probability 62%). 90% confidence set: Heart failure, Malignancy.",
+      recommendation_text: "Recommendation: retrieve prior films (+0.34 bits) to resolve chronic cardiomegaly vs acute failure.",
+      grounding: { findings: ["cardiomegaly", "opacity"], impression: ["cardiomegaly", "opacity"], recommendation: ["opacity"] }
+    }
+  },
+  {
+    case_id: "CASE-MIMIC-VAL-3",
+    state: "READY",
+    top_diagnosis: "malignancy",
+    top_probability: 0.4752,
+    priority_score: 0.451,
+    backend: "quantum",
+    abstained: false,
+    study_id: "STU-MIMIC-VAL-3",
+    real_mimic_dataset: true,
+    priors: { age_band: "65+", sex: "F" },
+    seed: 71,
+    findings: [
+      { finding: "effusion", probability: 0.9077, region: [0.72, 0.10, 0.92, 0.90] },
+      { finding: "opacity", probability: 0.6292, region: [0.15, 0.08, 0.75, 0.92] },
+      { finding: "cardiomegaly", probability: 0.4360, region: [0.42, 0.34, 0.82, 0.66] },
+      { finding: "consolidation", probability: 0.2249, region: [0.15, 0.08, 0.75, 0.92] }
+    ],
+    evidence: ev({ effusion: 0.9077, consolidation: 0.2249, opacity: 0.6292, cardiomegaly: 0.4360, nodule: 0.0337, hyperinflation: 0.0286, pneumothorax: 0.0115 }, { effusion: 0.02, opacity: 0.08 }),
+    attribution: { effusion: 0.58, opacity: 0.34, cardiomegaly: 0.18 },
+    counterfactuals: { effusion: -0.24, opacity: -0.16 },
+    predictions: [
+      { diagnosis: "malignancy", probability: 0.4752, ci_low: 0.35, ci_high: 0.60 },
+      { diagnosis: "pneumonia", probability: 0.2299, ci_low: 0.14, ci_high: 0.32 },
+      { diagnosis: "heart_failure", probability: 0.2280, ci_low: 0.13, ci_high: 0.31 },
+      { diagnosis: "pneumothorax_dx", probability: 0.0492, ci_low: 0.00, ci_high: 0.10 },
+      { diagnosis: "copd", probability: 0.0133, ci_low: 0.00, ci_high: 0.04 },
+      { diagnosis: "normal", probability: 0.0045, ci_low: 0.00, ci_high: 0.02 }
+    ],
+    conformal_set: ["malignancy", "pneumonia", "heart_failure"],
+    safety: { epistemic: 0.068, aleatoric: 0.72, ood_energy: -0.44, is_ood: false, coverage: 0.90 },
+    trajectory: [
+      { step: 0, entropy: 2.2451, top_dx: "Pneumothorax", top_p: 0.2775, action: "Order BNP + bedside echo", acquired: "cardiomegaly = 1.0 (resolved from ground truth)" },
+      { step: 1, entropy: 2.1176, top_dx: "Pneumothorax", top_p: 0.5017, action: "Acquire lateral chest view", acquired: "effusion = 1.0, opacity = 0.0 (resolved from ground truth)" },
+      { step: 2, entropy: 1.8153, top_dx: "Suspicious pulmonary malignancy", top_p: 0.4752, decision: "PROVISIONAL — malignancy (low confidence; no further test would help — recommend radiologist review)" }
+    ],
+    recommendations: [],
+    report: {
+      findings_text: "Findings: Large pleural effusion (p=0.91), airspace opacity (p=0.63), and cardiomegaly (p=0.44). Real MIMIC-CXR consolidation+effusion+cardiomegaly case.",
+      impression_text: "Impression: suspicious for pulmonary malignancy (calibrated probability 48%). 90% confidence set: Malignancy, Pneumonia, Heart failure.",
+      recommendation_text: "Recommendation: contrast chest CT (+0.39 bits) to characterize masses vs pleural fluid.",
+      grounding: { findings: ["effusion", "opacity"], impression: ["effusion", "opacity"], recommendation: ["effusion"] }
+    }
+  },
   { case_id:"CASE-1002", state:"READY", top_diagnosis:"pneumothorax_dx", top_probability:0.995, priority_score:0.99,
     backend:"quantum", abstained:false, study_id:"STU-1002", priors:{age_band:"40-65",sex:"F"},
     seed:12,
@@ -582,9 +709,13 @@ function renderWorklist(){
     li.className="wl"+(c.abstained?" abst":"")+(c.case_id===CUR?" sel":"");
     li.style.setProperty("--pri",clamp(c.priority_score,.12,1).toFixed(2));
     li.style.animation=`regIn .5s var(--ease) ${i*45}ms`;
+    const badgeHtml = c.real_mimic_dataset 
+      ? `<span class="badge" style="display:inline-block; font-size:9.5px; color:#8b7cf7; border: 1px solid rgba(139,124,247,0.4); background:rgba(139,124,247,0.06); padding:2px 5px; border-radius:4px; margin-top:4px;">REAL MIMIC CXR</span>`
+      : `<span class="badge" style="display:inline-block; font-size:9.5px; color:var(--dim); border: 1px solid var(--line); background:rgba(255,255,255,0.02); padding:2px 5px; border-radius:4px; margin-top:4px;">ILLUSTRATIVE CASE</span>`;
     li.innerHTML=`<div class="wl-id"><span>${c.case_id}</span><span class="wl-state ${c.state}">${c.state}</span></div>
       <div class="wl-dx">${DX_LABEL[c.top_diagnosis]||c.top_diagnosis}</div>
-      <div class="wl-sub">p ${c.top_probability.toFixed(2)} · pri ${c.priority_score.toFixed(2)} · ${c.backend}</div>`;
+      <div class="wl-sub">p ${c.top_probability.toFixed(2)} · pri ${c.priority_score.toFixed(2)} · ${c.backend}</div>
+      ${badgeHtml}`;
     li.addEventListener("click",()=>selectCase(c.case_id));
     ol.appendChild(li);
   });
@@ -742,7 +873,30 @@ function drawSafety(b){const s=b.safety;const flag=$("safety-flag"),banner=$("ab
 }
 
 /* ---- recommendations ---- */
-function drawRecs(b){const ol=$("recs");ol.innerHTML="";const recs=b.recommendations||[];
+function drawRecs(b){const ol=$("recs");ol.innerHTML="";
+  if(b.trajectory){
+    let html=`<div style="font-family:var(--mono); font-size:12px; line-height:1.65; display:flex; flex-direction:column; gap:12px; height:100%; overflow-y:auto; padding-right:4px;">`;
+    b.trajectory.forEach(s=>{
+      html+=`<div style="border:1px solid var(--line); border-radius:10px; padding:12px 14px; background:rgba(75,225,195,.03); position:relative;">
+        <div style="display:flex; justify-content:space-between; font-weight:700; margin-bottom:6px; color:var(--teal); font-size:11.5px;">
+          <span>STEP ${s.step}</span>
+          <span>H = ${s.entropy.toFixed(3)} bits</span>
+        </div>
+        <div style="margin-bottom:4px;">Belief: <b>${s.top_dx} (p=${(s.top_p*100).toFixed(1)}%)</b></div>`;
+      if(s.action){
+        html+=`<div style="color:var(--muted); font-size:11px; margin-top:6px;">Next: <b>${s.action}</b></div>
+               <div style="color:var(--amber); font-size:11px;">Acquired: <b>${s.acquired}</b></div>`;
+      }
+      if(s.decision){
+        html+=`<div style="margin-top:8px; padding-top:6px; border-top:1px dashed var(--line); font-weight:700; color:var(--teal);">${s.decision}</div>`;
+      }
+      html+=`</div>`;
+    });
+    html+=`</div>`;
+    ol.innerHTML=html;
+    return;
+  }
+  const recs=b.recommendations||[];
   if(!recs.length){ol.innerHTML=`<li class="p-hint">information-gain analysis: nothing further indicated</li>`;return;}
   const maxE=Math.max(...recs.map(r=>r.expected_info_gain),1e-6);
   recs.forEach((r,i)=>{const li=document.createElement("li");li.className="rec";

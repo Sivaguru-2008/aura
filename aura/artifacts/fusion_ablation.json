@@ -1,0 +1,38 @@
+{
+  "quantum": {
+    "calibration_temperature": 0.7583,
+    "model_accuracy": 0.6272,
+    "model_ece": 0.1661,
+    "model_nll": 1.2891,
+    "agent_avg_steps": 0.9941,
+    "agent_abstain_rate": 0.0828,
+    "agent_commit_rate": 0.9172,
+    "agent_accuracy_at_commit": 0.6968,
+    "agent_avg_initial_entropy": 3.981,
+    "agent_avg_final_entropy": 3.5602
+  },
+  "classical": {
+    "calibration_temperature": 0.2906,
+    "model_accuracy": 0.6627,
+    "model_ece": 0.1632,
+    "model_nll": 1.2175,
+    "agent_avg_steps": 0.716,
+    "agent_abstain_rate": 0.0059,
+    "agent_commit_rate": 0.9941,
+    "agent_accuracy_at_commit": 0.7024,
+    "agent_avg_initial_entropy": 1.5374,
+    "agent_avg_final_entropy": 1.2487
+  },
+  "learnable": {
+    "calibration_temperature": 0.7,
+    "model_accuracy": 0.6036,
+    "model_ece": 0.1668,
+    "model_nll": 1.2909,
+    "agent_avg_steps": 0.8343,
+    "agent_abstain_rate": 0.0296,
+    "agent_commit_rate": 0.9704,
+    "agent_accuracy_at_commit": 0.6951,
+    "agent_avg_initial_entropy": 1.6779,
+    "agent_avg_final_entropy": 1.4852
+  }
+}

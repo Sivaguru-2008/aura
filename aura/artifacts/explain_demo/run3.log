@@ -1,0 +1,31 @@
+[gradcam] labeler = v2   out = E:\AURA\aura-main\aura\artifacts\explain_demo
+[gradcam] thresholds: {'opacity': 0.138, 'consolidation': 0.149, 'pleural_effusion': 0.0, 'cardiomegaly': 0.257, 'nodule': 0.5, 'pneumothorax': 0.5, 'hyperinflation': 0.5}
+[gradcam] loading per-study val labels (v2)...
+[gradcam] val images: 2099  positives/finding: {'opacity': 594, 'consolidation': 118, 'pleural_effusion': 524, 'cardiomegaly': 415, 'nodule': 98, 'pneumothorax': 65, 'hyperinflation': 120}
+[gradcam] scoring val set (calibrated)...
+  scored 250/2099  (26 img/s)
+  scored 500/2099  (26 img/s)
+  scored 750/2099  (27 img/s)
+  scored 1000/2099  (28 img/s)
+  scored 1250/2099  (29 img/s)
+  scored 1500/2099  (30 img/s)
+  scored 1750/2099  (32 img/s)
+  scored 2000/2099  (32 img/s)
+[gradcam] pointing game over true positives...
+  [opacity] n_tp=250 PG=0.904 conc=1.384 zone_mass=0.8892 zone_conc=1.1417
+  [consolidation] n_tp=42 PG=0.9286 conc=1.4454 zone_mass=0.9101 zone_conc=1.1685
+  [pleural_effusion] n_tp=250 PG=0.056 conc=0.9922 zone_mass=0.5336 zone_conc=1.1777
+  [cardiomegaly] n_tp=248 PG=0.8508 conc=2.4246 zone_mass=0.4936 zone_conc=2.1742
+  [nodule] n_tp=3 PG=1.0 conc=1.7305 zone_mass=0.9441 zone_conc=1.2122
+[gradcam] rendering TP/FP/FN demo overlays...
+  demo pleural_effusion TP  p=1.00 crosses=True  peak_in_region=False  -> pleural_effusion_TP.png
+  demo pleural_effusion FP  p=1.00 crosses=True  peak_in_region=False  -> pleural_effusion_FP.png
+  demo pleural_effusion FN  p=0.00 crosses=True  peak_in_region=False  -> pleural_effusion_FN.png
+  demo cardiomegaly     TP  p=0.50 crosses=True  peak_in_region=True  -> cardiomegaly_TP.png
+  demo cardiomegaly     FP  p=0.46 crosses=True  peak_in_region=True  -> cardiomegaly_FP.png
+  demo cardiomegaly     FN  p=0.03 crosses=False  peak_in_region=True  -> cardiomegaly_FN.png
+  demo pneumothorax     TP  p=0.00 crosses=False  peak_in_region=True  -> pneumothorax_TP.png
+  demo pneumothorax     FP  p=0.00 crosses=False  peak_in_region=True  -> pneumothorax_FP.png
+  demo pneumothorax     FN  p=0.00 crosses=False  peak_in_region=True  -> pneumothorax_FN.png
+[gradcam] DONE. summary -> E:\AURA\aura-main\aura\artifacts\explain_demo\gradcam_validation.json
+[gradcam]        report  -> E:\AURA\aura-main\aura\artifacts\explain_demo\gradcam_validation.html

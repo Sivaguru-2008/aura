@@ -1,0 +1,11 @@
+[calib] val images: 2099
+[calib] raw logits computed (2099, 7)
+  opacity          ECE raw=0.165 served=0.130 full=0.031 | fires served= 887 full= 887 / 594 pos
+  consolidation    ECE raw=0.309 served=0.047 full=0.016 | fires served= 161 full= 136 / 118 pos
+  pleural_effusion ECE raw=0.133 served=0.264 full=0.028 | fires served=2099 full= 751 / 524 pos
+  cardiomegaly     ECE raw=0.159 served=0.093 full=0.022 | fires served= 423 full= 688 / 415 pos
+  nodule           ECE raw=0.206 served=0.045 full=0.009 | fires served=   3 full= 114 / 98 pos
+  pneumothorax     ECE raw=0.148 served=0.031 full=0.005 | fires served=   0 full=  68 / 65 pos
+  hyperinflation   ECE raw=0.167 served=0.057 full=0.016 | fires served=   0 full= 243 / 120 pos
+[calib] macro ECE: {'raw': 0.1838, 'served': 0.0952, 'full': 0.0181}
+[calib] DONE -> E:\AURA\aura-main\aura\artifacts\explain_demo\calibration_audit.json

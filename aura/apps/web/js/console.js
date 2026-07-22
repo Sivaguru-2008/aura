@@ -8,16 +8,8 @@ window.CONSOLE = (() => {
   "use strict";
   const { Field, api, toast, typeInto, clamp, REDUCED } = FX;
 
-  const DX_LABEL = {
-    normal: "No acute abnormality", pneumonia: "Pneumonia",
-    heart_failure: "Heart failure", copd: "COPD",
-    malignancy: "Malignancy", pneumothorax_dx: "Pneumothorax",
-  };
-  const EV_LABEL = {
-    opacity: "opacity", consolidation: "consolidation", effusion: "effusion",
-    cardiomegaly: "cardiomegaly", nodule: "nodule", hyperinflation: "hyperinflation",
-    pneumothorax: "pneumothorax", prior_risk: "prior risk",
-  };
+  let DX_LABEL = {};
+  let EV_LABEL = {};
   // report grounding uses Finding enum values; evidence nodes use channel names
   const FINDING_TO_CHANNEL = {
     opacity: "opacity", consolidation: "consolidation", pleural_effusion: "effusion",
@@ -46,8 +38,10 @@ window.CONSOLE = (() => {
     const grid = $("c-grid");
     grid.classList.add("assembling");
     try {
-      const [health, cases] = await Promise.all([api("/v1/health"), api("/v1/cases")]);
-      S.cases = cases.cases || [];
+      const [health, casesData] = await Promise.all([api("/v1/health"), api("/v1/studies")]);
+      S.cases = casesData.cases || [];
+      if (casesData.dx_labels) DX_LABEL = casesData.dx_labels;
+      if (casesData.ev_labels) EV_LABEL = casesData.ev_labels;
       renderChips(health);
       renderWorklist();
       // panels assemble themselves — staggered spring-in
@@ -93,15 +87,8 @@ window.CONSOLE = (() => {
       b.addEventListener("click", () => feedback(b.dataset.verdict, b));
     });
     $("btn-sign").addEventListener("click", sign);
-    // simulate
-    const picker = $("sim-picker");
-    picker.innerHTML = ["random", ...Object.keys(DX_LABEL)]
-      .map((d) => `<button class="sim-chip" data-dx="${d}">${d === "random" ? "⚄ random" : DX_LABEL[d]}</button>`).join("");
-    $("btn-sim").addEventListener("click", () => { picker.hidden = !picker.hidden; });
-    picker.addEventListener("click", (e) => {
-      const b = e.target.closest("[data-dx]");
-      if (b) { picker.hidden = true; simulate(b.dataset.dx); }
-    });
+    // Synthetic study generation removed — AURA runs real inference on uploaded
+    // radiographs only. The upload path below is the sole way to create a case.
     // upload
     $("btn-upload").addEventListener("click", () => { $("input-file").click(); });
     $("btn-history").addEventListener("click", () => { window.open("/history", "_blank"); });
@@ -135,6 +122,13 @@ window.CONSOLE = (() => {
     const ol = $("worklist");
     $("rail-count").textContent = S.cases.length + " cases";
     ol.innerHTML = "";
+    if (S.cases.length === 0) {
+      ol.innerHTML = `
+        <div class="empty-state mono" style="padding: 24px 12px; color: var(--faint); font-size: 13px; text-align: center; line-height: 1.6;">
+          No studies available.<br>Upload a chest X-ray to begin analysis.
+        </div>`;
+      return;
+    }
     S.cases.forEach((c, i) => {
       const li = document.createElement("li");
       li.className = "wl-item" + (c.abstained ? " abst" : "") + (c.case_id === S.current ? " sel" : "");
@@ -142,7 +136,7 @@ window.CONSOLE = (() => {
       li.style.animation = `capIn .5s var(--ease) ${i * 45}ms backwards`;
       li.innerHTML = `
         <div class="wl-id"><span>${c.case_id}</span><span class="wl-state ${c.state}">${c.state}</span></div>
-        <div class="wl-dx">${DX_LABEL[c.top_diagnosis] || c.top_diagnosis || "—"}</div>
+        <div class="wl-dx">${c.top_diagnosis_label || c.top_diagnosis || "—"}</div>
         <div class="wl-sub">p ${(c.top_probability || 0).toFixed(2)} · pri ${(c.priority_score || 0).toFixed(2)} · ${c.backend || ""}</div>`;
       li.addEventListener("click", () => selectCase(c.case_id));
       ol.appendChild(li);
@@ -163,9 +157,14 @@ window.CONSOLE = (() => {
     }
     let b = S.bundles.get(id);
     if (!b) {
-      try { b = await api(`/v1/cases/${id}`); S.bundles.set(id, b); }
+      try {
+        b = await api(`/v1/cases/${id}`);
+        S.bundles.set(id, b);
+      }
       catch { toast("failed to load case"); grid.classList.remove("switching"); return; }
     }
+    if (b.dx_labels) DX_LABEL = b.dx_labels;
+    if (b.ev_labels) EV_LABEL = b.ev_labels;
     populate(b);
     grid.classList.remove("switching");
     loadSimilar(id);
@@ -225,18 +224,26 @@ window.CONSOLE = (() => {
     // finding regions materialize
     const wrap = $("xray-regions");
     wrap.innerHTML = "";
-    const found = ((b.vision && b.vision.findings) || []).filter((f) => f.probability >= 0.5);
+    // Show exactly the findings the model asserts, at the *calibrated* per-finding
+    // operating point the report uses (server attaches f.present/f.threshold from
+    // vision_serving_calibration.json). Falls back to 0.5 only for legacy responses
+    // that lack the flag. Previously a hardcoded 0.5 hid genuine detections between
+    // the calibrated threshold (0.13–0.29) and 0.5 (audit H1).
+    const found = ((b.vision && b.vision.findings) || []).filter(
+      (f) => (f.present !== undefined ? f.present : f.probability >= 0.5));
     found.forEach((f, i) => {
       const [r0, c0, r1, c1] = f.region;
       const d = document.createElement("div");
       d.className = "region";
       d.style.cssText = `top:${r0 * 100}%;left:${c0 * 100}%;height:${(r1 - r0) * 100}%;width:${(c1 - c0) * 100}%;animation-delay:${0.25 + i * 0.18}s`;
-      d.innerHTML = `<span class="r-lbl">${(EV_LABEL[FINDING_TO_CHANNEL[f.finding]] || f.finding)} · ${f.probability.toFixed(2)}</span>`;
+      // EV_LABEL is keyed by finding value (API ev_labels); look it up directly.
+      // The old FINDING_TO_CHANNEL hop mislabeled pleural_effusion (value ≠ channel).
+      d.innerHTML = `<span class="r-lbl">${(EV_LABEL[f.finding] || f.finding)} · ${f.probability.toFixed(2)}</span>`;
       wrap.appendChild(d);
     });
     const p = b.priors || {};
     $("xray-meta").innerHTML = `
-      <span>${b.study_id} · CXR 64×64</span>
+      <span>${b.study_id} · CXR ${(b.image_shape || []).join("×") || "—"}</span>
       <span>${p.age_band || "?"} · ${p.sex || "?"}${p.smoker ? " · smoker" : ""}${p.fever ? " · fever" : ""}${p.prior_cancer ? " · prior ca" : ""}</span>`;
   }
 
@@ -546,8 +553,10 @@ window.CONSOLE = (() => {
         method: "POST", headers: { "Content-Type": "application/json", "x-aura-user": "clinician" },
         body: JSON.stringify({ diagnosis: dx }),
       });
-      const cases = await api("/v1/cases");
-      S.cases = cases.cases || [];
+      const casesData = await api("/v1/studies");
+      S.cases = casesData.cases || [];
+      if (casesData.dx_labels) DX_LABEL = casesData.dx_labels;
+      if (casesData.ev_labels) EV_LABEL = casesData.ev_labels;
       const h = await api("/v1/health").catch(() => null);
       if (h) renderChips(h);
       await wait(REDUCED ? 0 : 900); // let the convergence land
@@ -628,8 +637,10 @@ window.CONSOLE = (() => {
         headers: { "x-aura-user": "clinician" },
         body: fd,
       });
-      const cases = await api("/v1/cases");
-      S.cases = cases.cases || [];
+      const casesData = await api("/v1/studies");
+      S.cases = casesData.cases || [];
+      if (casesData.dx_labels) DX_LABEL = casesData.dx_labels;
+      if (casesData.ev_labels) EV_LABEL = casesData.ev_labels;
       const h = await api("/v1/health").catch(() => null);
       if (h) renderChips(h);
       await wait(REDUCED ? 0 : 900); // let the convergence land

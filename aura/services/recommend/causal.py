@@ -26,7 +26,7 @@ with the squared correlation:
 
 because ρ_ij² is the fraction of X_j's variance explained by X_i (the "novel"
 fraction is ``1 − ρ_ij²``; exact for Gaussians via the partial correlation — see
-``docs/ARCHITECTURE_REFACTOR.md`` for the derivation and its caveats). We further
+``docs/ARCHITECTURE.md`` for the derivation and its caveats). We further
 gate ρ_ij by a **hardcoded directed clinical dependency graph** so the
 deweighting is *causal*, not merely correlational: an edge ``i → j`` means "once
 ``i`` is known, ``j`` is partly explained", and only then is ``j`` deweighted.

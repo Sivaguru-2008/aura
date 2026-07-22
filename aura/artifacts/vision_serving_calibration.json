@@ -1,45 +1,56 @@
 {
   "method": "per_finding_platt",
-  "n_images": 16,
+  "source": "artifacts/calibration/calibration.json (full-val fit, n=2099)",
+  "n_images": 2099,
+  "provenance": "Re-wired 2026-07-21 from the validated full-val (n=2099) fit. The prior served file was a degenerate n=16 fit written by run_calibration(limit=3) in tests; that clobbering is now fixed (write gated to canonical runs). Backup: artifacts/vision_serving_calibration.n16.bak.json.",
   "per_finding_platt": {
     "opacity": {
-      "a": 1.3482,
-      "b": -1.8951
+      "a": 1.1748,
+      "b": -1.0252
     },
     "consolidation": {
-      "a": 3.1784,
-      "b": -7.084
+      "a": 0.949,
+      "b": -3.1007
     },
     "pleural_effusion": {
-      "a": 5.7219,
-      "b": 6.2708
+      "a": 0.8323,
+      "b": -1.197
     },
     "cardiomegaly": {
-      "a": 0.4073,
-      "b": -1.424
+      "a": 1.1035,
+      "b": -1.4917
     },
     "nodule": {
-      "a": 2.8796,
-      "b": -10.0
+      "a": 0.7911,
+      "b": -2.305
     },
     "pneumothorax": {
-      "a": 0.7803,
-      "b": -10.0
+      "a": 0.5506,
+      "b": -2.6773
     },
     "hyperinflation": {
-      "a": 0.4397,
-      "b": -10.0
+      "a": 0.7995,
+      "b": -2.4329
     }
   },
   "per_finding_temperature": {
-    "opacity": 7.389,
-    "consolidation": 7.389,
-    "pleural_effusion": 0.1353,
-    "cardiomegaly": 7.389,
-    "nodule": 0.1353,
-    "pneumothorax": 0.6881,
-    "hyperinflation": 1.3311
+    "opacity": 0.8878,
+    "consolidation": 1.4941,
+    "pleural_effusion": 1.3662,
+    "cardiomegaly": 1.1438,
+    "nodule": 0.6058,
+    "pneumothorax": 1.1345,
+    "hyperinflation": 1.0732
   },
-  "mean_ece_before": 0.258,
-  "mean_ece_after": 0.0673
+  "per_finding_threshold": {
+    "opacity": 0.2743,
+    "consolidation": 0.1985,
+    "pleural_effusion": 0.2854,
+    "cardiomegaly": 0.22,
+    "nodule": 0.1495,
+    "pneumothorax": 0.1692,
+    "hyperinflation": 0.1351
+  },
+  "mean_ece_before": 0.1808,
+  "mean_ece_after": 0.0256
 }

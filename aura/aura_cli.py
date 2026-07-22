@@ -144,6 +144,74 @@ def cmd_calibrate(args: argparse.Namespace) -> None:
     print((vision_calibration.CAL_DIR / "CALIBRATION_SUMMARY.md").read_text(encoding="utf-8"))
 
 
+def cmd_agent(args: argparse.Namespace) -> None:
+    import cv2
+    import numpy as np
+    from pathlib import Path
+    from services.vision.engine import VisionEngine
+    from services.fusion.engine import FusionEngine
+    from services.fusion.evidence import encode
+    from services.agent.active_diagnosis import ActiveDiagnosisAgent
+    from schemas.contracts import StructuredPriors
+
+    if not args.image:
+        print("error: agent requires --image PATH")
+        sys.exit(2)
+        
+    image_path = Path(args.image)
+    if not image_path.is_file():
+        print(f"error: image file not found: {image_path}")
+        sys.exit(1)
+        
+    img = cv2.imread(str(image_path), cv2.IMREAD_GRAYSCALE)
+    if img is None:
+        print(f"error: failed to load/decode image: {image_path}")
+        sys.exit(1)
+        
+    vision_engine = VisionEngine.load()
+    fusion_engine = FusionEngine()
+    
+    # 1) Run Vision Model to obtain raw probabilities
+    vision_result = vision_engine.analyze("STU-CLI-AGENT", img)
+    
+    # 2) Encode evidence
+    priors = StructuredPriors()
+    x = encode(vision_result, priors)
+    
+    # 3) Run agent
+    agent = ActiveDiagnosisAgent(
+        fusion_model=fusion_engine,
+        entropy_target_bits=args.entropy_target,
+        confidence=args.confidence,
+        max_tests=args.max_tests
+    )
+    trajectory = agent.diagnose(x)
+    _print_agent_trajectory(trajectory)
+
+
+def _print_agent_trajectory(trajectory) -> None:
+    print(f"\n=== Active Diagnosis Trajectory ({trajectory.backend.upper()}) ===")
+    print(f"Initial Uncertainty: {trajectory.initial_entropy:.3f} bits")
+    print(f"Final Uncertainty  : {trajectory.final_entropy:.3f} bits (reduction: {trajectory.bits_resolved:+.3f} bits)")
+    print(f"Acquired Tests     : {trajectory.n_tests}")
+    print(f"Status             : {trajectory.status.upper()}")
+    print(f"Final Diagnosis    : {trajectory.final_diagnosis} (p={trajectory.final_probability:.1%})")
+    print("-" * 68)
+    for step in trajectory.steps:
+        print(f"\nStep {step.step}:")
+        print(f"  calibrated differential:")
+        for dx, prob in list(step.posterior.items())[:3]:
+            print(f"    {dx:<25}: {prob:.1%}")
+        if len(step.posterior) > 3:
+            print(f"    ...")
+        print(f"  predictive entropy      : {step.entropy_bits:.3f} bits")
+        if step.action_display:
+            print(f"  recommended next step   : {step.action_display} (EIG={step.action_eig_bits} bits)")
+            print(f"  acquired findings       : {step.resolved}")
+        if step.decision:
+            print(f"  decision                : {step.decision}")
+
+
 # --------------------------------------------------------------------------- #
 # Pretty printing
 # --------------------------------------------------------------------------- #
@@ -219,6 +287,13 @@ def _build_parser() -> argparse.ArgumentParser:
     cal.add_argument("--limit", type=int, default=None)
     cal.add_argument("--no-plots", action="store_true")
     cal.set_defaults(func=cmd_calibrate)
+
+    ag = sub.add_parser("agent", help="run sequential diagnostic agent on one radiograph")
+    ag.add_argument("--image", required=True, help="path to a CXR (jpg/png/dicom)")
+    ag.add_argument("--entropy-target", type=float, default=0.6, help="entropy threshold for commit")
+    ag.add_argument("--confidence", type=float, default=0.85, help="confidence threshold for commit")
+    ag.add_argument("--max-tests", type=int, default=3, help="max tests to acquire")
+    ag.set_defaults(func=cmd_agent)
     return p
 
 
@@ -235,7 +310,7 @@ def main() -> None:
         return
 
     parser = _build_parser()
-    if cmd in {"predict", "evaluate", "explain", "benchmark", "calibrate", "-h", "--help"}:
+    if cmd in {"predict", "evaluate", "explain", "benchmark", "calibrate", "agent", "-h", "--help"}:
         args = parser.parse_args(sys.argv[1:])
         if getattr(args, "func", None) is None:
             print(__doc__)

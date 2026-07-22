@@ -95,10 +95,20 @@ def predict_image(
         except Exception as e:  # explanation is best-effort; never sink a prediction
             print(f"[predict] explanation artifacts failed: {e}")
 
+    # Production audit trail: one immutable record per real inference (req 8).
+    try:
+        from services.inference.audit_log import log_inference
+        log_inference(bundle, image_path, inference_time,
+                      backbone=getattr(pipeline.vision, "backbone", None))
+    except Exception as e:
+        print(f"[predict] inference logging failed: {e!r}")
+
+    from common.config import finding_present_threshold
     findings = [
         {"finding": FINDING_LABELS.get(fs.finding, fs.finding.value),
          "key": fs.finding.value, "probability": round(float(fs.probability), 4),
-         "present": bool(fs.probability >= 0.5)}
+         "threshold": round(finding_present_threshold(fs.finding.value), 3),
+         "present": bool(fs.probability >= finding_present_threshold(fs.finding.value))}
         for fs in (bundle.vision.findings if bundle.vision else [])
     ]
 

@@ -125,7 +125,13 @@ class Store:
     def get_case(self, case_id: str) -> CaseBundle | None:
         with Session(self.engine) as ses:
             row = ses.get(CaseRow, case_id)
-            return CaseBundle.model_validate(row.bundle) if row else None
+            if not row:
+                return None
+            b = CaseBundle.model_validate(row.bundle)
+            from schemas.clinical import DIAGNOSIS_LABELS, FINDING_LABELS
+            b.dx_labels = {d.value: l for d, l in DIAGNOSIS_LABELS.items()}
+            b.ev_labels = {f.value: l for f, l in FINDING_LABELS.items()}
+            return b
 
     def list_cases(self, state: str | None = None, limit: int = 200) -> list[dict]:
         """Lightweight worklist rows (not full bundles)."""
@@ -136,14 +142,21 @@ class Store:
             stmt = stmt.order_by(CaseRow.priority_score.desc()).limit(limit)
             rows = ses.execute(stmt).scalars().all()
             out = []
+            from schemas.clinical import DIAGNOSIS_LABELS, Diagnosis
             for r in rows:
                 b = r.bundle
+                try:
+                    dx_enum = Diagnosis(r.top_diagnosis)
+                    label = DIAGNOSIS_LABELS.get(dx_enum, r.top_diagnosis)
+                except ValueError:
+                    label = r.top_diagnosis
                 out.append({
                     "case_id": r.case_id,
                     "study_id": r.study_id,
                     "state": r.state,
                     "priority_score": r.priority_score,
                     "top_diagnosis": r.top_diagnosis,
+                    "top_diagnosis_label": label,
                     "top_probability": r.top_probability,
                     "abstained": r.abstained,
                     "backend": (b.get("fusion") or {}).get("backend", ""),

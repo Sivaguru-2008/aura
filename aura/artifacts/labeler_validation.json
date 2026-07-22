@@ -1,0 +1,3255 @@
+{
+  "artifact": "labeler_validation",
+  "generated": "2026-07-22T07:57:58.305189Z",
+  "purpose": "Pre-empt the circularity objection that AURA's 0.837 macro-AUROC is measured against its own rule-based report labels. Quantifies how faithful those labels are by scoring the v1 and v2 rule labelers against a hand-read gold standard.",
+  "headline_labeler": "v2",
+  "gold_provenance": {
+    "n_reports": 66,
+    "sampling_frame": "per-study MIMIC-CXR validation reports (1808 eligible per-study reports; text column of mimic_cxr_aug_validate.csv)",
+    "sampling": "45 uniformly-random reports (seed 20260722) + 21 targeted supplements drawn by keyword screen for rare findings (pneumothorax/consolidation/nodule/hyperinflation), each supplement read fresh. Random stratum gives unbiased common-finding estimates; supplements tighten rare-finding recall/precision. Strata are recorded per report.",
+    "label_convention": "CheXpert 3-way per finding: present / absent / uncertain; not-mentioned = absent. Scored under the pipeline's U-zeros binarization (uncertain -> negative) so the measurement matches the labels the model is trained and evaluated on.",
+    "opacity_definition": "Broad CheXpert 'Lung Opacity': any asserted parenchymal/airspace opacity, infiltrate, consolidation, or atelectasis/volume-loss/collapse. Isolated interstitial edema/vascular congestion without described opacity, and purely chronic scar 'densities', are NOT counted.",
+    "annotator": "LLM assistant (Claude) applying CheXpert labeling rules by careful full-text reading. This is an independent, comprehension-based reader that resolves negation, uncertainty, and temporal/resolution cues the regex cannot \u2014 but it is NOT a board-certified radiologist. Recommended next step: radiologist over-read of these 66 reports to upgrade this to a clinical gold standard. The gold itself therefore has a ceiling and is reported as such.",
+    "limits": "Single annotator (no second-reader kappa on the gold); report-text reading only (no image review); rare-finding cells (consolidation, pneumothorax) have <=6 gold positives so their precision/recall carry wide Wilson CIs \u2014 see the cross-model kappa artifact (kappa_crosscheck.json) for an image-level, label-free corroboration."
+  },
+  "v1_metrics_per_finding": {
+    "opacity": {
+      "gold_positives": 33,
+      "labeler_positives": 22,
+      "true_positives": 20,
+      "false_positives": 2,
+      "false_negatives": 13,
+      "true_negatives": 31,
+      "precision": 0.9091,
+      "precision_ci95": [
+        0.7218,
+        0.9747
+      ],
+      "recall": 0.6061,
+      "recall_ci95": [
+        0.4368,
+        0.7532
+      ],
+      "specificity": 0.9394,
+      "f1_score": 0.7273,
+      "cohen_kappa": 0.5455
+    },
+    "consolidation": {
+      "gold_positives": 4,
+      "labeler_positives": 8,
+      "true_positives": 4,
+      "false_positives": 4,
+      "false_negatives": 0,
+      "true_negatives": 58,
+      "precision": 0.5,
+      "precision_ci95": [
+        0.2152,
+        0.7848
+      ],
+      "recall": 1.0,
+      "recall_ci95": [
+        0.5101,
+        1.0
+      ],
+      "specificity": 0.9355,
+      "f1_score": 0.6667,
+      "cohen_kappa": 0.6374
+    },
+    "pleural_effusion": {
+      "gold_positives": 23,
+      "labeler_positives": 23,
+      "true_positives": 21,
+      "false_positives": 2,
+      "false_negatives": 2,
+      "true_negatives": 41,
+      "precision": 0.913,
+      "precision_ci95": [
+        0.732,
+        0.9758
+      ],
+      "recall": 0.913,
+      "recall_ci95": [
+        0.732,
+        0.9758
+      ],
+      "specificity": 0.9535,
+      "f1_score": 0.913,
+      "cohen_kappa": 0.8665
+    },
+    "cardiomegaly": {
+      "gold_positives": 15,
+      "labeler_positives": 8,
+      "true_positives": 8,
+      "false_positives": 0,
+      "false_negatives": 7,
+      "true_negatives": 51,
+      "precision": 1.0,
+      "precision_ci95": [
+        0.6756,
+        1.0
+      ],
+      "recall": 0.5333,
+      "recall_ci95": [
+        0.3012,
+        0.7519
+      ],
+      "specificity": 1.0,
+      "f1_score": 0.6957,
+      "cohen_kappa": 0.6385
+    },
+    "nodule": {
+      "gold_positives": 8,
+      "labeler_positives": 9,
+      "true_positives": 8,
+      "false_positives": 1,
+      "false_negatives": 0,
+      "true_negatives": 57,
+      "precision": 0.8889,
+      "precision_ci95": [
+        0.565,
+        0.9801
+      ],
+      "recall": 1.0,
+      "recall_ci95": [
+        0.6756,
+        1.0
+      ],
+      "specificity": 0.9828,
+      "f1_score": 0.9412,
+      "cohen_kappa": 0.9325
+    },
+    "pneumothorax": {
+      "gold_positives": 4,
+      "labeler_positives": 5,
+      "true_positives": 4,
+      "false_positives": 1,
+      "false_negatives": 0,
+      "true_negatives": 61,
+      "precision": 0.8,
+      "precision_ci95": [
+        0.3755,
+        0.9638
+      ],
+      "recall": 1.0,
+      "recall_ci95": [
+        0.5101,
+        1.0
+      ],
+      "specificity": 0.9839,
+      "f1_score": 0.8889,
+      "cohen_kappa": 0.8809
+    },
+    "hyperinflation": {
+      "gold_positives": 8,
+      "labeler_positives": 8,
+      "true_positives": 8,
+      "false_positives": 0,
+      "false_negatives": 0,
+      "true_negatives": 58,
+      "precision": 1.0,
+      "precision_ci95": [
+        0.6756,
+        1.0
+      ],
+      "recall": 1.0,
+      "recall_ci95": [
+        0.6756,
+        1.0
+      ],
+      "specificity": 1.0,
+      "f1_score": 1.0,
+      "cohen_kappa": 1.0
+    }
+  },
+  "v1_macro_average": {
+    "macro_precision": 0.8587,
+    "macro_recall": 0.8646,
+    "macro_f1": 0.8332,
+    "macro_specificity": 0.9707,
+    "macro_kappa": 0.7859
+  },
+  "v1_micro_average": {
+    "true_positives": 73,
+    "false_positives": 10,
+    "false_negatives": 22,
+    "true_negatives": 357,
+    "precision": 0.8795,
+    "recall": 0.7684,
+    "f1_score": 0.8202,
+    "overall_cell_accuracy": 0.9307
+  },
+  "v1_uncertain_handling": {
+    "opacity": {
+      "n_uncertain_in_gold": 1,
+      "labeler_fired_positive": 1
+    },
+    "consolidation": {
+      "n_uncertain_in_gold": 3,
+      "labeler_fired_positive": 3
+    },
+    "pleural_effusion": {
+      "n_uncertain_in_gold": 3,
+      "labeler_fired_positive": 2
+    },
+    "cardiomegaly": {
+      "n_uncertain_in_gold": 1,
+      "labeler_fired_positive": 0
+    },
+    "nodule": {
+      "n_uncertain_in_gold": 0,
+      "labeler_fired_positive": 0
+    },
+    "pneumothorax": {
+      "n_uncertain_in_gold": 1,
+      "labeler_fired_positive": 1
+    },
+    "hyperinflation": {
+      "n_uncertain_in_gold": 0,
+      "labeler_fired_positive": 0
+    }
+  },
+  "v2_metrics_per_finding": {
+    "opacity": {
+      "gold_positives": 33,
+      "labeler_positives": 25,
+      "true_positives": 24,
+      "false_positives": 1,
+      "false_negatives": 9,
+      "true_negatives": 32,
+      "precision": 0.96,
+      "precision_ci95": [
+        0.8046,
+        0.9929
+      ],
+      "recall": 0.7273,
+      "recall_ci95": [
+        0.5578,
+        0.8493
+      ],
+      "specificity": 0.9697,
+      "f1_score": 0.8276,
+      "cohen_kappa": 0.697
+    },
+    "consolidation": {
+      "gold_positives": 4,
+      "labeler_positives": 7,
+      "true_positives": 4,
+      "false_positives": 3,
+      "false_negatives": 0,
+      "true_negatives": 59,
+      "precision": 0.5714,
+      "precision_ci95": [
+        0.2505,
+        0.8418
+      ],
+      "recall": 1.0,
+      "recall_ci95": [
+        0.5101,
+        1.0
+      ],
+      "specificity": 0.9516,
+      "f1_score": 0.7273,
+      "cohen_kappa": 0.7045
+    },
+    "pleural_effusion": {
+      "gold_positives": 23,
+      "labeler_positives": 24,
+      "true_positives": 22,
+      "false_positives": 2,
+      "false_negatives": 1,
+      "true_negatives": 41,
+      "precision": 0.9167,
+      "precision_ci95": [
+        0.7415,
+        0.9768
+      ],
+      "recall": 0.9565,
+      "recall_ci95": [
+        0.7901,
+        0.9923
+      ],
+      "specificity": 0.9535,
+      "f1_score": 0.9362,
+      "cohen_kappa": 0.9009
+    },
+    "cardiomegaly": {
+      "gold_positives": 15,
+      "labeler_positives": 15,
+      "true_positives": 14,
+      "false_positives": 1,
+      "false_negatives": 1,
+      "true_negatives": 50,
+      "precision": 0.9333,
+      "precision_ci95": [
+        0.7018,
+        0.9881
+      ],
+      "recall": 0.9333,
+      "recall_ci95": [
+        0.7018,
+        0.9881
+      ],
+      "specificity": 0.9804,
+      "f1_score": 0.9333,
+      "cohen_kappa": 0.9137
+    },
+    "nodule": {
+      "gold_positives": 8,
+      "labeler_positives": 9,
+      "true_positives": 8,
+      "false_positives": 1,
+      "false_negatives": 0,
+      "true_negatives": 57,
+      "precision": 0.8889,
+      "precision_ci95": [
+        0.565,
+        0.9801
+      ],
+      "recall": 1.0,
+      "recall_ci95": [
+        0.6756,
+        1.0
+      ],
+      "specificity": 0.9828,
+      "f1_score": 0.9412,
+      "cohen_kappa": 0.9325
+    },
+    "pneumothorax": {
+      "gold_positives": 4,
+      "labeler_positives": 5,
+      "true_positives": 4,
+      "false_positives": 1,
+      "false_negatives": 0,
+      "true_negatives": 61,
+      "precision": 0.8,
+      "precision_ci95": [
+        0.3755,
+        0.9638
+      ],
+      "recall": 1.0,
+      "recall_ci95": [
+        0.5101,
+        1.0
+      ],
+      "specificity": 0.9839,
+      "f1_score": 0.8889,
+      "cohen_kappa": 0.8809
+    },
+    "hyperinflation": {
+      "gold_positives": 8,
+      "labeler_positives": 8,
+      "true_positives": 8,
+      "false_positives": 0,
+      "false_negatives": 0,
+      "true_negatives": 58,
+      "precision": 1.0,
+      "precision_ci95": [
+        0.6756,
+        1.0
+      ],
+      "recall": 1.0,
+      "recall_ci95": [
+        0.6756,
+        1.0
+      ],
+      "specificity": 1.0,
+      "f1_score": 1.0,
+      "cohen_kappa": 1.0
+    }
+  },
+  "v2_macro_average": {
+    "macro_precision": 0.8672,
+    "macro_recall": 0.9453,
+    "macro_f1": 0.8935,
+    "macro_specificity": 0.9745,
+    "macro_kappa": 0.8614
+  },
+  "v2_micro_average": {
+    "true_positives": 84,
+    "false_positives": 9,
+    "false_negatives": 11,
+    "true_negatives": 358,
+    "precision": 0.9032,
+    "recall": 0.8842,
+    "f1_score": 0.8936,
+    "overall_cell_accuracy": 0.9567
+  },
+  "v2_uncertain_handling": {
+    "opacity": {
+      "n_uncertain_in_gold": 1,
+      "labeler_fired_positive": 1
+    },
+    "consolidation": {
+      "n_uncertain_in_gold": 3,
+      "labeler_fired_positive": 3
+    },
+    "pleural_effusion": {
+      "n_uncertain_in_gold": 3,
+      "labeler_fired_positive": 2
+    },
+    "cardiomegaly": {
+      "n_uncertain_in_gold": 1,
+      "labeler_fired_positive": 0
+    },
+    "nodule": {
+      "n_uncertain_in_gold": 0,
+      "labeler_fired_positive": 0
+    },
+    "pneumothorax": {
+      "n_uncertain_in_gold": 1,
+      "labeler_fired_positive": 1
+    },
+    "hyperinflation": {
+      "n_uncertain_in_gold": 0,
+      "labeler_fired_positive": 0
+    }
+  },
+  "validation_samples": [
+    {
+      "index": 0,
+      "study_id": "s50058197",
+      "subject_id": "17055995",
+      "stratum": "random",
+      "report_text": "Findings: Single portable view of the chest. Again, low lung volumes are seen. Increased interstitial markings on the current exam suggestive of vascular congestion. Left costophrenic angle is now more blunted potentially due to atelectasis, although effusion is also possible. Linear retrocardiac opacity persists. Cardiomediastinal silhouette is stable. There is a new right IJ central venous catheter whose tip is in the right atrium and could be withdrawn 4.5 cm to be at the lower SVC. No visualized pneumothorax. Lower cervical fixation hardware is identified. Impression: New right IJ central venous line with tip likely within the right atrium and could be withdrawn to be in the lower SVC. Pulmonary vascular congestion.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": "u",
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 1,
+      "study_id": "s55361629",
+      "subject_id": "18795271",
+      "stratum": "random",
+      "report_text": "Findings: Single AP upright portable view of the chest was obtained. There is persistent elevation of the right hemidiaphragm with overlying right base atelectasis. An enteric tube is seen, distal aspect terminating in the region of the gastroesophageal junction. Recommend advancement by several centimeters so that it is well within the stomach. There is no large pleural effusion or pneumothorax. The aortic knob is calcified. The cardiac silhouette is unremarkable. Impression: 1. Elevation of the right hemidiaphragm which is increased as compared to the prior study with overlying basilar atelectasis. 2. Enteric tube terminates in the region of the gastroesophageal junction, recommend advancement so that it is well within the stomach.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 2,
+      "study_id": "s59300264",
+      "subject_id": "19932024",
+      "stratum": "random",
+      "report_text": "Findings: Moderately well inflated lungs with no change in prominence of pulmonary vasculature. Stable cardiomegaly. Enlarged left atrial shadow is again identified. No pleural effusions or pneumothorax. No change in bony thorax. Impression: No change in mild to moderate pulmonary edema and cardiomegaly. No lobar consolidation.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 3,
+      "study_id": "s58628303",
+      "subject_id": "11717909",
+      "stratum": "random",
+      "report_text": "Findings: Portable semi-upright radiograph of the chest demonstrates low lung volumes which results in bronchovascular crowding. Left lower lobe collapse has recurred. The cardiomediastinal and hilar contours are unchanged. The endotracheal tube ends 1.8 cm from the carina. Chest tubes project over the left hemi thorax. Swan-Ganz catheter ends in the right pulmonary artery. Left ventricular assist device is in unchanged position. Nasogastric tube courses into the stomach. Left-sided PICC line ends at the cavoatrial junction. Impression: 1. Nasogastric tube courses into the stomach. 2. Endotracheal tube ends 1.8 cm from the carina. 3. Left lower lobe collapse has recurred. NOTIFICATION: These findings were discussed with ___ by Dr. ___ ___ telephone at 11:36am on ___, 10 minutes after discovery.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 4,
+      "study_id": "s52122560",
+      "subject_id": "17945610",
+      "stratum": "random",
+      "report_text": "Findings: The ETT is in standard position. The right pigtail catheter also appears intact and unchanged in position projecting over the right aspect of the mediastinum in the lower hemithorax. The enteric tube crosses the midline and the is tip is not seen. The stomach is nondistended. Bilateral pulmonary edema has markedly improved since ___ and minimally improved since ___, now mild in severity. Persistent focal right upper lobe opacity could represent concurrent pneumonia. Hazy opacification blunting of the left costophrenic angle is overall similar and suggest persistent small left pleural effusion. No definite right pleural effusion. Mild to moderate cardiomegaly persists and is unchanged. The mediastinum is not widened. No pneumothorax. Aortic knob calcifications are re- demonstrated. Dextroconvex scoliosis of the thoracic spine is unchanged. Impression: Improving, now mild, pulmonary edema with persistent right upper lobe opacity which could represent concurrent pneumonia.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 5,
+      "study_id": "s58301819",
+      "subject_id": "17971994",
+      "stratum": "random",
+      "report_text": "Findings: The left-sided chest tube is been removed. There is a small left pleural effusion and volume loss in the left lower lobe better new compared to prior. There is no pneumothorax. There is a small right effusion as well Impression: Worsened appearance to the left lung.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 6,
+      "study_id": "s50084553",
+      "subject_id": "10003502",
+      "stratum": "random",
+      "report_text": "Findings: Impression: Compared to chest radiographs since ___, most recently ___. Large right and moderate left pleural effusions and severe bibasilar atelectasis are unchanged. Cardiac silhouette is obscured. No pneumothorax. Pulmonary edema is mild, obscured radiographically by overlying abnormalities.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 7,
+      "study_id": "s54487320",
+      "subject_id": "11925631",
+      "stratum": "random",
+      "report_text": "Findings: Impression: AP chest compared to ___: There has been little change since ___ except for decrease in previous small right pleural effusion. Substantial atelectasis persists at the base of the right lung and the left lower lobe is still completely consolidated or collapsed. Upper lungs are grossly clear. The extent of gaseous distention of the intestinal tract as seen in the upper abdomen has improved. No pneumothorax. Mild-to-moderate cardiomegaly, improved.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": "u",
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "note": "'consolidated or collapsed' -> consolidation uncertain (etiology hedged collapse vs consolidation)."
+    },
+    {
+      "index": 8,
+      "study_id": "s56285032",
+      "subject_id": "17055995",
+      "stratum": "random",
+      "report_text": "Findings: Impression: No acute cardiopulmonary abnormality.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 9,
+      "study_id": "s52350751",
+      "subject_id": "19112585",
+      "stratum": "random",
+      "report_text": "Findings: Portable semi-erect chest radiograph ___ at 07:33 is submitted. Impression: Right internal jugular Swan-Ganz catheter, endotracheal tube and nasogastric tube are unchanged in position. Status post median sternotomy with stable postoperative cardiac and mediastinal enlargement. Layering bilateral effusions with bibasilar patchy opacities likely representing lower lobe atelectasis. Prominent perihilar vasculature likely reflects combination of low lung volumes and residual perihilar edema. No pneumothorax.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 10,
+      "study_id": "s56772300",
+      "subject_id": "18580594",
+      "stratum": "random",
+      "report_text": "Findings: In comparison with study of ___, there is little overall change in the diffuse bilateral pulmonary nodules, consistent with widespread metastases from renal cell carcinoma. The patient has taken a slightly better inspiration. There may be some mild elevation of pulmonary venous pressure. Impression:",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 11,
+      "study_id": "s57272076",
+      "subject_id": "11614040",
+      "stratum": "random",
+      "report_text": "Findings: were reported to ___ by ___ ___ by telephone at 18:50 on ___. 2. Residual consolidation in the left mid and lower lung. ______________________________________________________________________________ FINAL REPORT REASON FOR EXAMINATION: Evaluation of the patient with a left pleural effusion after thoracocentesis, now after removal of the drain. AP radiograph of the chest was compared to ___ obtained at 3:17 p.m. Currently, there is minimal amount of apical left pneumothorax and there is interval decrease additionally in the left pleural effusion. Loculation of pleural effusion is suspected along the lateral aspect. The basal opacities in the left base are unchanged. The Port-A-Cath catheter tip is at the cavoatrial junction, unchanged. Impression:",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 1,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 1,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 1,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 1,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 12,
+      "study_id": "s55015392",
+      "subject_id": "17559288",
+      "stratum": "random",
+      "report_text": "Findings: Impression: 1. Left PICC ends in the upper SVC, unchanged in position. 2. Improvement of multifocal opacities when compared to the chest x-ray of ___.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 13,
+      "study_id": "s54360882",
+      "subject_id": "11717909",
+      "stratum": "random",
+      "report_text": "Findings: Impression: In comparison with these study of ___, the patient has taken a slightly better inspiration. The monitoring and support devices are stable. The degree of opacification in the right hemithorax appears to have decreased, though much of this could merely represent the better inspiration. Poor definition of the hemidiaphragm on the right is consistent with layering pleural fluid. The opacification at the left base has decreased and most likely represents atelectasis.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 14,
+      "study_id": "s50743847",
+      "subject_id": "14880886",
+      "stratum": "random",
+      "report_text": "Findings: Heart size is normal. Cardiomediastinal silhouette and hilar contours are normal. Lungs are clear. Pleural surfaces are clear without effusion or pneumothorax. No overt traumatic abnormality. Impression: 1. No acute cardiopulmonary abnormality. 2. No overt traumatic abnormality.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 15,
+      "study_id": "s54660460",
+      "subject_id": "14293935",
+      "stratum": "random",
+      "report_text": "Findings: Impression:",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 16,
+      "study_id": "s52103847",
+      "subject_id": "17665558",
+      "stratum": "random",
+      "report_text": "Findings: PA and lateral views of the chest provided. Left chest wall pacer device is seen with leads extending into the right heart. Midline sternotomy wires are also noted. The lungs are clear. There is no focal consolidation, effusion, or pneumothorax. The cardiomediastinal silhouette is normal. Imaged osseous structures are intact. No free air below the right hemidiaphragm is seen. Impression: No acute intrathoracic process. Pacemaker in place.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 17,
+      "study_id": "s52226505",
+      "subject_id": "15295867",
+      "stratum": "random",
+      "report_text": "Findings: The lungs are clear without focal consolidation. No pleural effusion or pneumothorax is seen. The cardiac and mediastinal silhouettes are unremarkable. Impression: No acute cardiopulmonary process.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 18,
+      "study_id": "s52093968",
+      "subject_id": "15167936",
+      "stratum": "random",
+      "report_text": "Findings: Impression: In comparison with the study of ___, allowing for the PA and lateral projections, the right mediastinal border of the heart is slightly less prominent. No evidence of acute focal pneumonia or vascular congestion.There is loss of height of several vertebral bodies in the thoracic region, not appreciated on the most recent available study in ___.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 19,
+      "study_id": "s57641661",
+      "subject_id": "10003502",
+      "stratum": "random",
+      "report_text": "Findings: Frontal and lateral views of the chest. Size of the bilateral effusions, left greater than right has slightly decreased in size since prior exam. There is less pulmonary vascular congestion on the current exam as well. Cardiac silhouette which appears enlarged, is unchanged. No acute osseous abnormality is detected. Impression: Persistent small bilateral effusions, larger on the left which have decreased in size. Decreased pulmonary vascular congestion. No evidence of superimposed acute cardiopulmonary process.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 20,
+      "study_id": "s57718675",
+      "subject_id": "11177224",
+      "stratum": "random",
+      "report_text": "Findings: Portable semi-upright radiograph of the chest demonstrates increased interstitial markings in the bilateral lungs concerning for pulmonary edema. Increased opacification in the retrocardiac region raises concern for atelectasis versus pneumonia. There is a small left-sided pleural effusion. Cardiomediastinal and hilar contours are unchanged. No pneumothorax. Impression: 1. Interval increase in interstitial markings raises concern for pulmonary edema. 2. Retrocardiac opacity is consistent with atelectasis or less likely pneumonia.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 21,
+      "study_id": "s51748293",
+      "subject_id": "14429763",
+      "stratum": "random",
+      "report_text": "Findings: Upright frontal view of the chest is limited by patient rotation. Within this limitation, there is no acute intrathoracic process. The mediastinal, pleural and pulmonary structures are unremarkable. There is no pleural effusion or pneumothorax identified. Calcifications are noted within the aortic arch. Degenerative changes of the cervical spine and clips overlying the left neck are seen. Impression: Limited study, however, no acute intrathoracic process.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 22,
+      "study_id": "s54998180",
+      "subject_id": "18528269",
+      "stratum": "random",
+      "report_text": "Findings: PA and lateral views of the chest were provided. The lungs are hyperinflated and clear. No effusion or pneumothorax is seen. The heart and mediastinal contours are normal. Bony structures are intact. No free air below the right hemidiaphragm. Impression: No acute intrathoracic process.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      }
+    },
+    {
+      "index": 23,
+      "study_id": "s55456794",
+      "subject_id": "19580789",
+      "stratum": "random",
+      "report_text": "Findings: The cardiomediastinal and hilar contours are within normal limits. There is mild tortuosity of the thoracic aorta. Lung volumes are slightly decreased when compared to prior examination. There is no focal consolidation, pleural effusion or pneumothorax. Impression: No acute cardiopulmonary process.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 24,
+      "study_id": "s54673619",
+      "subject_id": "11686207",
+      "stratum": "random",
+      "report_text": "Findings: PA and lateral chest views have been obtained with patient in upright position. There is moderate cardiac enlargement and the thoracic aorta is generally widened and elongated. Calcium deposits are seen in the wall, mostly at the level of the arch. The pulmonary vasculature demonstrates an upper zone redistribution pattern, but there is no sign of an advanced interstitial or alveolar edema. No evidence of acute infiltrates and the lateral pleural sinuses are free. In the apical area, thickened pleural structures are noted bilaterally and combined with old scar formations and irregular densities in the peripheral portions of the parenchyma in this territory. When comparison is made with the next previous examination of ___, these changes have not undergone any difference in appearance anf represent old inactive specific scars. Comparison demonstrates on the other hand that the cardiac size has increased mildly and so has the upper zone redistribution pattern. Acute infiltrates are not present. Impression: Old stable, probably specific bilateral apical scar formations, moderate cardiac enlargement with mild degree of chronic CHF but no evidence of acute pulmonary infiltrates or pleural effusions.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 25,
+      "study_id": "s56979658",
+      "subject_id": "13863916",
+      "stratum": "random",
+      "report_text": "Findings: Impression: Comparison to ___. Normal lung volumes. Normal size of the cardiac silhouette. Normal hilar and mediastinal contours. No pneumonia, no pulmonary edema, no pleural effusions. No lung nodules or masses.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 26,
+      "study_id": "s56607012",
+      "subject_id": "16033763",
+      "stratum": "random",
+      "report_text": "Findings: As compared to the previous radiograph, the patient has undergone thoracocentesis on the left. The pleural effusion has slightly decreased in extent but still occupies approximately two-thirds of the left hemithorax. There is no evidence of pneumothorax. Unchanged appearance of the known bilateral extensive pulmonary nodules. Impression:",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 27,
+      "study_id": "s53769263",
+      "subject_id": "11888614",
+      "stratum": "random",
+      "report_text": "Findings: Supine portable AP view of the chest was provided. There is an endotracheal tube which is seen terminating approximately 7.6 cm above the carina. An NG tube tip terminates in the left upper abdomen. There is mild prominence of the bronchovascular markings which could reflect technique though possibility of aspiration is not excluded. No definite pneumothorax or effusion is seen. Cardiomediastinal silhouette appears normal. No bony deformities are seen. Impression: Appropriately positioned ET and NG tubes. Mild bronchovascular prominence could reflect an element of aspiration.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 28,
+      "study_id": "s57420501",
+      "subject_id": "10198310",
+      "stratum": "random",
+      "report_text": "Findings: PA and lateral views of the chest provided. Left chest wall AICD is again seen with leads extending into the right atrium and right ventricle. The heart is moderately enlarged. Hila appearing or urged. There is no overt pulmonary edema. No large effusion or pneumothorax. No focal consolidation concerning for pneumonia. The mediastinal contour is stable. Bony structures are intact. No free air below the right hemidiaphragm seen. Impression: Moderate cardiomegaly with pulmonary vascular congestion.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 29,
+      "study_id": "s52575559",
+      "subject_id": "14501307",
+      "stratum": "random",
+      "report_text": "Findings: There is no focal consolidation, pleural effusion or pneumothorax. The cardiomediastinal and hilar contours are normal. Impression: No acute cardiopulmonary process.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 30,
+      "study_id": "s53111950",
+      "subject_id": "14798972",
+      "stratum": "random",
+      "report_text": "Findings: were discussed with Dr. ___ ___ the phone by Dr. ___ at 12:30 p.m. on ___. Impression:",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 31,
+      "study_id": "s51395345",
+      "subject_id": "15902493",
+      "stratum": "random",
+      "report_text": "Findings: IMPRESSION (PFI): ___ ___ ___ 3:00 PM 1. Lines and tubes in place. 2. Stable right upper mediastinal mass. 3. Right middle lobe atelectasis. 4. Question of narrowed trachea beyond the ET tube - CT may be considered is clinical concern for poor aeration exists. ______________________________________________________________________________ FINAL REPORT HISTORY: An ___-year-old female with right mediastinal mass. STUDY: Supine portable AP chest radiograph. COMPARISON: Chest CT from ___ and multiple chest radiographs from ___ through ___. FINDINGS: The patient is rotated to the left. The endotracheal tube sits just below the clavicular heads; the carina is not well seen, and while chest radiography is not ideal to assess for such, the trachea distal to the ET tube appears narrowed. The endogastric tube side port is well below the GE junction. The left-sided central line tip in the mid SVC. The heart size is within normal limits. Mediastinal contours again demonstrate calcified atherosclerotic disease at the aortic knob and a large mass approximately 8.5 x 6 cm in the coronal plane dominating the right upper mediastinum (better characterized on prior CT). Right middle lobe atelectasis is new. There is no large pleural effusion or pneumothorax. Impression: (PFI): ___ ___ ___ 3:00 PM 1. Lines and tubes in place. 2. Stable right upper mediastinal mass. 3. Right middle lobe atelectasis. 4. Question of narrowed trachea beyond the ET tube - CT may be considered is clinical concern for poor aeration exists. ______________________________________________________________________________ FINAL REPORT HISTORY: An ___-year-old female with right mediastinal mass. STUDY: Supine portable AP chest radiograph. COMPARISON: Chest CT from ___ and multiple chest radiographs from ___ through ___. FINDINGS: The patient is rotated to the left. The endotracheal tube sits just below the clavicular heads; the carina is not well seen, and while chest radiography is not ideal to assess for such, the trachea distal to the ET tube appears narrowed. The endogastric tube side port is well below the GE junction. The left-sided central line tip in the mid SVC. The heart size is within normal limits. Mediastinal contours again demonstrate calcified atherosclerotic disease at the aortic knob and a large mass approximately 8.5 x 6 cm in the coronal plane dominating the right upper mediastinum (better characterized on prior CT). Right middle lobe atelectasis is new. There is no large pleural effusion or pneumothorax. IMPRESSION: 1. Lines and tubes as described above. 2. Stable right upper mediastinal mass. 3. Right middle lobe atelectasis. 4. Question of narrowed trachea beyond the ET tube - CT may be considered is clinical concern for poor aeration exists.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "note": "8.5cm mass is MEDIASTINAL, not a pulmonary nodule -> gold nodule=0; regex fires on 'mass' (labeler false-positive, a known precision gap)."
+    },
+    {
+      "index": 32,
+      "study_id": "s56562756",
+      "subject_id": "19245983",
+      "stratum": "random",
+      "report_text": "Findings: The lungs are clear. There is no consolidation, effusion, or edema. The cardiomediastinal silhouette is within normal limits. No acute osseous abnormalities. Impression: No acute cardiopulmonary process.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 33,
+      "study_id": "s58318194",
+      "subject_id": "18713335",
+      "stratum": "random",
+      "report_text": "Findings: As compared to the previous radiograph, the size of the cardiac silhouette is moderately increased. Given lower lung volumes, there is more crowding of the vascular and bronchial structures, notably at the lung bases, but no pulmonary edema is present. No pneumonia. No pleural effusions. No lung nodules or masses. Impression:",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 34,
+      "study_id": "s52459455",
+      "subject_id": "15780880",
+      "stratum": "random",
+      "report_text": "Findings: As compared to the previous radiograph, the pre-existing parenchymal opacities have slightly decreased in extent and severity but are still clearly visible, notably in the region of the right apex. The bilateral pleural effusions, better visualized on the lateral than on the frontal radiograph, persist. Unchanged normal hilar structures and normal size of the cardiac silhouette, with minimal calcification of the aortic wall and minimal tortuosity of the aorta. No pneumothorax. Mild degenerative right shoulder disease. Impression:",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 35,
+      "study_id": "s50703372",
+      "subject_id": "11888614",
+      "stratum": "random",
+      "report_text": "Findings: Impression: ET tube tip is 3 cm above the carinal. NG tube tip is in the stomach. Pulmonary edema is substantial, bilateral associated with large bilateral pleural effusions. No evidence of pneumothorax expressed",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 36,
+      "study_id": "s53914388",
+      "subject_id": "12502618",
+      "stratum": "random",
+      "report_text": "Findings: As compared to the previous radiograph, there is no relevant change. The alignment of the sternal wires is constant. No change in position. Normal appearance of the lung parenchyma. No pneumothorax. No pleural effusions. Normal size of the cardiac silhouette. Normal hilar and mediastinal contours. Impression:",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 37,
+      "study_id": "s53058109",
+      "subject_id": "18057037",
+      "stratum": "random",
+      "report_text": "Findings: In comparison with study of ___, there is continued enlargement of the cardiac silhouette without evidence of pulmonary edema. Small left effusion is seen. Again, there is substantial elevation of the right hemidiaphragmatic contour, as clearly demonstrated on the CT of ___. Impression:",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 38,
+      "study_id": "s58480596",
+      "subject_id": "16823449",
+      "stratum": "random",
+      "report_text": "Findings: PA and lateral views of the chest provided. Subtle basal opacities likely represent minimal atelectasis. No definite signs of pneumonia or edema. No large effusion or pneumothorax. The cardiomediastinal silhouette is normal. Imaged osseous structures are intact. No free air below the right hemidiaphragm is seen. Impression: Minimal basal opacities likely represent atelectasis.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 39,
+      "study_id": "s53275640",
+      "subject_id": "10337896",
+      "stratum": "random",
+      "report_text": "Findings: The tracheostomy tube is unchanged in position and terminates approximately 4.8 cm above the carina. The right PICC line terminates in the distal SVC. There is no significant change in the lungs when compared to ___. There are several parenchymal calcifications which were characterized on the most recent CT scan. Again noted are diffuse infiltrative parenchymal opacities, right worse than left; this is largely due to pulmonary edema and the right-sided pleural effusion, but underlying pneumonia cannot be excluded. The mediastinum is wide, which was noted as far back as the outside hospital CXR from ___. No acute osseous abnormalities. Impression: 1. Moderate pulmonary edema, unchanged. 2. Interval improvement in right-sided pleural effusion.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 40,
+      "study_id": "s59507971",
+      "subject_id": "11717909",
+      "stratum": "random",
+      "report_text": "Findings: These are two views during Dobhoff placement. On the second film the feeding tube tip is in the stomach. NG tube is been removed. The right IJ line is unchanged. The appearance the lungs are unchanged. Impression: Dobhoff tube in the stomach",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 41,
+      "study_id": "s56521428",
+      "subject_id": "15911529",
+      "stratum": "random",
+      "report_text": "Findings: Allowing for changes in positioning and lung volumes, the small right pleural effusion and adjacent compressive atelectasis is probably unchanged compared with ___. The right-sided pigtail catheter is in unchanged position. The left chest wall atrial and biventricular pacemaker leads are in standard position. There is moderate stable cardiomegaly. Impression: Unchanged small right pleural effusion.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 42,
+      "study_id": "s59179922",
+      "subject_id": "13894716",
+      "stratum": "random",
+      "report_text": "Findings: Impression: Heart size and mediastinum are unchanged as compared to previous study from ___. Bilateral pleural effusions, right more than left as well as supporting devices are unchanged. No pneumothorax. No evidence of pulmonary edema",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 43,
+      "study_id": "s55834788",
+      "subject_id": "16466095",
+      "stratum": "random",
+      "report_text": "Findings: Impression: No evidence of acute or chronic TB.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 44,
+      "study_id": "s56582554",
+      "subject_id": "11717909",
+      "stratum": "random",
+      "report_text": "Findings: Impression: The Swan-Ganz catheter inserted on the right side has its tip the right pulmonary artery. There is no pneumothorax or CHF. There is persistent linear atelectasis or scarring in the right lung base and right perihilar region. The cardiac silhouette is unchanged.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 45,
+      "study_id": "s56562091",
+      "subject_id": "18580594",
+      "stratum": "enrich:nodule",
+      "report_text": "Findings: AP and lateral views of the chest. The innumerable bilateral nodular densities, better appreciated on recent chest CTA from ___, appear slightly worse compared to study done on ___ but this may be exaggerated by difference in technique and superimposed edema. The cardiomediastinal and hilar contours are normal. There is no pleural effusion or pneumothorax. Impression: Innumerable bilateral nodular opacities, better seen on recent chest CT from ___, appear slightly worse compared to study done on ___ but this may be exaggerated by difference in technique and possibly superimposed edema.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "note": "'innumerable bilateral nodular opacities' -> both nodule and opacity credited present."
+    },
+    {
+      "index": 46,
+      "study_id": "s53814539",
+      "subject_id": "13196707",
+      "stratum": "enrich:nodule",
+      "report_text": "Findings: Dobhoff tube terminates in the body of the stomach. Right subclavian line has been removed in the interim. SVC stent appears unchanged in position. Bibasilar consolidations may represent a combination of pneumonia and/ or atelectasis, not significantly changed. Multiple bilateral pulmonary metastases are known to the patient. Small right pleural effusion has decreased. No pneumothorax. Cardiomediastinal contours are stable. Right hemidiaphragm is persistently elevated. Impression: 1. Slight interval decrease in size of a small right pleural effusion, with persistent bibasilar pneumonia and/or atelectasis. 2. Multiple bilateral pulmonary metastases.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 47,
+      "study_id": "s52613722",
+      "subject_id": "13356814",
+      "stratum": "enrich:hyperinflation",
+      "report_text": "Findings: The cardiomediastinal and hilar contours are stable. The aorta is tortuous. The lungs are mildly hyperexpanded suggestive of underlying emphysema. There has been interval development of a right lower lobe opacity which would be concerning for pneumonia or aspiration, less likely atelectasis. No pneumothorax or pulmonary edema. Note is made of severe degenerative change involving the right glenohumeral joint. Impression: Interval development of probable right lower lobe pneumonia or aspiration. Clinical correlation is advised.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      }
+    },
+    {
+      "index": 48,
+      "study_id": "s57891982",
+      "subject_id": "17257394",
+      "stratum": "enrich:hyperinflation",
+      "report_text": "Findings: The lungs are hyperinflated and clear. The cardiomediastinal silhouette, hilar contours, and pleural surfaces are normal. There is no pleural effusion or pneumothorax. Degenerative changes are seen in the thoracic spine. Impression: No acute cardiopulmonary process.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      }
+    },
+    {
+      "index": 49,
+      "study_id": "s53764194",
+      "subject_id": "11226572",
+      "stratum": "enrich:hyperinflation",
+      "report_text": "Findings: Previously seen focal consolidation at the lingula is resolved and there is only minimal residual interstitial thickening. There is no consolidation, pleural effusion, or pneumothorax. Cardiomediastinal and hilar silhouette are normal size and unchanged. There is no radiographic findings that suggests sarcoidosis. The lungs are mildly hyperinflated. Impression: No evidence of pneumonia.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 1,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      }
+    },
+    {
+      "index": 50,
+      "study_id": "s57478248",
+      "subject_id": "18166102",
+      "stratum": "enrich:hyperinflation",
+      "report_text": "Findings: The lungs are hyperexpanded with increased opacification of the right upper and middle lobes with silhouetting of the right cardiac border and retrocardiac opacification on lateral view suggests pneumonia. The mediastinal silhouette and bilateral hemidiaphragms stable. The left lung is clear. No pneumothorax or pleural effusion is present. Impression: Retrocardiac opacification concerning for pneumonia. Repeat radiograph 6 weeks after completion of treatment is recommended to ensure resolution. RECOMMENDATION(S): Repeat chest radiograph 6 weeks after completion of treatment is recommended to ensure resolution.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      }
+    },
+    {
+      "index": 51,
+      "study_id": "s58368837",
+      "subject_id": "19950864",
+      "stratum": "enrich:hyperinflation",
+      "report_text": "Findings: Frontal and lateral views of the chest show no acute intrathoracic process. Flattened diaphragms and pulmonary blebs are consistent with obstructive lung disease. The mediastinum and pleural structures are unremarkable. Calcifications are seen within the aortic arch. The shoulders are not fully evaluated, however, there are no suspicious osseous lesions. Degenerative changes are seen within the thoracic spine. Impression: No acute intrathoracic process.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      }
+    },
+    {
+      "index": 52,
+      "study_id": "s51076696",
+      "subject_id": "18971051",
+      "stratum": "enrich:hyperinflation",
+      "report_text": "Findings: The lungs remain hyperinflated. The cardiac and mediastinal silhouettes are stable with the aorta calcified and tortuous the cardiac silhouette mildly enlarged. There is aortic valve calcification. No focal consolidation, pleural effusion, or evidence of pneumothorax is seen. Impression: No acute cardiopulmonary process. No significant interval change.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      }
+    },
+    {
+      "index": 53,
+      "study_id": "s57213444",
+      "subject_id": "12906762",
+      "stratum": "enrich:pneumothorax+",
+      "report_text": "Findings: Impression: ET tube tip is 6.7 cm above the carinal. Left subclavian line tip is at the level of mid SVC. Apical scarring is unchanged but there is interval development of right lower lobe opacity that potentially might reflect interval development of infectious process. Left pigtail catheter is in place. Subcutaneous air is extensive. Minimal basal pneumothorax might potentially be present",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": "u",
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 1,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 1,
+        "hyperinflation": 0
+      },
+      "note": "'Minimal basal pneumothorax might potentially be present' -> pneumothorax uncertain."
+    },
+    {
+      "index": 54,
+      "study_id": "s57817725",
+      "subject_id": "19254322",
+      "stratum": "enrich:pneumothorax+",
+      "report_text": "Findings: Impression: PA and lateral chest compared to ___: Small to moderate left pneumothorax is larger today with both lateral and anterior components of air and fluid. Small left pleural loculation along the posterior chest wall is minimally bigger. Severe atelectasis at the base of the left lung, milder involvement at the right base are unchanged. Heart size top normal. A bulge in the mediastinum in the region of the ascending aorta which developed post-operatively is presumably mediastinal fluid collection. Dr. ___ was paged.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 1,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 1,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 1,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 1,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 55,
+      "study_id": "s54079675",
+      "subject_id": "19175595",
+      "stratum": "enrich:pneumothorax+",
+      "report_text": "Findings: In comparison to earlier study of this date, there are lower lung volumes with little change in the degree of small-to-moderate left pneumothorax. Opacification in the retrocardiac region is consistent with atelectasis. Right lung is clear and there is no evidence of vascular congestion. Impression:",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 1,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 1,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 1,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 1,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 56,
+      "study_id": "s50127791",
+      "subject_id": "19175595",
+      "stratum": "enrich:pneumothorax+",
+      "report_text": "Findings: In comparison with study of ___, there is little change in the degree of left pneumothorax. Persistent atelectatic changes are seen at the left base. On the lateral view, there is an air-fluid level posteriorly, consistent with some degree of hydropneumothorax, possibly loculated. Dilatation of gas-filled loops of bowel is consistent with adynamic ileus. Impression:",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": "u",
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 1,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 1,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 1,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 1,
+        "hyperinflation": 0
+      },
+      "note": "hydropneumothorax 'possibly loculated' -> effusion uncertain; pneumothorax present."
+    },
+    {
+      "index": 57,
+      "study_id": "s54463242",
+      "subject_id": "10569231",
+      "stratum": "enrich:consolidation+",
+      "report_text": "Findings: Moderate enlargement of the cardiac silhouette persists. The lung bases are underpenetrated due to overlying soft tissue. Increased opacity projecting over the inferior thoracic spine on the lateral view may be due to atelectasis although an early consolidation due to aspiration or infection is not excluded in the appropriate clinical setting. No pleural effusion or pneumothorax is seen. Mediastinal contours are stable. No pulmonary edema is seen. Impression: Persistent enlargement of the cardiac silhouette. No pulmonary edema. The lung bases are underpenetrated due to overlying soft tissue. Increased opacity projecting over the inferior thoracic spine on the lateral view may be due to atelectasis although an early consolidation due to aspiration or infection is not excluded in the appropriate clinical setting.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": "u",
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 1,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 1,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "note": "'may be atelectasis although early consolidation not excluded' -> consolidation uncertain."
+    },
+    {
+      "index": 58,
+      "study_id": "s59614205",
+      "subject_id": "16033763",
+      "stratum": "enrich:consolidation+",
+      "report_text": "Findings: Impression: AP chest compared to ___ through ___: Small residual left pleural effusion or pleural thickening is unchanged since at least ___, now with only a single left drain in place at the base of the left hemithorax. Left lower lobe is largely consolidated or collapsed. Multiple pulmonary metastases are longstanding. The heart moderately enlarged, whether due to cardiomegaly alone or in combination with pericardial effusion has not changed for several days. The upper lobe pulmonary vasculature is engorged, but there is no pulmonary edema. Transvenous right ventricular pacer lead unchanged in longstanding position.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": "u",
+        "pleural_effusion": "u",
+        "cardiomegaly": 1,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 1,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "note": "'consolidated or collapsed' + 'effusion or pleural thickening' -> both uncertain."
+    },
+    {
+      "index": 59,
+      "study_id": "s50417837",
+      "subject_id": "19112585",
+      "stratum": "enrich:consolidation+",
+      "report_text": "Findings: Portable semi-erect chest radiograph ___ at 17:45 is submitted. Impression: The right internal jugular Swan-Ganz catheter and nasogastric tube are unchanged in position. Endotracheal tube has its tip approximately 5 cm above the carina. The heart remains stably enlarged. Overall, there is improving aeration in both lungs suggestive of resolving moderate pulmonary edema. Retrocardiac consolidation persists likely reflecting lobar collapse in the setting of a pleural effusion. Pneumonia in the retrocardiac area cannot be excluded. The and right pleural effusion. Patient is status post median sternotomy for CABG. No pneumothorax.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 60,
+      "study_id": "s58279613",
+      "subject_id": "11717909",
+      "stratum": "enrich:consolidation+",
+      "report_text": "Findings: Patient is mildly rotated. Compared to ___, there is worsening of right perihilar parenchymal opacities. Left lung atelectasis is still present. Bilateral pleural effusions are likely unchanged. Sternotomy wires and surgical clips are well aligned and unchanged from prior. ETT terminates less than 1 cm from the carina, however this may be due to chin-tuck position of the patient. Otherwise, support lines appear unchanged from prior. Impression: Worsening consolidation in right perihilar region.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 1,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 61,
+      "study_id": "s51958471",
+      "subject_id": "17971994",
+      "stratum": "enrich:nodule+",
+      "report_text": "Findings: The lungs are hyperinflated. There is no pneumothorax. Bilateral effusions are small. Retrocardiac opacity correlates with postoperative changes seen on concurrent CTA chest. The cardiomediastinal silhouette is normal. Imaged osseous structures are intact. No free air below the right hemidiaphragm is seen. Impression: No acute intrathoracic process. Faint nodules throughout the lungs are better seen on concurrent CTA chest.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 1
+      }
+    },
+    {
+      "index": 62,
+      "study_id": "s59479332",
+      "subject_id": "16159370",
+      "stratum": "enrich:nodule+",
+      "report_text": "Findings: discussed with Dr ___ by phone on ___ at 3.___ pm ______________________________________________________________________________ WET READ: ___ ___ ___ 9:04 PM Small if any bilateral effusions. Otherwise clear lungs. A ___ ___ ______________________________________________________________________________ FINAL REPORT PA AND LATERAL VIEWS OF THE CHEST: REASON FOR EXAM: CHF exacerbation, evaluate for pleural effusions. Comparison is made with prior study ___. Right pleural effusion is small. There are low lung volumes. Mild-to-moderate cardiomegaly is stable. The aorta is tortuous. Right lower lobe opacities are persistent including more lateral rounded opacities from ___, the growth cannot be assesed due to different inspiration and position of the patient. Right mid lung scarring is stable. Impression: Small right pleural effusion. Right lower lobe lung nodules. CT is recommended.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 1,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 63,
+      "study_id": "s54072113",
+      "subject_id": "13196707",
+      "stratum": "enrich:nodule+",
+      "report_text": "Findings: AP upright and lateral views of the chest provided. Elevation of the right hemidiaphragm is again noted. The heart appears top-normal in size. There is a SVC stent in place. Known right suprahilar mass is better assessed on recent prior CT exam. Multiple pulmonary nodules are also better assessed on prior CT. There is no new consolidation, large effusion or pneumothorax seen. Bony structures appear intact. Impression: No convincing signs of pneumonia.",
+      "gold_3way": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 1,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    },
+    {
+      "index": 64,
+      "study_id": "s51293946",
+      "subject_id": "14376938",
+      "stratum": "enrich:ptx-neg-kw",
+      "report_text": "Findings: Opacity projecting over the anterior left first rib is likely due to overlapping structures however, this could be confirmed with apical lordotic view. No focal consolidation is seen elsewhere. No pleural effusion or pneumothorax is seen. The cardiac and mediastinal silhouettes are unremarkable. No pulmonary edema is seen. Impression: Opacity projecting over the anterior left first rib is likely due to overlapping structures however, this could be confirmed with apical lordotic view. No focal consolidation seen elsewhere",
+      "gold_3way": {
+        "opacity": "u",
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 0,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 0,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "note": "'Opacity ... likely due to overlapping structures' = probable artefact -> gold opacity=uncertain (binarized 0); regex fires on 'opacity'."
+    },
+    {
+      "index": 65,
+      "study_id": "s52869267",
+      "subject_id": "11717909",
+      "stratum": "enrich:ptx-neg-kw",
+      "report_text": "Findings: Since ___, moderate right pleural effusion is mildly improved and bibasilar and retrocardiac atelectasis is increased with a possible new small left pleural effusion. A new opacity in the right mid lung may be atelectasis but could represent pneumonia in the right clinical setting. The left lung remains clear. Enlarged appearing heart may be technical from persistence of low lung volumes. Unchanged positioning of right internal jugular central line and feeding tube. Median sternotomy wires are intact and aligned. No pneumothorax. Impression: 1. Since ___, moderate right pleural effusion is mildly improved, bibasilar atelectasis is increased with possible new small left pleural effusion, and new opacity in the right mid lung may be atelectasis but could be pneumonia in the right clinical setting.",
+      "gold_3way": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": "u",
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "gold_binary": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v1_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      },
+      "v2_labels": {
+        "opacity": 1,
+        "consolidation": 0,
+        "pleural_effusion": 1,
+        "cardiomegaly": 0,
+        "nodule": 0,
+        "pneumothorax": 0,
+        "hyperinflation": 0
+      }
+    }
+  ]
+}

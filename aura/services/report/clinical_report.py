@@ -28,6 +28,7 @@ from schemas.clinical import (
 )
 from schemas.contracts import CaseBundle
 from services.fusion.evidence import EVIDENCE_CHANNELS
+from common.config import finding_present_threshold
 
 # Clinical acuity → risk band for the top diagnosis.
 _RISK_BAND: dict[Diagnosis, str] = {
@@ -108,7 +109,7 @@ def _vision_findings(bundle: CaseBundle) -> list[dict]:
             "finding": FINDING_LABELS.get(fs.finding, fs.finding.value),
             "key": fs.finding.value,
             "probability": round(float(fs.probability), 4),
-            "present": bool(fs.probability >= 0.5),
+            "present": bool(fs.probability >= finding_present_threshold(fs.finding.value)),
             "region": fs.region,
         })
     return out
@@ -173,7 +174,7 @@ def _evidence_used(bundle: CaseBundle) -> list[str]:
     used: list[str] = []
     # Positive imaging findings.
     for fs in (bundle.vision.findings if bundle.vision else []):
-        if fs.probability >= 0.5:
+        if fs.probability >= finding_present_threshold(fs.finding.value):
             used.append(f"{FINDING_LABELS.get(fs.finding, fs.finding.value)} (p={fs.probability:.2f})")
     # Reasoning-step evidence (labs/symptoms/history that fired).
     for st in (bundle.reasoning.steps if bundle.reasoning else []):
@@ -236,13 +237,59 @@ def _risk_level(bundle: CaseBundle) -> dict:
     return {"level": band, "rationale": note}
 
 
+_PROV_CACHE: Optional[list[str]] = None
+
+
+def _label_provenance_lines() -> list[str]:
+    """Measured label-provenance caveats read from the validation artifacts
+    (labeler_validation.json, kappa_crosscheck.json). Falls back to a generic
+    statement when those artifacts are absent, so the report never fabricates."""
+    global _PROV_CACHE
+    if _PROV_CACHE is not None:
+        return _PROV_CACHE
+    import json
+    from common.config import ARTIFACTS
+    lines: list[str] = []
+    try:
+        lv = ARTIFACTS / "labeler_validation.json"
+        if lv.exists():
+            d = json.loads(lv.read_text())
+            gm = d.get("v2_macro_average", {})
+            n = d.get("gold_provenance", {}).get("n_reports")
+            f1, k = gm.get("macro_f1"), gm.get("macro_kappa")
+            if f1 is not None and k is not None:
+                lines.append(
+                    f"Ground-truth labels come from a rule-based report labeler (not the official "
+                    f"CheXpert labeler). Validated against {n} hand-read reports: macro F1 {f1:.2f}, "
+                    f"Cohen's kappa {k:.2f} vs expert-convention reading.")
+    except Exception:
+        pass
+    try:
+        kc = ARTIFACTS / "kappa_crosscheck.json"
+        if kc.exists():
+            d = json.loads(kc.read_text())
+            au = d.get("macro", {}).get("mean_auroc_aura_vs_xrv")
+            ni = d.get("provenance", {}).get("n_images")
+            if au is not None:
+                lines.append(
+                    f"Independently cross-checked against torchxrayvision (separate labels) on {ni} "
+                    f"images: mean cross-model AUROC {au:.2f}; nodule agreement is below chance and is "
+                    f"flagged unreliable.")
+    except Exception:
+        pass
+    if not lines:
+        lines = ["Ground-truth training labels were derived from free-text reports by a rule-based "
+                 "labeler and inherit its error modes."]
+    _PROV_CACHE = lines
+    return lines
+
+
 def _limitations(bundle: CaseBundle) -> list[str]:
     lim = [
         "Automated decision support only — not a substitute for a radiologist's read.",
         "DenseNet-121 trained on MIMIC-CXR; performance may degrade on out-of-distribution "
         "equipment, projections, or populations.",
-        "Ground-truth training labels were derived from free-text reports by a rule-based "
-        "labeler and inherit its error modes.",
+        *_label_provenance_lines(),
         "Findings localize regions of interest; they are observations, not tissue diagnoses.",
     ]
     s = bundle.safety

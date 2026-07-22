@@ -87,7 +87,9 @@ class ReportEngine:
         grounding: dict[str, list[str]] = {}
 
         # ---- Findings: only findings the vision engine actually asserted. ----
-        positives = [f for f in vision.findings if f.probability >= 0.5]
+        from common.config import finding_present_threshold
+        positives = [f for f in vision.findings
+                     if f.probability >= finding_present_threshold(f.finding.value)]
         if positives:
             parts = []
             for fs in positives:

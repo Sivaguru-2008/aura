@@ -7,17 +7,8 @@ window.HISTORY_PORTAL = (() => {
 
   const { Field, api, toast, typeInto, clamp, countTo } = FX;
 
-  const DX_LABEL = {
-    normal: "No acute abnormality", pneumonia: "Pneumonia",
-    heart_failure: "Heart failure", copd: "COPD",
-    malignancy: "Malignancy", pneumothorax_dx: "Pneumothorax",
-  };
-
-  const EV_LABEL = {
-    opacity: "opacity", consolidation: "consolidation", effusion: "effusion",
-    cardiomegaly: "cardiomegaly", nodule: "nodule", hyperinflation: "hyperinflation",
-    pneumothorax: "pneumothorax", prior_risk: "prior risk",
-  };
+  let DX_LABEL = {};
+  let EV_LABEL = {};
 
   const FINDING_TO_CHANNEL = {
     opacity: "opacity", consolidation: "consolidation", pleural_effusion: "effusion",
@@ -69,6 +60,8 @@ window.HISTORY_PORTAL = (() => {
     try {
       const data = await api("/v1/cases");
       S.cases = data.cases || [];
+      if (data.dx_labels) DX_LABEL = data.dx_labels;
+      if (data.ev_labels) EV_LABEL = data.ev_labels;
     } catch (err) {
       toast("Failed to load history archive");
       $("history-grid").innerHTML = `<div class="loading-state mono" style="color:var(--red)">GATEWAY OFFLINE — Run uvicorn server</div>`;
@@ -181,7 +174,7 @@ window.HISTORY_PORTAL = (() => {
           <span class="card-id">${c.case_id}</span>
           <span class="card-status ${c.abstained ? 'abstained' : c.state}">${c.abstained ? 'abstained' : c.state}</span>
         </div>
-        <div class="card-dx">${c.abstained ? 'Abstained (Uncertain)' : (DX_LABEL[c.top_diagnosis] || c.top_diagnosis)}</div>
+        <div class="card-dx">${c.abstained ? 'Abstained (Uncertain)' : (c.top_diagnosis_label || c.top_diagnosis || '')}</div>
         <div class="card-meta">
           <span>p ${(c.top_probability || 0).toFixed(2)}</span>
           <span>pri ${(c.priority_score || 0).toFixed(2)}</span>
@@ -217,6 +210,8 @@ window.HISTORY_PORTAL = (() => {
         return;
       }
     }
+    if (b.dx_labels) DX_LABEL = b.dx_labels;
+    if (b.ev_labels) EV_LABEL = b.ev_labels;
 
     if (view === "image") {
       populateImagePage(b);
