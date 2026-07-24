@@ -35,9 +35,10 @@ from common.config import get_settings
 
 # Accepted upload types — layered in front of the content-based xray_gate. DICOM
 # often has no extension, so the empty suffix is permitted and content-sniffed.
-_ALLOWED_SUFFIXES = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".dcm", ".dicom", ""}
+_ALLOWED_SUFFIXES = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".dcm", ".dicom", ".zip", ""}
 _ALLOWED_CONTENT_TYPES = {
     "image/png", "image/jpeg", "image/tiff", "application/dicom",
+    "application/zip", "application/x-zip-compressed",
     "application/octet-stream", "", None,
 }
 

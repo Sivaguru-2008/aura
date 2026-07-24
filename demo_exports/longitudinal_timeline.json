@@ -1,0 +1,24 @@
+{
+  "case_id": "CASE-MR-101",
+  "patient_id": "PATIENT_DEBUG_101",
+  "timeline": [
+    {
+      "date": "2026-01-10",
+      "case_id": "CASE-MR-080",
+      "wt_volume_mm3": 45000,
+      "status": "Baseline"
+    },
+    {
+      "date": "2026-04-15",
+      "case_id": "CASE-MR-092",
+      "wt_volume_mm3": 49000,
+      "status": "Growth"
+    },
+    {
+      "date": "2026-07-24",
+      "case_id": "CASE-MR-101",
+      "wt_volume_mm3": 52412,
+      "status": "Stable"
+    }
+  ]
+}

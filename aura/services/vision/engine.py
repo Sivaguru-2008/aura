@@ -14,7 +14,7 @@ import numpy as np
 
 from common.config import ARTIFACTS
 from common.mathx import sigmoid
-from schemas.clinical import Finding
+from schemas.clinical import CHEST_FINDINGS, Finding
 from schemas.contracts import FindingScore, VisionResult
 from services.vision.features import FEATURE_NAMES, extract_features, feature_vector
 
@@ -31,6 +31,119 @@ _FINDING_REGION: dict[Finding, tuple[float, float, float, float]] = {
     Finding.PNEUMOTHORAX: (0.15, 0.08, 0.75, 0.92),
     Finding.HYPERINFLATION: (0.12, 0.06, 0.86, 0.94),
 }
+
+
+def _make_diagnostic_report(best_model_path: Path, original_exc: Exception) -> str:
+    import sys
+    import traceback
+
+    python_version = sys.version
+    checkpoint_ok = "FAIL"
+    model_ok = "FAIL"
+    state_dict_ok = "FAIL"
+    torchvision_ok = "FAIL"
+    native_dependency = "OK"
+
+    # 1. Torch details
+    try:
+        import torch
+        torch_version = torch.__version__
+        cuda_available = str(torch.cuda.is_available())
+    except Exception:
+        torch_version = "NOT INSTALLED"
+        cuda_available = "UNKNOWN"
+
+    # 2. TorchVision import
+    try:
+        import torchvision
+        torchvision_ok = "PASS"
+    except Exception:
+        torchvision_ok = "FAIL"
+
+    # 3. Checkpoint load
+    checkpoint = None
+    try:
+        import torch
+        checkpoint = torch.load(best_model_path, map_location="cpu", weights_only=True)
+        checkpoint_ok = "PASS"
+    except Exception:
+        checkpoint_ok = "FAIL"
+
+    # 4. Model construction
+    model = None
+    try:
+        from ml.vision_cxr.model import DenseNet121CXR
+        from schemas.clinical import FINDINGS
+        model = DenseNet121CXR(num_classes=len(FINDINGS))
+        model_ok = "PASS"
+    except Exception:
+        model_ok = "FAIL"
+
+    # 5. State dict load
+    if checkpoint_ok == "PASS" and model_ok == "PASS":
+        try:
+            if "model_state_dict" in checkpoint:
+                model.load_state_dict(checkpoint["model_state_dict"])
+            else:
+                model.load_state_dict(checkpoint)
+            state_dict_ok = "PASS"
+        except Exception:
+            state_dict_ok = "FAIL"
+
+    # 6. Native dependency detection
+    exc_str = str(original_exc).lower()
+    if "shm.dll" in exc_str:
+        native_dependency = "shm.dll blocked by Application Control policy"
+    elif "winerror" in exc_str or "dll" in exc_str or "oserror" in exc_str:
+        import re
+        m = re.search(r"[\w\d_-]+\.dll", exc_str)
+        if m:
+            native_dependency = f"{m.group(0)} load failure"
+        else:
+            native_dependency = "DLL/Native load failure"
+    else:
+        tb_full = "".join(traceback.format_exception(type(original_exc), original_exc, original_exc.__traceback__)).lower()
+        if "4551" in tb_full:
+            native_dependency = "Blocked by Application Control policy"
+        else:
+            native_dependency = "OK"
+
+    tb_str = "".join(traceback.format_exception(type(original_exc), original_exc, original_exc.__traceback__))
+
+    report = f"""----------------------------------------
+VisionEngine startup failed
+
+Checkpoint:
+{best_model_path}
+
+Python:
+{python_version}
+
+Torch:
+{torch_version}
+
+Torch CUDA available:
+{cuda_available}
+
+Checkpoint load:
+{checkpoint_ok}
+
+Model construction:
+{model_ok}
+
+State dict load:
+{state_dict_ok}
+
+TorchVision import:
+{torchvision_ok}
+
+Native dependency:
+{native_dependency}
+
+Original exception:
+{tb_str.strip()}
+----------------------------------------"""
+    return report
 
 
 class VisionEngine:
@@ -78,11 +191,8 @@ class VisionEngine:
 
         if backbone is None:
             if not allow_fallback:
-                raise RuntimeError(
-                    f"AURA requires the trained model at {best_model_path} and refuses to "
-                    f"serve substitute/heuristic outputs ({load_err}). Train it "
-                    f"(`aura_cli train-cnn`) or set AURA_ALLOW_FALLBACK_VISION=1 for dev only."
-                )
+                report = _make_diagnostic_report(best_model_path, load_err)
+                raise RuntimeError(report)
             backbone = cls._maybe_backbone()
 
         path = path or (ARTIFACTS / "vision.npz")
@@ -135,11 +245,15 @@ class VisionEngine:
         # The production DenseNet-121 covers all findings: return its outputs verbatim,
         # with NO heuristic feature scores mixed in. Feature-fill is only for a partial
         # backbone (e.g. torchxrayvision, which lacks hyperinflation) in dev mode.
-        if all(f in cnn for f in Finding):
-            return {f: float(cnn[f]) for f in Finding}
+        # Iterate the *chest* findings, not every member of the Finding enum: the
+        # enum also carries brain observations (mass lesion, midline shift, ...)
+        # that this model has no head for, and indexing them here raised KeyError
+        # the moment the brain vocabulary was added.
+        if all(f in cnn for f in CHEST_FINDINGS):
+            return {f: float(cnn[f]) for f in CHEST_FINDINGS}
         scores = self._feature_scores(img)          # baseline for uncovered findings only
         scores.update(cnn)                            # CNN wins where it has a label
-        return {f: scores[f] for f in Finding}
+        return {f: scores[f] for f in CHEST_FINDINGS}
 
     def _fallback_scores(self, img: np.ndarray) -> dict[Finding, float]:
         """Untrained heuristic so the engine is never dead. Uses raw features."""

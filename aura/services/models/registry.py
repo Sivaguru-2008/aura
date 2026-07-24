@@ -8,8 +8,8 @@ from common.config import ARTIFACTS
 
 
 class ModelRegistry:
-    def __init__(self, path: Path | None = None):
-        self.path = path or (ARTIFACTS / "registry.json")
+    def __init__(self, filename: str = "registry.json"):
+        self.path = ARTIFACTS / filename
 
     def list_versions(self) -> list[dict]:
         if not self.path.exists():

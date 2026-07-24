@@ -25,17 +25,47 @@ class Calibration:
     ood_std: float = 1.0
     ece: float = 0.0                    # reported expected calibration error post-scaling
 
-    def save(self, path: Path | None = None) -> None:
+    def save(self, path: Path | None = None, backend: str | None = None) -> None:
+        """Persist. With ``backend`` set, writes the per-backend file as well.
+
+        Both are written so an older reader that only knows ``safety.npz`` keeps
+        working while a backend-aware reader gets the right numbers.
+        """
         path = path or (ARTIFACTS / "safety.npz")
-        np.savez(path, **{k: np.array(v) for k, v in asdict(self).items()})
+        payload = {k: np.array(v) for k, v in asdict(self).items()}
+        np.savez(path, **payload)
+        if backend:
+            np.savez(backend_calibration_path(backend), **payload)
 
     @classmethod
-    def load(cls, path: Path | None = None) -> "Calibration":
+    def load(cls, path: Path | None = None, backend: str | None = None
+             ) -> "Calibration":
+        """Load calibration, preferring the file fitted for ``backend``.
+
+        Temperature, conformal threshold, and OOD energy statistics are all properties
+        of *one model's* logit distribution, not of the pipeline. Serving the quantum
+        VQC with the classical product-of-experts' temperature is not a small error:
+        the two differ by roughly a factor of two on this system (0.94 vs 0.46), which
+        is a large, systematic distortion of every downstream probability, conformal
+        set, and abstention decision.
+
+        Falls back to the shared ``safety.npz`` when no per-backend file exists, so a
+        deployment that has not run the per-backend fit still starts.
+        """
+        if path is None and backend:
+            candidate = backend_calibration_path(backend)
+            if candidate.exists():
+                path = candidate
         path = path or (ARTIFACTS / "safety.npz")
         if not path.exists():
             return cls()
         d = np.load(path)
         return cls(**{k: float(d[k]) for k in d.files})
+
+
+def backend_calibration_path(backend: str) -> Path:
+    """Artifact path holding the calibration fitted for ``backend``."""
+    return ARTIFACTS / f"safety_{backend}.npz"
 
 
 def fit_temperature(logits: np.ndarray, labels: np.ndarray) -> float:

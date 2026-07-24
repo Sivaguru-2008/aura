@@ -24,7 +24,7 @@ class TrainConfig:
         self.use_sampler = kwargs.get("use_sampler", False)
         
         # Device
-        self.device = kwargs.get("device", "cuda" if os.environ.get("AURA_DEVICE") == "cuda" else None)
+        self.device = kwargs.get("device", os.environ.get("AURA_DEVICE"))
         if self.device is None:
             import torch
             self.device = "cuda" if torch.cuda.is_available() else "cpu"

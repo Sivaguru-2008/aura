@@ -11,57 +11,57 @@
     224
   ],
   "cpu_latency": {
-    "mean_ms": 83.171,
-    "p50_ms": 80.017,
-    "p95_ms": 107.134,
-    "min_ms": 67.34,
-    "max_ms": 108.201,
-    "throughput_img_per_s": 12.02
+    "mean_ms": 47.882,
+    "p50_ms": 47.067,
+    "p95_ms": 51.65,
+    "min_ms": 43.099,
+    "max_ms": 52.791,
+    "throughput_img_per_s": 20.88
   },
   "memory_after_cpu": {
     "process_rss_mb": null
   },
   "gpu_latency": {
-    "mean_ms": 29.102,
-    "p50_ms": 26.147,
-    "p95_ms": 42.86,
-    "min_ms": 22.116,
-    "max_ms": 45.741,
-    "throughput_img_per_s": 34.36
+    "mean_ms": 19.937,
+    "p50_ms": 19.583,
+    "p95_ms": 23.908,
+    "min_ms": 16.873,
+    "max_ms": 24.029,
+    "throughput_img_per_s": 50.16
   },
   "batch_throughput": {
     "1": {
-      "img_per_s": 26.45,
-      "ms_per_batch": 37.804
+      "img_per_s": 45.3,
+      "ms_per_batch": 22.073
     },
     "8": {
-      "img_per_s": 300.62,
-      "ms_per_batch": 26.612
+      "img_per_s": 408.86,
+      "ms_per_batch": 19.567
     },
     "16": {
-      "img_per_s": 524.28,
-      "ms_per_batch": 30.518
+      "img_per_s": 550.69,
+      "ms_per_batch": 29.054
     },
     "32": {
-      "img_per_s": 618.13,
-      "ms_per_batch": 51.769
+      "img_per_s": 593.31,
+      "ms_per_batch": 53.935
     },
     "64": {
-      "img_per_s": 571.43,
-      "ms_per_batch": 112.0
+      "img_per_s": 558.07,
+      "ms_per_batch": 114.68
     }
   },
   "mixed_precision": {
     "available": true,
-    "fp32_ms_per_batch": 25.648,
-    "amp_fp16_ms_per_batch": 31.167,
-    "speedup": 0.823
+    "fp32_ms_per_batch": 21.006,
+    "amp_fp16_ms_per_batch": 25.948,
+    "speedup": 0.81
   },
   "memory": {
-    "gpu_peak_mb": 693.45,
-    "gpu_reserved_mb": 1283.46,
+    "gpu_peak_mb": 693.98,
+    "gpu_reserved_mb": 937.43,
     "gpu_name": "NVIDIA GeForce RTX 5050 Laptop GPU",
     "process_rss_mb": null
   },
-  "single_image_throughput_img_per_s": 34.36
+  "single_image_throughput_img_per_s": 50.16
 }

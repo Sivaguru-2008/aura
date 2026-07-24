@@ -74,11 +74,20 @@ def train_ensemble(X, y, k=5, seed=7):
 # --------------------------------------------------------------------------- #
 # Quantum variational circuit — PennyLane + torch backprop.
 # --------------------------------------------------------------------------- #
-def train_quantum(X, y, n_qubits, n_layers, epochs=30, lr=0.05, batch=50, seed=7):
+def train_quantum(X, y, n_qubits, n_layers, epochs=30, lr=0.05, batch=50, seed=7,
+                  entangler: str = "ring"):
+    """Train the VQC head.
+
+    ``entangler="none"`` trains the product-state control used by the entanglement
+    ablation (``ml/evaluation/quantum_study.py``). The ablation calls *this* function
+    rather than reimplementing the loop, because a control trained by different code
+    than the treatment measures the difference between two implementations, not the
+    difference between two ansaetze.
+    """
     import torch
 
     torch.manual_seed(seed)
-    circuit = make_qnode(n_qubits, n_layers, interface="torch")
+    circuit = make_qnode(n_qubits, n_layers, interface="torch", entangler=entangler)
 
     theta = torch.nn.Parameter(0.1 * torch.randn(n_layers, n_qubits, 2, dtype=torch.float64))
     W = torch.nn.Parameter(0.1 * torch.randn(N_DX, n_qubits, dtype=torch.float64))

@@ -1,100 +1,218 @@
-# AURA — System & Product Architecture
+# AURA System Architecture and Design Diagrams
 
-This document describes the Product & System Architecture for **AURA** (*Adaptive Uncertainty-aware Reasoning Assistant*). It outlines the modular microservice layout, the 9-stage clinical inference pipeline, the event bus orchestration, and the integrated Classical-Quantum Stack.
-
----
-
-## 1. Product Vision: Epistemic Clinical Intelligence
-
-Every diagnostic AI on the market today answers one question: *"What disease is in this image?"*
-AURA is designed to answer a different, safety-critical question: **"What is known, how confidently is it known, what evidence is missing, and what should be done next?"**
-
-AURA creates a new category: **Clinical Epistemic Intelligence** — software whose core job is to model clinical uncertainty, manage incomplete evidence, and provide an auditable reasoning path. The core primitive is the **Evidence Graph**, where every case is a graph of evidence nodes (imaging findings, prior studies, structured priors, clinician annotations) carrying calibrated probabilities and uncertainty bounds.
+This document details the software architecture, pipeline flow, and safety mechanisms of the AURA Clinical Intelligence Copilot.
 
 ---
 
-## 2. System Topology & Event-Driven Pipeline
+## 1. Overall System Architecture
 
-AURA's operations run as an event-driven analysis pipeline. The FastAPI gateway orchestrates the execution of independent service engines over an async event bus:
-
+```mermaid
+graph TD
+    Client[Client / Web SPA] -->|POST /analyze| Gateway[FastAPI Gateway]
+    Client -->|HTTP GET/POST| Auth[OIDC/RBAC Gateway Security]
+    
+    Gateway -->|1. Stream & Hash| Intake[Upload Intake]
+    Intake -->|ImageAsset| Router[Intelligent Modality Router]
+    
+    Router -->|Support Check| Registry[Engine Registry]
+    Router -->|Select Engine| Dispatch[Dispatch Service]
+    
+    subgraph Thorax Engine (Chest X-Ray)
+        Dispatch -->|Route: chest_xray| Thorax[Thorax Engine Adapter]
+        Thorax -->|224x224 Grid| DenseNet[DenseNet-121 Feature Extractor]
+        DenseNet -->|Logits| tempScaleC[Temperature Scaling]
+        tempScaleC -->|Calibrated Logits| Fusion[Evidence Fusion Backend]
+        Fusion -->|Adjusted Posterior| Reasoner[Clinical Reasoner]
+        Reasoner -->|multimodal Posterior| SafetyC[Safety Engine: Conformal + OOD]
+        SafetyC -->|Assess| Explain[Saliency Explainer]
+        Explain -->|Grounded| ReportC[Grounded Report Engine]
+    end
+    
+    subgraph NeuroMind Engine (Brain MRI)
+        Dispatch -->|Route: brain_mri| NeuroMind[NeuroMind Engine Adapter]
+        NeuroMind -->|Volumetric Series| Found[MRI Foundation Pipeline]
+        Found -->|Resample + Normalise| ResUNet[Multi-Task ResU-Net]
+        ResUNet -->|Segmentation Mask| SliceProj[2D Visual Slice Projector]
+        ResUNet -->|Tumour Presence| tempScaleB[Platt Calibration]
+        ResUNet -->|Quality & Size| SafetyB[Neuro Safety Engine]
+        tempScaleB -->|Calibrated Prob| SafetyB
+        SafetyB -->|Report Grounding| ReportB[Brain Report Engine]
+    end
+    
+    ReportC -->|Save Bundle| DB[(SQLite Store & Conformal Log)]
+    ReportB -->|Save Bundle| DB
+    ReportC -->|Embeddings| Mem[(Memory Similar Index)]
+    
+    DB -->|Audit Rows| Admin[Admin Monitoring Dashboard]
 ```
-study.received ──► VisionEngine ──► evidence.encode ──► FusionEngine
-                        │                                    │
-                  (7 findings)                      (Quantum/Classical)
-                        │                                    │
-                        ▼                                    ▼
-                ClinicalReasoner ◄──────────────────── resolved_logits
-                        │
-                  (Adjusted dx)
-                        │
-                        ▼
-                  SafetyEngine ◄─── aci_qhat (conformal, OOD, abstention)
-                        │
-                        ├──► ExplainEngine (Grad-CAM++ / attribution)
-                        ├──► RecommendEngine (greedy EVOI next-best-test)
-                        └──► ReportEngine ──► MemoryEngine (longitudinal index)
-```
-
-### The 9-Stage Runtime Pipeline
-
-1. **Intake & Gate**: The study (image file or DICOM) is loaded, checked for format validity, normalized, and resized to $224 \times 224$ (using area-averaging).
-2. **Vision Engine**: Runs a fine-tuned DenseNet-121 model on the chest radiograph to yield 7 independent finding probabilities and a 1024-dimensional feature embedding.
-3. **Evidence Encoding**: Compresses findings + structured clinical priors (age, smoking status, etc.) into an 8-channel vector $x \in [0, 1]^8$.
-4. **Evidence Fusion**: Fuses the evidence vector into a joint diagnostic posterior over 6 diagnoses. Supports:
-   - **Quantum Fusion (Q1)**: Parameterized 8-qubit variational circuit.
-   - **Classical Fusion**: Bayesian product-of-experts (the baseline).
-   - **Wasserstein Conflict Guard**: Tie-breaker that defers to classical if the quantum and classical posteriors diverge beyond a threshold, resolving contradiction risks.
-5. **Clinical Reasoning**: Intercepts the fusion logits and incorporates multimodal laboratory/symptom history via guideline likelihood ratios.
-6. **Safety & Calibration**: Applies per-finding Platt/temperature scaling, builds a Mondrian class-conditional conformal prediction set, evaluates OOD energy score, and checks the 4-reason abstention policy (Low Confidence, Large Conformal Set, High Epistemic Uncertainty, Out of Distribution).
-7. **Explainability**: Computes Grad-CAM++ heatmaps for regional localization, leave-one-out feature attribution, and counterfactuals.
-8. **Next-Step Recommendation**: Ranks diagnostic actions (e.g. CT, lateral film, blood tests) by Expected Information Gain (EIG) per unit cost/risk.
-9. **Report Generation & Memory**: Prepares a structured findings report where every sentence is grounded in evidence, indexes the study embedding in the similarity memory, and logs clinician feedback to the SQLite audit database.
 
 ---
 
-## 3. The Classical-Quantum Stack
+## 2. Modality Routing and Decision Flow
 
-AURA separates classical perception (computer vision) from quantum-native reasoning. We apply quantum computing strictly to the low-dimensional, correlation-rich clinical evidence vector ($8\text{--}16$ features).
-
-### The Honesty Contract & Verification Tiers
-
-To ensure scientific integrity, every quantum capability is labeled under one of three tiers:
-* **[A] Measured**: Runs today on a simulator; compared head-to-head against a classical twin on real data via the benchmark harness.
-* **[B] Grounded**: Implemented on a simulator; quantum benefit is structural or representational (e.g. density-matrix coherences representing joint uncertainty), backed by peer-reviewed literature.
-* **[C] Vision**: Requires fault-tolerant quantum hardware (FTQC); represents future roadmap capabilities.
-
-### Quantum Services (Q0–Q6)
-
-* **Q0 — Quantum Feature-Map Registry [A]**: Governs the evidence-to-state mapping (`RY` rotation). Supports feedback-driven angle training to align the feature representation.
-* **Q1 — Quantum Evidence Fusion [A - Active]**: models $k$-th order interactions between evidence channels using a variational quantum classifier (VQC) with CNOT-ring entanglement. It outputs a 6-diagnosis posterior and finite-shot uncertainty.
-* **Q2 — Quantum Belief Engine [B]**: Represents belief states as density matrices $\rho$ on mixed-state simulators to track correlated ambiguity (off-diagonal coherences) and analyze clinician anchoring risk via order-sensitivity re-evaluation.
-* **Q3 — Quantum Similarity Kernels [B]**: Re-ranks historical cases using state-fidelity kernels for rare disease matching.
-* **Q4 — QAOA Diagnostic Planner [C]**: Resolves next-test panels as a Quadratic Unconstrained Binary Optimization (QUBO) problem using QAOA.
-* **Q5 — Quantum Trajectory Engine [B]**: Maps multi-state longitudinal progression models as unitary evolutions over time.
-* **Q6 — Quantum Uncertainty Service [A]**: Optimizes shot budgeting and Born sampling over diagnostic outcomes.
+```mermaid
+flowchart TD
+    Start[Upload Staged] --> ParseHeader{DICOM Header Present?}
+    
+    ParseHeader -->|Yes| DicomModality{Modality MR/CT/US/MG?}
+    DicomModality -->|MR / CT / US / MG| MapModality[Map Modality & Extract Keywords]
+    DicomModality -->|Other / Chest| RunGate[Run Chest X-Ray Intake Gate]
+    
+    ParseHeader -->|No| CheckPixel{Grayscale & High Tonal Entropy?}
+    CheckPixel -->|Yes| HeadGeom{Axial Head Geometry Score > 0.85?}
+    CheckPixel -->|No| RunGate
+    
+    HeadGeom -->|Yes| MatchMR[Match Brain MRI - Capped 0.91]
+    HeadGeom -->|No| RunGate
+    
+    RunGate -->|CXR Confirmed| MatchCXR[Match Chest X-Ray - 0.88]
+    RunGate -->|Unconfirmed| RejectImage[Unrecognised Image - Reject]
+    
+    MapModality --> MatchMapped[Match via Header Keyword - 0.97]
+    
+    MatchMR --> Resolve[Modality Router Decision]
+    MatchCXR --> Resolve
+    MatchMapped --> Resolve
+    RejectImage --> Resolve
+    
+    Resolve --> CheckDeclaration{Client Declared Modality?}
+    CheckDeclaration -->|No| FinalRoute[Resolve Engine from Registry]
+    CheckDeclaration -->|Yes| Conflict{Declaration Contradicts Detector?}
+    Conflict -->|Yes| Refuse[Refuse / ModalityConflict Error]
+    Conflict -->|No| FinalRoute
+```
 
 ---
 
-## 4. Folder Structure (Monorepo)
+## 3. Thorax Diagnostic Pipeline
 
-The repository layout is organized to support microservice isolation and clean integration boundaries:
-
+```mermaid
+sequenceDiagram
+    autonumber
+    participant SPA as Web Dashboard
+    participant API as FastAPI Gateway
+    participant Router as Modality Router
+    participant Vision as DenseNet-121 Vision Engine
+    participant Fusion as Evidence Fusion Engine
+    participant Safety as Safety Engine
+    participant Reasoner as Clinical Reasoner
+    participant DB as SQLite Audit Trail
+    
+    SPA->>API: POST /v1/studies/analyze (File + Priors)
+    API->>Router: route(asset)
+    Note over Router: Identifies modality, validates against client statement
+    Router-->>API: RoutingMetadata (chest_xray)
+    API->>Vision: analyze(img)
+    Note over Vision: Computes 7-finding probabilities + anatomical embeddings
+    Vision-->>API: VisionResult
+    API->>Fusion: fuse_vector(evidence)
+    Note over Fusion: Computes diagnostic logits from quantum/classical model
+    Fusion-->>API: Logits
+    API->>Reasoner: reason(posterior, labs/symptoms)
+    Note over Reasoner: Fuses imaging posterior with clinical context using Guideline LRs
+    Reasoner-->>API: Adjusted Posterior
+    API->>Safety: assess(final_posterior, online_qhat)
+    Note over Safety: Runs conformal prediction + energy OOD z-score + deep ensemble MI
+    Safety-->>API: SafetyAssessment
+    API->>DB: save_case(CaseBundle)
+    API-->>SPA: CaseBundle (report, conformal_set, saliency_overlay)
 ```
-aura-main/
-├── docs/                          # Project documentation hierarchy
-│   ├── ARCHITECTURE.md            # System & Product Architecture
-│   ├── CURRENT_STATUS.md          # Real capabilities snapshot
-│   └── ...                        # Guides, APIs, and benchmarks
-├── aura/
-│   ├── apps/                      # Doctor dashboard (HTML/CSS/JS SPA)
-│   ├── artifacts/                 # Serialized model weights & configurations
-│   ├── common/                    # Shared utilities, configuration, event bus
-│   ├── gateway/                   # FastAPI application, database schemas, and pipeline orchestration
-│   ├── mimic/                     # MIMIC-CXR dataset parsers, labeling rules, and splits
-│   ├── ml/                        # Training pipelines, Platt calibration, and benchmark execution
-│   ├── schemas/                   # Pydantic data models (single source of truth)
-│   ├── services/                  # Business logic engines (vision, fusion, safety, etc.)
-│   └── tests/                     # 135+ automated unit and integration tests
-├── datasets/                      # Gitignored; MIMIC-CXR validation and train subsets
-└── README.md                      # Main project entrance
+
+---
+
+## 4. NeuroMind Diagnostic Pipeline
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant SPA as Web Dashboard
+    participant API as FastAPI Gateway
+    participant Router as Modality Router
+    participant Found as MRI Foundation Pipeline
+    participant ResUNet as Multi-Task ResU-Net
+    participant Safety as Neuro Safety Engine
+    participant DB as SQLite Audit Trail
+    
+    SPA->>API: POST /v1/studies/analyze (NIfTI / ZIP)
+    API->>Router: route(asset)
+    Note over Router: Verifies NIfTI/NRRD format, bypasses CXR gate
+    Router-->>API: RoutingMetadata (brain_mri)
+    API->>Found: run(study_path)
+    Note over Found: Voxel resampling, orientation canonical, intensity normalisation
+    Found-->>API: FoundationStudy
+    API->>ResUNet: analyze(FoundationStudy)
+    Note over ResUNet: Segment tumor regions (WT, TC, ET) + compute presence + size + quality
+    ResUNet-->>API: NeuroVisionOutput
+    API->>Safety: assess(presence_raw, quality_score, sequence_mapping)
+    Note over Safety: Platt calibration, checks sequence completeness, flags motion artifacts
+    Safety-->>API: NeuroSafetyAssessment
+    API->>DB: save_case(BrainCaseBundle)
+    API-->>SPA: BrainCaseBundle (segmentation_overlay, volumes_table, report)
+```
+
+---
+
+## 5. Safety Engine Guardrails
+
+```mermaid
+graph TD
+    Logits[Raw Diagnostic Logits] --> temp[Temperature Scaling]
+    temp --> Calibrated[Calibrated Probabilities]
+    
+    subgraph Conformal Prediction
+        Calibrated --> marginal{ACI qhat Available?}
+        marginal -->|Yes| ACI[Set conformal threshold to ACI qhat]
+        marginal -->|No| Static[Set conformal threshold to split-conformal qhat]
+        ACI --> ConformalSet[Compute Conformal Prediction Set]
+        Static --> ConformalSet
+    end
+    
+    subgraph Out-of-Distribution Safety
+        Logits --> Energy[Compute Energy Score]
+        Energy --> ZScore[Compute Z-Score against In-Distribution Mean/Std]
+        ZScore --> Threshold{Z-Score > Threshold?}
+        Threshold -->|Yes| OOD[Flag OOD & Abstain]
+        Threshold -->|No| Clean[Clear OOD Check]
+    end
+    
+    subgraph Epistemic Uncertainty
+        Logits --> Ensemble{Deep Ensemble Present?}
+        Ensemble -->|Yes| MI[mutual Information between members]
+        Ensemble -->|No| Perturb[Perturb input evidence & measure posterior variance]
+        MI --> Epistemic[Quantify Aleatoric vs Epistemic Uncertainty]
+        Perturb --> Epistemic
+    end
+    
+    ConformalSet --> Assessment[Assemble Safety Assessment]
+    OOD --> Assessment
+    Epistemic --> Assessment
+```
+
+---
+
+## 6. Longitudinal Progression and Tracking
+
+```mermaid
+flowchart LR
+    Prev[Previous MRI Case] --> Reg[Spatial Registration]
+    Curr[Current MRI Case] --> Reg
+    
+    Reg --> Align[Co-register previous & current volumes]
+    Align --> Segment[Extract tumor segmentations WT, TC, ET]
+    
+    Segment --> VolumeCalc[Calculate volume in mm3 per region]
+    VolumeCalc --> Diff[Calculate absolute & percentage difference]
+    
+    Diff --> Grow{Growth > 10%?}
+    Diff --> Regress{Regression > 10%?}
+    
+    Grow -->|Yes| Progress[Flag Tumor Progression]
+    Regress -->|Yes| Response[Flag Treatment Response / Regression]
+    
+    Grow -->|No| Stable[Flag Stable Disease]
+    Regress -->|No| Stable
+    
+    Progress --> Report[Generate Longitudinal Progress Report & Timeline]
+    Response --> Report
+    Stable --> Report
 ```

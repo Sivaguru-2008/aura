@@ -20,6 +20,26 @@ artifacts/best_model.pt, loaded automatically by the vision engine.
 """
 from __future__ import annotations
 
+# --- Automatic Virtualenv Redirect for Windows Application Control ---
+import os
+import sys
+import subprocess
+
+if sys.platform == "win32":
+    venv_python = r"E:\AURA\venv\Scripts\python.exe"
+    if os.path.exists(venv_python) and sys.executable.lower() != venv_python.lower():
+        torch_ok = False
+        try:
+            import torch
+            torch_ok = True
+        except Exception:
+            pass
+
+        if not torch_ok:
+            code = subprocess.call([venv_python] + sys.argv)
+            sys.exit(code)
+# ---------------------------------------------------------------------
+
 import argparse
 import os
 import sys

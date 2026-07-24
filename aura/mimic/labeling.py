@@ -21,7 +21,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Optional
 
-from schemas.clinical import Diagnosis, Finding
+from schemas.clinical import CHEST_DIAGNOSES, Diagnosis, Finding
 
 # --------------------------------------------------------------------------- #
 # Concept lexicon — regexes matched against lowercased sentences.
@@ -163,7 +163,7 @@ def _map_diagnosis(concepts: dict[str, int], normal_cue: bool) -> tuple[Diagnosi
     def pos(c: str) -> bool:
         return concepts.get(c) == 1
 
-    scores: dict[Diagnosis, float] = {d: 0.0 for d in Diagnosis}
+    scores: dict[Diagnosis, float] = {d: 0.0 for d in CHEST_DIAGNOSES}
     if pos("pneumothorax"):
         scores[Diagnosis.PNEUMOTHORAX] += 1.0
     if pos("nodule"):

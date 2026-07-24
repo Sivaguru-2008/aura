@@ -39,6 +39,17 @@ class StructuredPriors(BaseModel):
     immunocompromised: bool = False
 
 
+class ClinicalContext(BaseModel):
+    age: Optional[int] = None
+    sex: Optional[str] = None
+    symptoms: Optional[str] = None
+    previous_diagnosis: Optional[str] = None
+    previous_surgery: Optional[str] = None
+    radiotherapy: Optional[bool] = None
+    chemotherapy: Optional[bool] = None
+    clinical_notes: Optional[str] = None
+
+
 class LabPanel(BaseModel):
     """De-identified lab values. None = not resulted (missing, not zero)."""
     wbc: Optional[float] = None            # x10^9/L  (>11 leukocytosis)
@@ -123,9 +134,17 @@ class EvidenceItem(BaseModel):
     kind: EvidenceKind
     name: str
     value: float                               # normalized strength in [0,1]
-    probability: float = 0.5                   # calibrated belief this evidence holds
-    uncertainty: float = 0.0                   # engine-reported uncertainty
+    # ``None`` where the producing engine has no calibrated belief or no uncertainty
+    # estimate for this item — e.g. a segmented-voxel count, which is a measurement
+    # rather than a probabilistic claim. The 0.5 / 0.0 defaults are what a caller that
+    # does not set them gets; they are not stand-ins for "unknown".
+    probability: float | None = 0.5            # calibrated belief this evidence holds
+    uncertainty: float | None = 0.0            # engine-reported uncertainty
     source_service: str = ""
+    source: Optional[str] = None
+    model: Optional[str] = None
+    validation_status: Optional[str] = None
+
 
 
 # --------------------------------------------------------------------------- #
@@ -159,13 +178,21 @@ class AbstentionReason(str, Enum):
     LARGE_CONFORMAL_SET = "large_conformal_set"
     OUT_OF_DISTRIBUTION = "out_of_distribution"
     HIGH_EPISTEMIC = "high_epistemic_uncertainty"
+    # Conditions of *validity*, not of confidence: the model may be perfectly certain
+    # and still be outside the regime it was fitted in. Raised by the brain path, where
+    # a study missing one of the four required sequences produces a precise number
+    # from an input the network was never trained on.
+    INCOMPLETE_STUDY = "incomplete_study"
+    LOW_QUALITY = "low_quality"
 
 
 class Prediction(BaseModel):
     diagnosis: Diagnosis
     probability: float                         # calibrated
-    ci_low: float
-    ci_high: float
+    # ``None`` where no interval was computed. Not every engine produces one, and a
+    # zero-width interval reads as a claim of exactness that was never made.
+    ci_low: float | None = None
+    ci_high: float | None = None
 
 
 class SafetyAssessment(BaseModel):
@@ -174,17 +201,24 @@ class SafetyAssessment(BaseModel):
     top: Diagnosis
     top_probability: float
     # Conformal prediction set at the configured coverage (e.g. 90%).
+    #
+    # Every quantity below is ``| None`` because not every engine measures every one of
+    # them, and the alternative is worse than a gap: a 0.0 in ``ood_energy`` or
+    # ``epistemic_uncertainty`` renders on the console as a dial reading zero, which a
+    # clinician reads as "measured, and reassuring". The chest pipeline sets all of
+    # them; the brain path runs a single network with no ensemble, no conformal
+    # calibration set and no OOD scorer, and says so by leaving them null.
     conformal_set: list[Diagnosis]
-    conformal_coverage: float
+    conformal_coverage: float | None = None
     conformal_method: str = "marginal"         # "marginal" | "mondrian" (class-conditional)
-    epistemic_uncertainty: float = 0.0         # ensemble top-class disagreement (std)
-    aleatoric_uncertainty: float = 0.0
-    epistemic_mi: float = 0.0                  # mutual information / BALD (bits)
-    predictive_entropy: float = 0.0            # total predictive entropy (bits)
+    epistemic_uncertainty: float | None = 0.0  # ensemble top-class disagreement (std)
+    aleatoric_uncertainty: float | None = 0.0
+    epistemic_mi: float | None = 0.0           # mutual information / BALD (bits)
+    predictive_entropy: float | None = 0.0     # total predictive entropy (bits)
     uncertainty_method: str = "input_perturbation"   # or "deep_ensemble"
     n_ensemble: int = 0
-    ood_energy: float = 0.0
-    is_ood: bool = False
+    ood_energy: float | None = 0.0
+    is_ood: bool | None = False
     abstained: bool = False
     abstention_reason: AbstentionReason = AbstentionReason.NONE
     model_version: str = ""
@@ -208,6 +242,7 @@ class Explanation(BaseModel):
     # Counterfactual: "if this evidence were removed, top prob changes by ..."
     counterfactuals: dict[str, float] = Field(default_factory=dict)
     method: str = "occlusion+shapley"
+    clinical_warning: Optional[str] = None
 
 
 # --------------------------------------------------------------------------- #
@@ -216,11 +251,18 @@ class Explanation(BaseModel):
 class Recommendation(BaseModel):
     action: str                                # e.g. "acquire_lateral_view"
     display: str                               # human phrasing
-    expected_info_gain: float                  # bits of diagnostic entropy reduced
+    # ``None`` when the producing engine does not run an expected-information-gain
+    # computation. The chest path does (see services/eig); the brain path does not, and
+    # inventing a utility so the card has a number to sort by would make a recommendation
+    # look ranked when it was not.
+    expected_info_gain: float | None = None    # bits of diagnostic entropy reduced
     cost_tier: str                             # "low" | "medium" | "high"
     risk_tier: str                             # "none" | "low" | "medium"
-    utility: float                             # EIG / (cost * risk) composite
+    utility: float | None = None               # EIG / (cost * risk) composite
     rationale: str
+    reason: Optional[str] = None
+    evidence: Optional[list[str]] = None
+    confidence: Optional[float] = None
 
 
 # --------------------------------------------------------------------------- #
@@ -303,6 +345,8 @@ class CaseBundle(BaseModel):
     reasoning: Optional[ReasoningTrace] = None
     recommendations: list[Recommendation] = Field(default_factory=list)
     report: Optional[ReportDraft] = None
+    volumes: Optional[dict[str, dict[str, float]]] = None
+    clinical_context: Optional[ClinicalContext] = None
     multimodal: Optional[MultimodalContext] = None
     ground_truth: Optional[Diagnosis] = None
     created_at: datetime = Field(default_factory=_now)

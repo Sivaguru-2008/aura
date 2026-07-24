@@ -1,0 +1,4 @@
+Region,Volume (mm3),Percent of Brain,Status
+Whole Tumor (WT),52412,3.84,Stable
+Tumor Core (TC),17752,1.30,Regression
+Enhancing Tumor (ET),8866,0.65,Growth

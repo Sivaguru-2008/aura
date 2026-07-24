@@ -11,7 +11,7 @@ import numpy as np
 
 from common.config import ARTIFACTS, ensure_dirs
 from common.mathx import sigmoid
-from schemas.clinical import Finding
+from schemas.clinical import CHEST_FINDINGS, Finding
 from services.vision.features import FEATURE_NAMES, extract_features
 from ml.data import Sample, make_dataset
 
@@ -45,7 +45,7 @@ def run(n_samples: int = 700, seed: int = 7) -> dict:
 
     out: dict[str, np.ndarray] = {"_mean": mean, "_std": std}
     accs = {}
-    for finding in Finding:
+    for finding in CHEST_FINDINGS:
         yb = np.array([1.0 if s.findings[finding] >= 0.5 else 0.0 for s in samples])
         if yb.sum() == 0:
             out[finding.value] = np.zeros(X.shape[1] + 1) - 5.0  # never fires

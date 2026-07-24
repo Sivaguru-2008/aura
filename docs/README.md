@@ -13,6 +13,8 @@ This directory serves as the unified, modern documentation hierarchy for the pro
 * **[MODEL_PIPELINE.md](file:///e:/AURA/aura-main/docs/MODEL_PIPELINE.md)**: DenseNet-121 CNN model details, Platt calibration parameters, and findings model card.
 * **[TRAINING_GUIDE.md](file:///e:/AURA/aura-main/docs/TRAINING_GUIDE.md)**: Developer guide to training the CNN, generating synthetic datasets, and fitting the fusion weights.
 * **[INFERENCE_PIPELINE.md](file:///e:/AURA/aura-main/docs/INFERENCE_PIPELINE.md)**: Step-by-step trace of how a study progresses from pixel intake to the grounded report.
+* **[QUANTUM.md](file:///e:/AURA/aura-main/docs/QUANTUM.md)**: The quantum fusion layer — what it measurably buys (measurement-budgeted abstention, evidence-entanglement map) and what it measurably does not (the entanglement ablation is a negative result). Every number reproducible from `artifacts/quantum_study.json`.
+* **[MRI_FOUNDATION.md](file:///e:/AURA/aura-main/docs/MRI_FOUNDATION.md)**: The NeuroMind MRI Foundation Layer — study loading (DICOM/NIfTI/NRRD), metadata, sequence identification, quality control, and volume standardisation. Preprocessing infrastructure only; contains no models.
 * **[DATASETS.md](file:///e:/AURA/aura-main/docs/DATASETS.md)**: Detailed schema and labeling protocols for the MIMIC-CXR dataset.
 * **[BENCHMARKS.md](file:///e:/AURA/aura-main/docs/BENCHMARKS.md)**: Computational benchmarks, throughput, latencies, and comparison stats.
 * **[VALIDATION.md](file:///e:/AURA/aura-main/docs/VALIDATION.md)**: Statistical validation report of temperature scaling, conformal prediction coverage, and bootstrapping results.

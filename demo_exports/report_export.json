@@ -1,0 +1,12 @@
+{
+  "case_id": "CASE-MR-101",
+  "study_id": "STU-MR-5bc3ba3c8d58",
+  "modality": "brain_mri",
+  "diagnosis": "malignancy",
+  "probability": 0.9412,
+  "conformal_set": [
+    "malignancy"
+  ],
+  "findings": "Large enhancing lesion measuring 4.5 cm with surrounding vasogenic edema.",
+  "impression": "High-Grade Glioma (GBM)."
+}

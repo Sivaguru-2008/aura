@@ -15,12 +15,15 @@ py-modules = []
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
-testpaths = ["tests", "services", "gateway"]
+testpaths = ["tests", "services", "gateway", "backend"]
 addopts = "-q"
+markers = [
+    "slow: batch validation over the real image corpora (deselect with -m 'not slow')",
+]
 
 [tool.aura]
 # Central config surface. Engines read defaults from here via aura_common.config.
-fusion_backend = "quantum"        # "quantum" | "classical"
+fusion_backend = "classical"      # "classical" (served, fair-benchmark winner) | "quantum" (research); see EVIDENCE_DRIVEN_AUDIT.md H2
 abstention_conformal_size = 4     # abstain if the 90% conformal set has > N labels
                                   # (recalibrated to the real MIMIC distribution — audit F1/F8)
 ood_energy_threshold = 1.5

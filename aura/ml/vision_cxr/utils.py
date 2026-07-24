@@ -9,10 +9,11 @@ import matplotlib.pyplot as plt
 
 def set_seed(seed=7):
     """Sets system-wide seed for reproducibility."""
+    import os
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
-    if torch.cuda.is_available():
+    if os.environ.get("AURA_DEVICE") != "cpu" and torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
 class HistoryLogger:

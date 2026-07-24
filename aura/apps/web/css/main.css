@@ -412,6 +412,7 @@ h1, h2, h3 { font-weight: 560; letter-spacing: -0.02em; }
     "p p p p r r r r t t t t";
 }
 .p-xray { grid-area: x; } .p-evidence { grid-area: e; } .p-safety { grid-area: s; }
+.p-neuroview { grid-area: n; }
 .p-posterior { grid-area: p; } .p-recs { grid-area: r; } .p-report { grid-area: t; }
 
 .panel {
@@ -487,6 +488,120 @@ h1, h2, h3 { font-weight: 560; letter-spacing: -0.02em; }
 }
 .tip b { color: var(--ink); }
 .tip .cf-pos { color: var(--cyan); } .tip .cf-neg { color: var(--red); }
+
+/* NeuroView */
+.p-neuroview {
+  min-height: 620px;
+}
+.c-grid:has(.p-neuroview:not([hidden])) {
+  grid-template-areas:
+    "x x x x e e e e e s s s"
+    "n n n n n n n n n n n n"
+    "p p p p r r r r t t t t";
+}
+.nv-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 250px;
+  gap: 14px;
+  min-height: 310px;
+}
+.nv-render {
+  position: relative;
+  min-height: 310px;
+  border: 1px solid var(--hair);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+}
+.nv-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.nv-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  color: var(--dim);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+}
+.nv-controls label {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.nv-controls input,
+.nv-slice input {
+  accent-color: var(--violet);
+  width: 100%;
+}
+#nv-intensity {
+  color: var(--faint);
+  line-height: 1.5;
+}
+.nv-layers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 10.5px;
+}
+.nv-layer {
+  display: grid;
+  grid-template-columns: 16px 12px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  border: 1px solid var(--hair);
+  border-radius: 8px;
+  padding: 8px;
+  color: var(--dim);
+}
+.nv-layer input {
+  margin: 0;
+  accent-color: var(--cyan);
+}
+.nv-layer em {
+  grid-column: 3;
+  font-style: normal;
+  color: var(--faint);
+  font-size: 9.5px;
+}
+.nv-layer.off {
+  opacity: 0.55;
+}
+.nv-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 10px currentColor;
+}
+.nv-slices {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+.nv-slice {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.nv-slice span {
+  color: var(--faint);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.nv-slice canvas {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--hair);
+  border-radius: 8px;
+  background: #000;
+}
 
 /* safety panel */
 .flag { font-size: 10px; letter-spacing: 0.18em; padding: 4px 10px; border-radius: 6px; }
@@ -592,12 +707,21 @@ h1, h2, h3 { font-weight: 560; letter-spacing: -0.02em; }
 /* ============ responsive ============ */
 @media (max-width: 1180px) {
   .c-grid { grid-template-areas: "x x x x x e e e e e e e" "s s s s p p p p p p p p" "r r r r r t t t t t t t"; }
+  .c-grid:has(.p-neuroview:not([hidden])) {
+    grid-template-areas:
+      "x x x x x e e e e e e e"
+      "n n n n n n n n n n n n"
+      "s s s s p p p p p p p p"
+      "r r r r r t t t t t t t";
+  }
 }
 @media (max-width: 900px) {
   .bench-rig { grid-template-columns: 1fr; }
   .c-rail { width: 210px; }
   .c-grid { display: flex; flex-direction: column; }
   .pipe-caption { flex-direction: column; align-items: flex-start; gap: 18px; }
+  .nv-layout { grid-template-columns: 1fr; }
+  .nv-slices { grid-template-columns: 1fr; }
 }
 @media (max-width: 700px) {
   .c-body { flex-direction: column; }

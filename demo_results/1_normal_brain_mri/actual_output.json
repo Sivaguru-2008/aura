@@ -1,0 +1,19 @@
+{
+  "inference_time_s": 1.3847,
+  "top_diagnosis": "normal_brain",
+  "top_probability": 0.9951,
+  "abstained": true,
+  "fusion_backend": "brain-vision-presence-head",
+  "presence_probability_raw": 0.0893,
+  "presence_probability_calibrated": 0.0049,
+  "sequences_used": [
+    "flair",
+    "t1",
+    "t1ce",
+    "t2"
+  ],
+  "sequences_missing": [],
+  "model_version": "brain_vision_v2@epoch24",
+  "state": "abstained",
+  "analysis_seconds": 1.5001
+}

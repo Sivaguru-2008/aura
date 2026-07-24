@@ -27,9 +27,16 @@ MODEL_VERSION = "safety-v2"
 class SafetyEngine:
     def __init__(self, calibration: Calibration | None = None,
                  ensemble: DeepEnsemble | None = None,
-                 mondrian_qhats: np.ndarray | None = None):
-        self.cal = calibration or Calibration.load()
+                 mondrian_qhats: np.ndarray | None = None,
+                 backend: str | None = None):
         self.settings = get_settings()
+        # Calibration is a property of the *fusion backend's* logits, not of the
+        # pipeline. Loading the backend-specific fit keeps the served temperature,
+        # conformal threshold and OOD statistics matched to the model that produced
+        # the logits being calibrated; without it, switching backends silently scores
+        # one model with another's constants. Falls back to the shared file.
+        self.backend = backend or self.settings.fusion_backend
+        self.cal = calibration or Calibration.load(backend=self.backend)
         self.ensemble = ensemble if ensemble is not None else DeepEnsemble.load()
         self.mondrian_qhats = (
             mondrian_qhats if mondrian_qhats is not None else self._load_mondrian()

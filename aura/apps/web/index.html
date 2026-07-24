@@ -170,11 +170,37 @@
     <aside class="c-rail">
       <div class="rail-head mono"><span>WORKLIST</span><span id="rail-count"></span></div>
       <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
-        <button id="btn-upload" class="btn-core slim"><span>+ upload chest X-ray</span></button>
+        <button id="btn-upload-xray" class="btn-core slim"><span>+ upload chest X-ray</span></button>
+        <button id="btn-upload-mri" class="btn-core slim" style="background: linear-gradient(135deg, #8b7cf7 0%, #5d4be1 100%); border-color: #8b7cf7;"><span>+ upload brain MRI</span></button>
         <button id="btn-history" class="btn-ghost" style="border-radius: 8px; font-family: var(--mono); font-size: 12.5px; padding: 8px 18px;">📂 View History & Reports</button>
       </div>
-      <input type="file" id="input-file" accept=".png,.jpg,.jpeg,.dcm,.dicom" style="display: none;">
+      <input type="file" id="input-file-xray" accept=".png,.jpg,.jpeg,.dcm,.dicom" style="display: none;">
+      <input type="file" id="input-file-mri" accept=".png,.jpg,.jpeg,.dcm,.dicom,.nii,.nii.gz,.nrrd" style="display: none;">
       <ol id="worklist"></ol>
+      <!-- System Telemetry / Dashboard Monitoring (Task 11) -->
+      <div class="telemetry-panel mono" style="margin-top: auto; padding: 12px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 11.5px;">
+        <div style="font-weight: bold; margin-bottom: 8px; color: #4be1c3; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;"><i class="dot" style="display:inline-block; width:6px; height:6px; background:#4be1c3; border-radius:50%"></i>Telemetry</div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span style="color: var(--faint);">Total Studies:</span>
+          <span id="tel-total-studies" style="color: #fff; font-weight: bold;">—</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span style="color: var(--faint);">Rejected Studies:</span>
+          <span id="tel-rejected-studies" style="color: #ff6b6b; font-weight: bold;">—</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span style="color: var(--faint);">OOD Anomalies:</span>
+          <span id="tel-ood-count" style="color: #ffd166; font-weight: bold;">—</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span style="color: var(--faint);">Calibration ECE:</span>
+          <span id="tel-calib-status" style="color: #4be1c3; font-weight: bold;">0.2087</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--faint);">Audit Log Status:</span>
+          <span id="tel-audit-health" style="color: #4be1c3; font-weight: bold;">Healthy</span>
+        </div>
+      </div>
     </aside>
 
     <main class="c-main" id="c-main">
@@ -221,6 +247,46 @@
           </div>
         </section>
 
+        <section class="panel p-neuroview" data-tilt id="panel-neuroview" hidden>
+          <header><h4>AURA NeuroView</h4>
+            <div class="p-tools">
+              <span class="p-hint mono" id="nv-status">Not Available</span>
+              <button id="nv-reset" class="tg">reset camera</button>
+            </div>
+          </header>
+          <div class="nv-layout">
+            <div class="nv-render" id="nv-vtk"></div>
+            <div class="nv-side">
+              <div class="nv-controls mono">
+                <label>opacity <input id="nv-opacity" type="range" min="0" max="100" value="42"></label>
+                <label>layer opacity <input id="nv-layer-opacity" type="range" min="0" max="100" value="55"></label>
+                <label>window <input id="nv-window" type="range" min="1" max="65535" value="65535"></label>
+                <label>level <input id="nv-level" type="range" min="0" max="65535" value="32768"></label>
+                <span id="nv-intensity">window/level n/a</span>
+              </div>
+              <div class="nv-layers mono" id="nv-layers"></div>
+            </div>
+          </div>
+          <div class="nv-slices">
+            <div class="nv-slice">
+              <span class="mono">axial</span>
+              <canvas id="nv-axial"></canvas>
+              <input id="nv-axial-range" type="range" min="0" max="0" value="0">
+            </div>
+            <div class="nv-slice">
+              <span class="mono">coronal</span>
+              <canvas id="nv-coronal"></canvas>
+              <input id="nv-coronal-range" type="range" min="0" max="0" value="0">
+            </div>
+            <div class="nv-slice">
+              <span class="mono">sagittal</span>
+              <canvas id="nv-sagittal"></canvas>
+              <input id="nv-sagittal-range" type="range" min="0" max="0" value="0">
+            </div>
+          </div>
+          <footer class="p-foot mono" id="nv-meta"></footer>
+        </section>
+
         <section class="panel p-posterior" data-tilt id="panel-posterior">
           <header><h4>Calibrated differential</h4><span class="p-hint mono" id="post-backend"></span></header>
           <div id="post-bars"></div>
@@ -253,6 +319,7 @@
 
 <script src="/static/js/fx.js?v=5"></script>
 <script src="/static/js/landing.js?v=5"></script>
+<script src="/static/js/neuroview.js?v=1"></script>
 <script src="/static/js/console.js?v=5"></script>
 <script src="/static/js/main.js?v=5"></script>
 </body>

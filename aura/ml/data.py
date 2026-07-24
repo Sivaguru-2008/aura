@@ -22,7 +22,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from schemas.clinical import Diagnosis, Finding
+from schemas.clinical import CHEST_FINDINGS, Diagnosis, Finding
 from schemas.contracts import StructuredPriors
 
 # The grid + anatomy primitives now live in the dependency-free ``common`` layer so
@@ -96,7 +96,7 @@ def _priors_for(dx: Diagnosis, rng: np.random.Generator) -> StructuredPriors:
 
 def make_sample(dx: Diagnosis, rng: np.random.Generator) -> Sample:
     img = _base_thorax(rng)
-    f: dict[Finding, float] = {k: 0.0 for k in Finding}
+    f: dict[Finding, float] = {k: 0.0 for k in CHEST_FINDINGS}
 
     if dx == Diagnosis.PNEUMONIA:
         side = rng.choice(["right_lung", "left_lung"])

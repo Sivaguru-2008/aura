@@ -1,0 +1,16 @@
+{
+  "classes": [
+    "flair",
+    "t1",
+    "t1ce",
+    "t2"
+  ],
+  "accuracy_per_channel": 0.8649041352127731,
+  "study_order_endorsement_rate": 0.8808394038628617,
+  "n_train_slices": 138913,
+  "n_test_slices": 59876,
+  "n_volumes": 369,
+  "split": "by volume (patient-disjoint)",
+  "corpus": "BraTS2020 training slices",
+  "role": "consistency check on a declared channel order, never a primary sequence assignment -- per-channel accuracy is far too low for that"
+}

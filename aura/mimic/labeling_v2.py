@@ -16,7 +16,7 @@ NOT the official Stanford CheXpert labeler (Python2/credentialed) — an improve
 transparent rule labeler validated against report reading.
 """
 import re
-from schemas.clinical import Finding
+from schemas.clinical import CHEST_FINDINGS, Finding
 
 CONCEPTS = {
     "effusion":      r"effusion|pleural fluid",
@@ -78,7 +78,7 @@ def _label_in_sentence(sent: str, m: re.Match) -> int:
 
 def label_v2(text: str) -> dict:
     if not text or not text.strip():
-        return {f.value: 0.0 for f in Finding}
+        return {f.value: 0.0 for f in CHEST_FINDINGS}
     clean = re.sub(r"_{2,}", " ", text.lower())
     clean = clean.replace("findings:", " . ").replace("impression:", " . ")
     concepts = {}
@@ -95,7 +95,7 @@ def label_v2(text: str) -> dict:
     # Opacity hierarchy: consolidation / pneumonia are opacities.
     if concepts.get("consolidation") == 1 or concepts.get("pneumonia") == 1:
         concepts["opacity"] = 1
-    out = {f.value: 0.0 for f in Finding}
+    out = {f.value: 0.0 for f in CHEST_FINDINGS}
     for c, v in concepts.items():
         f = CONCEPT_TO_FINDING.get(c)
         if f is not None:

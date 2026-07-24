@@ -12,15 +12,33 @@ import pennylane as qml
 
 
 def make_qnode(n_qubits: int, n_layers: int, device_name: str = "default.qubit",
-               shots: int | None = None, interface: str = "numpy"):
+               shots: int | None = None, interface: str = "numpy",
+               entangler: str = "ring"):
     """Build the fusion QNode.
 
     Encoding: angle-encode each evidence channel as RY(pi * x_i) on its own qubit.
-    Ansatz : n_layers of (trainable RY, RZ per qubit) + a ring of CNOTs. The
-             entangling ring is what lets the model represent higher-order
-             interactions between evidence sources in a 2**n Hilbert space.
+    Ansatz : n_layers of (trainable RY, RZ per qubit) + an entangling block. The
+             entangler is what lets the model represent higher-order interactions
+             between evidence sources in a 2**n Hilbert space.
     Readout: <Z_i> per qubit -> a classical linear head maps to diagnosis logits.
+
+    ``entangler`` selects the two-qubit block:
+
+    * ``"ring"`` — CNOT ring, the shipped ansatz.
+    * ``"none"`` — no two-qubit gates at all. The register stays a product state, so
+      every qubit evolves independently and ``<Z_i Z_j> = <Z_i><Z_j>`` exactly. This
+      is the **ablation control**: same qubit count, same layer count, same trainable
+      parameter count, same encoding, same readout, same optimiser — entanglement is
+      the only thing removed. Any performance difference is therefore attributable to
+      entanglement and to nothing else, which is the only way to answer "is the
+      quantum part doing work?" with a number instead of an opinion.
+
+    A product-state VQC is not a trivial model: it is still a trained non-linear map
+    (each qubit performs its own rotation chain and contributes ``<Z_i>``), so the
+    control is a fair one rather than a straw man.
     """
+    if entangler not in ("ring", "none"):
+        raise ValueError(f"unknown entangler {entangler!r}; expected 'ring' or 'none'")
     dev = qml.device(device_name, wires=n_qubits, shots=shots)
 
     @qml.qnode(dev, interface=interface, diff_method="best")
@@ -33,8 +51,9 @@ def make_qnode(n_qubits: int, n_layers: int, device_name: str = "default.qubit",
             for i in range(n_qubits):
                 qml.RY(theta[layer][i][0], wires=i)
                 qml.RZ(theta[layer][i][1], wires=i)
-            for i in range(n_qubits):
-                qml.CNOT(wires=[i, (i + 1) % n_qubits])
+            if entangler == "ring":
+                for i in range(n_qubits):
+                    qml.CNOT(wires=[i, (i + 1) % n_qubits])
         return [qml.expval(qml.PauliZ(i)) for i in range(n_qubits)]
 
     return circuit
@@ -45,8 +64,17 @@ def n_params(n_qubits: int, n_layers: int) -> int:
 
 
 def make_probs_qnode(n_qubits: int, n_layers: int, device_name: str = "default.qubit",
-                     shots: int | None = None, interface: str = "numpy"):
-    """Build a QNode returning the joint probability distribution of all 2**n_qubits basis states."""
+                     shots: int | None = None, interface: str = "numpy",
+                     entangler: str = "ring"):
+    """Build a QNode returning the joint probability distribution of all 2**n_qubits basis states.
+
+    ``entangler`` must match the circuit the parameters were trained on — see
+    :func:`make_qnode`. Measuring a product-trained ``theta`` through the ring ansatz
+    evaluates a different unitary and returns a distribution that is well-formed and
+    wrong.
+    """
+    if entangler not in ("ring", "none"):
+        raise ValueError(f"unknown entangler {entangler!r}; expected 'ring' or 'none'")
     dev = qml.device(device_name, wires=n_qubits, shots=shots)
 
     @qml.qnode(dev, interface=interface, diff_method="best")
@@ -57,8 +85,9 @@ def make_probs_qnode(n_qubits: int, n_layers: int, device_name: str = "default.q
             for i in range(n_qubits):
                 qml.RY(theta[layer][i][0], wires=i)
                 qml.RZ(theta[layer][i][1], wires=i)
-            for i in range(n_qubits):
-                qml.CNOT(wires=[i, (i + 1) % n_qubits])
+            if entangler == "ring":
+                for i in range(n_qubits):
+                    qml.CNOT(wires=[i, (i + 1) % n_qubits])
         return qml.probs(wires=range(n_qubits))
 
     return circuit

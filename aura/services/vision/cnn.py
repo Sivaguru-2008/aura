@@ -63,11 +63,10 @@ def select_device(prefer: str | None = None) -> str:
     """Pick the compute device once. Honours AURA_DEVICE / explicit override."""
     import os
 
-    import torch
-
     want = prefer or os.environ.get("AURA_DEVICE")
     if want:
         return want
+    import torch
     return "cuda" if torch.cuda.is_available() else "cpu"
 
 

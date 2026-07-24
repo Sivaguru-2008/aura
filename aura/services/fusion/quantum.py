@@ -21,15 +21,21 @@ MODEL_VERSION = "fusion-vqc-v1"
 
 class QuantumFusion:
     def __init__(self, theta: np.ndarray, W: np.ndarray, b: np.ndarray,
-                 n_qubits: int, n_layers: int):
+                 n_qubits: int, n_layers: int, entangler: str = "ring"):
         self.theta = np.asarray(theta, dtype=float)
         self.W = np.asarray(W, dtype=float)      # (n_dx, n_qubits)
         self.b = np.asarray(b, dtype=float)      # (n_dx,)
         self.n_qubits = n_qubits
         self.n_layers = n_layers
+        #: Two-qubit block this model's parameters were trained with. Carried on the
+        #: instance because ``theta`` alone does not identify the circuit: reading a
+        #: product-trained model back through the ring ansatz silently evaluates the
+        #: wrong unitary and produces plausible, wrong expectations.
+        self.entangler = entangler
         self.backend = "quantum"
         self.model_version = MODEL_VERSION
-        self._circuit = make_qnode(n_qubits, n_layers, interface="numpy")
+        self._circuit = make_qnode(n_qubits, n_layers, interface="numpy",
+                                   entangler=entangler)
 
     @classmethod
     def load(cls, path: Path | None = None) -> "QuantumFusion | None":
@@ -37,7 +43,10 @@ class QuantumFusion:
         if not path.exists():
             return None
         d = np.load(path)
-        return cls(d["theta"], d["W"], d["b"], int(d["n_qubits"]), int(d["n_layers"]))
+        # Older artifacts predate the entangler field and are all ring-trained.
+        entangler = str(d["entangler"]) if "entangler" in d.files else "ring"
+        return cls(d["theta"], d["W"], d["b"], int(d["n_qubits"]), int(d["n_layers"]),
+                   entangler=entangler)
 
     def _expectations(self, x: np.ndarray) -> np.ndarray:
         z = self._circuit(x, self.theta)
@@ -74,7 +83,9 @@ class QuantumFusion:
         """Get the joint probability distribution of the n_qubits measurement basis states."""
         if not hasattr(self, "_probs_circuit"):
             from services.fusion.device import make_probs_qnode
-            self._probs_circuit = make_probs_qnode(self.n_qubits, self.n_layers, interface="numpy")
+            self._probs_circuit = make_probs_qnode(
+                self.n_qubits, self.n_layers, interface="numpy",
+                entangler=self.entangler)
         p = self._probs_circuit(x, self.theta)
         return np.asarray(p, dtype=float)
 

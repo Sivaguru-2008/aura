@@ -1,33 +1,36 @@
-# AURA — Known Limitations & Exclusions
+# AURA Known Limitations and Clinical Boundaries
 
-This document outlines the clinical, technical, and operational boundaries of the current AURA codebase.
-
----
-
-## 1. Regulatory Status
-
-* **Not a Validated Medical Device**: AURA is research-grade software. It has not received regulatory clearance or approval from the US Food and Drug Administration (FDA) as a Software as a Medical Device (SaMD), nor has it been certified under the EU Medical Device Regulation (MDR).
-* **Clinical Decision Support Only**: AURA is designed strictly as a clinical decision support tool. It must never be used autonomously to establish diagnoses or direct patient treatments; a licensed clinician must always serve as the primary reader.
+This document outlines the known clinical boundaries, algorithmic constraints, and dataset biases of the AURA Clinical Intelligence Copilot.
 
 ---
 
-## 2. Technical & Model Limitations
+## 1. Algorithmic and Structural Constraints
 
-### Closed-Vocabulary Diagnostics
-* The evidence fusion and clinical reasoning engines operate on a closed vocabulary of **6 diagnoses**: Normal, COPD, Heart Failure, Malignancy, Pneumonia, and Pneumothorax.
-* Visual findings outside the 7-label classifier head (e.g. fractures, chest tubes, mediastinal shifts, or specific vascular anomalies) are not represented and will be missed.
+### Brain MRI (NeuroMind)
+- **Sequence Dependencies:** NeuroMind requires a complete study with all four standard sequences (**FLAIR, T1, T1CE, and T2**). If any sequence is missing, the system will raise an incomplete study flag and abstain from providing tumor segmentation overlays or diagnostic probabilities.
+- **Slice Resolution Floor:** The MRI Foundation pipeline requires a minimum of **2 slices** per series. A single-slice upload (2D image representing a 3D volume) does not carry through-plane spatial geometry and cannot be canonicalized or resampled, resulting in a clean rejection (`unreadable_image`).
+- **Head CT Ambiguity:** Pixel geometry features (gray level distribution and background air-to-subject ratio) cannot distinguish between axial brain MRIs and axial head CTs. While DICOM metadata will safely route a head CT as unsupported, a raw PNG/JPEG export of a head CT will trigger the head geometry signature and route to NeuroMind, flagged for review.
 
-### OOD Energy-Score Boundaries
-* The Out-of-Distribution (OOD) detector calculates an energy z-score based on the 8-dimensional evidence vector. Within valid chest radiograph space, this low-dimensional feature vector has limited dynamic range.
-* Thus, the primary defense against non-radiograph images (e.g. hand X-rays, artifacts, or blank files) is the structural `xray_gate.validate_cxr()`, which runs at image intake. The energy-score OOD detector serves as a secondary defense.
-
-### Conformal Prediction Saturation
-* Although Mondrian conformal prediction ensures class-conditional coverage, classes with extremely low sample support (e.g. rare clinical cases) can cause the quantiles to saturate. 
-* To prevent degeneracy, AURA implements a fallback to pooled marginal conformal thresholds, but this reduces class-specific precision for rare conditions.
+### Chest X-Ray (Thorax)
+- **Modality Scope:** AURA Thorax is strictly validated for **frontal chest radiographs**. It actively rejects lateral projections, extremities, abdominal x-rays, and mammograms during modality routing.
+- **Color Interference:** Plain-image signatures reject colored screenshots or files containing annotations/color bars, as medical radiographs are grayscale.
 
 ---
 
-## 3. Operational & Security Limitations
+## 2. Dataset Biases & Demographic Gaps
 
-* **No Multi-User Isolation**: The FastAPI gateway is designed as a single-clinician offline service. It does not feature user session isolation, data partitioning, or multi-tenant database routing.
-* **Security Seams**: By default, the service operates in an offline, unsecured mode trust-verifying the `x-aura-user` header. Although token authorization, rate-limiting, and MIME type-checks exist (`gateway/security.py`), they are turned off for the offline seeder demo.
+### Chest Model (MIMIC-CXR Validation)
+- The DenseNet-121 model was trained on the MIMIC-CXR dataset, which represents a patient population from a tertiary academic medical center in the United States.
+- **Prevalence Gaps:** Rare pathologies such as pneumothorax (prevalence: 1.8% in validation split) and hyperinflation (prevalence: 1.6%) suffer from high positive prediction set sizes due to sparse training signals.
+
+### Brain Model (BraTS2020 Validation)
+- The ResU-Net model was trained on the BraTS2020 dataset, which consists of preoperative brain MRIs of patients diagnosed with High-Grade Gliomas (HGG) or Low-Grade Gliomas (LGG).
+- **Clinical Phase Bias:** The model is not validated for postoperative monitoring, radiation necrosis differentiation, or non-glial tumors (such as meningiomas, acoustic neuromas, or primary central nervous system lymphomas).
+
+---
+
+## 3. Clinical Safety Boundaries
+
+- **Not a Diagnostic Replacement:** AURA is a clinical intelligence copilot designed to assist radiologists and physicians. It is not approved for autonomous primary diagnostic interpretation.
+- **Safety Abstentions:** When epistemic uncertainty (mutual information between deep ensemble members) exceeds `0.45` or when the OOD energy score z-score exceeds `3.0`, the system abstains from a clinical claim, advising manual radiological review.
+- **Conformal Set Scannability:** Conformal prediction sets guarantee 90% coverage but may occasionally include multiple competing diagnoses (set size > 3) when clinical presentation is highly ambiguous. Users must review all items in the conformal prediction set.

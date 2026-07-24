@@ -24,3 +24,15 @@ manifest.jsonl
 aura/artifacts/*.pt
 aura/artifacts/tb/
 
+
+# Brain Vision Engine (NeuroMind) — derived artefacts, all regenerable:
+#   cache/        11 GB of standardised voxels; rebuild with `cli ingest`
+#   checkpoints/  ~300 MB of weights; rebuild with `cli train`
+#   embeddings/   one 3.5 MB store per epoch
+# The reports, the model card, and the latest embedding store stay: they are the
+# evidence, and `latest.npz` is the representation downstream modules are told not to
+# recompute.
+aura/artifacts/brain/cache/
+aura/artifacts/brain/checkpoints/
+aura/artifacts/brain/tensorboard/
+aura/artifacts/brain/embeddings/epoch_*.npz

@@ -97,6 +97,16 @@ class AuditRow(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
+class NeuroViewRow(Base):
+    """MRI-only visualization artifact keyed by case id."""
+
+    __tablename__ = "neuroview_artifacts"
+    case_id: Mapped[str] = mapped_column(String, primary_key=True)
+    study_id: Mapped[str] = mapped_column(String, index=True)
+    payload: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
 class Store:
     def __init__(self, db_path: Path):
         db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -169,6 +179,22 @@ class Store:
     def count(self) -> int:
         with Session(self.engine) as ses:
             return ses.query(CaseRow).count()
+
+    # ---- MRI NeuroView artifacts ----
+    def save_neuroview(self, case_id: str, study_id: str, payload: dict) -> None:
+        with Session(self.engine) as ses:
+            row = ses.get(NeuroViewRow, case_id)
+            if row is None:
+                row = NeuroViewRow(case_id=case_id)
+                ses.add(row)
+            row.study_id = study_id
+            row.payload = payload
+            ses.commit()
+
+    def get_neuroview(self, case_id: str) -> dict | None:
+        with Session(self.engine) as ses:
+            row = ses.get(NeuroViewRow, case_id)
+            return dict(row.payload) if row and row.payload else None
 
     # ---- feedback ----
     def add_feedback(self, case_id: str, diagnosis: str, verdict: str,

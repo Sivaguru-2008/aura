@@ -1,0 +1,913 @@
+{
+  "name": "AURA NeuroMind Brain Vision Engine",
+  "version": "1.0.0",
+  "run_name": "brain_vision_v2",
+  "status": "trained",
+  "architecture": {
+    "version": "1.0.0",
+    "encoder": "residual_unet2d",
+    "decoder": "unet2d",
+    "stage_channels": [
+      32,
+      64,
+      128,
+      256,
+      320
+    ],
+    "classes": {
+      "0": "Background",
+      "1": "Necrotic / non-enhancing core",
+      "2": "Peritumoural oedema",
+      "3": "Enhancing tumour"
+    },
+    "heads": [
+      "segmentation",
+      "presence",
+      "size",
+      "quality",
+      "embedding"
+    ],
+    "deep_supervision_levels": 4,
+    "embedding": {
+      "dimension": 128,
+      "source": "encoder_bottleneck",
+      "normalized": true,
+      "objective": "supervised_contrastive+variance_covariance",
+      "version": "1.0.0"
+    },
+    "quality_artifact_classes": [
+      "rician_noise",
+      "bias_field",
+      "motion_ghosting",
+      "k_space_spike",
+      "blur",
+      "clean"
+    ],
+    "modalities": [
+      {
+        "key": "flair",
+        "sequence": "flair",
+        "label": "FLAIR",
+        "required": true,
+        "provenance": "BraTS2020 HDF5 image channel 0"
+      },
+      {
+        "key": "t1",
+        "sequence": "t1",
+        "label": "T1-weighted",
+        "required": true,
+        "provenance": "BraTS2020 HDF5 image channel 1"
+      },
+      {
+        "key": "t1ce",
+        "sequence": "t1ce",
+        "label": "T1-weighted post-contrast",
+        "required": true,
+        "provenance": "BraTS2020 HDF5 image channel 2"
+      },
+      {
+        "key": "t2",
+        "sequence": "t2",
+        "label": "T2-weighted",
+        "required": true,
+        "provenance": "BraTS2020 HDF5 image channel 3"
+      }
+    ],
+    "input_size": [
+      192,
+      192
+    ],
+    "parameters": {
+      "total": 11286127,
+      "encoder": 6364160,
+      "decoder": 4595872,
+      "head_segmentation": 1936,
+      "head_presence": 83716,
+      "head_size": 83716,
+      "head_quality": 41143,
+      "head_embedding": 115584
+    }
+  },
+  "objective": {
+    "heads": [
+      "embedding",
+      "presence",
+      "quality",
+      "segmentation",
+      "size"
+    ],
+    "segmentation_terms": {
+      "dice": 1.0,
+      "cross_entropy": 1.0,
+      "focal": 0.0,
+      "boundary": 0.0
+    },
+    "head_weights": {
+      "segmentation": 1.0,
+      "presence": 0.3,
+      "size": 0.2,
+      "quality": 2.0,
+      "embedding": 0.15
+    },
+    "deep_supervision_weights": [
+      1.0,
+      0.5,
+      0.25,
+      0.125
+    ],
+    "class_weights": [
+      0.2,
+      1.0,
+      1.0,
+      1.5
+    ],
+    "embedding_objective": {
+      "supcon_temperature": 0.1,
+      "variance_weight": 1.0,
+      "covariance_weight": 0.04
+    }
+  },
+  "data": {
+    "corpus": "E:\\AURA\\datasets\\brats2020\\BraTS2020_training_data\\content\\data",
+    "cache_version": "1.0.0",
+    "foundation_version": "1.0.0",
+    "channel_verification": {
+      "subjects": 369,
+      "evaluated": 321,
+      "agreed": 317,
+      "agreement": 0.9875389408099688,
+      "test": "the post-contrast channel must maximise (mean(enhancing) - mean(necrotic)) / std(brain) across the four image channels \u2014 the definition of gadolinium enhancement",
+      "not_evaluated_reason": "subjects with fewer than 200 enhancing or 200 necrotic voxels carry no signal for this test",
+      "disagreed_subjects": [
+        "BraTS20_Training_079",
+        "BraTS20_Training_207",
+        "BraTS20_Training_245",
+        "BraTS20_Training_285"
+      ]
+    },
+    "subjects": {
+      "train": 258,
+      "val": 55,
+      "test": 56
+    },
+    "slices": {
+      "train": 34643,
+      "val": 7407,
+      "test": 7531
+    },
+    "slice_statistics": {
+      "slices": 49581,
+      "subjects": 369,
+      "positive_slices": 24415,
+      "positive_fraction": 0.4924,
+      "area_percentiles_positive": {
+        "p5": 32.0,
+        "p25": 487.0,
+        "p50": 1265.0,
+        "p75": 2268.5,
+        "p95": 3785.0
+      }
+    },
+    "morphology_labels": {
+      "num_classes": 22,
+      "size_boundaries_px": [
+        737.0,
+        1951.0
+      ],
+      "definition": "(subregion presence pattern) x (size tertile)"
+    },
+    "split_policy": "by subject, stratified by tumour grade; no subject contributes slices to more than one split"
+  },
+  "training": {
+    "device": "cuda",
+    "epochs_configured": 30,
+    "epochs_completed": 30,
+    "batch_size": 16,
+    "effective_batch_size": 16,
+    "samples_per_epoch": 8000,
+    "curriculum": [
+      [
+        "large",
+        2
+      ],
+      [
+        "medium",
+        3
+      ],
+      [
+        "small",
+        3
+      ],
+      [
+        "full",
+        100
+      ]
+    ],
+    "stability": {
+      "amp": true,
+      "grad_clip": 12.0,
+      "grad_accum": 1,
+      "ema": true,
+      "warmup_epochs": 1.0,
+      "schedule": "cosine annealing",
+      "early_stopping_patience": 6
+    }
+  },
+  "best": {
+    "epoch": 24,
+    "monitor": "composite_dice_mean",
+    "value": 0.8752,
+    "validation": {
+      "epoch": 24,
+      "split": "val",
+      "samples": 7407,
+      "seconds": 99.166,
+      "loss": {
+        "dice": 0.140707,
+        "cross_entropy": 0.069375,
+        "segmentation": 0.203152,
+        "presence": 0.171743,
+        "size": 0.025584,
+        "quality": 0.060183,
+        "quality_artifact": 0.965333,
+        "supcon": 2.348793,
+        "embed_variance": 0.938551,
+        "embed_covariance": 0.001311,
+        "embedding": 3.287396,
+        "total": 1.259401
+      },
+      "segmentation": {
+        "per_class": {
+          "ncr_net": {
+            "dice": 0.75054,
+            "dice_per_slice_mean": 0.84646,
+            "dice_per_slice_median": 1.0,
+            "iou": 0.60069,
+            "iou_per_slice_mean": 0.8184,
+            "precision": 0.76977,
+            "recall": 0.73225,
+            "sensitivity": 0.73225,
+            "specificity": 0.99918,
+            "hausdorff_p95_px": 7.5362,
+            "hausdorff_slices_measured": 1867,
+            "voxels": {
+              "tp": 741734,
+              "fp": 221847,
+              "fn": 271219,
+              "tn": 271816848
+            },
+            "slices": 7407,
+            "empty_agreements": 4966,
+            "false_alarms": 167
+          },
+          "edema": {
+            "dice": 0.81116,
+            "dice_per_slice_mean": 0.83251,
+            "dice_per_slice_median": 0.95505,
+            "iou": 0.68231,
+            "iou_per_slice_mean": 0.7787,
+            "precision": 0.77847,
+            "recall": 0.84672,
+            "sensitivity": 0.84672,
+            "specificity": 0.997,
+            "hausdorff_p95_px": 8.4162,
+            "hausdorff_slices_measured": 3401,
+            "voxels": {
+              "tp": 2846534,
+              "fp": 810058,
+              "fn": 515311,
+              "tn": 268879745
+            },
+            "slices": 7407,
+            "empty_agreements": 3593,
+            "false_alarms": 107
+          },
+          "enhancing": {
+            "dice": 0.84893,
+            "dice_per_slice_mean": 0.92126,
+            "dice_per_slice_median": 1.0,
+            "iou": 0.73751,
+            "iou_per_slice_mean": 0.89438,
+            "precision": 0.81026,
+            "recall": 0.89147,
+            "sensitivity": 0.89147,
+            "specificity": 0.99925,
+            "hausdorff_p95_px": 3.9464,
+            "hausdorff_slices_measured": 1915,
+            "voxels": {
+              "tp": 871476,
+              "fp": 204069,
+              "fn": 106099,
+              "tn": 271870004
+            },
+            "slices": 7407,
+            "empty_agreements": 5247,
+            "false_alarms": 62
+          }
+        },
+        "per_composite": {
+          "whole_tumor": {
+            "dice": 0.9018,
+            "dice_per_slice_mean": 0.87803,
+            "dice_per_slice_median": 0.97353,
+            "iou": 0.82117,
+            "iou_per_slice_mean": 0.83998,
+            "precision": 0.87462,
+            "recall": 0.93073,
+            "sensitivity": 0.93073,
+            "specificity": 0.99733,
+            "hausdorff_p95_px": 7.7715,
+            "hausdorff_slices_measured": 3408,
+            "voxels": {
+              "tp": 4981611,
+              "fp": 714107,
+              "fn": 370762,
+              "tn": 266985168
+            },
+            "slices": 7407,
+            "empty_agreements": 3581,
+            "false_alarms": 103
+          },
+          "tumor_core": {
+            "dice": 0.87488,
+            "dice_per_slice_mean": 0.9015,
+            "dice_per_slice_median": 1.0,
+            "iou": 0.77758,
+            "iou_per_slice_mean": 0.87757,
+            "precision": 0.86445,
+            "recall": 0.88556,
+            "sensitivity": 0.88556,
+            "specificity": 0.99898,
+            "hausdorff_p95_px": 5.4122,
+            "hausdorff_slices_measured": 2250,
+            "voxels": {
+              "tp": 1762726,
+              "fp": 276400,
+              "fn": 227802,
+              "tn": 270784720
+            },
+            "slices": 7407,
+            "empty_agreements": 4762,
+            "false_alarms": 144
+          },
+          "enhancing_tumor": {
+            "dice": 0.84893,
+            "dice_per_slice_mean": 0.92126,
+            "dice_per_slice_median": 1.0,
+            "iou": 0.73751,
+            "iou_per_slice_mean": 0.89438,
+            "precision": 0.81026,
+            "recall": 0.89147,
+            "sensitivity": 0.89147,
+            "specificity": 0.99925,
+            "hausdorff_p95_px": 3.9464,
+            "hausdorff_slices_measured": 1915,
+            "voxels": {
+              "tp": 871476,
+              "fp": 204069,
+              "fn": 106099,
+              "tn": 271870004
+            },
+            "slices": 7407,
+            "empty_agreements": 5247,
+            "false_alarms": 62
+          }
+        },
+        "composite_dice_mean": 0.8752,
+        "composite_regions_scored": 3,
+        "composite_regions_absent": 0,
+        "class_dice_mean": 0.80354,
+        "classes_scored": 3,
+        "hausdorff_percentile": 95.0,
+        "hausdorff_available": true,
+        "note": "dice is pooled over all voxels of the split; dice_per_slice_mean averages the per-slice value, which weighs a 3-pixel focus the same as a 3000-pixel tumour"
+      },
+      "presence": {
+        "whole_tumor": {
+          "prevalence": 0.50263,
+          "positives": 3723,
+          "accuracy": 0.90711,
+          "sensitivity": 0.95111,
+          "specificity": 0.86265,
+          "precision": 0.87497,
+          "auroc": 0.97974
+        },
+        "ncr_net": {
+          "prevalence": 0.30701,
+          "positives": 2274,
+          "accuracy": 0.93749,
+          "sensitivity": 0.91337,
+          "specificity": 0.94818,
+          "precision": 0.88647,
+          "auroc": 0.97711
+        },
+        "edema": {
+          "prevalence": 0.50047,
+          "positives": 3707,
+          "accuracy": 0.9113,
+          "sensitivity": 0.95063,
+          "specificity": 0.87189,
+          "precision": 0.88144,
+          "auroc": 0.98037
+        },
+        "enhancing": {
+          "prevalence": 0.28325,
+          "positives": 2098,
+          "accuracy": 0.96247,
+          "sensitivity": 0.91802,
+          "specificity": 0.98003,
+          "precision": 0.94783,
+          "auroc": 0.98764
+        }
+      },
+      "size": {
+        "whole_tumor": {
+          "mae": 0.04759,
+          "rmse": 0.0967,
+          "pearson_r": 0.95737,
+          "predicted_std": 0.31594,
+          "target_std": 0.33331,
+          "approx_pixel_error_at_median": 124.7
+        },
+        "ncr_net": {
+          "mae": 0.05097,
+          "rmse": 0.1131,
+          "pearson_r": 0.89065,
+          "predicted_std": 0.23643,
+          "target_std": 0.24533,
+          "approx_pixel_error_at_median": 136.1
+        },
+        "edema": {
+          "mae": 0.05222,
+          "rmse": 0.09531,
+          "pearson_r": 0.95217,
+          "predicted_std": 0.29077,
+          "target_std": 0.31114,
+          "approx_pixel_error_at_median": 140.5
+        },
+        "enhancing": {
+          "mae": 0.02271,
+          "rmse": 0.06317,
+          "pearson_r": 0.9678,
+          "predicted_std": 0.24846,
+          "target_std": 0.24916,
+          "approx_pixel_error_at_median": 51.8
+        }
+      },
+      "quality": {
+        "image_quality": {
+          "mae": 0.18453,
+          "rmse": 0.24532,
+          "pearson_r": 0.64063,
+          "predicted_std": 0.21231,
+          "target_std": 0.31076
+        },
+        "diagnostics": {
+          "degraded_fraction": 0.5732,
+          "predicted_range": [
+            0.1164,
+            0.9698
+          ],
+          "severity_correlation": -0.41512,
+          "severity_correlation_note": "predicted quality vs known degradation severity, on degraded samples only; strongly negative is correct",
+          "mean_predicted_clean": 0.84648,
+          "mean_predicted_degraded": 0.60977,
+          "separation": 0.23671,
+          "per_artifact": {
+            "rician_noise": {
+              "n": 832,
+              "severity_correlation": -0.55868
+            },
+            "bias_field": {
+              "n": 844,
+              "severity_correlation": -0.28489
+            },
+            "motion_ghosting": {
+              "n": 865,
+              "severity_correlation": -0.62451
+            },
+            "k_space_spike": {
+              "n": 872,
+              "severity_correlation": -0.48637
+            },
+            "blur": {
+              "n": 833,
+              "severity_correlation": -0.75257
+            }
+          },
+          "artifact_type_accuracy": 0.65627,
+          "artifact_type_chance": 0.16667
+        }
+      },
+      "embedding": {
+        "samples": 6000,
+        "dimension": 128,
+        "collapse": {
+          "mean_pairwise_cosine": 0.50543,
+          "mean_dimension_std": 0.06186,
+          "effective_rank": 5.593
+        },
+        "morphology_knn_purity": 0.74782,
+        "morphology_classes_present": 16,
+        "grade_probe": {
+          "knn_accuracy_cross_subject": 0.80383,
+          "majority_baseline": 0.80167,
+          "samples_with_grade": 6000,
+          "note": "tumour grade is never a training target; neighbours from the same subject are excluded so adjacent slices cannot answer for each other"
+        }
+      },
+      "performance": {
+        "slices": 7407,
+        "total_seconds": 25.1492,
+        "ms_per_slice_mean": 3.3952,
+        "ms_per_slice_p95": 3.5344,
+        "slices_per_second": 294.52,
+        "peak_gpu_memory_mb": 882.79
+      }
+    }
+  },
+  "intended_use": "Perception layer for AURA NeuroMind: glioma sub-region segmentation and reusable latent representation over pre-processed multi-sequence brain MRI. Research use. Not a diagnostic device and not validated for clinical decision-making.",
+  "caveats": [
+    "BraTS2020 contains only glioma. A model trained on it has never seen a metastasis, a meningioma, an abscess, a demyelinating lesion, or a healthy brain, and its output on any of those is undefined rather than negative.",
+    "Every subject is pre-skull-stripped, N4-corrected, and co-registered to the SRI24 atlas by the challenge organisers. A clinical study that has not been through the same preparation is out of distribution.",
+    "The HDF5 redistribution carries no affine. Laterality is declared from the BraTS convention and is NOT verified; left/right must not be reported from this model.",
+    "Intensities arrive per-slice z-scored. They are exact within a slice and accurate to roughly +-20% across the slices of one volume.",
+    "Segmentation labels are the challenge's expert consensus. They were not re-adjudicated here.",
+    "Trained and validated on 2D axial slices. Volumetric consistency between adjacent slices is not enforced by the model or measured by the reported metrics.",
+    "The tumour-grade probe reported under embedding metrics is a representation-quality diagnostic, not a grading model."
+  ],
+  "head_validity_validation": {
+    "presence": {
+      "metric": "AUROC per region",
+      "min": 0.97711,
+      "passes": true,
+      "criterion": "AUROC > 0.75 on every region"
+    },
+    "size": {
+      "metric": "Pearson r vs true log-area",
+      "min": 0.89065,
+      "passes": true,
+      "criterion": "r > 0.60 on every region"
+    },
+    "quality": {
+      "metric": "correlation with known degradation severity",
+      "value": -0.41512,
+      "passes": true,
+      "criterion": "r <= -0.3",
+      "note": null
+    },
+    "embedding_grade_transfer": {
+      "metric": "cross-subject k-NN accuracy on held-out tumour grade",
+      "value": 0.80383,
+      "majority_baseline": 0.80167,
+      "passes": true,
+      "criterion": "beats the majority-class baseline",
+      "note": null
+    },
+    "embedding_morphology": {
+      "metric": "k-NN purity over the trained morphology class",
+      "value": 0.74782,
+      "collapse": {
+        "mean_pairwise_cosine": 0.50543,
+        "mean_dimension_std": 0.06186,
+        "effective_rank": 5.593
+      },
+      "passes": true,
+      "criterion": "purity > 0.5 and not collapsed"
+    }
+  },
+  "head_validity_test": {
+    "presence": {
+      "metric": "AUROC per region",
+      "min": 0.97743,
+      "passes": true,
+      "criterion": "AUROC > 0.75 on every region"
+    },
+    "size": {
+      "metric": "Pearson r vs true log-area",
+      "min": 0.88739,
+      "passes": true,
+      "criterion": "r > 0.60 on every region"
+    },
+    "quality": {
+      "metric": "correlation with known degradation severity",
+      "value": -0.42337,
+      "passes": true,
+      "criterion": "r <= -0.3",
+      "note": null
+    },
+    "embedding_grade_transfer": {
+      "metric": "cross-subject k-NN accuracy on held-out tumour grade",
+      "value": 0.77983,
+      "majority_baseline": 0.78917,
+      "passes": false,
+      "criterion": "beats the majority-class baseline",
+      "note": "the embedding does not carry tumour grade above the majority baseline. It clusters the morphology it was trained on; that is what it is validated for and the limit of what it is validated for."
+    },
+    "embedding_morphology": {
+      "metric": "k-NN purity over the trained morphology class",
+      "value": 0.74786,
+      "collapse": {
+        "mean_pairwise_cosine": 0.47651,
+        "mean_dimension_std": 0.06367,
+        "effective_rank": 5.723
+      },
+      "passes": true,
+      "criterion": "purity > 0.5 and not collapsed"
+    }
+  },
+  "head_validity_note": "head_validity_validation is measured on the split the best epoch was selected on, so a marginal verdict there may be selection noise. head_validity_test is measured on 56 subjects that took no part in training or model selection, and is the one that counts. Where they disagree, the test verdict stands.",
+  "test_report": {
+    "split": "test",
+    "subjects": 56,
+    "slices": 7531,
+    "segmentation": {
+      "per_class": {
+        "ncr_net": {
+          "dice": 0.72275,
+          "dice_per_slice_mean": 0.81925,
+          "dice_per_slice_median": 1.0,
+          "iou": 0.56586,
+          "iou_per_slice_mean": 0.79427,
+          "precision": 0.74918,
+          "recall": 0.69811,
+          "sensitivity": 0.69811,
+          "specificity": 0.99909,
+          "hausdorff_p95_px": 8.6684,
+          "hausdorff_slices_measured": 1695,
+          "voxels": {
+            "tp": 749710,
+            "fp": 250998,
+            "fn": 324200,
+            "tn": 276297876
+          },
+          "slices": 7531,
+          "empty_agreements": 5107,
+          "false_alarms": 155
+        },
+        "edema": {
+          "dice": 0.82272,
+          "dice_per_slice_mean": 0.83837,
+          "dice_per_slice_median": 0.97214,
+          "iou": 0.69884,
+          "iou_per_slice_mean": 0.78877,
+          "precision": 0.79387,
+          "recall": 0.85376,
+          "sensitivity": 0.85376,
+          "specificity": 0.99717,
+          "hausdorff_p95_px": 8.1222,
+          "hausdorff_slices_measured": 3340,
+          "voxels": {
+            "tp": 2985565,
+            "fp": 775222,
+            "fn": 511396,
+            "tn": 273350601
+          },
+          "slices": 7531,
+          "empty_agreements": 3748,
+          "false_alarms": 112
+        },
+        "enhancing": {
+          "dice": 0.83486,
+          "dice_per_slice_mean": 0.89666,
+          "dice_per_slice_median": 1.0,
+          "iou": 0.71654,
+          "iou_per_slice_mean": 0.87093,
+          "precision": 0.83267,
+          "recall": 0.83707,
+          "sensitivity": 0.83707,
+          "specificity": 0.99936,
+          "hausdorff_p95_px": 4.5285,
+          "hausdorff_slices_measured": 1823,
+          "voxels": {
+            "tp": 886635,
+            "fp": 178175,
+            "fn": 172576,
+            "tn": 276385398
+          },
+          "slices": 7531,
+          "empty_agreements": 5278,
+          "false_alarms": 47
+        }
+      },
+      "per_composite": {
+        "whole_tumor": {
+          "dice": 0.91498,
+          "dice_per_slice_mean": 0.87994,
+          "dice_per_slice_median": 0.98075,
+          "iou": 0.84329,
+          "iou_per_slice_mean": 0.84563,
+          "precision": 0.89958,
+          "recall": 0.93093,
+          "sensitivity": 0.93093,
+          "specificity": 0.99785,
+          "hausdorff_p95_px": 7.0847,
+          "hausdorff_slices_measured": 3342,
+          "voxels": {
+            "tp": 5241201,
+            "fp": 585104,
+            "fn": 388881,
+            "tn": 271407598
+          },
+          "slices": 7531,
+          "empty_agreements": 3730,
+          "false_alarms": 111
+        },
+        "tumor_core": {
+          "dice": 0.84561,
+          "dice_per_slice_mean": 0.88614,
+          "dice_per_slice_median": 1.0,
+          "iou": 0.73252,
+          "iou_per_slice_mean": 0.86217,
+          "precision": 0.85945,
+          "recall": 0.83221,
+          "sensitivity": 0.83221,
+          "specificity": 0.99895,
+          "hausdorff_p95_px": 6.1478,
+          "hausdorff_slices_measured": 2120,
+          "voxels": {
+            "tp": 1775208,
+            "fp": 290310,
+            "fn": 357913,
+            "tn": 275199353
+          },
+          "slices": 7531,
+          "empty_agreements": 4921,
+          "false_alarms": 135
+        },
+        "enhancing_tumor": {
+          "dice": 0.83486,
+          "dice_per_slice_mean": 0.89666,
+          "dice_per_slice_median": 1.0,
+          "iou": 0.71654,
+          "iou_per_slice_mean": 0.87093,
+          "precision": 0.83267,
+          "recall": 0.83707,
+          "sensitivity": 0.83707,
+          "specificity": 0.99936,
+          "hausdorff_p95_px": 4.5285,
+          "hausdorff_slices_measured": 1823,
+          "voxels": {
+            "tp": 886635,
+            "fp": 178175,
+            "fn": 172576,
+            "tn": 276385398
+          },
+          "slices": 7531,
+          "empty_agreements": 5278,
+          "false_alarms": 47
+        }
+      },
+      "composite_dice_mean": 0.86515,
+      "composite_regions_scored": 3,
+      "composite_regions_absent": 0,
+      "class_dice_mean": 0.79344,
+      "classes_scored": 3,
+      "hausdorff_percentile": 95.0,
+      "hausdorff_available": true,
+      "note": "dice is pooled over all voxels of the split; dice_per_slice_mean averages the per-slice value, which weighs a 3-pixel focus the same as a 3000-pixel tumour"
+    },
+    "presence": {
+      "whole_tumor": {
+        "prevalence": 0.48997,
+        "positives": 3690,
+        "accuracy": 0.88806,
+        "sensitivity": 0.95014,
+        "specificity": 0.82843,
+        "precision": 0.84178,
+        "auroc": 0.97743
+      },
+      "ncr_net": {
+        "prevalence": 0.30129,
+        "positives": 2269,
+        "accuracy": 0.9344,
+        "sensitivity": 0.88233,
+        "specificity": 0.95686,
+        "precision": 0.89816,
+        "auroc": 0.98153
+      },
+      "edema": {
+        "prevalence": 0.48745,
+        "positives": 3671,
+        "accuracy": 0.8955,
+        "sensitivity": 0.95042,
+        "specificity": 0.84326,
+        "precision": 0.85222,
+        "auroc": 0.97906
+      },
+      "enhancing": {
+        "prevalence": 0.29292,
+        "positives": 2206,
+        "accuracy": 0.94556,
+        "sensitivity": 0.8427,
+        "specificity": 0.98817,
+        "precision": 0.96722,
+        "auroc": 0.98256
+      }
+    },
+    "size": {
+      "whole_tumor": {
+        "mae": 0.05129,
+        "rmse": 0.10077,
+        "pearson_r": 0.95435,
+        "predicted_std": 0.3134,
+        "target_std": 0.33484,
+        "approx_pixel_error_at_median": 137.2
+      },
+      "ncr_net": {
+        "mae": 0.04967,
+        "rmse": 0.11186,
+        "pearson_r": 0.88739,
+        "predicted_std": 0.22924,
+        "target_std": 0.24008,
+        "approx_pixel_error_at_median": 131.7
+      },
+      "edema": {
+        "mae": 0.05269,
+        "rmse": 0.09833,
+        "pearson_r": 0.94992,
+        "predicted_std": 0.29256,
+        "target_std": 0.31365,
+        "approx_pixel_error_at_median": 142.1
+      },
+      "enhancing": {
+        "mae": 0.02991,
+        "rmse": 0.08312,
+        "pearson_r": 0.94412,
+        "predicted_std": 0.23779,
+        "target_std": 0.24969,
+        "approx_pixel_error_at_median": 71.0
+      }
+    },
+    "quality": {
+      "image_quality": {
+        "mae": 0.18345,
+        "rmse": 0.24285,
+        "pearson_r": 0.6345,
+        "predicted_std": 0.21683,
+        "target_std": 0.30779
+      },
+      "diagnostics": {
+        "degraded_fraction": 0.5716,
+        "predicted_range": [
+          0.0559,
+          0.9764
+        ],
+        "severity_correlation": -0.42337,
+        "severity_correlation_note": "predicted quality vs known degradation severity, on degraded samples only; strongly negative is correct",
+        "mean_predicted_clean": 0.83575,
+        "mean_predicted_degraded": 0.59652,
+        "separation": 0.23923,
+        "per_artifact": {
+          "rician_noise": {
+            "n": 857,
+            "severity_correlation": -0.55479
+          },
+          "bias_field": {
+            "n": 856,
+            "severity_correlation": -0.28855
+          },
+          "motion_ghosting": {
+            "n": 842,
+            "severity_correlation": -0.5838
+          },
+          "k_space_spike": {
+            "n": 858,
+            "severity_correlation": -0.56212
+          },
+          "blur": {
+            "n": 892,
+            "severity_correlation": -0.70661
+          }
+        },
+        "artifact_type_accuracy": 0.66485,
+        "artifact_type_chance": 0.16667
+      }
+    },
+    "embedding": {
+      "samples": 6000,
+      "dimension": 128,
+      "collapse": {
+        "mean_pairwise_cosine": 0.47651,
+        "mean_dimension_std": 0.06367,
+        "effective_rank": 5.723
+      },
+      "morphology_knn_purity": 0.74786,
+      "morphology_classes_present": 16,
+      "grade_probe": {
+        "knn_accuracy_cross_subject": 0.77983,
+        "majority_baseline": 0.78917,
+        "samples_with_grade": 6000,
+        "note": "tumour grade is never a training target; neighbours from the same subject are excluded so adjacent slices cannot answer for each other"
+      }
+    },
+    "performance": {
+      "slices": 7531,
+      "total_seconds": 23.5792,
+      "ms_per_slice_mean": 3.136,
+      "ms_per_slice_p95": 3.3668,
+      "slices_per_second": 319.39,
+      "peak_gpu_memory_mb": 882.79
+    }
+  }
+}

@@ -1,0 +1,244 @@
+{
+  "generated_seconds": 92.7,
+  "data": {
+    "source": "mimic-cxr",
+    "train": 1338,
+    "calibration": 446,
+    "test": 447,
+    "patient_disjoint": true
+  },
+  "circuit": {
+    "n_qubits": 8,
+    "n_layers": 3,
+    "device": "default.qubit (PennyLane statevector simulator)",
+    "encoding": "RY(pi * x_i), one evidence channel per qubit",
+    "readout": "<Z_i> per qubit -> linear head -> diagnosis logits"
+  },
+  "q1_q2_ablation": {
+    "vqc_entangled": {
+      "accuracy": 0.5414,
+      "nll": 1.2682,
+      "ece": 0.0464,
+      "temperature": 1.1342,
+      "mean_confidence": 0.5142,
+      "train_seconds": 43.78,
+      "entangler": "ring",
+      "trainable_parameters": 102
+    },
+    "vqc_product": {
+      "accuracy": 0.5705,
+      "nll": 1.212,
+      "ece": 0.0831,
+      "temperature": 1.0901,
+      "mean_confidence": 0.5226,
+      "train_seconds": 35.93,
+      "entangler": "none",
+      "trainable_parameters": 102
+    },
+    "classical_poe": {
+      "accuracy": 0.5145,
+      "nll": 1.323,
+      "ece": 0.0834,
+      "temperature": 0.7338,
+      "mean_confidence": 0.4811,
+      "trainable_parameters": 54
+    },
+    "entanglement_effect": {
+      "delta_accuracy": -0.0291,
+      "delta_nll": 0.0562,
+      "delta_ece": -0.0367,
+      "bootstrap": {
+        "accuracy": {
+          "delta": -0.0288,
+          "ci95": [
+            -0.0582,
+            0.0
+          ],
+          "excludes_zero": false
+        },
+        "nll": {
+          "delta": 0.056,
+          "ci95": [
+            0.0222,
+            0.0902
+          ],
+          "excludes_zero": true
+        },
+        "ece": {
+          "delta": -0.0273,
+          "ci95": [
+            -0.0676,
+            0.018
+          ],
+          "excludes_zero": false
+        },
+        "n_bootstrap": 2000,
+        "n_studies": 447
+      },
+      "note": "Entangled minus product-state, both trained by the same function on the same data with the same seed and the same parameter count. Negative delta_nll and delta_ece favour entanglement; positive delta_accuracy favours entanglement. A delta near zero is a real result and means the CNOT ring is not earning its place on this 8-channel evidence vector. Read the bootstrap intervals before reading the point estimates: the test split is small enough that a point delta can be one patient."
+    }
+  },
+  "q3_measurement_budget": {
+    "studies": 447,
+    "commit_rate": 0.8635,
+    "abstain_rate": 0.1365,
+    "accuracy_at_commit": 0.5725,
+    "median_shots_spent": 128,
+    "mean_shots_spent": 916,
+    "min_shots_spent": 128,
+    "abstention_breakdown": {
+      "measurement_limited": 1,
+      "model_limited": 60
+    },
+    "median_predicted_shots_to_resolve": 8433,
+    "note": "Measurement-limited abstentions would be resolved by running the same circuit longer. Model-limited abstentions would not \u2014 the top two diagnoses are tied at infinite measurement precision, so the case needs a human. No classical fusion model can make this distinction, because classical inference has no measurement budget to vary."
+  },
+  "q4_evidence_coupling": {
+    "channels": [
+      "opacity",
+      "consolidation",
+      "effusion",
+      "cardiomegaly",
+      "nodule",
+      "hyperinflation",
+      "pneumothorax",
+      "prior_risk"
+    ],
+    "mean_abs_differential_matrix": [
+      [
+        0.0,
+        0.037144,
+        0.291347,
+        0.032874,
+        0.538513,
+        0.073487,
+        0.044411,
+        0.117551
+      ],
+      [
+        0.037144,
+        0.0,
+        0.063827,
+        0.435566,
+        0.039547,
+        0.170795,
+        0.30158,
+        0.064885
+      ],
+      [
+        0.291347,
+        0.063827,
+        0.0,
+        0.03596,
+        0.39754,
+        0.120088,
+        0.061166,
+        0.081468
+      ],
+      [
+        0.032874,
+        0.435566,
+        0.03596,
+        0.0,
+        0.052779,
+        0.24693,
+        0.334226,
+        0.110035
+      ],
+      [
+        0.538513,
+        0.039547,
+        0.39754,
+        0.052779,
+        0.0,
+        0.122714,
+        0.047462,
+        0.172616
+      ],
+      [
+        0.073487,
+        0.170795,
+        0.120088,
+        0.24693,
+        0.122714,
+        0.0,
+        0.235214,
+        0.045729
+      ],
+      [
+        0.044411,
+        0.30158,
+        0.061166,
+        0.334226,
+        0.047462,
+        0.235214,
+        0.0,
+        0.047076
+      ],
+      [
+        0.117551,
+        0.064885,
+        0.081468,
+        0.110035,
+        0.172616,
+        0.045729,
+        0.047076,
+        0.0
+      ]
+    ],
+    "top_coupled_pairs": [
+      {
+        "channels": [
+          "opacity",
+          "nodule"
+        ],
+        "mean_abs_differential": 0.538513
+      },
+      {
+        "channels": [
+          "consolidation",
+          "cardiomegaly"
+        ],
+        "mean_abs_differential": 0.435566
+      },
+      {
+        "channels": [
+          "effusion",
+          "nodule"
+        ],
+        "mean_abs_differential": 0.39754
+      },
+      {
+        "channels": [
+          "cardiomegaly",
+          "pneumothorax"
+        ],
+        "mean_abs_differential": 0.334226
+      },
+      {
+        "channels": [
+          "consolidation",
+          "pneumothorax"
+        ],
+        "mean_abs_differential": 0.30158
+      },
+      {
+        "channels": [
+          "opacity",
+          "effusion"
+        ],
+        "mean_abs_differential": 0.291347
+      }
+    ],
+    "mean_differential_coupling": 4.3225,
+    "mean_measurement_entropy_bits": 4.0965,
+    "max_entropy_bits": 8.0,
+    "mean_entropy_shift_bits": 0.6162,
+    "note": "Averaged |C_ij(x) - C_ij(no findings)| over the held-out set. Ranks the evidence pairs this circuit consistently reasons about jointly. Coupling within the model, not causation in the patient."
+  },
+  "honesty": {
+    "hardware": "simulated; no quantum hardware was used",
+    "shot_noise": "Shot noise is aleatoric readout noise. More shots converge to the analytic expectation, not to the truth \u2014 a confident wrong answer gets more confident, not more correct.",
+    "temperature": "Every model is scored at its own fitted temperature. Scoring one backend at another's temperature produced the original inflated quantum win (audit F6) and is not repeated here."
+  }
+}

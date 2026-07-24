@@ -1,0 +1,48 @@
+{
+  "data_source": "mimic-cxr",
+  "calibration_studies": 446,
+  "test_studies": 447,
+  "backends": {
+    "classical": {
+      "backend": "classical",
+      "temperature": 0.479,
+      "conformal_qhat": 0.9098,
+      "coverage_target": 0.9,
+      "empirical_coverage": 0.9038,
+      "mean_conformal_set_size": 3.539,
+      "ood_mean": -1.0731,
+      "ood_std": 0.2086,
+      "test_accuracy": 0.5414,
+      "test_nll": 1.3026,
+      "test_ece": 0.1266
+    },
+    "quantum": {
+      "backend": "quantum",
+      "temperature": 0.9057,
+      "conformal_qhat": 0.9144,
+      "coverage_target": 0.9,
+      "empirical_coverage": 0.915,
+      "mean_conformal_set_size": 3.537,
+      "ood_mean": -2.1591,
+      "ood_std": 0.5646,
+      "test_accuracy": 0.5324,
+      "test_nll": 1.2853,
+      "test_ece": 0.0896
+    },
+    "learnable": {
+      "backend": "learnable",
+      "temperature": 0.8867,
+      "conformal_qhat": 0.9191,
+      "coverage_target": 0.9,
+      "empirical_coverage": 0.9083,
+      "mean_conformal_set_size": 3.421,
+      "ood_mean": -1.9332,
+      "ood_std": 0.4392,
+      "test_accuracy": 0.5526,
+      "test_nll": 1.2663,
+      "test_ece": 0.0902
+    }
+  },
+  "temperature_spread": 1.89,
+  "why": "Each backend is calibrated on its own logits. The temperature spread across backends is the factor by which serving one backend with another's calibration would distort every downstream probability, conformal set, and abstention decision."
+}

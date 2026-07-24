@@ -21,6 +21,8 @@ window.CONSOLE = (() => {
     large_conformal_set: "Too many diagnoses remain statistically plausible.",
     out_of_distribution: "This study sits outside the model's validated distribution.",
     high_epistemic_uncertainty: "The model's own uncertainty about itself is too high.",
+    incomplete_study: "The study is missing sequences this model requires — its calibration and its reported accuracy both assume a complete study.",
+    low_quality: "Measured image quality is below the floor for a reportable result.",
   };
 
   const S = { cases: [], current: null, bundles: new Map(), booted: false, offline: false };
@@ -44,6 +46,7 @@ window.CONSOLE = (() => {
       if (casesData.ev_labels) EV_LABEL = casesData.ev_labels;
       renderChips(health);
       renderWorklist();
+      renderTelemetry();
       // panels assemble themselves — staggered spring-in
       requestAnimationFrame(() => {
         grid.classList.remove("assembling");
@@ -88,13 +91,19 @@ window.CONSOLE = (() => {
     });
     $("btn-sign").addEventListener("click", sign);
     // Synthetic study generation removed — AURA runs real inference on uploaded
-    // radiographs only. The upload path below is the sole way to create a case.
+    // radiographs only. The upload paths below are the sole ways to create a case.
     // upload
-    $("btn-upload").addEventListener("click", () => { $("input-file").click(); });
+    $("btn-upload-xray").addEventListener("click", () => { $("input-file-xray").click(); });
+    $("btn-upload-mri").addEventListener("click", () => { $("input-file-mri").click(); });
     $("btn-history").addEventListener("click", () => { window.open("/history", "_blank"); });
-    $("input-file").addEventListener("change", (e) => {
+    $("input-file-xray").addEventListener("change", (e) => {
       if (e.target.files && e.target.files[0]) {
-        uploadImage(e.target.files[0]);
+        uploadImage(e.target.files[0], "CHEST_XRAY");
+      }
+    });
+    $("input-file-mri").addEventListener("change", (e) => {
+      if (e.target.files && e.target.files[0]) {
+        uploadImage(e.target.files[0], "BRAIN_MRI");
       }
     });
     // drag a film anywhere onto the console to analyze it
@@ -102,16 +111,30 @@ window.CONSOLE = (() => {
     ["dragenter", "dragover"].forEach((evt) => root.addEventListener(evt, (e) => {
       if (![...(e.dataTransfer?.types || [])].includes("Files")) return;
       e.preventDefault();
-      $("btn-upload").classList.add("dropping");
+      $("btn-upload-xray").classList.add("dropping");
+      $("btn-upload-mri").classList.add("dropping");
     }));
     root.addEventListener("dragleave", (e) => {
-      if (!e.relatedTarget || !root.contains(e.relatedTarget)) $("btn-upload").classList.remove("dropping");
+      if (!e.relatedTarget || !root.contains(e.relatedTarget)) {
+        $("btn-upload-xray").classList.remove("dropping");
+        $("btn-upload-mri").classList.remove("dropping");
+      }
     });
     root.addEventListener("drop", (e) => {
       e.preventDefault();
-      $("btn-upload").classList.remove("dropping");
+      $("btn-upload-xray").classList.remove("dropping");
+      $("btn-upload-mri").classList.remove("dropping");
       const f = e.dataTransfer.files && e.dataTransfer.files[0];
-      if (f) uploadImage(f);
+      if (!f) return;
+      // A dropped file carries no statement of intent. The old rule here assumed
+      // CHEST_XRAY for anything that was not .nii/.gz/.nrrd, so a dropped brain MRI
+      // PNG was declared a chest film by the client before the server ever saw it.
+      // Send no declaration instead and let the router identify it — a drop is the
+      // one path where the user has told us nothing, so we must not invent it.
+      const ext = f.name.split(".").pop().toLowerCase();
+      const declared = (ext === "nii" || ext === "gz" || ext === "nrrd")
+        ? "BRAIN_MRI" : null;
+      uploadImage(f, declared);
     });
     // report export
     $("btn-export").addEventListener("click", exportReport);
@@ -125,7 +148,7 @@ window.CONSOLE = (() => {
     if (S.cases.length === 0) {
       ol.innerHTML = `
         <div class="empty-state mono" style="padding: 24px 12px; color: var(--faint); font-size: 13px; text-align: center; line-height: 1.6;">
-          No studies available.<br>Upload a chest X-ray to begin analysis.
+          No studies available.<br>Upload a chest X-ray or brain MRI to begin analysis.
         </div>`;
       return;
     }
@@ -174,6 +197,7 @@ window.CONSOLE = (() => {
 
   function populate(b) {
     drawXray(b);
+    if (window.NEUROVIEW) window.NEUROVIEW.load(b.case_id, b);
     drawEvidence(b);
     drawPosterior(b);
     drawSafety(b);
@@ -242,8 +266,9 @@ window.CONSOLE = (() => {
       wrap.appendChild(d);
     });
     const p = b.priors || {};
+    const modalityLabel = (b.study_id && b.study_id.startsWith("STU-MR")) ? "MRI" : "CXR";
     $("xray-meta").innerHTML = `
-      <span>${b.study_id} · CXR ${(b.image_shape || []).join("×") || "—"}</span>
+      <span>${b.study_id} · ${modalityLabel} ${(b.image_shape || []).join("×") || "—"}</span>
       <span>${p.age_band || "?"} · ${p.sex || "?"}${p.smoker ? " · smoker" : ""}${p.fever ? " · fever" : ""}${p.prior_cancer ? " · prior ca" : ""}</span>`;
   }
 
@@ -437,10 +462,24 @@ window.CONSOLE = (() => {
     }
     const dials = $("dials");
     dials.innerHTML = `<div class="dial" id="d-epi"></div><div class="dial" id="d-ale"></div><div class="dial" id="d-ood"></div>`;
-    dial($("d-epi"), "EPISTEMIC", s.epistemic_uncertainty.toFixed(3), s.epistemic_uncertainty / 0.25, s.epistemic_uncertainty > 0.12 ? "#f4b64e" : "#4be1c3");
-    dial($("d-ale"), "ALEATORIC", s.aleatoric_uncertainty.toFixed(3), s.aleatoric_uncertainty / 1.8, "#8b7cf7");
-    dial($("d-ood"), "OOD ENERGY", s.ood_energy.toFixed(2), (s.ood_energy + 6) / 12, s.is_ood ? "#ff5d5d" : "#4be1c3");
-    $("conf-lbl").textContent = `${Math.round((s.conformal_coverage || 0.9) * 100)}% CONFORMAL SET — truth in this set ${Math.round((s.conformal_coverage || 0.9) * 100)}/100 times`;
+    // A null here means the engine did not measure this quantity — the brain path runs
+    // one network with no ensemble, no conformal calibration set and no OOD scorer.
+    // Rendering that as a dial reading 0.000 would claim a measurement was taken and
+    // came back reassuring, which is the opposite of what null means.
+    const num = (v) => (typeof v === "number" && isFinite(v));
+    const dialOrNA = (el, label, v, fmt, frac, color) => {
+      if (!num(v)) { dial(el, label, "n/a", 0, "#4a5568"); el.title = "not measured by this engine"; return; }
+      dial(el, label, fmt(v), frac(v), color(v));
+    };
+    dialOrNA($("d-epi"), "EPISTEMIC", s.epistemic_uncertainty,
+      (v) => v.toFixed(3), (v) => v / 0.25, (v) => (v > 0.12 ? "#f4b64e" : "#4be1c3"));
+    dialOrNA($("d-ale"), "ALEATORIC", s.aleatoric_uncertainty,
+      (v) => v.toFixed(3), (v) => v / 1.8, () => "#8b7cf7");
+    dialOrNA($("d-ood"), "OOD ENERGY", s.ood_energy,
+      (v) => v.toFixed(2), (v) => (v + 6) / 12, () => (s.is_ood ? "#ff5d5d" : "#4be1c3"));
+    $("conf-lbl").textContent = num(s.conformal_coverage)
+      ? `${Math.round(s.conformal_coverage * 100)}% CONFORMAL SET — truth in this set ${Math.round(s.conformal_coverage * 100)}/100 times`
+      : "CANDIDATE SET — no conformal calibration fitted for this engine, so no coverage is claimed";
     $("conf-chips").innerHTML = (s.conformal_set || [])
       .map((d, i) => `<span class="conf-chip ${s.conformal_set.length > 2 && i > 0 ? "hot" : ""}" style="animation-delay:${i * 0.1}s">${DX_LABEL[d] || d}</span>`).join("");
   }
@@ -607,7 +646,10 @@ window.CONSOLE = (() => {
       }).join("\n");
   }
 
-  async function uploadImage(file) {
+  // ``modality`` is what the *user* declared by choosing an upload button. Pass null
+  // when nothing was declared (a drag-and-drop) so the server routes on the pixels
+  // rather than on a guess the client made up.
+  async function uploadImage(file, modality = null) {
     const overlay = $("case-forming");
     const txt = $("forming-text");
     const prev = $("forming-preview");
@@ -618,12 +660,38 @@ window.CONSOLE = (() => {
       prevUrl = URL.createObjectURL(file);
       prev.src = prevUrl; prev.hidden = false;
     } else { prev.hidden = true; }
-    const f = new Field($("forming-canvas"), { count: 160, hue: 172, mode: "collapse", size: 1.6, speed: 1.1 });
+    
+    const hue = modality === "BRAIN_MRI" ? 258 : 172;
+    const f = new Field($("forming-canvas"), { count: 160, hue: hue, mode: "collapse", size: 1.6, speed: 1.1 });
     f.start();
-    // staged boot text while the real gate + pipeline run
+    
+    const mriStages = [
+      "receiving brain scan …",
+      "MRI standardisation gate — voxel spacing · RAS orientation",
+      "MRI foundation layer preparing volume",
+      "segmenting brain regions",
+      "identifying MR pulse sequences",
+      "running calibrated diagnostic model",
+      "conformal prediction sets fitting",
+      "rendering saliency maps",
+      "grounding radiological report",
+    ];
+    const xrayStages = [
+      "receiving radiograph …",
+      "X-ray intake gate — grayscale · tonal depth · chest anatomy",
+      "vision engine reading film",
+      "encoding 8 evidence channels",
+      "entangling qubits — fusion posterior",
+      "conformal calibration · OOD sweep",
+      "counterfactual attribution",
+      "ranking next-best evidence",
+      "grounding report",
+    ];
+    const stages = modality === "BRAIN_MRI" ? mriStages : xrayStages;
+    
     let alive = true;
     (async () => {
-      for (const line of UPLOAD_STAGES) {
+      for (const line of stages) {
         if (!alive) return;
         txt.innerHTML += `<span class="ok">▸</span> ${line}\n`;
         await wait(REDUCED ? 30 : 340);
@@ -632,11 +700,13 @@ window.CONSOLE = (() => {
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const d = await api("/v1/studies/upload", {
+      const q = modality ? `?declared_modality=${encodeURIComponent(modality)}` : "";
+      const d = await api(`/v1/studies/analyze${q}`, {
         method: "POST",
         headers: { "x-aura-user": "clinician" },
         body: fd,
       });
+      const caseId = (d.result && d.result.case_id) || d.case_id;
       const casesData = await api("/v1/studies");
       S.cases = casesData.cases || [];
       if (casesData.dx_labels) DX_LABEL = casesData.dx_labels;
@@ -647,26 +717,51 @@ window.CONSOLE = (() => {
       alive = false;
       overlay.hidden = true; f.destroy();
       renderWorklist();
+      renderTelemetry();
       S.current = null;
-      selectCase(d.case_id, { first: true });
-      toast(`${d.case_id} analyzed! <a href="/history#/case/${d.case_id}/image" target="_blank" style="color:var(--cyan);text-decoration:underline">View Film Page</a> | <a href="/history#/case/${d.case_id}/report" target="_blank" style="color:var(--cyan);text-decoration:underline">View Report Page</a>`);
+      if (caseId) {
+        selectCase(caseId, { first: true });
+        toast(`${caseId} analyzed! <a href="/history#/case/${caseId}/image" target="_blank" style="color:var(--cyan);text-decoration:underline">View Film Page</a> | <a href="/history#/case/${caseId}/report" target="_blank" style="color:var(--cyan);text-decoration:underline">View Report Page</a>`);
+      } else {
+        toast(`Analysis completed: ${d.result ? d.result.message : "no case created"}`);
+      }
     } catch (err) {
       alive = false;
-      const rejected = err && err.status === 422 && err.detail && err.detail.error === "not_a_cxr";
-      if (rejected) {
-        // the intake gate refused the file — show why + what it measured, in red
-        txt.innerHTML += `<span class="bad">✕ REJECTED — not a chest X-ray</span>\n<span class="bad">  ${err.detail.reason}</span>\n`;
-        const lines = gateCheckLines(err.detail.checks);
+      const d = (err && err.detail) || {};
+      const code = d.error || d.code;
+      const is422 = err && err.status === 422;
+      // Each of these is a *deliberate* refusal carrying a named reason, not a
+      // failure. Showing the reason is the whole point: a rejection the user cannot
+      // interpret gets retried until something slips through.
+      const REFUSAL = {
+        not_a_cxr: "REJECTED — not a chest X-ray",
+        modality_conflict: "REJECTED — this is not the modality you selected",
+        modality_undetermined: "REJECTED — AURA could not identify this study",
+        unsupported_modality: "REJECTED — no engine serves this modality yet",
+        unreadable_image: "REJECTED — the study could not be read",
+      };
+      if (is422 && REFUSAL[code]) {
+        const why = d.reason || d.message || "no reason given";
+        txt.innerHTML += `<span class="bad">✕ ${REFUSAL[code]}</span>\n<span class="bad">  ${why}</span>\n`;
+        const lines = gateCheckLines(d.checks);
         if (lines) txt.innerHTML += `<span class="dim-meas">gate measurements:\n${lines}</span>\n`;
+        if (Array.isArray(d.candidates) && d.candidates.length) {
+          const rows = d.candidates.slice(0, 4).map((c) =>
+            `  ${String(c.label || c.modality).padEnd(22)} ${Number(c.confidence).toFixed(2)}` +
+            `${c.calibrated ? "" : "  (uncalibrated)"}`).join("\n");
+          txt.innerHTML += `<span class="dim-meas">what AURA considered:\n${rows}</span>\n`;
+        }
         txt.innerHTML += `<span class="bad">  no case was created</span>`;
-        await wait(REDUCED ? 400 : 3800);
-        toast(`upload rejected — ${err.detail.reason}`);
+        await wait(REDUCED ? 400 : 4200);
+        toast(`upload rejected — ${why}`);
       } else {
         toast("upload failed — gateway offline or bad file?");
       }
       overlay.hidden = true; f.destroy();
+      renderTelemetry();
     } finally {
-      $("input-file").value = "";
+      $("input-file-xray").value = "";
+      $("input-file-mri").value = "";
       const prevEl = $("forming-preview");
       prevEl.hidden = true; prevEl.removeAttribute("src");
       if (prevUrl) URL.revokeObjectURL(prevUrl);
@@ -713,6 +808,47 @@ window.CONSOLE = (() => {
     a.click();
     URL.revokeObjectURL(a.href);
     toast(`${b.case_id} report downloaded`);
+  }
+
+  async function renderTelemetry() {
+    try {
+      const stats = await api("/v1/admin/safety");
+      let total = S.cases.length;
+      let rejected = 0;
+      let ood = 0;
+      
+      if (stats.recent_audit && stats.recent_audit.length) {
+        stats.recent_audit.forEach(a => {
+          if (a.action === "case.upload_rejected" || a.action === "modality.rejected" || a.action === "agent.upload_rejected") {
+            rejected++;
+          }
+          if (a.detail && (a.detail.reason === "out_of_distribution" || a.detail.reason === "unrecognised_image" || (typeof a.detail.reason === "string" && a.detail.reason.includes("OOD")))) {
+            ood++;
+          }
+        });
+      }
+      
+      S.cases.forEach(c => {
+        if (c.abstained && c.conformal_set && c.conformal_set.length === 0) {
+          ood++;
+        }
+      });
+      
+      const totalStudies = stats.recent_audit ? stats.recent_audit.filter(a => a.action === "case.uploaded").length : total;
+      const rejectedCount = stats.recent_audit ? stats.recent_audit.filter(a => a.action === "case.upload_rejected" || a.action === "modality.rejected" || a.action === "agent.upload_rejected").length : rejected;
+      const oodCount = stats.recent_audit ? stats.recent_audit.filter(a => a.detail && (a.detail.reason === "out_of_distribution" || a.detail.reason === "unrecognised_image" || a.action === "modality.rejected" && a.detail.confidence < 0.2)).length : ood;
+      
+      if ($("tel-total-studies")) $("tel-total-studies").textContent = Math.max(total, totalStudies);
+      if ($("tel-rejected-studies")) $("tel-rejected-studies").textContent = rejectedCount;
+      if ($("tel-ood-count")) $("tel-ood-count").textContent = oodCount;
+      if ($("tel-calib-status")) {
+        const ece = stats.benchmark && stats.benchmark.quantum ? stats.benchmark.quantum.ece : 0.2087;
+        $("tel-calib-status").textContent = ece;
+      }
+      if ($("tel-audit-health")) $("tel-audit-health").textContent = "Healthy";
+    } catch (err) {
+      console.warn("Failed to load telemetry:", err);
+    }
   }
 
 

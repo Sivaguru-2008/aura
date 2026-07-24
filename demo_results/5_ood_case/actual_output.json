@@ -1,0 +1,11 @@
+{
+  "routing": {
+    "modality": "unknown",
+    "supported": false,
+    "reason": "Unsupported modality."
+  },
+  "safety": {
+    "abstained": true,
+    "reason": "Unsupported modality."
+  }
+}

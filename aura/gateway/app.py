@@ -37,7 +37,24 @@ async def lifespan(app: FastAPI):
     pipeline = Pipeline(store=store)          # store handle enables online ACI (F9)
     state["store"] = store
     state["pipeline"] = pipeline
-    state["registry"] = ModelRegistry()
+    state["chest_registry"] = ModelRegistry("chest_registry.json")
+    state["brain_registry"] = ModelRegistry("brain_registry.json")
+    state["registry"] = state["chest_registry"]
+
+    # Intelligent Modality Router (backend/): mounts /v1/studies/route,
+    # /v1/studies/analyze and /v1/engines, and binds the Thorax engine adapter to the
+    # pipeline + store built above. This is the ONLY integration point — the chest-X-ray
+    # pipeline and the legacy /v1/studies/upload endpoint are unchanged. A router
+    # failure must not prevent the chest-X-ray service from starting.
+    try:
+        from backend.bootstrap import install_router
+
+        state["dispatch"] = install_router(
+            app, pipeline, store, on_case_created=session_case_ids.append
+        )
+    except Exception as e:                        # pragma: no cover - startup resilience
+        print(f"[gateway] WARNING: modality router failed to install: {e!r}")
+
     if not pipeline.fusion.is_trained():
         print("[gateway] WARNING: fusion model not trained; run `aura_cli train`.")
     # PRODUCTION: Seeding has been disabled. The worklist starts empty.
@@ -186,6 +203,23 @@ def get_case(case_id: str):
         except Exception:
             pass
     return d
+
+
+@app.get("/v1/cases/{case_id}/neuroview")
+def get_neuroview(case_id: str):
+    b = store().get_case(case_id)
+    if b is None:
+        raise HTTPException(404, "case not found")
+    is_brain_case = (
+        str(b.study_id).startswith("STU-MR")
+        or ((b.fusion.backend if b.fusion else "") == "brain-vision-presence-head")
+    )
+    if not is_brain_case:
+        raise HTTPException(404, "NeuroView is available only for Brain MRI cases.")
+    payload = store().get_neuroview(case_id)
+    if payload is None:
+        raise HTTPException(404, "NeuroView data is not available for this Brain MRI case.")
+    return payload
 
 
 @app.post("/v1/cases/{case_id}/feedback")
@@ -442,7 +476,13 @@ def similar(case_id: str):
 
 @app.get("/v1/models")
 def models():
-    return {"versions": state["registry"].list_versions()}
+    chest_versions = state["chest_registry"].list_versions()
+    brain_versions = state["brain_registry"].list_versions()
+    return {
+        "chest": chest_versions,
+        "brain": brain_versions,
+        "versions": chest_versions + brain_versions
+    }
 
 
 @app.get("/v1/model-card")
@@ -638,4 +678,3 @@ def history_route():
     if idx.exists():
         return FileResponse(str(idx))
     return JSONResponse({"message": "History page not found."}, status_code=404)
-

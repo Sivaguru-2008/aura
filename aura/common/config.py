@@ -5,6 +5,58 @@ changes — the modularity requirement made operational.
 """
 from __future__ import annotations
 
+# --- Windows Application Control DLL Loading Workaround ---
+import os
+import sys
+
+if sys.platform == "win32":
+    import glob
+    import ctypes
+    import importlib.util
+
+    def _is_shm_blocked() -> bool:
+        try:
+            spec = importlib.util.find_spec("torch")
+            if spec is not None and spec.origin is not None:
+                torch_dir = os.path.dirname(spec.origin)
+                shm_dll = os.path.join(torch_dir, "lib", "shm.dll")
+                if os.path.exists(shm_dll):
+                    kernel32 = ctypes.WinDLL("kernel32.dll", use_last_error=True)
+                    kernel32.LoadLibraryExW.restype = ctypes.c_void_p
+                    res = kernel32.LoadLibraryExW(shm_dll, None, 0x00001100)
+                    if res is None:
+                        return ctypes.get_last_error() == 4551
+        except Exception:
+            pass
+        return False
+
+    try:
+        device_cpu = os.environ.get("AURA_DEVICE") == "cpu"
+        shm_blocked = _is_shm_blocked()
+
+        if device_cpu or shm_blocked:
+            _orig_glob = glob.glob
+            def _patched_glob(pathname, *args, **kwargs):
+                res = _orig_glob(pathname, *args, **kwargs)
+                if isinstance(pathname, str) and "torch" in pathname and pathname.endswith("*.dll"):
+                    filtered = []
+                    for f in res:
+                        name = os.path.basename(f).lower()
+                        # Exclude shm.dll if running in CPU mode or if it is blocked by policy
+                        if name == "shm.dll" and (device_cpu or shm_blocked):
+                            continue
+                        # Exclude CUDA DLLs if CPU mode is requested
+                        if device_cpu and any(x in name for x in ["cuda", "nvtoolsext", "cublas", "cufft", "curand", "cusolver", "cusparse", "cudnn"]):
+                            continue
+                        filtered.append(f)
+                    return filtered
+                return res
+            glob.glob = _patched_glob
+    except Exception:
+        pass
+# -----------------------------------------------------------
+
+
 import os
 import tomllib
 from dataclasses import dataclass
@@ -41,7 +93,14 @@ def finding_present_threshold(finding_value: str, default: float = 0.5) -> float
 
 @dataclass(frozen=True)
 class Settings:
-    fusion_backend: str = "quantum"          # "quantum" | "classical"
+    # Served fusion backend. Default "classical" (product-of-experts): the fair,
+    # per-backend-temperature benchmark (artifacts/benchmark.json, EVIDENCE_DRIVEN_AUDIT.md
+    # H2) has it winning every metric over the VQC (accuracy 0.696 vs 0.638, better ECE /
+    # Brier / NLL). "quantum" remains a selectable research backend (env AURA_FUSION_BACKEND
+    # =quantum), still trained + benchmarked. NOTE: safety.npz calibration is fit on whichever
+    # backend is served (ml/training/train_fusion.py), so change this only alongside a
+    # recalibration, never the flag alone.
+    fusion_backend: str = "classical"        # "classical" (served) | "quantum" (research)
     # Vision backbone: "features" (numpy fallback), "densenet_mimic" (real
     # MIMIC-CXR DenseNet-121), or "timm" (fine-tuned EfficientNetV2/ConvNeXt/Swin).
     vision_backend: str = "features"
@@ -84,6 +143,10 @@ class Settings:
     auth_token: str = ""                     # when set, mutating endpoints require it
     auth_header: str = "x-aura-token"        # header carrying the shared token
     rate_limit_rpm: int = 0                  # >0 enables a per-client request/minute cap
+    # --- Part 3: Progression thresholds ---------------------------------------- #
+    progression_growth_threshold: float = 0.20
+    progression_regression_threshold: float = -0.20
+
 
 
 def _as_bool(v) -> bool:
@@ -145,6 +208,8 @@ def get_settings() -> Settings:
         rate_limit_rpm=pick("rate_limit_rpm", int, base.rate_limit_rpm),
         fusion_train_source=pick("fusion_train_source", str, base.fusion_train_source),
         fusion_train_n=pick("fusion_train_n", int, base.fusion_train_n),
+        progression_growth_threshold=pick("progression_growth_threshold", float, base.progression_growth_threshold),
+        progression_regression_threshold=pick("progression_regression_threshold", float, base.progression_regression_threshold),
     )
 
 

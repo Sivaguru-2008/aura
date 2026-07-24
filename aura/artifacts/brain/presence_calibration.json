@@ -1,0 +1,24 @@
+{
+  "method": "platt_on_logit",
+  "a": 1.4304073988634833,
+  "b": -1.9978552561921703,
+  "fitted_at": "2026-07-23T14:10:09.355904+00:00",
+  "checkpoint_epoch": 24,
+  "checkpoint_monitor": "composite_dice_mean",
+  "checkpoint_monitor_value": 0.8752,
+  "corpus": "BraTS2020 training slices, all four sequences present",
+  "n_fit_slices": 1445,
+  "n_eval_slices": 955,
+  "n_fit_volumes": 221,
+  "n_eval_volumes": 148,
+  "split": "by volume (patient-disjoint)",
+  "held_out": {
+    "auroc_raw": 0.9874429223744293,
+    "auroc_calibrated": 0.9874429223744293,
+    "brier_raw": 0.06579625478557041,
+    "brier_calibrated": 0.03567876674468913,
+    "ece_raw": 0.09496915171712793,
+    "ece_calibrated": 0.01796687391033685
+  },
+  "caveat": "Fitted with all four sequences present, which is the only condition the network was trained under. It does not transfer to a study missing sequences: measured single-sequence whole-tumour Dice is 0.52 FLAIR, 0.28 T2, 0.02 T1, 0.00 T1ce against 0.58 with all four."
+}

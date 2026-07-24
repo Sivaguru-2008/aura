@@ -11,7 +11,10 @@ class VisionModel:
     Conforms to the CXRBackbone contract from services/vision/cnn.py.
     """
     def __init__(self, model_path: str, device: str = None):
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
+        import os
+        self.device = device or os.environ.get("AURA_DEVICE")
+        if not self.device:
+            self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = DenseNet121CXR(num_classes=len(FINDINGS))
         
         # Load weights. weights_only=True runs torch's safe unpickler so a tampered

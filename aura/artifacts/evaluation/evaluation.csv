@@ -1,0 +1,27 @@
+Model,Metric,Value,Unit
+Chest (DenseNet-121),auroc,0.8095,fraction
+Chest (DenseNet-121),auprc,0.3188,fraction
+Chest (DenseNet-121),f1,0.333,fraction
+Chest (DenseNet-121),sensitivity,0.7243,fraction
+Chest (DenseNet-121),specificity,0.7481,fraction
+Chest (DenseNet-121),precision,0.2391,fraction
+Chest (DenseNet-121),ece,0.2087,fraction
+Chest (DenseNet-121),brier_score,0.1556,fraction
+Chest (DenseNet-121),model_size_mb,27.12,MB
+Chest (DenseNet-121),cpu_latency_ms,47.88,ms
+Chest (DenseNet-121),cpu_throughput_img_s,20.88,images/s
+Brain (ResU-Net),dice_mean,0.86515,fraction
+Brain (ResU-Net),dice_whole_tumor,0.91498,fraction
+Brain (ResU-Net),dice_tumor_core,0.84561,fraction
+Brain (ResU-Net),dice_enhancing_tumor,0.83486,fraction
+Brain (ResU-Net),hausdorff95_wt_px,7.0847,px
+Brain (ResU-Net),hausdorff95_tc_px,6.1478,px
+Brain (ResU-Net),hausdorff95_et_px,4.5285,px
+Brain (ResU-Net),presence_auroc,0.97743,fraction
+Brain (ResU-Net),model_size_mb,86.25,MB
+Brain (ResU-Net),cpu_study_latency_ms,12747.84,ms
+Brain (ResU-Net),cpu_slice_throughput_s,12.16,slices/s
+Fusion (Quantum),conformal_coverage,0.9275,fraction
+Fusion (Quantum),conformal_set_size,3.464,count
+Fusion (Classical),conformal_coverage,0.913,fraction
+Fusion (Classical),conformal_set_size,3.261,count

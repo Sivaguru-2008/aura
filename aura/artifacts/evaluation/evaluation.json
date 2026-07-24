@@ -1,0 +1,57 @@
+{
+  "metadata": {
+    "timestamp": "2026-07-24T04:59:52Z",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "torch_version": "2.11.0+cu128",
+    "cuda_available": true
+  },
+  "chest_model": {
+    "model_name": "DenseNet-121",
+    "model_size_mb": 27.12,
+    "validation_images": 602,
+    "metrics": {
+      "auroc": 0.8095,
+      "auprc": 0.3188,
+      "f1": 0.333,
+      "sensitivity": 0.7243,
+      "specificity": 0.7481,
+      "precision": 0.2391,
+      "ece": 0.2087,
+      "brier_score": 0.1556
+    },
+    "performance": {
+      "cpu_latency_ms": 47.88,
+      "cpu_throughput_img_s": 20.88
+    }
+  },
+  "brain_model": {
+    "model_name": "ResU-Net (3D Segmentation & Multi-task)",
+    "model_size_mb": 86.25,
+    "validation_slices": 7531,
+    "metrics": {
+      "dice_mean": 0.86515,
+      "dice_whole_tumor": 0.91498,
+      "dice_tumor_core": 0.84561,
+      "dice_enhancing_tumor": 0.83486,
+      "hausdorff95_wt_px": 7.0847,
+      "hausdorff95_tc_px": 6.1478,
+      "hausdorff95_et_px": 4.5285,
+      "presence_auroc": 0.97743
+    },
+    "performance": {
+      "cpu_slice_throughput_s": 12.16,
+      "cpu_study_latency_ms": 12747.84
+    }
+  },
+  "evidence_fusion": {
+    "quantum_conformal_coverage": 0.9275,
+    "quantum_conformal_set_size": 3.464,
+    "classical_conformal_coverage": 0.913,
+    "classical_conformal_set_size": 3.261,
+    "ood_detection": {
+      "method": "energy_score_zscore",
+      "ood_energy_threshold": 3.0,
+      "ood_fpr_95_tpr": 0.045
+    }
+  }
+}
