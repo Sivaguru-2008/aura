@@ -3,7 +3,7 @@ window.NEUROVIEW = (() => {
   "use strict";
 
   const NOT_AVAILABLE = "Not Available";
-  const state = { caseId: null, payload: null, vtkReady: null, vtkView: null, layers: new Map() };
+  const state = { caseId: null, payload: null, vtkReady: null, vtkView: null, layers: new Map(), selectedLesionId: null };
   const $ = (id) => document.getElementById(id);
 
   async function load(caseId, bundle) {
@@ -44,6 +44,8 @@ window.NEUROVIEW = (() => {
     buildLayerControls(payload.layers || []);
     buildSliceControls(payload);
     bindPrimaryControls(payload);
+    bindCanvasClicks(payload);
+    renderNeuroInsight(payload.neuroinsight, payload);
     renderSlices();
     renderVtk(payload).catch(() => {
       $("nv-status").textContent = "GPU renderer unavailable";
@@ -56,6 +58,7 @@ window.NEUROVIEW = (() => {
     $("nv-meta").textContent = message || "Unable to compute from current MRI study.";
     $("nv-layers").innerHTML = "";
     ["nv-axial", "nv-coronal", "nv-sagittal"].forEach((id) => clearCanvas($(id)));
+    clearNeuroInsight(message || "Unable to compute from current MRI study.");
     teardown();
   }
 
@@ -283,8 +286,208 @@ window.NEUROVIEW = (() => {
     }
     state.vtkView = null;
     state.payload = null;
+    state.selectedLesionId = null;
     const root = $("nv-vtk");
     if (root) root.innerHTML = "";
+    clearNeuroInsight("No study loaded");
+  }
+
+  /* NeuroInsight Helper Functions (Task 4) */
+  function renderNeuroInsight(insight, payload) {
+    const summaryEl = $("nv-insight-summary");
+    const listEl = $("nv-insight-lesions-list");
+    if (!summaryEl || !listEl) return;
+
+    if (!insight || insight.status !== "available" || !insight.lesions || insight.lesions.length === 0) {
+      clearNeuroInsight(insight?.message || "Measurement unavailable");
+      return;
+    }
+
+    summaryEl.textContent = `${insight.lesion_count} connected lesion component(s) detected.`;
+    listEl.innerHTML = "";
+
+    insight.lesions.forEach((l) => {
+      const btn = document.createElement("button");
+      btn.className = "btn-lesion mono";
+      btn.setAttribute("data-id", l.id);
+      btn.textContent = `Lesion #${l.id} (${l.volume_mm3.toFixed(1)} mm³)`;
+      
+      // Professional custom styling
+      btn.style.background = "rgba(255,255,255,0.03)";
+      btn.style.border = "1px solid rgba(255,255,255,0.08)";
+      btn.style.color = "var(--dim)";
+      btn.style.padding = "7px 12px";
+      btn.style.borderRadius = "6px";
+      btn.style.cursor = "pointer";
+      btn.style.textAlign = "left";
+      btn.style.fontSize = "11.5px";
+      btn.style.transition = "all 0.2s";
+      
+      btn.onmouseover = () => {
+        if (state.selectedLesionId !== l.id) {
+          btn.style.background = "rgba(255,255,255,0.08)";
+          btn.style.borderColor = "rgba(255,255,255,0.15)";
+          btn.style.color = "#fff";
+        }
+      };
+      btn.onmouseout = () => {
+        if (state.selectedLesionId !== l.id) {
+          btn.style.background = "rgba(255,255,255,0.03)";
+          btn.style.borderColor = "rgba(255,255,255,0.08)";
+          btn.style.color = "var(--dim)";
+        }
+      };
+      btn.onclick = () => {
+        selectLesion(l.id, insight, payload);
+      };
+      listEl.appendChild(btn);
+    });
+
+    // Auto-select first lesion if any exist
+    if (insight.lesions.length > 0 && !state.selectedLesionId) {
+      selectLesion(insight.lesions[0].id, insight, payload);
+    } else if (state.selectedLesionId) {
+      selectLesion(state.selectedLesionId, insight, payload);
+    }
+  }
+
+  function clearNeuroInsight(message) {
+    const summaryEl = $("nv-insight-summary");
+    const listEl = $("nv-insight-lesions-list");
+    const detailPane = $("nv-insight-detail-pane");
+    const noSelectionPane = $("nv-insight-no-selection");
+
+    if (summaryEl) summaryEl.textContent = "Clinical intelligence unavailable.";
+    if (listEl) listEl.innerHTML = `<div style="color: var(--faint); font-style: italic; font-size:12px;">${message || "No data"}</div>`;
+    if (detailPane) detailPane.style.display = "none";
+    if (noSelectionPane) {
+      noSelectionPane.style.display = "flex";
+      noSelectionPane.textContent = message || "Select a lesion to explore.";
+    }
+    state.selectedLesionId = null;
+  }
+
+  function selectLesion(id, insight, payload) {
+    const lesion = insight.lesions.find(l => l.id === id);
+    if (!lesion) return;
+
+    state.selectedLesionId = id;
+
+    // Highlight selected button
+    const listEl = $("nv-insight-lesions-list");
+    if (listEl) {
+      const buttons = listEl.querySelectorAll("button");
+      buttons.forEach(b => {
+        const btnId = parseInt(b.getAttribute("data-id"));
+        if (btnId === id) {
+          b.style.background = "rgba(139,124,247,0.2)";
+          b.style.borderColor = "#8b7cf7";
+          b.style.color = "#fff";
+          b.style.boxShadow = "0 0 8px rgba(139,124,247,0.3)";
+        } else {
+          b.style.background = "rgba(255,255,255,0.03)";
+          b.style.borderColor = "rgba(255,255,255,0.08)";
+          b.style.color = "var(--dim)";
+          b.style.boxShadow = "none";
+        }
+      });
+    }
+
+    // Populate detail fields
+    $("nv-insight-lesion-title").textContent = `LESION #${lesion.id} DETAILS`;
+    $("nv-insight-volume").textContent = `${lesion.volume_mm3.toFixed(1)} mm³`;
+    $("nv-insight-voxels").textContent = lesion.voxel_count;
+    $("nv-insight-diameter").textContent = `${lesion.max_diameter_mm.toFixed(1)} mm`;
+    $("nv-insight-dimensions").textContent = lesion.dimensions_mm.map(d => d.toFixed(1)).join(" x ") + " mm";
+    $("nv-insight-coords-vox").textContent = `[${lesion.centroid_voxel.map(c => c.toFixed(0)).join(", ")}]`;
+    $("nv-insight-coords-mni").textContent = `[${lesion.centroid_mni.map(c => c.toFixed(1)).join(", ")}]`;
+    $("nv-insight-confidence").textContent = `${(lesion.confidence * 100).toFixed(1)}%`;
+    $("nv-insight-surface-area").textContent = `${lesion.surface_area_mm2.toFixed(1)} mm²`;
+    
+    $("nv-insight-lobe").textContent = lesion.anatomy.lobe;
+    $("nv-insight-structure").textContent = lesion.anatomy.structure;
+    $("nv-insight-functional").textContent = lesion.anatomy.functional_area;
+
+    $("nv-insight-saliency").textContent = lesion.explainability.mean_saliency.toFixed(3);
+    $("nv-insight-uncertainty").textContent = lesion.explainability.uncertainty.toFixed(3);
+
+    // Show details pane
+    $("nv-insight-detail-pane").style.display = "block";
+    $("nv-insight-no-selection").style.display = "none";
+
+    // Center cross-sectional view slices
+    const axialVal = Math.round(lesion.centroid_voxel[2]);
+    const coronalVal = Math.round(lesion.centroid_voxel[0]);
+    const sagittalVal = Math.round(lesion.centroid_voxel[1]);
+
+    const axialSlider = $("nv-axial-range");
+    const coronalSlider = $("nv-coronal-range");
+    const sagittalSlider = $("nv-sagittal-range");
+
+    if (axialSlider) axialSlider.value = String(axialVal);
+    if (coronalSlider) coronalSlider.value = String(coronalVal);
+    if (sagittalSlider) sagittalSlider.value = String(sagittalVal);
+
+    renderSlices();
+  }
+
+  function bindCanvasClicks(payload) {
+    const canvases = [
+      { id: "nv-axial", plane: "axial" },
+      { id: "nv-coronal", plane: "coronal" },
+      { id: "nv-sagittal", plane: "sagittal" }
+    ];
+    canvases.forEach(({ id, plane }) => {
+      const canvas = $(id);
+      if (!canvas) return;
+      
+      // Bind click handler
+      canvas.onclick = (event) => {
+        handleCanvasClick(event, canvas, plane, payload);
+      };
+      // Style cursor on hover to suggest interactivity
+      canvas.style.cursor = "crosshair";
+    });
+  }
+
+  function handleCanvasClick(event, canvas, plane, payload) {
+    if (!payload || !payload.neuroinsight || payload.neuroinsight.status !== "available") return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const clickY = event.clientY - rect.top;
+    
+    const vol = decodeVolume(payload);
+    const [xDim, yDim, zDim] = vol.dims;
+    const size = plane === "axial" ? [xDim, yDim] : plane === "coronal" ? [xDim, zDim] : [yDim, zDim];
+    const [w, h] = size;
+    
+    const col = Math.floor((clickX / rect.width) * w);
+    const row = Math.floor((clickY / rect.height) * h);
+    
+    if (col < 0 || col >= w || row < 0 || row >= h) return;
+    
+    const axialVal = Number($("nv-axial-range").value);
+    const coronalVal = Number($("nv-coronal-range").value);
+    const sagittalVal = Number($("nv-sagittal-range").value);
+    
+    let voxelIdx;
+    if (plane === "axial") {
+      voxelIdx = idx(col, row, axialVal, xDim, yDim);
+    } else if (plane === "coronal") {
+      voxelIdx = idx(col, coronalVal, row, xDim, yDim);
+    } else {
+      voxelIdx = idx(sagittalVal, col, row, xDim, yDim);
+    }
+    
+    // Look up label from the invisible lesion labels layer
+    const lesionLayer = state.layers.get("lesion_labels");
+    if (lesionLayer && lesionLayer.dataArray) {
+      const lesionId = lesionLayer.dataArray[voxelIdx];
+      if (lesionId > 0) {
+        selectLesion(lesionId, payload.neuroinsight, payload);
+      }
+    }
   }
 
   return { load };

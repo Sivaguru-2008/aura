@@ -284,6 +284,65 @@
               <input id="nv-sagittal-range" type="range" min="0" max="0" value="0">
             </div>
           </div>
+
+          <!-- NeuroInsight Sub-panel (Task 3) -->
+          <div class="nv-insight-container" id="nv-insight-container" style="display: flex; gap: 14px; border-top: 1px solid rgba(255,255,255,0.08); margin-top: 14px; padding-top: 14px;">
+              <div class="nv-insight-list-pane" style="flex: 1; min-width: 220px; display: flex; flex-direction: column;">
+                  <h5 class="mono" style="color: var(--dim); margin-bottom: 8px; font-size: 11.5px; font-weight: bold; letter-spacing: 0.05em; text-transform: uppercase;">AURA NeuroInsight</h5>
+                  <div class="mono" id="nv-insight-summary" style="font-size: 11px; color: var(--faint); margin-bottom: 8px;">Counting lesions...</div>
+                  <div id="nv-insight-lesions-list" class="mono" style="display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto;">
+                      <div style="color: var(--faint); font-size: 12px; font-style: italic;">No study loaded</div>
+                  </div>
+              </div>
+              <div class="nv-insight-detail-pane" id="nv-insight-detail-pane" style="flex: 2; border-left: 1px solid rgba(255,255,255,0.08); padding-left: 14px; font-family: var(--mono); font-size: 12px; display: none;">
+                  <h5 id="nv-insight-lesion-title" style="color: #8b7cf7; font-weight: bold; margin-bottom: 8px; font-size: 11.5px; text-transform: uppercase;">LESION DETAILS</h5>
+                  <div class="nv-insight-metrics-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 14px; margin-bottom: 12px;">
+                      <div>
+                          <span style="color: var(--faint);">Volume:</span> <span id="nv-insight-volume" style="color: #fff; font-weight: bold;">—</span>
+                      </div>
+                      <div>
+                          <span style="color: var(--faint);">Voxel Count:</span> <span id="nv-insight-voxels" style="color: #fff; font-weight: bold;">—</span>
+                      </div>
+                      <div>
+                          <span style="color: var(--faint);">Max Diameter:</span> <span id="nv-insight-diameter" style="color: #fff; font-weight: bold;">—</span>
+                      </div>
+                      <div>
+                          <span style="color: var(--faint);">Dimensions:</span> <span id="nv-insight-dimensions" style="color: #fff; font-weight: bold;">—</span>
+                      </div>
+                      <div>
+                          <span style="color: var(--faint);">Centroid Voxel:</span> <span id="nv-insight-coords-vox" style="color: #fff; font-weight: bold;">—</span>
+                      </div>
+                      <div>
+                          <span style="color: var(--faint);">Centroid MNI:</span> <span id="nv-insight-coords-mni" style="color: #fff; font-weight: bold;">—</span>
+                      </div>
+                      <div>
+                          <span style="color: var(--faint);">Classification Conf:</span> <span id="nv-insight-confidence" style="color: #4be1c3; font-weight: bold;">—</span>
+                      </div>
+                      <div>
+                          <span style="color: var(--faint);">Surface Area:</span> <span id="nv-insight-surface-area" style="color: #fff; font-weight: bold;">—</span>
+                      </div>
+                  </div>
+                  <div class="nv-insight-anatomy" style="margin-bottom: 12px; background: rgba(139,124,247,0.06); padding: 8px; border-radius: 6px; border: 1px dashed rgba(139,124,247,0.2);">
+                      <div style="font-weight: bold; color: #8b7cf7; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 11px;">
+                          <span>ANATOMICAL LOCALIZATION</span>
+                          <span style="font-size: 9px; opacity: 0.8; letter-spacing: 0.05em; background: rgba(139,124,247,0.15); padding: 2px 6px; border-radius: 4px;" id="nv-insight-disclaimer">Approximate Anatomical Localization</span>
+                      </div>
+                      <div style="display: flex; flex-direction: column; gap: 4px; font-size: 11.5px;">
+                          <div><span style="color: var(--faint);">Approximate Lobe:</span> <span id="nv-insight-lobe" style="color: #fff; font-weight: bold;">—</span></div>
+                          <div><span style="color: var(--faint);">Nearby Structures:</span> <span id="nv-insight-structure" style="color: #fff; font-weight: bold;">—</span></div>
+                          <div><span style="color: var(--faint);">Functional Areas:</span> <span id="nv-insight-functional" style="color: #fff; font-weight: bold;">—</span></div>
+                      </div>
+                  </div>
+                  <div class="nv-insight-explain" style="background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); font-size: 11.5px; display: flex; justify-content: space-between; gap: 14px;">
+                      <div><span style="color: var(--faint);">Spatial Saliency weight:</span> <span id="nv-insight-saliency" style="color: #4be1c3; font-weight: bold;">—</span></div>
+                      <div><span style="color: var(--faint);">Softmax Uncertainty:</span> <span id="nv-insight-uncertainty" style="color: #ff6b6b; font-weight: bold;">—</span></div>
+                  </div>
+              </div>
+              <div class="nv-insight-no-selection mono" id="nv-insight-no-selection" style="flex: 2; display: flex; align-items: center; justify-content: center; border-left: 1px solid rgba(255,255,255,0.08); padding-left: 14px; font-size: 11.5px; color: var(--faint); min-height: 150px; text-align: center;">
+                  Select a lesion from the list or click directly on the segmented tumor in any slice canvas to explore exact mathematical measurements and registered anatomical localization.
+              </div>
+          </div>
+
           <footer class="p-foot mono" id="nv-meta"></footer>
         </section>
 

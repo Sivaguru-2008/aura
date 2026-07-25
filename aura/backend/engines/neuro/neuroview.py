@@ -49,7 +49,27 @@ def build_neuroview_payload(
             "Unable to compute from current MRI study.",
         )
 
+    # Calculate NeuroInsight post-processing clinical intelligence
+    from backend.engines.neuro.neuroinsight import compute_neuroinsight
+    insight = compute_neuroinsight(study, output)
+    insight_payload = {k: v for k, v in insight.items() if k != "labeled_mask"}
+
     masks = _segmentation_layers(output, volume.shape, brain_mask)
+    if insight.get("status") == "available" and "labeled_mask" in insight:
+        labeled_mask = insight["labeled_mask"]
+        aligned_labels = np.transpose(labeled_mask.astype(np.uint8), (1, 2, 0))
+        if aligned_labels.shape == volume.shape:
+            masks.append(_labeled_layer(
+                "lesion_labels",
+                "Lesion Labels",
+                aligned_labels,
+                "Derived from AURA NeuroInsight connected components."
+            ))
+        else:
+            masks.append(_unavailable_layer("lesion_labels"))
+    else:
+        masks.append(_unavailable_layer("lesion_labels"))
+
     return {
         "neuroview_version": NEUROVIEW_VERSION,
         "case_id": case_id,
@@ -88,6 +108,7 @@ def build_neuroview_payload(
         "volume": encoded,
         "layers": masks,
         "unavailable_text": NOT_AVAILABLE,
+        "neuroinsight": insight_payload,
     }
 
 
@@ -104,6 +125,12 @@ def _unavailable(case_id: str, study_id: str, message: str) -> dict[str, Any]:
         "volume": None,
         "layers": [],
         "unavailable_text": NOT_AVAILABLE,
+        "neuroinsight": {
+            "status": "unavailable",
+            "lesion_count": 0,
+            "lesions": [],
+            "message": message,
+        },
     }
 
 
@@ -331,6 +358,29 @@ def _mask_layer(
         "dtype": "uint8",
         "data": _b64(data),
         "voxel_count": int(data.sum()),
+        "provenance": provenance,
+    }
+
+
+def _labeled_layer(
+    key: str,
+    label_name: str,
+    labels: np.ndarray,
+    provenance: str,
+) -> dict[str, Any]:
+    data = np.ascontiguousarray(labels.astype(np.uint8))
+    return {
+        "key": key,
+        "label": label_name,
+        "available": True,
+        "message": "",
+        "color": "",
+        "opacity": 0.0,  # Functional layer, not rendered as a mask
+        "dims": [int(v) for v in data.shape],
+        "encoding": "base64",
+        "dtype": "uint8",
+        "data": base64.b64encode(np.asfortranarray(data).tobytes(order="F")).decode("ascii"),
+        "voxel_count": int(np.count_nonzero(data > 0)),
         "provenance": provenance,
     }
 
