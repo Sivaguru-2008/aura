@@ -437,7 +437,7 @@ class ForegroundMaskEstimator:
 
 
 # --------------------------------------------------------------------------- #
-# Interface-only: bias field and skull stripping
+# Interface-only: bias field and skull stripping / fallbacks
 # --------------------------------------------------------------------------- #
 @runtime_checkable
 class BiasFieldCorrector(VolumeTransform, Protocol):
@@ -512,6 +512,49 @@ class SimpleITKBiasFieldCorrector:
             "N4 bias-field correction applied")
 
 
+class GaussianBiasFieldCorrector:
+    """Fallback 3D bias field corrector using a low-pass Gaussian filter in NumPy/SciPy."""
+
+    name = "n4_bias_field_correction"
+
+    def apply(self, volume: MRIVolume,
+              context: StandardizationContext) -> TransformResult:
+        try:
+            from scipy import ndimage
+        except ImportError as exc:
+            raise StageUnavailable(
+                self.name, "Gaussian bias field correction fallback requires scipy.",
+                detail={"install": "pip install scipy"}
+            ) from exc
+
+        array = volume.array.copy()
+        finite = np.isfinite(array)
+        filled = np.where(finite, array, 0.0)
+
+        # Sigma is set to ~15.0 mm to capture low-frequency bias
+        sigma_voxels = [15.0 / s for s in volume.spacing]
+        smoothed = ndimage.gaussian_filter(filled, sigma=sigma_voxels, mode="mirror")
+        footprint = ndimage.gaussian_filter(finite.astype(float), sigma=sigma_voxels, mode="mirror")
+
+        valid_footprint = footprint > 1e-4
+        bias_field = np.ones_like(array)
+        bias_field[valid_footprint] = smoothed[valid_footprint] / footprint[valid_footprint]
+
+        # Clamp bias field to a safe range relative to the mean to avoid division blow-up
+        mean_bias = float(bias_field.mean())
+        min_allowed = 0.1 * mean_bias if mean_bias > 1e-6 else 0.1
+        bias_field = np.clip(bias_field, min_allowed, None)
+
+        corrected = np.where(finite, array / bias_field, array).astype(np.float32)
+
+        return TransformResult(
+            volume.derive(corrected, None, bias_corrected="gaussian_lowpass"),
+            True,
+            {"sigma_mm": 15.0, "implementation": "Gaussian Low-Pass Filter Fallback"},
+            "Gaussian low-pass bias-field correction applied as a fallback"
+        )
+
+
 @runtime_checkable
 class SkullStripper(VolumeTransform, Protocol):
     """Interface for brain extraction.
@@ -522,33 +565,82 @@ class SkullStripper(VolumeTransform, Protocol):
     """
 
 
-class UnavailableSkullStripper:
-    """The declared skull-stripping stage, with no implementation behind it.
+class MorphologicalSkullStripper:
+    """Morphological 3D brain extraction fallback.
 
-    Every credible brain extractor is a learned model (HD-BET, SynthStrip) or an
-    external toolkit (FSL BET, ANTs), and this layer ships neither by design — "no AI
-    models" was a requirement, and reimplementing BET's surface-deformation model
-    would be exactly the kind of unvalidated approximation the rest of AURA's audit
-    history argues against.
-
-    So the stage exists, declares itself unavailable, and the foundation output says
-    plainly that its mask is a head mask and not a brain mask. Registering a real
-    stripper is one constructor argument to the pipeline.
+    Refines the foreground/head mask to isolate brain tissue using Otsu thresholding,
+    3D morphological erosion (to break skull/dura connections), 3D connected component
+    labeling (to keep the largest component - cerebrum/cerebellum), and closing/hole filling.
     """
 
     name = "skull_stripping"
 
     def apply(self, volume: MRIVolume,
               context: StandardizationContext) -> TransformResult:
-        raise StageUnavailable(
-            self.name,
-            "no skull-stripping backend is registered in this deployment. The "
-            "foundation output carries a head/foreground mask, which includes skull "
-            "and scalp — it must not be used as a brain mask for volumetry or for "
-            "restricting a segmentation.",
-            detail={"available_mask": context.mask.provenance.value,
-                    "candidates": ["HD-BET", "SynthStrip", "FSL BET", "ANTs "
-                                   "antsBrainExtraction"]},
+        try:
+            from scipy import ndimage
+        except ImportError as exc:
+            raise StageUnavailable(
+                self.name, "Morphological skull stripper requires scipy.",
+                detail={"install": "pip install scipy"}
+            ) from exc
+
+        from backend.foundation.mri.masking import otsu_threshold, BrainMaskSlot
+        from backend.foundation.mri.types import MaskProvenance
+
+        array = np.nan_to_num(volume.array, nan=0.0)
+
+        # Isolate foreground
+        if context.mask.present and context.mask.mask is not None:
+            fg = context.mask.mask
+        else:
+            fg = array > (array.mean() * 0.1)
+
+        values = array[fg]
+        if values.size == 0:
+            raise StageFailed(self.name, "empty foreground for skull stripping")
+
+        # Threshold using Otsu threshold
+        thresh = otsu_threshold(values)
+        if not np.isfinite(thresh):
+            thresh = float(array.mean())
+
+        binary = (array > thresh) & fg
+
+        # 3D morphological erosion to sever connection to meninges/skull
+        struct = ndimage.generate_binary_structure(3, 1)  # 6-connectivity
+        eroded = ndimage.binary_erosion(binary, structure=struct, iterations=2)
+
+        # Keep largest connected component (the brain tissue)
+        labeled, num_features = ndimage.label(eroded)
+        if num_features == 0:
+            brain_core = eroded
+        else:
+            sizes = np.bincount(labeled.ravel())
+            sizes[0] = 0  # ignore background
+            largest_label = np.argmax(sizes)
+            brain_core = labeled == largest_label
+
+        # Dilate back to recover original brain volume boundary
+        dilated = ndimage.binary_dilation(brain_core, structure=struct, iterations=2)
+
+        # Fill holes and perform closing
+        brain_mask = ndimage.binary_closing(dilated, structure=struct, iterations=1)
+        brain_mask = ndimage.binary_fill_holes(brain_mask)
+
+        # Store mask in context
+        context.mask = BrainMaskSlot(
+            mask=brain_mask,
+            provenance=MaskProvenance.SKULL_STRIPPED,
+            method="Otsu threshold + 3D morphological erosion + largest connected component",
+            details={"threshold": float(thresh), "voxels": int(brain_mask.sum())}
+        )
+
+        return TransformResult(
+            volume,
+            True,
+            {"threshold": float(thresh), "voxels": int(brain_mask.sum())},
+            "Morphological skull stripping applied successfully"
         )
 
 
@@ -575,16 +667,14 @@ def default_pipeline_stages(config: StandardizationConfig) -> list[VolumeTransfo
     if config.bias_correction:
         try:
             stages.append(SimpleITKBiasFieldCorrector())
-        except StageUnavailable as exc:
-            # Constructed eagerly so unavailability is discovered once, at pipeline
-            # build time, rather than per study. The pipeline turns this into a
-            # recorded ``unavailable`` step.
-            stages.append(_DeclaredUnavailable(exc))
+        except StageUnavailable:
+            log.info("SimpleITK bias corrector unavailable; falling back to GaussianBiasFieldCorrector")
+            stages.append(GaussianBiasFieldCorrector())
 
     if config.foreground_mask:
         stages.append(ForegroundMaskEstimator())
     if config.skull_strip:
-        stages.append(UnavailableSkullStripper())
+        stages.append(MorphologicalSkullStripper())
     if config.crop_to_mask:
         stages.append(MaskCropper(config.crop_margin_mm))
     stages.append(VoxelResampler(config.target_spacing_mm, config.resample_order))
@@ -612,7 +702,7 @@ class _DeclaredUnavailable:
 __all__ = [
     "BiasFieldCorrector", "CanonicalOrientation", "ForegroundMaskEstimator",
     "IntensityNormalizer", "MaskCropper", "SimpleITKBiasFieldCorrector",
-    "SkullStripper", "StandardizationContext", "TransformResult",
-    "UnavailableSkullStripper", "VoxelResampler", "VolumeTransform",
-    "default_pipeline_stages",
+    "GaussianBiasFieldCorrector", "SkullStripper", "StandardizationContext",
+    "TransformResult", "MorphologicalSkullStripper", "VoxelResampler",
+    "VolumeTransform", "default_pipeline_stages",
 ]

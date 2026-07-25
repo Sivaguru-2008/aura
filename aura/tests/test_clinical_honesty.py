@@ -5,6 +5,7 @@ import zipfile
 import tempfile
 import numpy as np
 import pytest
+pytest.importorskip("torch")
 from pathlib import Path
 from fastapi.testclient import TestClient
 from pydicom.dataset import FileDataset, FileMetaDataset

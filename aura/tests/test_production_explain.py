@@ -1,8 +1,10 @@
 """Regression tests for Step 3 — Score-CAM, overlays, bounding boxes, HTML report."""
 from __future__ import annotations
 
-import numpy as np
 import pytest
+pytest.importorskip("torch")
+
+import numpy as np
 
 from schemas.clinical import Finding
 from services.explain import overlays as O

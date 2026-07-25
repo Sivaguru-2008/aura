@@ -72,7 +72,7 @@ from backend.foundation.mri.standardize import (
     IntensityNormalizer,
     MaskCropper,
     StandardizationContext,
-    UnavailableSkullStripper,
+    MorphologicalSkullStripper,
     VoxelResampler,
 )
 from backend.foundation.mri.types import (
@@ -1060,10 +1060,13 @@ def test_non_ras_target_is_declined_rather_than_faked():
         CanonicalOrientation("LPS")
 
 
-def test_skull_stripping_declares_itself_unavailable(phantom):
-    with pytest.raises(StageUnavailable) as excinfo:
-        UnavailableSkullStripper().apply(_volume(phantom), _context())
-    assert "must not be used as a brain mask" in excinfo.value.reason
+def test_skull_stripping_is_functional(phantom):
+    context = _context()
+    ForegroundMaskEstimator().apply(_volume(phantom), context)
+    result = MorphologicalSkullStripper().apply(_volume(phantom), context)
+    assert context.mask.provenance is MaskProvenance.SKULL_STRIPPED
+    assert context.mask.is_brain_mask is True
+    assert result.changed is True
 
 
 def test_foreground_stage_fills_the_mask_slot_with_honest_provenance(phantom):
@@ -1128,28 +1131,40 @@ def test_pipeline_records_every_stage_in_the_processing_history(dicom_study):
 
 def test_unavailable_stages_are_recorded_not_silently_skipped(dicom_study):
     """N4 and skull stripping have no backend here; the history must say so."""
-    series = MRIFoundationPipeline().run(dicom_study).series[0]
-    unavailable = series.history.unavailable_stages
+    from unittest.mock import patch
+    from backend.foundation.mri.errors import StageUnavailable
+    
+    def raise_unavailable(*args, **kwargs):
+        raise StageUnavailable("mocked_stage", "mocked reason")
+        
+    with patch("backend.foundation.mri.standardize.GaussianBiasFieldCorrector.apply", side_effect=raise_unavailable), \
+         patch("backend.foundation.mri.standardize.MorphologicalSkullStripper.apply", side_effect=raise_unavailable):
+        series = MRIFoundationPipeline().run(dicom_study).series[0]
+        unavailable = series.history.unavailable_stages
 
-    assert "n4_bias_field_correction" in unavailable
-    assert "skull_stripping" in unavailable
-    assert series.history.was_applied("n4_bias_field_correction") is False
-    n4 = series.history.step("n4_bias_field_correction")
-    assert "SimpleITK" in n4.message and "NOT bias corrected" in n4.message
+        assert "n4_bias_field_correction" in unavailable
+        assert "skull_stripping" in unavailable
 
 
 def test_strict_mode_turns_an_unavailable_stage_into_a_failure(dicom_study):
+    from unittest.mock import patch
+    from backend.foundation.mri.errors import StageUnavailable
+    
+    def raise_unavailable(*args, **kwargs):
+        raise StageUnavailable("skull_stripping", "mocked reason")
+        
     config = FoundationConfig(
         standardization=StandardizationConfig(strict=True))
-    with pytest.raises(StudyValidationError):
-        MRIFoundationPipeline(config).run(dicom_study)
+    with patch("backend.foundation.mri.standardize.MorphologicalSkullStripper.apply", side_effect=raise_unavailable):
+        with pytest.raises(StudyValidationError):
+            MRIFoundationPipeline(config).run(dicom_study)
 
 
-def test_pipeline_output_declares_the_mask_is_not_a_brain_mask(dicom_study):
+def test_pipeline_output_declares_the_mask_is_a_brain_mask(dicom_study):
     series = MRIFoundationPipeline().run(dicom_study).series[0]
     assert series.brain_mask.present
-    assert series.brain_mask.provenance is MaskProvenance.FOREGROUND_HEURISTIC
-    assert series.brain_mask.is_brain_mask is False
+    assert series.brain_mask.provenance is MaskProvenance.SKULL_STRIPPED
+    assert series.brain_mask.is_brain_mask is True
 
 
 def test_registration_plan_is_prepared_but_no_transform_is_computed(dicom_study):
@@ -1295,9 +1310,9 @@ def test_neuromind_foundation_evidence_carries_no_clinical_claim(tmp_path, phant
     foundation = prepared.metadata["foundation"]
     series = foundation["series"][0]
     assert series["quality_score"] > 0
-    assert series["brain_mask"]["is_brain_mask"] is False
+    assert series["brain_mask"]["is_brain_mask"] is True
     assert series["registration"]["transform"] is None
-    assert any(step["status"] == "unavailable"
+    assert all(step["status"] in ("applied", "no_op")
                for step in series["processing_history"]["steps"])
 
     # The foundation description must carry measurements only — nothing shaped like a

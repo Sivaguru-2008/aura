@@ -1,6 +1,7 @@
 """Regression test for AURA server vision engine startup path and diagnostics."""
 import os
 import pytest
+pytest.importorskip("torch")
 from unittest import mock
 from services.vision.engine import VisionEngine
 

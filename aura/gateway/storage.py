@@ -107,6 +107,14 @@ class NeuroViewRow(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
+class MemoryRecordRow(Base):
+    __tablename__ = "memory_records"
+    case_id: Mapped[str] = mapped_column(String, primary_key=True)
+    diagnosis: Mapped[str] = mapped_column(String, default="")
+    embedding_json: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
 class Store:
     def __init__(self, db_path: Path):
         db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -283,3 +291,28 @@ class Store:
                 "entity_id": r.entity_id, "detail": r.detail,
                 "created_at": r.created_at.isoformat(),
             } for r in rows]
+
+    # ---- memory indexing ----
+    def add_memory_record(self, case_id: str, embedding: list[float] | np.ndarray, diagnosis: str) -> None:
+        emb_list = list(embedding) if hasattr(embedding, "__iter__") else embedding
+        emb_str = json.dumps(emb_list)
+        with Session(self.engine) as ses:
+            row = ses.get(MemoryRecordRow, case_id)
+            if row is None:
+                row = MemoryRecordRow(case_id=case_id)
+                ses.add(row)
+            row.diagnosis = diagnosis
+            row.embedding_json = emb_str
+            ses.commit()
+
+    def list_memory_records(self) -> list[dict]:
+        with Session(self.engine) as ses:
+            rows = ses.execute(select(MemoryRecordRow)).scalars().all()
+            return [
+                {
+                    "case_id": r.case_id,
+                    "diagnosis": r.diagnosis,
+                    "embedding": json.loads(r.embedding_json),
+                }
+                for r in rows
+            ]

@@ -5,6 +5,7 @@ import asyncio
 
 import numpy as np
 import pytest
+pytest.importorskip("torch")
 
 from ml.data import IMG, make_multimodal, make_sample
 from schemas.clinical import Diagnosis

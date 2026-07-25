@@ -46,7 +46,7 @@ class Pipeline:
         self.recommend = RecommendEngine()
         self.reasoner = ClinicalReasoner()
         self.report = ReportEngine()
-        self.memory = memory or MemoryEngine()
+        self.memory = memory or MemoryEngine(store=store)
         # Optional persistence handle — lets serving read the online Adaptive
         # Conformal Inference threshold (Module 8) the feedback endpoint updates.
         # None for standalone/test construction, so those paths stay unchanged.

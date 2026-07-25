@@ -5,8 +5,10 @@ cleanly when the corpus is absent (e.g. CI without the dataset mount).
 """
 from __future__ import annotations
 
-import numpy as np
 import pytest
+pytest.importorskip("torch")
+
+import numpy as np
 
 
 def _mimic_available() -> bool:

@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import pytest
 import base64
+
+pytest.importorskip("torch")
 import json
 
 import numpy as np

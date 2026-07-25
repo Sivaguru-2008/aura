@@ -14,15 +14,21 @@ class MemoryRecord:
 
 
 class MemoryEngine:
-    def __init__(self):
+    def __init__(self, store=None):
+        self.store = store
         self._store: list[MemoryRecord] = []
         self.model_version = "memory-v1"
 
     def index(self, case_id: str, embedding: list[float] | np.ndarray, diagnosis: str) -> None:
+        emb_arr = np.asarray(embedding, dtype=float)
         self._store.append(
-            MemoryRecord(case_id=case_id, embedding=np.asarray(embedding, dtype=float),
-                         diagnosis=diagnosis)
+            MemoryRecord(case_id=case_id, embedding=emb_arr, diagnosis=diagnosis)
         )
+        if self.store is not None:
+            try:
+                self.store.add_memory_record(case_id, emb_arr, diagnosis)
+            except Exception as e:
+                print(f"[MemoryEngine] failed to write persistent memory record: {e}")
 
     @staticmethod
     def _cosine(a: np.ndarray, b: np.ndarray) -> float:
@@ -32,7 +38,19 @@ class MemoryEngine:
         return float(np.dot(a, b) / (na * nb))
 
     def similar(self, embedding: list[float] | np.ndarray, k: int = 3,
-                exclude: str | None = None) -> list[dict]:
+                 exclude: str | None = None) -> list[dict]:
+        # Sync from persistent store if local cache is empty
+        if not self._store and self.store is not None:
+            try:
+                records = self.store.list_memory_records()
+                for r in records:
+                    self._store.append(
+                        MemoryRecord(case_id=r["case_id"], embedding=np.asarray(r["embedding"], dtype=float),
+                                     diagnosis=r["diagnosis"])
+                    )
+            except Exception as e:
+                print(f"[MemoryEngine] failed to load persistent memory records: {e}")
+
         q = np.asarray(embedding, dtype=float)
         scored = [
             {"case_id": r.case_id, "diagnosis": r.diagnosis,
