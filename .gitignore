@@ -36,3 +36,6 @@ aura/artifacts/brain/cache/
 aura/artifacts/brain/checkpoints/
 aura/artifacts/brain/tensorboard/
 aura/artifacts/brain/embeddings/epoch_*.npz
+
+# IBM Quantum token — never commit (holds a real secret once filled)
+ibm_quantum.env
