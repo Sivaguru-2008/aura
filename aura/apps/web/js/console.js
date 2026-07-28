@@ -293,13 +293,23 @@ window.CONSOLE = (() => {
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
   function populate(b) {
-    drawXray(b);
-    if (window.NEUROVIEW) window.NEUROVIEW.load(b.case_id, b);
-    drawEvidence(b);
-    drawPosterior(b);
-    drawSafety(b);
-    drawRecs(b);
-    drawReport(b);
+    // Render each panel in isolation. A throw in any one panel must not abort the
+    // rest: previously an exception in e.g. drawPosterior silently halted every
+    // panel after it, so the differential, safety, next-best-evidence and report
+    // all rendered blank while the x-ray and evidence graph looked fine.
+    const steps = [
+      ["xray", drawXray],
+      ["neuroview", (b) => { if (window.NEUROVIEW) window.NEUROVIEW.load(b.case_id, b); }],
+      ["evidence", drawEvidence],
+      ["posterior", drawPosterior],
+      ["safety", drawSafety],
+      ["recommendations", drawRecs],
+      ["report", drawReport],
+    ];
+    for (const [name, fn] of steps) {
+      try { fn(b); }
+      catch (e) { console.error(`AURA: panel "${name}" failed to render`, e); }
+    }
   }
 
   /* ================= x-ray + saliency + findings ================= */
@@ -544,13 +554,19 @@ window.CONSOLE = (() => {
     if (b.fusion && (qEnt || b.fusion.qae_enabled || b.fusion.qbn_enabled)) {
       qTel.style.display = "block";
       if (qEnt) {
-        $("q-entropy").textContent = qEnt.measurement_entropy_bits.toFixed(4);
+        // Null-safe formatting: the entanglement field set varies by backend/version,
+        // and a single undefined here used to throw and blank every panel below it
+        // (now isolated in populate(), but the telemetry should still degrade to "—").
+        const f4 = (v) => (typeof v === "number" && isFinite(v)) ? v.toFixed(4) : "—";
+        $("q-entropy").textContent = f4(qEnt.measurement_entropy_bits);
         const shift = qEnt.entropy_shift_bits;
         const shiftEl = $("q-entropy-shift");
-        shiftEl.textContent = `${shift >= 0 ? "+" : ""}${shift.toFixed(4)} bits`;
-        shiftEl.style.color = shift < 0 ? "#4be1c3" : "#ff6b6b";
-        $("q-coupling").textContent = qEnt.differential_coupling.toFixed(4);
-        $("q-baseline-coupling").textContent = qEnt.baseline_coupling.toFixed(4);
+        shiftEl.textContent = (typeof shift === "number" && isFinite(shift))
+          ? `${shift >= 0 ? "+" : ""}${shift.toFixed(4)} bits` : "—";
+        shiftEl.style.color = (shift < 0) ? "#4be1c3" : "#ff6b6b";
+        $("q-coupling").textContent = f4(qEnt.differential_coupling);
+        // Backend emits `total_coupling`; some builds named it `baseline_coupling`.
+        $("q-baseline-coupling").textContent = f4(qEnt.baseline_coupling ?? qEnt.total_coupling);
       } else {
         $("q-entropy").textContent = "—";
         $("q-entropy-shift").textContent = "—";
@@ -580,7 +596,7 @@ window.CONSOLE = (() => {
     $("post-backend").textContent = b.fusion ? `${b.fusion.backend} fusion · ${b.fusion.n_shots || 0} shots` : "";
     const conf = new Set((b.safety.conformal_set || []).map(String));
     const stds = (b.fusion && b.fusion.posterior_std) || {};
-    const preds = [...b.safety.predictions].sort((a, c) => c.probability - a.probability);
+    const preds = [...(b.safety.predictions || [])].sort((a, c) => c.probability - a.probability);
     preds.forEach((p, i) => {
       const row = document.createElement("div");
       row.className = "post-row" + (i === 0 ? " top" : "") + (conf.has(p.diagnosis) ? " inset" : "");
