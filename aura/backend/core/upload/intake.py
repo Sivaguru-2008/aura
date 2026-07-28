@@ -133,7 +133,7 @@ class UploadIntake:
         """
         from fastapi import HTTPException
 
-        from gateway.security import read_capped, validate_upload_name
+        from gateway.security import read_capped, validate_upload_name, validate_mri_content
 
         filename = getattr(file, "filename", None) or "upload"
         content_type = getattr(file, "content_type", None)
@@ -141,6 +141,7 @@ class UploadIntake:
         try:
             validate_upload_name(filename, content_type)
             payload = await read_capped(file, self.max_bytes)
+            validate_mri_content(payload, filename)
         except HTTPException as exc:
             # Translate the gateway's HTTP-shaped guard into the backend taxonomy, so
             # the API layer has exactly one error type to render.
@@ -160,3 +161,80 @@ class UploadIntake:
 
         with stage_bytes(payload, filename, content_type) as asset:
             yield asset
+
+    @contextlib.asynccontextmanager
+    async def receive_multiple(self, files: list[Any]) -> AsyncIterator[ImageAsset]:
+        """Validate, stream, stage, and yield multiple uploaded files in a temp directory."""
+        from fastapi import HTTPException
+        import hashlib
+        import shutil
+        from gateway.security import read_capped, validate_upload_name, validate_mri_content
+
+        if not files:
+            raise UploadRejected("no files uploaded", http_status=400)
+
+        temp_dir = tempfile.mkdtemp(prefix="aura-intake-multi-")
+        temp_path = Path(temp_dir)
+        
+        try:
+            total_bytes = 0
+            hashes = []
+            
+            for file in files:
+                filename = getattr(file, "filename", None) or "upload"
+                content_type = getattr(file, "content_type", None)
+                
+                try:
+                    validate_upload_name(filename, content_type)
+                    payload = await read_capped(file, self.max_bytes)
+                    validate_mri_content(payload, filename)
+                except HTTPException as exc:
+                    detail = exc.detail if isinstance(exc.detail, dict) else {}
+                    reason = detail.get("reason") or str(exc.detail)
+                    log.warning(
+                        "upload rejected by transport guard",
+                        extra={"context": {"filename": filename, "status": exc.status_code, "reason": reason}},
+                    )
+                    raise UploadRejected(reason, http_status=exc.status_code, detail={"filename": filename}) from exc
+
+                if not payload:
+                    continue
+                
+                total_bytes += len(payload)
+                file_hash = ImageAsset.digest(payload)
+                hashes.append((filename, file_hash))
+                
+                target_file_path = temp_path / filename
+                target_file_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(target_file_path, "wb") as f:
+                    f.write(payload)
+
+            if total_bytes == 0:
+                raise UploadRejected("the uploaded files are empty", http_status=422)
+
+            hashes.sort()
+            combined_string = "".join(h[1] for h in hashes)
+            combined_hash = hashlib.sha256(combined_string.encode("utf-8")).hexdigest()
+
+            asset = ImageAsset(
+                path=temp_path,
+                original_filename="multiple_files",
+                content_type="application/x-directory",
+                size_bytes=total_bytes,
+                sha256=combined_hash,
+                dicom_tags={},
+            )
+            
+            log.info(
+                "multiple upload staged",
+                extra={"context": {"files": len(files), "bytes": total_bytes, "sha256": asset.sha256[:12]}},
+            )
+            
+            yield asset
+
+        finally:
+            try:
+                shutil.rmtree(temp_dir)
+            except OSError as exc:
+                log.error(f"failed to remove staged temp directory {temp_dir}: {exc}")
+

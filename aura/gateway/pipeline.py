@@ -41,7 +41,13 @@ class Pipeline:
         self.bus = bus or EventBus()
         self.vision = VisionEngine.load()
         self.fusion = FusionEngine()
-        self.safety = SafetyEngine()
+        # Safety calibration is a property of the fusion backend's logits, so it must
+        # follow the backend the fusion engine *actually resolved to* — not the raw
+        # setting. FusionEngine falls back to classical when quantum artifacts are
+        # absent; binding safety to `settings.fusion_backend` instead would then scale
+        # classical logits with the quantum temperature (0.46 vs 0.99), silently
+        # distorting every served probability, conformal set and abstention decision.
+        self.safety = SafetyEngine(backend=self.fusion.backend)
         self.explain = ExplainEngine()
         self.recommend = RecommendEngine()
         self.reasoner = ClinicalReasoner()
@@ -125,8 +131,8 @@ class Pipeline:
         # 6) Missing-evidence recommendations
         recommendations = self.recommend.recommend(self.fusion.model, x)
 
-        # 8) Report (grounded in findings, safety, recommendations, and reasoning)
-        report = self.report.compose(vision, safety, recommendations, reasoning)
+        # 8) Report (grounded in findings, safety, recommendations, reasoning, and fusion)
+        report = self.report.compose(vision, safety, recommendations, reasoning, fusion)
 
         # 9) Memory index (for similarity/priors)
         self.memory.index(case_id, vision.embedding, safety.top.value)

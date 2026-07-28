@@ -202,21 +202,58 @@ class ClinicalReasoner:
 
         p0 = np.array([max(1e-9, posterior.get(d, 0.0)) for d in DIAGNOSES])
         p0 = p0 / p0.sum()
-        logit = np.log(p0)
+
+        from common.config import get_settings
+        settings = get_settings()
 
         steps: list[ReasoningStep] = []
         citations: list[str] = []
-        for rule in RULES:
-            step = rule.fire(ctx)
-            if step is None:
-                continue
-            for i, d in enumerate(DIAGNOSES):
-                logit[i] += step.effect.get(d, 0.0)
-            steps.append(step)
-            if step.guideline and step.guideline not in citations:
-                citations.append(step.guideline)
 
-        adjusted = softmax(logit)
+        if getattr(settings, "reasoner_backend", "classical") == "quantum":
+            from services.reasoning.qbn import QuantumBayesianNetwork
+            
+            # Map labs and symptoms to binary indicators
+            bnp_high = mm.labs.bnp is not None and mm.labs.bnp >= 400
+            orthopnea = mm.symptoms.orthopnea or False
+            cardiac = float(bnp_high or orthopnea)
+
+            wbc_high = mm.labs.wbc is not None and mm.labs.wbc > 11
+            pct_high = mm.labs.procalcitonin is not None and mm.labs.procalcitonin >= 0.5
+            crp_high = mm.labs.crp is not None and mm.labs.crp > 50
+            fever = mm.symptoms.fever or priors.fever or False
+            infectious = float(wbc_high or pct_high or crp_high or fever)
+
+            smoking = (mm.history.smoking_pack_years or 0.0) >= 20 or priors.smoker
+            prior_cancer = mm.history.prior_cancer or priors.prior_cancer or False
+            hemoptysis = mm.symptoms.hemoptysis or False
+            copd = mm.history.copd or False
+            malignancy_obstructive = float(smoking or prior_cancer or hemoptysis or copd)
+
+            # Evaluate Quantum Bayesian Network
+            qbn = QuantumBayesianNetwork.load()
+            adjusted = qbn.reason(posterior, [cardiac, infectious, malignancy_obstructive])
+
+            # Trace clinical rules that fired for clinical report narrative
+            for rule in RULES:
+                step = rule.fire(ctx)
+                if step is not None:
+                    steps.append(step)
+                    if step.guideline and step.guideline not in citations:
+                        citations.append(step.guideline)
+        else:
+            # Classical Likelihood update
+            logit = np.log(p0)
+            for rule in RULES:
+                step = rule.fire(ctx)
+                if step is None:
+                    continue
+                for i, d in enumerate(DIAGNOSES):
+                    logit[i] += step.effect.get(d, 0.0)
+                steps.append(step)
+                if step.guideline and step.guideline not in citations:
+                    citations.append(step.guideline)
+            adjusted = softmax(logit)
+
         prior_d = {d: float(p0[i]) for i, d in enumerate(DIAGNOSES)}
         adj_d = {d: float(adjusted[i]) for i, d in enumerate(DIAGNOSES)}
 

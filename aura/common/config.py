@@ -100,7 +100,9 @@ class Settings:
     # =quantum), still trained + benchmarked. NOTE: safety.npz calibration is fit on whichever
     # backend is served (ml/training/train_fusion.py), so change this only alongside a
     # recalibration, never the flag alone.
-    fusion_backend: str = "classical"        # "classical" (served) | "quantum" (research)
+    fusion_backend: str = "classical"        # dataclass fallback; pyproject [tool.aura] sets the
+                                             # served default to "quantum". "classical" = selectable
+                                             # interpretable fallback. See registry.json / docs/QUANTUM.md.
     # Vision backbone: "features" (numpy fallback), "densenet_mimic" (real
     # MIMIC-CXR DenseNet-121), or "timm" (fine-tuned EfficientNetV2/ConvNeXt/Swin).
     vision_backend: str = "features"
@@ -146,6 +148,9 @@ class Settings:
     # --- Part 3: Progression thresholds ---------------------------------------- #
     progression_growth_threshold: float = 0.20
     progression_regression_threshold: float = -0.20
+    qae_enabled: bool = False
+    neuro_qkl_enabled: bool = False
+    reasoner_backend: str = "classical"
 
 
 
@@ -210,6 +215,9 @@ def get_settings() -> Settings:
         fusion_train_n=pick("fusion_train_n", int, base.fusion_train_n),
         progression_growth_threshold=pick("progression_growth_threshold", float, base.progression_growth_threshold),
         progression_regression_threshold=pick("progression_regression_threshold", float, base.progression_regression_threshold),
+        qae_enabled=pick("qae_enabled", _as_bool, base.qae_enabled),
+        neuro_qkl_enabled=pick("neuro_qkl_enabled", _as_bool, base.neuro_qkl_enabled),
+        reasoner_backend=pick("reasoner_backend", str, base.reasoner_backend),
     )
 
 

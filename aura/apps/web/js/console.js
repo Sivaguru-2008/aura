@@ -93,19 +93,57 @@ window.CONSOLE = (() => {
     // Synthetic study generation removed — AURA runs real inference on uploaded
     // radiographs only. The upload paths below are the sole ways to create a case.
     // upload
+    // Toggle MRI dropdown
+    const mriBtn = $("btn-upload-mri");
+    const mriDropdown = $("mri-dropdown");
+    
+    mriBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const visible = mriDropdown.style.display === "block";
+      mriDropdown.style.display = visible ? "none" : "block";
+    });
+    
+    document.addEventListener("click", () => {
+      mriDropdown.style.display = "none";
+    });
+    
+    $("btn-upload-mri-files").addEventListener("click", (e) => {
+      e.stopPropagation();
+      mriDropdown.style.display = "none";
+      $("input-file-mri").click();
+    });
+    
+    $("btn-upload-mri-folder").addEventListener("click", (e) => {
+      e.stopPropagation();
+      mriDropdown.style.display = "none";
+      $("input-folder-mri").click();
+    });
+
     $("btn-upload-xray").addEventListener("click", () => { $("input-file-xray").click(); });
-    $("btn-upload-mri").addEventListener("click", () => { $("input-file-mri").click(); });
     $("btn-history").addEventListener("click", () => { window.open("/history", "_blank"); });
+    
     $("input-file-xray").addEventListener("change", (e) => {
       if (e.target.files && e.target.files[0]) {
         uploadImage(e.target.files[0], "CHEST_XRAY");
       }
     });
+    
     $("input-file-mri").addEventListener("change", (e) => {
-      if (e.target.files && e.target.files[0]) {
-        uploadImage(e.target.files[0], "BRAIN_MRI");
+      if (e.target.files && e.target.files.length) {
+        if (e.target.files.length === 1) {
+          uploadImage(e.target.files[0], "BRAIN_MRI");
+        } else {
+          uploadImage(e.target.files, "BRAIN_MRI");
+        }
       }
     });
+
+    $("input-folder-mri").addEventListener("change", (e) => {
+      if (e.target.files && e.target.files.length) {
+        uploadImage(e.target.files, "BRAIN_MRI");
+      }
+    });
+
     // drag a film anywhere onto the console to analyze it
     const root = $("console");
     ["dragenter", "dragover"].forEach((evt) => root.addEventListener(evt, (e) => {
@@ -120,21 +158,80 @@ window.CONSOLE = (() => {
         $("btn-upload-mri").classList.remove("dropping");
       }
     });
-    root.addEventListener("drop", (e) => {
+    
+    // Recursive directory traversal for dropped folders
+    async function getFilesFromDataTransfer(dataTransfer) {
+      const files = [];
+      const items = [...(dataTransfer.items || [])];
+      
+      const traverse = async (entry) => {
+        if (entry.isFile) {
+          const file = await new Promise((resolve) => entry.file(resolve));
+          const relativePath = entry.fullPath.startsWith("/") ? entry.fullPath.slice(1) : entry.fullPath;
+          Object.defineProperty(file, "filename", {
+            value: relativePath,
+            writable: true
+          });
+          files.push(file);
+        } else if (entry.isDirectory) {
+          const reader = entry.createReader();
+          let allEntries = [];
+          
+          const readAll = async () => {
+            const results = await new Promise((resolve) => reader.readEntries(resolve));
+            if (results.length > 0) {
+              allEntries = allEntries.concat(results);
+              await readAll();
+            }
+          };
+          await readAll();
+          
+          for (const child of allEntries) {
+            await traverse(child);
+          }
+        }
+      };
+
+      for (const item of items) {
+        if (item.kind === "file") {
+          const entry = item.webkitGetAsEntry();
+          if (entry) {
+            await traverse(entry);
+          }
+        }
+      }
+      return files;
+    }
+
+    root.addEventListener("drop", async (e) => {
       e.preventDefault();
       $("btn-upload-xray").classList.remove("dropping");
       $("btn-upload-mri").classList.remove("dropping");
-      const f = e.dataTransfer.files && e.dataTransfer.files[0];
-      if (!f) return;
-      // A dropped file carries no statement of intent. The old rule here assumed
-      // CHEST_XRAY for anything that was not .nii/.gz/.nrrd, so a dropped brain MRI
-      // PNG was declared a chest film by the client before the server ever saw it.
-      // Send no declaration instead and let the router identify it — a drop is the
-      // one path where the user has told us nothing, so we must not invent it.
-      const ext = f.name.split(".").pop().toLowerCase();
-      const declared = (ext === "nii" || ext === "gz" || ext === "nrrd")
-        ? "BRAIN_MRI" : null;
-      uploadImage(f, declared);
+      
+      try {
+        const files = await getFilesFromDataTransfer(e.dataTransfer);
+        if (files.length === 0) return;
+        
+        let isMri = false;
+        for (const file of files) {
+          const name = file.name.toLowerCase();
+          if (name.endsWith(".nii") || name.endsWith(".nii.gz") || name.endsWith(".nrrd") || name.endsWith(".zip")) {
+            isMri = true;
+            break;
+          }
+        }
+        
+        const declared = isMri ? "BRAIN_MRI" : null;
+        if (files.length === 1) {
+          uploadImage(files[0], declared);
+        } else {
+          uploadImage(files, declared);
+        }
+      } catch (err) {
+        console.error("Drop traversal failed", err);
+        const f = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) uploadImage(f, null);
+      }
     });
     // report export
     $("btn-export").addEventListener("click", exportReport);
@@ -392,6 +489,81 @@ window.CONSOLE = (() => {
       });
       gEl.addEventListener("pointerleave", () => { tip.hidden = true; });
     });
+
+    // --- quantum entanglement edges and telemetry ---
+    const nodePosMap = {};
+    items.forEach((it, i) => {
+      nodePosMap[it.name] = { pos: nodePos[i], index: i };
+    });
+
+    const qEnt = b.fusion && b.fusion.quantum_entanglement;
+    if (qEnt && qEnt.top_pairs) {
+      qEnt.top_pairs.forEach((pair) => {
+        const [ch1, ch2] = pair.channels;
+        const corr = pair.correlation;
+        
+        if (nodePosMap[ch1] && nodePosMap[ch2]) {
+          const [x1, y1] = nodePosMap[ch1].pos;
+          const [x2, y2] = nodePosMap[ch2].pos;
+          
+          const mx = (x1 + x2) / 2;
+          const my = (y1 + y2) / 2;
+          const dx = x2 - x1;
+          const dy = y2 - y1;
+          const len = Math.sqrt(dx * dx + dy * dy);
+          
+          const ox = -dy / len * 25;
+          const oy = dx / len * 25;
+          
+          const isPos = corr > 0;
+          const strokeCol = isPos ? "rgba(139,124,247,0.75)" : "rgba(244,182,78,0.7)";
+          const strokeWidth = (Math.abs(corr) * 12 + 1.2).toFixed(2);
+          
+          const e = mk("path", {
+            d: `M ${x1} ${y1} Q ${mx + ox} ${my + oy} ${x2} ${y2}`,
+            class: "ev-entanglement-edge",
+            stroke: strokeCol,
+            "stroke-width": strokeWidth,
+            fill: "none",
+            opacity: 0.15 + Math.abs(corr) * 0.8,
+            "stroke-dasharray": isPos ? "none" : "3 3",
+          });
+          
+          const L = e.getTotalLength();
+          e.style.strokeDasharray = L;
+          e.style.strokeDashoffset = L;
+          e.style.transition = `stroke-dashoffset 1.1s ease-out 0.8s`;
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            e.style.strokeDashoffset = 0;
+          }));
+        }
+      });
+    }
+
+    const qTel = $("quantum-entanglement-telemetry");
+    if (b.fusion && (qEnt || b.fusion.qae_enabled || b.fusion.qbn_enabled)) {
+      qTel.style.display = "block";
+      if (qEnt) {
+        $("q-entropy").textContent = qEnt.measurement_entropy_bits.toFixed(4);
+        const shift = qEnt.entropy_shift_bits;
+        const shiftEl = $("q-entropy-shift");
+        shiftEl.textContent = `${shift >= 0 ? "+" : ""}${shift.toFixed(4)} bits`;
+        shiftEl.style.color = shift < 0 ? "#4be1c3" : "#ff6b6b";
+        $("q-coupling").textContent = qEnt.differential_coupling.toFixed(4);
+        $("q-baseline-coupling").textContent = qEnt.baseline_coupling.toFixed(4);
+      } else {
+        $("q-entropy").textContent = "—";
+        $("q-entropy-shift").textContent = "—";
+        $("q-coupling").textContent = "—";
+        $("q-baseline-coupling").textContent = "—";
+      }
+      const qaeRow = $("qae-telemetry-row");
+      if (qaeRow) qaeRow.style.display = b.fusion.qae_enabled ? "flex" : "none";
+      const qbnRow = $("qbn-telemetry-row");
+      if (qbnRow) qbnRow.style.display = b.fusion.qbn_enabled ? "flex" : "none";
+    } else {
+      qTel.style.display = "none";
+    }
   }
 
   function lightNodes(names, on) {
@@ -649,15 +821,129 @@ window.CONSOLE = (() => {
   // ``modality`` is what the *user* declared by choosing an upload button. Pass null
   // when nothing was declared (a drag-and-drop) so the server routes on the pixels
   // rather than on a guess the client made up.
-  async function uploadImage(file, modality = null) {
+  // rather than on a guess the client made up.
+  async function uploadImage(fileOrFiles, modality = null) {
+    const isMultiple = (fileOrFiles instanceof FileList) || Array.isArray(fileOrFiles);
+    const files = isMultiple ? [...fileOrFiles] : [fileOrFiles];
+    const firstFile = files[0];
+
+    // If it's a Brain MRI upload, show the preview first!
+    if (modality === "BRAIN_MRI") {
+      const overlay = $("case-forming");
+      const txt = $("forming-text");
+      overlay.hidden = false;
+      txt.innerHTML = `<span class="ok">▸</span> Staging files and reading metadata …\n`;
+      const f = new Field($("forming-canvas"), { count: 80, hue: 258, mode: "collapse", size: 1.6, speed: 1.1 });
+      f.start();
+
+      try {
+        const fd = new FormData();
+        if (isMultiple) {
+          files.forEach(file => {
+            const filename = file.filename || file.name;
+            fd.append("files", file, filename);
+          });
+        } else {
+          fd.append("file", firstFile);
+        }
+
+        const previewData = await api(`/v1/studies/preview`, {
+          method: "POST",
+          headers: { "x-aura-user": "clinician" },
+          body: fd,
+        });
+
+        // Hide overlay and stop animation
+        overlay.hidden = true;
+        f.destroy();
+
+        // Populate the preview modal elements
+        $("preview-patient-id").textContent = previewData.patient_id || "n/a";
+        $("preview-study-id").textContent = previewData.study_id || "n/a";
+        $("preview-seq-type").textContent = previewData.sequence_type || "n/a";
+        $("preview-dims").textContent = previewData.original_dimensions ? previewData.original_dimensions.join(" x ") : "n/a";
+        $("preview-spacing").textContent = previewData.voxel_spacing ? previewData.voxel_spacing.map(v => Number(v).toFixed(3)).join(" x ") + " mm" : "n/a";
+        $("preview-orientation").textContent = previewData.orientation || "n/a";
+        $("preview-slices").textContent = previewData.number_of_slices || "n/a";
+        $("preview-affine").textContent = previewData.affine_matrix_summary || "n/a";
+        
+        const scannerText = previewData.scanner_metadata 
+          ? `Manufacturer: ${previewData.scanner_metadata.Manufacturer}\nStrength: ${previewData.scanner_metadata.MagneticFieldStrength}\nModality: ${previewData.scanner_metadata.Modality}`
+          : "n/a";
+        $("preview-scanner").innerText = scannerText;
+
+        // Populate thumbnails
+        const t = previewData.thumbnails || {};
+        $("thumb-flair").src = t.flair || "";
+        $("thumb-t1").src = t.t1 || "";
+        $("thumb-t1ce").src = t.t1ce || "";
+        $("thumb-t2").src = t.t2 || "";
+
+        // Display modal
+        const modal = $("mri-preview-modal");
+        modal.style.display = "flex";
+
+        // Bind cancel buttons
+        const closeBtn = $("btn-close-preview");
+        const cancelBtn = $("btn-cancel-preview");
+        const runBtn = $("btn-run-analysis");
+
+        const cleanup = () => {
+          modal.style.display = "none";
+          closeBtn.onclick = null;
+          cancelBtn.onclick = null;
+          runBtn.onclick = null;
+        };
+
+        closeBtn.onclick = cleanup;
+        cancelBtn.onclick = cleanup;
+
+        // When "Analyze Study" is clicked, run actual analysis!
+        runBtn.onclick = async () => {
+          cleanup();
+          await executeRealAnalysis(files, modality);
+        };
+
+      } catch (err) {
+        overlay.hidden = true;
+        f.destroy();
+
+        const d = (err && err.detail) || {};
+        const why = d.reason || d.message || err.message || "upload validation failed";
+        // The #1 upload mistake is selecting a single sequence. A lone 3-D volume can
+        // never form a complete BraTS study (FLAIR + T1 + T1ce + T2), and the raw
+        // validator message doesn't say what to do about it. Turn it into an
+        // instruction. A genuine single 4-D NIfTI still succeeds, so this only fires
+        // for the incomplete-study case.
+        if (files.length === 1 && /four sequences|4-?D|3-?D file/i.test(why)) {
+          toast("Brain MRI needs all four sequences. Select FLAIR, T1, T1ce and T2 together (Ctrl/Cmd-click), or use Upload Folder — one 3-D file on its own can't be analysed.");
+        } else {
+          toast("Preview generation failed: " + why);
+        }
+      } finally {
+        $("input-file-xray").value = "";
+        $("input-file-mri").value = "";
+        $("input-folder-mri").value = "";
+      }
+      return;
+    }
+
+    // Default flow for X-ray or other modalities
+    await executeRealAnalysis(files, modality);
+  }
+
+  async function executeRealAnalysis(files, modality) {
+    const isMultiple = files.length > 1;
+    const firstFile = files[0];
     const overlay = $("case-forming");
     const txt = $("forming-text");
     const prev = $("forming-preview");
     overlay.hidden = false;
     txt.innerHTML = "";
+    
     let prevUrl = null;
-    if (file.type && file.type.startsWith("image/")) {
-      prevUrl = URL.createObjectURL(file);
+    if (!isMultiple && firstFile && firstFile.type && firstFile.type.startsWith("image/")) {
+      prevUrl = URL.createObjectURL(firstFile);
       prev.src = prevUrl; prev.hidden = false;
     } else { prev.hidden = true; }
     
@@ -666,15 +952,14 @@ window.CONSOLE = (() => {
     f.start();
     
     const mriStages = [
-      "receiving brain scan …",
-      "MRI standardisation gate — voxel spacing · RAS orientation",
-      "MRI foundation layer preparing volume",
-      "segmenting brain regions",
-      "identifying MR pulse sequences",
-      "running calibrated diagnostic model",
-      "conformal prediction sets fitting",
-      "rendering saliency maps",
-      "grounding radiological report",
+      "Uploading…",
+      "Verifying MRI sequences…",
+      "Reading NIfTI volumes…",
+      "Checking affine consistency…",
+      "Checking voxel spacing…",
+      "Preparing multimodal tensor…",
+      "Running AI inference…",
+      "Generating report…",
     ];
     const xrayStages = [
       "receiving radiograph …",
@@ -699,7 +984,15 @@ window.CONSOLE = (() => {
     })();
     try {
       const fd = new FormData();
-      fd.append("file", file);
+      if (files.length > 1 || files[0].filename) {
+        files.forEach(file => {
+          const filename = file.filename || file.name;
+          fd.append("files", file, filename);
+        });
+      } else {
+        fd.append("file", firstFile);
+      }
+      
       const q = modality ? `?declared_modality=${encodeURIComponent(modality)}` : "";
       const d = await api(`/v1/studies/analyze${q}`, {
         method: "POST",
@@ -730,38 +1023,40 @@ window.CONSOLE = (() => {
       const d = (err && err.detail) || {};
       const code = d.error || d.code;
       const is422 = err && err.status === 422;
-      // Each of these is a *deliberate* refusal carrying a named reason, not a
-      // failure. Showing the reason is the whole point: a rejection the user cannot
-      // interpret gets retried until something slips through.
       const REFUSAL = {
         not_a_cxr: "REJECTED — not a chest X-ray",
         modality_conflict: "REJECTED — this is not the modality you selected",
         modality_undetermined: "REJECTED — AURA could not identify this study",
         unsupported_modality: "REJECTED — no engine serves this modality yet",
         unreadable_image: "REJECTED — the study could not be read",
+        study_validation_failed: "REJECTED — validation failed",
       };
-      if (is422 && REFUSAL[code]) {
-        const why = d.reason || d.message || "no reason given";
-        txt.innerHTML += `<span class="bad">✕ ${REFUSAL[code]}</span>\n<span class="bad">  ${why}</span>\n`;
+      
+      const why = d.reason || d.message || err.message || "upload failed";
+      
+      if (is422 && (REFUSAL[code] || code === "study_validation_failed")) {
+        const title = REFUSAL[code] || "REJECTED — validation failed";
+        txt.innerHTML += `<span class="bad">✕ ${title}</span>\n<span class="bad">  ${why}</span>\n`;
         const lines = gateCheckLines(d.checks);
         if (lines) txt.innerHTML += `<span class="dim-meas">gate measurements:\n${lines}</span>\n`;
         if (Array.isArray(d.candidates) && d.candidates.length) {
           const rows = d.candidates.slice(0, 4).map((c) =>
             `  ${String(c.label || c.modality).padEnd(22)} ${Number(c.confidence).toFixed(2)}` +
-            `${c.calibrated ? "" : "  (uncalibrated)"}`).join("\n");
-          txt.innerHTML += `<span class="dim-meas">what AURA considered:\n${rows}</span>\n`;
+            (c.reason ? ` (${c.reason})` : "")
+          ).join("\n");
+          txt.innerHTML += `<span class="dim-meas">modality candidates:\n${rows}</span>\n`;
         }
-        txt.innerHTML += `<span class="bad">  no case was created</span>`;
-        await wait(REDUCED ? 400 : 4200);
-        toast(`upload rejected — ${why}`);
       } else {
-        toast("upload failed — gateway offline or bad file?");
+        txt.innerHTML += `<span class="bad">✕ ${why}</span>\n`;
       }
+      
+      await wait(1800);
       overlay.hidden = true; f.destroy();
       renderTelemetry();
     } finally {
       $("input-file-xray").value = "";
       $("input-file-mri").value = "";
+      $("input-folder-mri").value = "";
       const prevEl = $("forming-preview");
       prevEl.hidden = true; prevEl.removeAttribute("src");
       if (prevUrl) URL.revokeObjectURL(prevUrl);

@@ -166,6 +166,9 @@ class FusionResult(BaseModel):
     conflict_distance: float = 0.0             # EMD(VQC, PoE) on the severity axis
     conflict_threshold: float = 0.0            # dynamic τ used for the decision
     fallback_triggered: bool = False           # True when the PoE fallback fired
+    quantum_entanglement: Optional[dict] = None
+    qae_enabled: bool = False
+    qbn_enabled: bool = False
     created_at: datetime = Field(default_factory=_now)
 
 

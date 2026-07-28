@@ -1,0 +1,55 @@
+[
+  {
+    "service": "vision",
+    "name": "vision-cxr-densenet121-production",
+    "version": "1.0",
+    "status": "active",
+    "metrics": {
+      "note": "DenseNet-121 MIMIC-CXR, per-finding Platt"
+    }
+  },
+  {
+    "service": "fusion",
+    "name": "fusion-poe-v1",
+    "version": "1.0",
+    "status": "active",
+    "backend": "classical",
+    "role": "served",
+    "metrics": {
+      "accuracy": 0.4798,
+      "nll": 1.3416,
+      "ece": 0.0435,
+      "temperature": 0.4574
+    },
+    "train_data": "mimic-cxr"
+  },
+  {
+    "service": "fusion",
+    "name": "fusion-vqc-v1",
+    "version": "1.0",
+    "status": "research",
+    "backend": "quantum",
+    "role": "selectable (AURA_FUSION_BACKEND=quantum)",
+    "metrics": {
+      "accuracy": 0.5202,
+      "nll": 1.3485,
+      "ece": 0.0605,
+      "temperature": 0.9868
+    },
+    "train_data": "mimic-cxr"
+  },
+  {
+    "service": "safety",
+    "name": "safety-v1",
+    "version": "1.0",
+    "status": "active",
+    "calibration": {
+      "temperature": 0.4574,
+      "conformal_qhat": 0.91,
+      "coverage": 0.9,
+      "ece": 0.0743,
+      "fit_on_backend": "classical",
+      "train_data": "mimic-cxr"
+    }
+  }
+]

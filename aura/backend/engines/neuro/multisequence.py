@@ -81,6 +81,84 @@ class ChannelOrderRejected(RuntimeError):
         self.evidence = evidence
 
 
+def parse_nifti_header(source: Path | str | bytes) -> tuple[int, ...] | None:
+    """Parse NIfTI-1 or NIfTI-2 header to extract image shape.
+    
+    Supports gzipped and raw NIfTI files, as well as direct byte payloads.
+    """
+    import struct
+    import gzip
+
+    try:
+        if isinstance(source, bytes):
+            payload = source
+            if payload.startswith(b"\x1f\x8b"):
+                try:
+                    payload = gzip.decompress(payload)
+                except Exception:
+                    return None
+            header = payload[:540]
+        else:
+            path = Path(source)
+            if not path.exists():
+                return None
+            is_gz = path.suffix.lower() == ".gz" or path.name.lower().endswith(".nii.gz")
+            if is_gz:
+                try:
+                    with gzip.open(path, "rb") as f:
+                        header = f.read(540)
+                except Exception:
+                    try:
+                        with open(path, "rb") as f:
+                            header = f.read(540)
+                    except Exception:
+                        return None
+            else:
+                try:
+                    with open(path, "rb") as f:
+                        header = f.read(540)
+                except Exception:
+                    return None
+                        
+        if len(header) < 348:
+            return None
+            
+        sizeof_hdr_le = struct.unpack("<i", header[:4])[0]
+        sizeof_hdr_be = struct.unpack(">i", header[:4])[0]
+        
+        endian = None
+        if sizeof_hdr_le == 348:
+            endian = "<"
+        elif sizeof_hdr_be == 348:
+            endian = ">"
+            
+        if endian:
+            dim = struct.unpack(f"{endian}8h", header[40:56])
+            ndim = dim[0]
+            if 0 < ndim <= 7:
+                return tuple(int(x) for x in dim[1:1+ndim])
+                
+        if len(header) >= 12:
+            magic2 = header[4:12]
+            if magic2 in (b"n+2\x00\r\n\x1a\n", b"ni2\x00\r\n\x1a\n"):
+                sizeof_hdr2_le = struct.unpack("<i", header[:4])[0]
+                sizeof_hdr2_be = struct.unpack(">i", header[:4])[0]
+                endian2 = None
+                if sizeof_hdr2_le == 540:
+                    endian2 = "<"
+                elif sizeof_hdr2_be == 540:
+                    endian2 = ">"
+                if endian2:
+                    if len(header) >= 80:
+                        dim = struct.unpack(f"{endian2}8q", header[16:80])
+                        ndim = dim[0]
+                        if 0 < ndim <= 7:
+                            return tuple(int(x) for x in dim[1:1+ndim])
+    except Exception:
+        pass
+    return None
+
+
 def looks_multisequence(path: Path, expected_channels: int) -> bool:
     """True when ``path`` is a NIfTI whose 4th axis has ``expected_channels`` entries."""
     try:
@@ -89,7 +167,10 @@ def looks_multisequence(path: Path, expected_channels: int) -> bool:
         image = nib.load(str(path))
         shape = image.shape
     except Exception:
-        return False
+        # Fallback to direct header parsing if nibabel is absent or fails
+        shape = parse_nifti_header(path)
+        if shape is None:
+            return False
     return len(shape) == 4 and shape[3] == expected_channels
 
 
@@ -100,7 +181,12 @@ def load_multisequence(path: Path, sequence_keys: Sequence[str],
     Raises:
         ChannelOrderRejected: the pixels contradict the assumed order.
     """
-    import nibabel as nib
+    try:
+        import nibabel as nib
+    except ImportError as e:
+        raise RuntimeError(
+            "The 'nibabel' library is required to load multi-sequence NIfTI studies but it is not installed."
+        ) from e
 
     image = nib.load(str(path))
     data = np.asarray(image.dataobj, dtype=np.float32)

@@ -14,7 +14,6 @@ from typing import Any, Sequence
 import numpy as np
 
 from backend.engines.neuro.multisequence import MultiSequenceStudy
-from backend.vision.brain.dataset import fit_to_grid, normalize_slice
 from backend.vision.brain.types import ModalitySpec, TumorRegion
 
 UNAVAILABLE = "Unable to compute from current MRI study."
@@ -40,7 +39,7 @@ def build_neuroview_payload(
     if prepared is None:
         return _unavailable(case_id, getattr(output, "study_id", ""), UNAVAILABLE)
 
-    volume, source, spacing, brain_mask = prepared
+    volume, source, spacing, brain_mask, keep = prepared
     encoded = _encode_volume(volume)
     if encoded is None:
         return _unavailable(
@@ -54,15 +53,52 @@ def build_neuroview_payload(
     insight = compute_neuroinsight(study, output)
     insight_payload = {k: v for k, v in insight.items() if k != "labeled_mask"}
 
-    masks = _segmentation_layers(output, volume.shape, brain_mask)
-    if insight.get("status") == "available" and "labeled_mask" in insight:
+    # Reconstruct segmentations back to original volume grid
+    seg = getattr(output, "segmentation", None)
+    if seg is not None and keep is not None:
+        seg = np.asarray(seg)
+        if seg.ndim == 3 and seg.shape[0] == len(keep):
+            full_seg = _reconstruct_segmentation(seg, keep, volume.shape)
+            
+            masks = [
+                _mask_layer("tumor", "Tumor", full_seg > 0, "#ff5d5d",
+                            "Derived from NeuroMind segmentation classes > 0."),
+                _mask_layer("edema", "Edema", full_seg == TumorRegion.EDEMA.value, "#f4b64e",
+                            "Derived from the NeuroMind edema segmentation class."),
+                _mask_layer(
+                    "necrosis",
+                    "Necrosis",
+                    full_seg == TumorRegion.NECROTIC_CORE.value,
+                    "#8b7cf7",
+                    "Derived from the NeuroMind necrotic/non-enhancing core segmentation class.",
+                ),
+            ]
+            if brain_mask is None or brain_mask.shape != volume.shape:
+                masks.append(_unavailable_layer("healthy_tissue"))
+            else:
+                masks.append(_mask_layer(
+                    "healthy_tissue",
+                    "Healthy tissue",
+                    brain_mask & (full_seg == TumorRegion.BACKGROUND.value),
+                    "#4be1c3",
+                    "Derived from an existing brain mask minus NeuroMind tumor segmentation.",
+                ))
+        else:
+            masks = [_unavailable_layer("tumor"), _unavailable_layer("edema"),
+                     _unavailable_layer("necrosis"), _unavailable_layer("healthy_tissue")]
+    else:
+        masks = [_unavailable_layer("tumor"), _unavailable_layer("edema"),
+                 _unavailable_layer("necrosis"), _unavailable_layer("healthy_tissue")]
+
+    # Reconstruct connected component labels layer
+    if insight.get("status") == "available" and "labeled_mask" in insight and keep is not None:
         labeled_mask = insight["labeled_mask"]
-        aligned_labels = np.transpose(labeled_mask.astype(np.uint8), (1, 2, 0))
-        if aligned_labels.shape == volume.shape:
+        if labeled_mask.ndim == 3 and labeled_mask.shape[0] == len(keep):
+            reconstructed_labels = _reconstruct_segmentation(labeled_mask, keep, volume.shape)
             masks.append(_labeled_layer(
                 "lesion_labels",
                 "Lesion Labels",
-                aligned_labels,
+                reconstructed_labels,
                 "Derived from AURA NeuroInsight connected components."
             ))
         else:
@@ -134,59 +170,64 @@ def _unavailable(case_id: str, study_id: str, message: str) -> dict[str, Any]:
     }
 
 
+def _reconstruct_segmentation(seg: np.ndarray, keep: np.ndarray, target_shape: tuple[int, int, int]) -> np.ndarray:
+    """Map the resized/cropped segmentation slices back to the original volume grid."""
+    H, W, Z = target_shape
+    full_seg = np.zeros((H, W, Z), dtype=np.uint8)
+    
+    for i, z in enumerate(keep):
+        slice_2d = seg[i]
+        
+        target_h, target_w = H, W
+        height, width = slice_2d.shape
+        
+        if target_h > height:
+            pad_h = target_h - height
+            before_h = pad_h // 2
+            slice_2d = np.pad(slice_2d, ((before_h, pad_h - before_h), (0, 0)))
+        elif target_h < height:
+            offset_h = (height - target_h) // 2
+            slice_2d = slice_2d[offset_h:offset_h + target_h, :]
+            
+        if target_w > width:
+            pad_w = target_w - width
+            before_w = pad_w // 2
+            slice_2d = np.pad(slice_2d, ((0, 0), (before_w, pad_w - before_w)))
+        elif target_w < width:
+            offset_w = (width - target_w) // 2
+            slice_2d = slice_2d[:, offset_w:offset_w + target_w]
+            
+        full_seg[:, :, int(z)] = slice_2d
+        
+    return full_seg
+
+
 def _model_grid_volume(
     *,
     study: Any,
     output: Any,
     modalities: Sequence[ModalitySpec],
     min_brain_fraction: float,
-) -> tuple[np.ndarray, dict[str, Any], tuple[float, float, float] | None, np.ndarray | None] | None:
+) -> tuple[np.ndarray, dict[str, Any], tuple[float, float, float] | None, np.ndarray | None, np.ndarray] | None:
     volumes, source, spacing, brain_mask = _assemble_source_volume(study, output, modalities)
     if volumes is None:
         return None
 
+    # Calculate slices kept by model inference based on min_brain_fraction
     brain = np.any(volumes > 0, axis=0)
     per_slice = brain.reshape(-1, brain.shape[2]).mean(axis=0)
     keep = np.flatnonzero(per_slice >= float(min_brain_fraction))
     if keep.size == 0:
         keep = np.arange(volumes.shape[3])
 
-    input_size = tuple(getattr(output.processing, "input_size", ()) or ())
-    if len(input_size) != 2 or input_size[0] <= 0 or input_size[1] <= 0:
-        seg = getattr(output, "segmentation", None)
-        if seg is None or np.asarray(seg).ndim != 3:
-            return None
-        input_size = tuple(int(v) for v in np.asarray(seg).shape[1:3])
-
     selected_channel = int(source["channel_index"])
-    planes: list[np.ndarray] = []
-    mask_planes: list[np.ndarray] = []
-    for z in keep:
-        z_int = int(z)
-        slice_channels = np.ascontiguousarray(volumes[..., z_int], dtype=np.float32)
-        normalised = normalize_slice(slice_channels, slice_channels.max(axis=0) > 0)
-        fitted, _ = fit_to_grid(
-            normalised,
-            np.zeros(slice_channels.shape[1:], dtype=np.uint8),
-            input_size,
-        )
-        planes.append(np.asarray(fitted[selected_channel], dtype=np.float32))
+    # Return the raw original channel volume (H, W, Z)
+    channel_volume = volumes[selected_channel]
+    
+    # Ensure there are no NaNs/Infs
+    channel_volume = np.nan_to_num(channel_volume, nan=0.0, posinf=0.0, neginf=0.0)
 
-        if brain_mask is not None:
-            dummy = np.zeros((1, brain_mask.shape[0], brain_mask.shape[1]), dtype=np.float32)
-            _, fitted_mask = fit_to_grid(
-                dummy,
-                np.asarray(brain_mask[:, :, z_int], dtype=np.uint8),
-                input_size,
-            )
-            mask_planes.append(fitted_mask.astype(bool))
-
-    if not planes:
-        return None
-
-    volume = np.stack(planes, axis=2).astype(np.float32)
-    fitted_brain = np.stack(mask_planes, axis=2) if mask_planes else None
-    return volume, source, spacing, fitted_brain
+    return channel_volume, source, spacing, brain_mask, keep
 
 
 def _assemble_source_volume(
@@ -295,47 +336,6 @@ def _encode_volume(volume: np.ndarray) -> dict[str, Any] | None:
             "window_level_supported": True,
         },
     }
-
-
-def _segmentation_layers(
-    output: Any,
-    volume_shape: tuple[int, int, int],
-    brain_mask: np.ndarray | None,
-) -> list[dict[str, Any]]:
-    seg = getattr(output, "segmentation", None)
-    if seg is None:
-        return [_unavailable_layer("tumor"), _unavailable_layer("edema"),
-                _unavailable_layer("necrosis"), _unavailable_layer("healthy_tissue")]
-    seg = np.asarray(seg)
-    if seg.ndim != 3 or seg.shape[0] != volume_shape[2] or tuple(seg.shape[1:]) != volume_shape[:2]:
-        return [_unavailable_layer("tumor"), _unavailable_layer("edema"),
-                _unavailable_layer("necrosis"), _unavailable_layer("healthy_tissue")]
-
-    aligned = np.transpose(seg.astype(np.uint8), (1, 2, 0))
-    layers = [
-        _mask_layer("tumor", "Tumor", aligned > 0, "#ff5d5d",
-                    "Derived from NeuroMind segmentation classes > 0."),
-        _mask_layer("edema", "Edema", aligned == TumorRegion.EDEMA.value, "#f4b64e",
-                    "Derived from the NeuroMind edema segmentation class."),
-        _mask_layer(
-            "necrosis",
-            "Necrosis",
-            aligned == TumorRegion.NECROTIC_CORE.value,
-            "#8b7cf7",
-            "Derived from the NeuroMind necrotic/non-enhancing core segmentation class.",
-        ),
-    ]
-    if brain_mask is None or brain_mask.shape != volume_shape:
-        layers.append(_unavailable_layer("healthy_tissue"))
-    else:
-        layers.append(_mask_layer(
-            "healthy_tissue",
-            "Healthy tissue",
-            brain_mask & (aligned == TumorRegion.BACKGROUND.value),
-            "#4be1c3",
-            "Derived from an existing brain mask minus NeuroMind tumor segmentation.",
-        ))
-    return layers
 
 
 def _mask_layer(

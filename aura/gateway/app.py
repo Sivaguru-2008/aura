@@ -297,7 +297,7 @@ async def upload_study(file: UploadFile = File(...)):
     """
     import tempfile
     import os
-    from gateway.security import validate_upload_name, read_capped
+    from gateway.security import validate_upload_name, read_capped, validate_mri_content
 
     # Type allowlist (extension + declared MIME) and a hard size cap enforced while
     # streaming, so a hostile upload can neither smuggle a non-image type nor
@@ -305,6 +305,7 @@ async def upload_study(file: UploadFile = File(...)):
     validate_upload_name(file.filename, file.content_type)
     max_bytes = int(get_settings().max_upload_mb * 1024 * 1024)
     payload = await read_capped(file, max_bytes)
+    validate_mri_content(payload, file.filename)
 
     suffix = Path(file.filename or "upload").suffix
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
@@ -377,11 +378,12 @@ async def run_agent_study(
     """
     import tempfile
     import os
-    from gateway.security import validate_upload_name, read_capped
+    from gateway.security import validate_upload_name, read_capped, validate_mri_content
 
     validate_upload_name(file.filename, file.content_type)
     max_bytes = int(get_settings().max_upload_mb * 1024 * 1024)
     payload = await read_capped(file, max_bytes)
+    validate_mri_content(payload, file.filename)
 
     suffix = Path(file.filename or "upload").suffix
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:

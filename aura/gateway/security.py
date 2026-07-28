@@ -35,11 +35,13 @@ from common.config import get_settings
 
 # Accepted upload types — layered in front of the content-based xray_gate. DICOM
 # often has no extension, so the empty suffix is permitted and content-sniffed.
-_ALLOWED_SUFFIXES = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".dcm", ".dicom", ".zip", ""}
+_ALLOWED_SUFFIXES = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".dcm", ".dicom", ".zip", ".nii", ".gz", ""}
 _ALLOWED_CONTENT_TYPES = {
     "image/png", "image/jpeg", "image/tiff", "application/dicom",
     "application/zip", "application/x-zip-compressed",
     "application/octet-stream", "", None,
+    "application/x-gzip", "application/gzip",
+    "application/x-nifti", "application/nifti", "application/nii",
 }
 
 
@@ -143,3 +145,183 @@ async def read_capped(file, max_bytes: int) -> bytes:
                                       "reason": f"upload exceeds {max_bytes} bytes"})
         chunks.append(chunk)
     return b"".join(chunks)
+
+
+def parse_nifti_header(source: Path | str | bytes) -> tuple[int, ...] | None:
+    """Parse NIfTI-1 or NIfTI-2 header to extract image shape.
+    
+    Supports gzipped and raw NIfTI files, as well as direct byte payloads.
+    """
+    import struct
+    import gzip
+
+    try:
+        if isinstance(source, bytes):
+            payload = source
+            if payload.startswith(b"\x1f\x8b"):
+                try:
+                    payload = gzip.decompress(payload)
+                except Exception:
+                    return None
+            header = payload[:540]
+        else:
+            path = Path(source)
+            if not path.exists():
+                return None
+            is_gz = path.suffix.lower() == ".gz" or path.name.lower().endswith(".nii.gz")
+            if is_gz:
+                try:
+                    with gzip.open(path, "rb") as f:
+                        header = f.read(540)
+                except Exception:
+                    try:
+                        with open(path, "rb") as f:
+                            header = f.read(540)
+                    except Exception:
+                        return None
+            else:
+                try:
+                    with open(path, "rb") as f:
+                        header = f.read(540)
+                except Exception:
+                    return None
+                        
+        if len(header) < 348:
+            return None
+            
+        sizeof_hdr_le = struct.unpack("<i", header[:4])[0]
+        sizeof_hdr_be = struct.unpack(">i", header[:4])[0]
+        
+        endian = None
+        if sizeof_hdr_le == 348:
+            endian = "<"
+        elif sizeof_hdr_be == 348:
+            endian = ">"
+            
+        if endian:
+            dim = struct.unpack(f"{endian}8h", header[40:56])
+            ndim = dim[0]
+            if 0 < ndim <= 7:
+                return tuple(int(x) for x in dim[1:1+ndim])
+                
+        if len(header) >= 12:
+            magic2 = header[4:12]
+            if magic2 in (b"n+2\x00\r\n\x1a\n", b"ni2\x00\r\n\x1a\n"):
+                sizeof_hdr2_le = struct.unpack("<i", header[:4])[0]
+                sizeof_hdr2_be = struct.unpack(">i", header[:4])[0]
+                endian2 = None
+                if sizeof_hdr2_le == 540:
+                    endian2 = "<"
+                elif sizeof_hdr2_be == 540:
+                    endian2 = ">"
+                if endian2:
+                    if len(header) >= 80:
+                        dim = struct.unpack(f"{endian2}8q", header[16:80])
+                        ndim = dim[0]
+                        if 0 < ndim <= 7:
+                            return tuple(int(x) for x in dim[1:1+ndim])
+    except Exception:
+        pass
+    return None
+
+
+def validate_mri_content(payload: bytes, filename: str | None) -> None:
+    """Perform content-based signature and integrity checks on MRI/NIfTI uploads.
+    
+    Validates that:
+    - .gz / .nii.gz files are valid gzip archives that decompress into valid NIfTI volumes.
+    - .nii files are valid NIfTI volumes.
+    - Raises HTTPException(422, ...) on validation failures.
+    """
+    import tempfile
+    import gzip
+    
+    filename_lower = filename.lower() if filename else ""
+    is_nii = filename_lower.endswith(".nii")
+    is_gz = filename_lower.endswith(".nii.gz") or filename_lower.endswith(".gz")
+    
+    if not (is_nii or is_gz):
+        return
+
+    # 1. Inspect file signature (magic bytes check)
+    if is_gz:
+        # Gzip magic is \x1f\x8b
+        if not payload.startswith(b"\x1f\x8b"):
+            raise HTTPException(422, {"error": "study_validation_failed", "reason": "Corrupted MRI archive"})
+        
+        # Test decompression
+        try:
+            decompressed = gzip.decompress(payload)
+        except Exception:
+            raise HTTPException(422, {"error": "study_validation_failed", "reason": "Corrupted MRI archive"})
+            
+        # Inspect decompressed magic bytes for NIfTI
+        if len(decompressed) < 348:
+            raise HTTPException(422, {"error": "study_validation_failed", "reason": "Invalid NIfTI file"})
+            
+        magic_nifti1 = decompressed[344:348]
+        magic_nifti2 = decompressed[4:12]
+        
+        is_nifti1 = magic_nifti1 in (b"n+1\x00", b"ni1\x00", b"n+1\x00\x00", b"ni1\x00\x00")
+        is_nifti2 = magic_nifti2 in (b"n+2\x00\r\n\x1a\n", b"ni2\x00\r\n\x1a\n")
+        
+        if not (is_nifti1 or is_nifti2):
+            raise HTTPException(422, {"error": "study_validation_failed", "reason": "Unsupported MRI format"})
+            
+    elif is_nii:
+        # Inspect magic bytes directly
+        if len(payload) < 348:
+            raise HTTPException(422, {"error": "study_validation_failed", "reason": "Invalid NIfTI file"})
+            
+        magic_nifti1 = payload[344:348]
+        magic_nifti2 = payload[4:12]
+        
+        is_nifti1 = magic_nifti1 in (b"n+1\x00", b"ni1\x00", b"n+1\x00\x00", b"ni1\x00\x00")
+        is_nifti2 = magic_nifti2 in (b"n+2\x00\r\n\x1a\n", b"ni2\x00\r\n\x1a\n")
+        
+        if not (is_nifti1 or is_nifti2):
+            raise HTTPException(422, {"error": "study_validation_failed", "reason": "Unsupported MRI format"})
+
+    # 2. Validate using nibabel if available, otherwise fallback to direct header parsing
+    try:
+        import nibabel as nib
+        from nibabel.filebasedimages import ImageFileError
+        nib_available = True
+    except ImportError:
+        nib_available = False
+
+    if nib_available:
+        suffix = ".nii.gz" if filename_lower.endswith(".nii.gz") else Path(filename_lower).suffix
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+            tmp.write(payload)
+            tmp_path = tmp.name
+
+        try:
+            img = nib.load(tmp_path)
+            if not isinstance(img, (nib.Nifti1Image, nib.Nifti2Image)):
+                raise HTTPException(422, {"error": "study_validation_failed", "reason": "Unsupported MRI format"})
+            shape = img.shape
+            if not shape or len(shape) < 3 or any(s <= 0 for s in shape):
+                raise HTTPException(422, {"error": "study_validation_failed", "reason": "Invalid NIfTI file"})
+        except HTTPException:
+            raise
+        except ImageFileError as exc:
+            msg = str(exc)
+            if "not a gzip file" in msg:
+                raise HTTPException(422, {"error": "study_validation_failed", "reason": "Corrupted MRI archive"})
+            elif "Cannot work out file type" in msg or "Unsupported" in msg:
+                raise HTTPException(422, {"error": "study_validation_failed", "reason": "Unsupported MRI format"})
+            else:
+                raise HTTPException(422, {"error": "study_validation_failed", "reason": "Invalid NIfTI file"})
+        except Exception:
+            raise HTTPException(422, {"error": "study_validation_failed", "reason": "Invalid NIfTI file"})
+        finally:
+            try:
+                Path(tmp_path).unlink()
+            except Exception:
+                pass
+    else:
+        # Fallback security check using direct header parsing when nibabel is absent
+        shape = parse_nifti_header(payload)
+        if shape is None or len(shape) < 3 or any(s <= 0 for s in shape):
+            raise HTTPException(422, {"error": "study_validation_failed", "reason": "Invalid NIfTI file"})

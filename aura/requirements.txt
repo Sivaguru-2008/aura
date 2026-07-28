@@ -31,3 +31,6 @@ pytest>=8.0
 #   opencv-python-headless
 #   pydicom>=2.4          # DICOM intake
 #   tensorboard>=2.15     # training logs
+
+# --- MRI dependency ---
+nibabel>=5.2.0

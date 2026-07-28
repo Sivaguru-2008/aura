@@ -20,17 +20,18 @@ window.NEUROVIEW = (() => {
     if (state.caseId === caseId && state.payload) return;
     state.caseId = caseId;
     state.payload = null;
+    state.bundle = bundle;
     $("nv-status").textContent = "loading NeuroView";
     try {
       const payload = await FX.api(`/v1/cases/${caseId}/neuroview`);
       state.payload = payload;
-      render(payload);
+      render(payload, bundle);
     } catch {
       unavailable("Unable to compute from current MRI study.");
     }
   }
 
-  function render(payload) {
+  function render(payload, bundle) {
     if (!payload || payload.status !== "available" || !payload.volume) {
       unavailable(payload?.message || "Unable to compute from current MRI study.");
       return;
@@ -38,6 +39,7 @@ window.NEUROVIEW = (() => {
     $("nv-status").textContent = `${payload.source?.sequence_label || "MRI"} volume`;
     $("nv-meta").textContent = [
       payload.metadata?.spacing_mm ? `spacing ${payload.metadata.spacing_mm.map((v) => Number(v).toFixed(3)).join(" x ")} mm` : "spacing n/a",
+      payload.volume?.dims ? `dimensions ${payload.volume.dims.join(" x ")}` : "dims n/a",
       `model ${payload.metadata?.model_version || NOT_AVAILABLE}`,
     ].join(" | ");
     state.layers = new Map((payload.layers || []).map((l) => [l.key, decodeLayer(l)]));
@@ -45,7 +47,7 @@ window.NEUROVIEW = (() => {
     buildSliceControls(payload);
     bindPrimaryControls(payload);
     bindCanvasClicks(payload);
-    renderNeuroInsight(payload.neuroinsight, payload);
+    renderNeuroInsight(payload.neuroinsight, payload, bundle);
     renderSlices();
     renderVtk(payload).catch(() => {
       $("nv-status").textContent = "GPU renderer unavailable";
@@ -235,12 +237,13 @@ window.NEUROVIEW = (() => {
     const layerAlpha = Number($("nv-layer-opacity").value) / 100;
 
     for (let row = 0; row < h; row++) {
+      const actualRow = h - 1 - row; // flip vertically so superior/anterior is up!
       for (let col = 0; col < w; col++) {
         const voxel = plane === "axial"
-          ? idx(col, row, index, xDim, yDim)
+          ? idx(col, actualRow, index, xDim, yDim)
           : plane === "coronal"
-            ? idx(col, index, row, xDim, yDim)
-            : idx(index, col, row, xDim, yDim);
+            ? idx(col, index, actualRow, xDim, yDim)
+            : idx(index, col, actualRow, xDim, yDim);
         const t = Math.max(0, Math.min(1, (vol.data[voxel] - low) / denom));
         let r = Math.round(t * 255), g = r, b = r;
         for (const layer of state.layers.values()) {
@@ -263,7 +266,32 @@ window.NEUROVIEW = (() => {
     dest.setTransform(dpr, 0, 0, dpr, 0, 0);
     dest.imageSmoothingEnabled = false;
     dest.clearRect(0, 0, rect.width, rect.height);
-    dest.drawImage(off, 0, 0, rect.width, rect.height);
+
+    // Apply physical spacing to prevent stretched/squashed brain!
+    const spacing = state.payload.metadata?.spacing_mm || [1, 1, 1];
+    const sx = Number(spacing[0]);
+    const sy = Number(spacing[1]);
+    const sz = Number(spacing[2]);
+
+    let physicalW, physicalH;
+    if (plane === "axial") {
+      physicalW = w * sx;
+      physicalH = h * sy;
+    } else if (plane === "coronal") {
+      physicalW = w * sx;
+      physicalH = h * sz;
+    } else { // sagittal
+      physicalW = w * sy;
+      physicalH = h * sz;
+    }
+
+    const scale = Math.min(rect.width / physicalW, rect.height / physicalH);
+    const drawW = physicalW * scale;
+    const drawH = physicalH * scale;
+    const dx = (rect.width - drawW) / 2;
+    const dy = (rect.height - drawH) / 2;
+
+    dest.drawImage(off, dx, dy, drawW, drawH);
   }
 
   function idx(x, y, z, xDim, yDim) {
@@ -293,10 +321,24 @@ window.NEUROVIEW = (() => {
   }
 
   /* NeuroInsight Helper Functions (Task 4) */
-  function renderNeuroInsight(insight, payload) {
+  function renderNeuroInsight(insight, payload, bundle) {
     const summaryEl = $("nv-insight-summary");
     const listEl = $("nv-insight-lesions-list");
     if (!summaryEl || !listEl) return;
+
+    // Populate Quantum Subtype QKL panel
+    const subtypePanel = $("nv-quantum-subtype-panel");
+    if (subtypePanel) {
+      const subtypes = bundle && bundle.volumes && bundle.volumes.tumor_subtypes;
+      if (subtypes && subtypes.qkl_enabled) {
+        subtypePanel.style.display = "block";
+        $("qkl-glioma").textContent = `${(subtypes.glioma * 100).toFixed(1)}%`;
+        $("qkl-meningioma").textContent = `${(subtypes.meningioma * 100).toFixed(1)}%`;
+        $("qkl-metastasis").textContent = `${(subtypes.metastasis * 100).toFixed(1)}%`;
+      } else {
+        subtypePanel.style.display = "none";
+      }
+    }
 
     if (!insight || insight.status !== "available" || !insight.lesions || insight.lesions.length === 0) {
       clearNeuroInsight(insight?.message || "Measurement unavailable");
@@ -356,7 +398,9 @@ window.NEUROVIEW = (() => {
     const listEl = $("nv-insight-lesions-list");
     const detailPane = $("nv-insight-detail-pane");
     const noSelectionPane = $("nv-insight-no-selection");
+    const subtypePanel = $("nv-quantum-subtype-panel");
 
+    if (subtypePanel) subtypePanel.style.display = "none";
     if (summaryEl) summaryEl.textContent = "Clinical intelligence unavailable.";
     if (listEl) listEl.innerHTML = `<div style="color: var(--faint); font-style: italic; font-size:12px;">${message || "No data"}</div>`;
     if (detailPane) detailPane.style.display = "none";
@@ -462,10 +506,37 @@ window.NEUROVIEW = (() => {
     const size = plane === "axial" ? [xDim, yDim] : plane === "coronal" ? [xDim, zDim] : [yDim, zDim];
     const [w, h] = size;
     
-    const col = Math.floor((clickX / rect.width) * w);
-    const row = Math.floor((clickY / rect.height) * h);
-    
-    if (col < 0 || col >= w || row < 0 || row >= h) return;
+    const spacing = payload.metadata?.spacing_mm || [1, 1, 1];
+    const sx = Number(spacing[0]);
+    const sy = Number(spacing[1]);
+    const sz = Number(spacing[2]);
+
+    let physicalW, physicalH;
+    if (plane === "axial") {
+      physicalW = w * sx;
+      physicalH = h * sy;
+    } else if (plane === "coronal") {
+      physicalW = w * sx;
+      physicalH = h * sz;
+    } else { // sagittal
+      physicalW = w * sy;
+      physicalH = h * sz;
+    }
+
+    const scale = Math.min(rect.width / physicalW, rect.height / physicalH);
+    const drawW = physicalW * scale;
+    const drawH = physicalH * scale;
+    const dx = (rect.width - drawW) / 2;
+    const dy = (rect.height - drawH) / 2;
+
+    const imageX = clickX - dx;
+    const imageY = clickY - dy;
+
+    if (imageX < 0 || imageX >= drawW || imageY < 0 || imageY >= drawH) return;
+
+    const col = Math.floor((imageX / drawW) * w);
+    const clickedRow = Math.floor((imageY / drawH) * h);
+    const row = h - 1 - clickedRow; // Account for vertical flip
     
     const axialVal = Number($("nv-axial-range").value);
     const coronalVal = Number($("nv-coronal-range").value);

@@ -83,7 +83,8 @@ class ReportEngine:
 
     def compose(self, vision: VisionResult, safety: SafetyAssessment,
                 recommendations: list[Recommendation],
-                reasoning: ReasoningTrace | None = None) -> ReportDraft:
+                reasoning: ReasoningTrace | None = None,
+                fusion: FusionResult | None = None) -> ReportDraft:
         grounding: dict[str, list[str]] = {}
 
         # ---- Findings: only findings the vision engine actually asserted. ----
@@ -101,6 +102,20 @@ class ReportEngine:
                              "effusion, or pneumothorax; cardiomediastinal silhouette "
                              "within normal limits.")
             grounding.setdefault("findings", []).append("no_positive_findings")
+
+        # ---- Quantum register and entanglement details ----
+        if fusion and fusion.quantum_entanglement:
+            q_ent = fusion.quantum_entanglement
+            top_pairs = q_ent.get("top_pairs") or []
+            if top_pairs:
+                pairs_str = "; ".join(
+                    f"{p['channels'][0].replace('_', ' ')} & {p['channels'][1].replace('_', ' ')} (corr: {p['correlation']:.4f})"
+                    for p in top_pairs[:3]
+                )
+                findings_text += (
+                    f" Quantum VQC Register: measurement entropy {q_ent['measurement_entropy_bits']:.4f} bits "
+                    f"(shift: {q_ent['entropy_shift_bits']:.4f} bits). Top entangled evidence channels: {pairs_str}."
+                )
 
         # ---- Impression: the final validated posterior. ----
         # When the clinical reasoner fired on real labs/symptoms/history it produces

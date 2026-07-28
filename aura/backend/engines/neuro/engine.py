@@ -122,10 +122,17 @@ class NeuroMindEngine(AnalysisEngine):
         self._foundation: Any | None = None
         self._vision: Any | None = None
         self._calibrator: Any | None = None
+        self._qkl: Any | None = None
 
     # ------------------------------------------------------------------ #
     # Lazily-constructed collaborators
     # ------------------------------------------------------------------ #
+    def _qkl_classifier(self):
+        from backend.engines.neuro.qkl import QKLClassifier
+        if self._qkl is None:
+            self._qkl = QKLClassifier.load()
+        return self._qkl
+
     def _foundation_pipeline(self):
         from backend.foundation.mri import FoundationConfig, MRIFoundationPipeline
 
@@ -168,6 +175,8 @@ class NeuroMindEngine(AnalysisEngine):
                            if _safe_can_read(r, asset.path)), None)
         
         is_zip = zipfile.is_zipfile(asset.path)
+        is_dir = asset.path.is_dir()
+
         if claimed_by is None and is_zip:
             try:
                 with zipfile.ZipFile(asset.path, 'r') as zf:
@@ -184,6 +193,11 @@ class NeuroMindEngine(AnalysisEngine):
                             break
             except Exception:
                 pass
+
+        if claimed_by is None and is_dir:
+            nii_files = [f for f in asset.path.rglob("*.nii*") if f.is_file() and not f.name.startswith(".")]
+            if nii_files:
+                claimed_by = "NIfTI"
 
         from backend.core.router.router import ModalityRouter
         from backend.core.shared.types import ImagingModality
@@ -245,6 +259,9 @@ class NeuroMindEngine(AnalysisEngine):
                     f"(4D {claimed_by}); channel order will be verified against the "
                     f"pixels before analysis",
                     checks)
+            if is_dir:
+                return ValidationOutcome(
+                    True, f"accepted as a candidate brain MR study directory ({claimed_by})", checks)
             return ValidationOutcome(
                 True, f"accepted as a candidate brain MR study ({claimed_by})", checks)
 
@@ -284,22 +301,77 @@ class NeuroMindEngine(AnalysisEngine):
             return tuple(spec.key for spec in DEFAULT_MODALITIES)
 
     def preprocess(self, asset: ImageAsset) -> PreparedStudy:
-        """Standardise the study through the MRI Foundation Layer.
-
-        A 4D multi-sequence NIfTI takes a separate route: the foundation layer's
-        single-series path would collapse its channel axis and hand the network one
-        sequence, which is the condition the engine abstains on.
-        """
+        """Standardise the study through the MRI Foundation Layer."""
+        from backend.foundation.mri.intake_manager import MRIIntakeManager
+        from backend.foundation.mri.errors import StudyValidationError
+        from backend.engines.neuro.multisequence import looks_multisequence
         import zipfile
         import shutil
         import tempfile
-        from backend.foundation.mri.errors import MRIFoundationError, StudyValidationError
-        from backend.foundation.mri.types import SequenceType
 
-        keys = self._sequence_keys()
-        
-        # Check if asset is a ZIP file (supports directory uploads over HTTP)
+        # Check format/nature of the upload
         is_zip = zipfile.is_zipfile(asset.path)
+        is_dir = asset.path.is_dir()
+        
+        # Determine if we should treat it as a multi-sequence study upload
+        is_multisequence = False
+        
+        if is_zip:
+            temp_inspect = Path(tempfile.mkdtemp(prefix="aura-inspect-"))
+            try:
+                with zipfile.ZipFile(asset.path, 'r') as zf:
+                    zf.extractall(temp_inspect)
+                nii_files = [f for f in temp_inspect.rglob("*.nii*") if f.is_file() and not f.name.startswith(".")]
+                if len(nii_files) > 1 or (len(nii_files) == 1 and looks_multisequence(nii_files[0], 4)):
+                    is_multisequence = True
+            except Exception:
+                pass
+            finally:
+                shutil.rmtree(temp_inspect)
+        elif is_dir:
+            nii_files = [f for f in asset.path.rglob("*.nii*") if f.is_file() and not f.name.startswith(".")]
+            if len(nii_files) > 1 or (len(nii_files) == 1 and looks_multisequence(nii_files[0], 4)):
+                is_multisequence = True
+        else:
+            # Single file
+            if looks_multisequence(asset.path, 4):
+                is_multisequence = True
+
+        if is_multisequence:
+            manager = MRIIntakeManager()
+            try:
+                study = manager.process(asset.path)
+            except StudyValidationError:
+                raise
+            except Exception as exc:
+                raise StudyValidationError(
+                    f"Validation failed for MR study: {exc}",
+                    detail={"filename": asset.original_filename}
+                ) from exc
+
+            index = self._store.count() + 1 if self._store else 1
+            is_4d = "4D" in study.order_source or study.order_source == "load_multisequence"
+            source_format = "nifti-4d" if is_4d else "folder/zip stacked"
+            
+            return PreparedStudy(
+                study_id=f"STU-MR-{asset.sha256[:12]}",
+                modality=ImagingModality.BRAIN_MRI,
+                payload=study,
+                metadata={
+                    "case_id": f"CASE-MR-{index}",
+                    "sha256": asset.sha256,
+                    "foundation": {
+                        "source_format": source_format,
+                        "series_count": len(study.sequence_keys),
+                        "sequences_identified": list(study.sequence_keys),
+                        "spacing_mm": list(study.spacing_mm or ()),
+                        "channel_order_source": study.order_source,
+                        "channel_order_check": study.order_endorsement,
+                    }
+                },
+            )
+        
+        # Fallback to single-series foundation pipeline (keeps existing tests passing!)
         temp_dir_path = None
         study_path = asset.path
 
@@ -310,9 +382,8 @@ class NeuroMindEngine(AnalysisEngine):
             study_path = temp_dir_path
 
         try:
-            if looks_multisequence(study_path, len(keys)):
-                return self._preprocess_multisequence(asset, study_path, keys)
-
+            from backend.foundation.mri.errors import MRIFoundationError
+            from backend.core.shared.errors import UnreadableImage
             try:
                 study = self._foundation_pipeline().run(
                     study_path,
@@ -345,36 +416,6 @@ class NeuroMindEngine(AnalysisEngine):
                     shutil.rmtree(temp_dir_path)
                 except Exception:
                     pass
-
-    def _preprocess_multisequence(self, asset: ImageAsset, study_path: Path,
-                                  keys: tuple[str, ...]) -> PreparedStudy:
-        """Load a complete 4D study, verifying its channel order first."""
-        from backend.foundation.mri.errors import StudyValidationError
-        try:
-            study = load_multisequence(study_path, keys)
-        except ChannelOrderRejected as exc:
-            raise StudyValidationError(
-                f"wrong sequence channel ordering in 4D NIfTI: {exc.reason}",
-                detail={"filename": asset.original_filename,
-                        "channel_order_check": exc.evidence},
-            ) from exc
-
-        index = self._store.count() + 1 if self._store else 1
-        return PreparedStudy(
-            study_id=f"STU-MR-{asset.sha256[:12]}",
-            modality=ImagingModality.BRAIN_MRI,
-            payload=study,
-            metadata={"case_id": f"CASE-MR-{index}",
-                      "sha256": asset.sha256,
-                      "foundation": {
-                          "source_format": "nifti-4d",
-                          "series_count": len(keys),
-                          "sequences_identified": list(keys),
-                          "spacing_mm": list(study.spacing_mm or ()),
-                          "channel_order_source": study.order_source,
-                          "channel_order_check": study.order_endorsement,
-                      }},
-        )
 
     @staticmethod
     def _describe(study, asset: ImageAsset) -> dict[str, Any]:
@@ -463,6 +504,15 @@ class NeuroMindEngine(AnalysisEngine):
                 detail={"case_id": case_id, "model": output.model_version})
         presence = calibrator(raw)
 
+        from common.config import get_settings
+        qkl_res = None
+        if get_settings().neuro_qkl_enabled and getattr(output, "features", None) is not None and getattr(output.features, "pooled", None) is not None:
+            try:
+                classifier = self._qkl_classifier()
+                qkl_res = classifier.predict_subtype(output.features.pooled)
+            except Exception as e:
+                log.warning(f"QKL subtype classification failed: {e}")
+
         caveats, abstain_reason, abstain_detail = self._disclosures(output, calibrator)
         bundle = build_case_bundle(
             output,
@@ -475,6 +525,7 @@ class NeuroMindEngine(AnalysisEngine):
             abstain_reason=abstain_reason,
             abstain_detail=abstain_detail,
             clinical_context=prepared.metadata.get("clinical_context"),
+            tumor_subtypes=qkl_res,
         )
         inference_seconds = time.perf_counter() - started
 
@@ -492,23 +543,32 @@ class NeuroMindEngine(AnalysisEngine):
                     self.log.exception("case-created hook failed; case is saved regardless")
             self._audit(case_id, bundle)
 
+        meta_dict = {
+            "inference_time_s": round(inference_seconds, 4),
+            "top_diagnosis": bundle.safety.top.value,
+            "top_probability": round(float(bundle.safety.top_probability), 4),
+            "abstained": bool(bundle.safety.abstained),
+            "fusion_backend": bundle.fusion.backend,
+            "presence_probability_raw": round(float(raw), 4),
+            "presence_probability_calibrated": round(float(presence), 4),
+            "sequences_used": list(getattr(output.processing, "sequences_used", ()) or ()),
+            "sequences_missing": list(getattr(output.processing, "sequences_missing", ()) or ()),
+            "model_version": output.model_version,
+            "state": bundle.state.value,
+        }
+        if qkl_res:
+            meta_dict.update({
+                "tumor_subtype_glioma": round(qkl_res["glioma"], 4),
+                "tumor_subtype_meningioma": round(qkl_res["meningioma"], 4),
+                "tumor_subtype_metastasis": round(qkl_res["metastasis"], 4),
+                "tumor_subtype_qkl_enabled": True,
+            })
+
         return AnalysisResult(
             study_id=prepared.study_id,
             payload=bundle,
             case_id=case_id,
-            metadata={
-                "inference_time_s": round(inference_seconds, 4),
-                "top_diagnosis": bundle.safety.top.value,
-                "top_probability": round(float(bundle.safety.top_probability), 4),
-                "abstained": bool(bundle.safety.abstained),
-                "fusion_backend": bundle.fusion.backend,
-                "presence_probability_raw": round(float(raw), 4),
-                "presence_probability_calibrated": round(float(presence), 4),
-                "sequences_used": list(getattr(output.processing, "sequences_used", ()) or ()),
-                "sequences_missing": list(getattr(output.processing, "sequences_missing", ()) or ()),
-                "model_version": output.model_version,
-                "state": bundle.state.value,
-            },
+            metadata=meta_dict,
         )
 
     def _build_neuroview(self, case_id: str, study, output) -> dict[str, Any]:

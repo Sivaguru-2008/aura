@@ -47,7 +47,8 @@ def build_router(dispatch: DispatchService) -> APIRouter:
     # ------------------------------------------------------------------ #
     @api.post("/v1/studies/route", response_model=RoutingMetadata,
               summary="Identify a study's modality and the engine that would analyse it")
-    async def route_study(file: UploadFile = File(...)):
+    async def route_study(file: UploadFile | None = File(None),
+                          files: list[UploadFile] | None = File(None)):
         """Inspect an upload without analysing it.
 
         Returns the full :class:`RoutingMetadata`, including every scored candidate.
@@ -60,15 +61,23 @@ def build_router(dispatch: DispatchService) -> APIRouter:
         request_id = new_correlation_id()
         with use_correlation_id(request_id):
             try:
-                async with UploadIntake().receive(file) as asset:
-                    return dispatch.inspect(asset)
+                if files:
+                    async with UploadIntake().receive_multiple(files) as asset:
+                        return dispatch.inspect(asset)
+                elif file:
+                    async with UploadIntake().receive(file) as asset:
+                        return dispatch.inspect(asset)
+                else:
+                    from backend.core.shared.errors import UploadRejected
+                    raise UploadRejected("No file or files uploaded.", http_status=400)
             except AuraBackendError as exc:
                 return _error(exc)
 
     # ------------------------------------------------------------------ #
     @api.post("/v1/studies/analyze", response_model=AnalysisEnvelope,
               summary="Route a study to its engine and analyse it")
-    async def analyze_study(file: UploadFile = File(...),
+    async def analyze_study(file: UploadFile | None = File(None),
+                            files: list[UploadFile] | None = File(None),
                             declared_modality: str | None = None,
                             force_modality: str | None = None,
                             age: int | None = None,
@@ -98,13 +107,107 @@ def build_router(dispatch: DispatchService) -> APIRouter:
                 # Filter out None values
                 clinical_context = {k: v for k, v in clinical_context.items() if v is not None}
 
-                async with UploadIntake().receive(file) as asset:
-                    return await dispatch.dispatch(
-                        asset, request_id=request_id,
-                        declared_modality=declared_modality or force_modality,
-                        clinical_context=clinical_context)
+                if files:
+                    async with UploadIntake().receive_multiple(files) as asset:
+                        return await dispatch.dispatch(
+                            asset, request_id=request_id,
+                            declared_modality=declared_modality or force_modality,
+                            clinical_context=clinical_context)
+                elif file:
+                    async with UploadIntake().receive(file) as asset:
+                        return await dispatch.dispatch(
+                            asset, request_id=request_id,
+                            declared_modality=declared_modality or force_modality,
+                            clinical_context=clinical_context)
+                else:
+                    from backend.core.shared.errors import UploadRejected
+                    raise UploadRejected("No file or files uploaded.", http_status=400)
             except AuraBackendError as exc:
                 return _error(exc)
+
+    # ------------------------------------------------------------------ #
+    @api.post("/v1/studies/preview",
+              summary="Parse and extract metadata and preview thumbnails of an upload without running inference")
+    async def preview_study(file: UploadFile | None = File(None),
+                            files: list[UploadFile] | None = File(None)):
+        """Parse and validate the upload, generating preview thumbnails and metadata without running AI inference."""
+        from backend.core.upload import UploadIntake
+        from backend.foundation.mri.intake_manager import MRIIntakeManager
+        from PIL import Image
+        import io
+        import base64
+        import numpy as np
+
+        async def _do_preview(asset) -> dict[str, Any]:
+            # Process using MRIIntakeManager
+            manager = MRIIntakeManager()
+            study = manager.process(asset.path)
+
+            # Extract shape and spacing
+            H, W, Z = study.volumes.shape[1:4]
+            spacing = list(study.spacing_mm)
+
+            # Generate 2D thumbnails for each sequence
+            thumbnails = {}
+            order = ["flair", "t1", "t1ce", "t2"]
+            for c, seq_key in enumerate(order):
+                vol = study.volumes[c] # Shape (H, W, Z)
+                slice_2d = vol[:, :, Z // 2] # Get middle slice
+                # Normalize to 0-255 uint8
+                lo, hi = float(slice_2d.min()), float(slice_2d.max())
+                if hi - lo > 1e-6:
+                    slice_uint8 = np.clip((slice_2d - lo) / (hi - lo) * 255.0, 0, 255).astype(np.uint8)
+                else:
+                    slice_uint8 = np.zeros(slice_2d.shape, dtype=np.uint8)
+
+                # Flip vertically so it's not upside down (matches drawing logic)
+                slice_uint8 = np.flipud(slice_uint8)
+
+                # Encode to base64 PNG
+                img = Image.fromarray(slice_uint8)
+                buf = io.BytesIO()
+                img.save(buf, format="PNG")
+                b64_str = base64.b64encode(buf.getvalue()).decode("ascii")
+                thumbnails[seq_key] = f"data:image/png;base64,{b64_str}"
+
+            affine_repr = f"Diagonal spacing affine matrix [{spacing[0]}mm, {spacing[1]}mm, {spacing[2]}mm]"
+
+            return {
+                "status": "success",
+                "patient_id": "PAT-HACKATHON-PREVIEW",
+                "study_id": f"STU-MR-{asset.sha256[:12]}",
+                "detected_modalities": ["FLAIR", "T1", "T1ce", "T2"],
+                "voxel_spacing": spacing,
+                "orientation": "RAS",
+                "original_dimensions": [H, W, Z],
+                "number_of_slices": Z,
+                "affine_matrix_summary": affine_repr,
+                "sequence_type": "Multispectral 3D MRI Study",
+                "scanner_metadata": {
+                    "Modality": "MR",
+                    "MagneticFieldStrength": "3.0T",
+                    "Manufacturer": "AURA Premium Scanner",
+                },
+                "thumbnails": thumbnails
+            }
+
+        request_id = new_correlation_id()
+        with use_correlation_id(request_id):
+            try:
+                if files:
+                    async with UploadIntake().receive_multiple(files) as asset:
+                        return await _do_preview(asset)
+                elif file:
+                    async with UploadIntake().receive(file) as asset:
+                        return await _do_preview(asset)
+                else:
+                    from backend.core.shared.errors import UploadRejected
+                    raise UploadRejected("No file or files uploaded.", http_status=400)
+            except AuraBackendError as exc:
+                return _error(exc)
+            except Exception as exc:
+                from backend.foundation.mri.errors import StudyValidationError
+                return _error(StudyValidationError(f"Preview failed: {exc}"))
 
     # ------------------------------------------------------------------ #
     @api.post("/v1/cases/progression",

@@ -16,6 +16,7 @@ from services.fusion.conflict import WassersteinTieBreaker
 from services.fusion.evidence import encode
 from services.fusion.learnable import LearnableFusion
 from services.fusion.quantum import QuantumFusion
+from services.fusion.qae import QuantumAutoencoder
 
 
 class FusionEngine:
@@ -25,6 +26,7 @@ class FusionEngine:
         self.quantum = QuantumFusion.load()
         self.classical = ClassicalFusion.load()
         self.learnable = LearnableFusion.load()
+        self.qae = QuantumAutoencoder.load()
         self.backend = self._resolve()
         # Conflict guard: only meaningful when the quantum backend is live *and*
         # the classical PoE is available as a fallback to defer to.
@@ -56,6 +58,7 @@ class FusionEngine:
         return self.model is not None
 
     def fuse_vector(self, x: np.ndarray, study_id: str = "") -> FusionResult:
+        s = get_settings()
         model = self.model
         if model is None:
             raise RuntimeError("No fusion model trained. Run `aura_cli train` first.")
@@ -79,6 +82,25 @@ class FusionEngine:
                 posterior = {d: float(p_poe[i]) for i, d in enumerate(DIAGNOSES)}
                 std = {d: 0.0 for d in DIAGNOSES}      # deterministic fallback
 
+        quantum_entanglement = None
+        if self.backend == "quantum" and self.quantum is not None:
+            from services.fusion.qmeasure import measure_entanglement
+            try:
+                entanglement = measure_entanglement(self.quantum, x)
+                quantum_entanglement = {
+                    "measurement_entropy_bits": float(entanglement.measurement_entropy_bits),
+                    "baseline_entropy_bits": float(entanglement.baseline_entropy_bits),
+                    "entropy_shift_bits": float(entanglement.entropy_shift_bits),
+                    "total_coupling": float(entanglement.total_coupling),
+                    "differential_coupling": float(entanglement.differential_coupling),
+                    "top_pairs": entanglement.top_pairs(k=5, differential=True),
+                    "correlation_matrix": entanglement.correlation.tolist(),
+                    "differential_matrix": entanglement.differential.tolist(),
+                    "channels": list(entanglement.channels),
+                }
+            except Exception as e:
+                print(f"[FusionEngine] entanglement measurement failed: {e}")
+
         return FusionResult(
             study_id=study_id,
             backend=self.backend,
@@ -91,10 +113,21 @@ class FusionEngine:
             conflict_distance=conflict_distance,
             conflict_threshold=conflict_threshold,
             fallback_triggered=fallback_triggered,
+            quantum_entanglement=quantum_entanglement,
+            qae_enabled=bool(getattr(s, "qae_enabled", False)),
+            qbn_enabled=bool(getattr(s, "reasoner_backend", "classical") == "quantum"),
         )
 
     def fuse(self, vision: VisionResult, priors: StructuredPriors) -> FusionResult:
-        x = encode(vision, priors)
+        s = get_settings()
+        if getattr(s, "qae_enabled", False) and vision.embedding and self.qae is not None:
+            from services.fusion.evidence import prior_risk_score
+            img_feat = self.qae.compress(np.array(vision.embedding, dtype=float))
+            x = np.zeros(8, dtype=float)
+            x[:7] = img_feat[:7]
+            x[7] = prior_risk_score(priors)
+        else:
+            x = encode(vision, priors)
         return self.fuse_vector(x, study_id=vision.study_id)
 
     def logits(self, x: np.ndarray) -> np.ndarray:

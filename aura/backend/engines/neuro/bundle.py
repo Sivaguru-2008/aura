@@ -158,6 +158,7 @@ def build_case_bundle(
     abstain_reason: AbstentionReason | None,
     abstain_detail: str | None = None,
     clinical_context: dict | None = None,
+    tumor_subtypes: dict[str, float] | None = None,
 ) -> CaseBundle:
     """Assemble the console bundle from one brain-vision result.
 
@@ -329,16 +330,32 @@ def build_case_bundle(
     )
 
     volumes = _volume_text(output)
+    if tumor_subtypes:
+        volumes["tumor_subtypes"] = tumor_subtypes
+
+    if tumor_subtypes:
+        diff_text = (
+            "Multi-class differential from Quantum Kernel Learning (QKL) classifier:\n"
+            f"  - Glioma: {tumor_subtypes.get('glioma', 0.0)*100:.1f}%\n"
+            f"  - Meningioma: {tumor_subtypes.get('meningioma', 0.0)*100:.1f}%\n"
+            f"  - Metastasis: {tumor_subtypes.get('metastasis', 0.0)*100:.1f}%\n"
+            "This differential is produced by projecting ResU-Net latent features "
+            "into a 6-qubit Hilbert space and evaluating decision boundaries using QKL."
+        )
+    else:
+        diff_text = (
+            "Two-class differential: intracranial tumour tissue present vs absent. "
+            "AURA's brain model is a BraTS segmentation network and has no tumour "
+            "subtype head — glioma, meningioma, metastasis and abscess are not "
+            "distinguished, and no subtype is being asserted."
+        )
+
     report = ReportDraft(
         study_id=study_id,
         findings_text=_findings_text(output, findings, volumes, presence_probability, abstain_reason is not None),
         impression_text=_impression_text(top, presence_probability, caveats, findings, abstained=abstain_reason is not None),
         recommendation_text=_recommendation_text(top, abstain_detail),
-        differential_text=(
-            "Two-class differential: intracranial tumour tissue present vs absent. "
-            "AURA's brain model is a BraTS segmentation network and has no tumour "
-            "subtype head — glioma, meningioma, metastasis and abscess are not "
-            "distinguished, and no subtype is being asserted."),
+        differential_text=diff_text,
         confidence_text=_confidence_text(presence_probability, caveats),
         grounding={
             "findings": [s.finding.value for s in findings],

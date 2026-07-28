@@ -20,7 +20,7 @@ window.LANDING = (() => {
   const STAGES = [
     { key: "VISION",    title: "Vision",            desc: "Reads the study and reports observations — opacity, effusion, nodule — never conclusions. Observations are evidence, not verdicts." },
     { key: "EVIDENCE",  title: "Evidence graph",    desc: "Findings and structured priors become eight calibrated evidence channels. What is absent is recorded as loudly as what is present." },
-    { key: "FUSION",    title: "Quantum fusion",    desc: "An 8-qubit variational circuit angle-encodes the evidence; entangling layers capture interactions a product of experts cannot. A classical Bayesian twin runs beside it." },
+    { key: "FUSION",    title: "Quantum fusion",    desc: "An 8-qubit variational circuit angle-encodes the eight evidence channels, with a classical Bayesian twin beside it as the fallback. Its measurement budget yields typed abstentions — measurement- vs model-limited — that classical inference cannot express. We ablated entanglement head-to-head: it did not beat the product-state baseline, and we say so." },
     { key: "SAFETY",    title: "Safety",            desc: "Deep-ensemble epistemic variance, temperature scaling, conformal sets with a 90% coverage guarantee, OOD energy — and the license to say “I don't know.”" },
     { key: "EXPLAIN",   title: "Explainability",    desc: "Occlusion saliency over the image; Shapley attribution and counterfactuals over every evidence node. Nothing the system believes is opaque." },
     { key: "RECOMMEND", title: "Missing evidence",  desc: "Ranks the next test by expected information gain per unit cost and risk — the question that shrinks the differential fastest." },
