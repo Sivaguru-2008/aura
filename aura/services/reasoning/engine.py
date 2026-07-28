@@ -179,15 +179,10 @@ RULES: list[Rule] = [
     Rule("hypoxia", "labs", "Oxygenation", _r_hypoxia),
 ]
 
+from knowledge.guidelines.templates import GUIDELINE_TEMPLATES
+
 # Imaging findings that intrinsically support each diagnosis (for the differential).
-_FINDING_SUPPORT = {
-    D.PNEUMONIA: [Finding.CONSOLIDATION, Finding.OPACITY],
-    D.HEART_FAILURE: [Finding.CARDIOMEGALY, Finding.EFFUSION],
-    D.COPD: [Finding.HYPERINFLATION],
-    D.MALIGNANCY: [Finding.NODULE],
-    D.PNEUMOTHORAX: [Finding.PNEUMOTHORAX],
-    D.NORMAL: [],
-}
+_FINDING_SUPPORT = {d: t.imaging for d, t in GUIDELINE_TEMPLATES.items()}
 
 
 class ClinicalReasoner:

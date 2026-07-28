@@ -28,7 +28,7 @@ from services.memory import MemoryEngine
 from services.reasoning import ClinicalReasoner
 from services.recommend import RecommendEngine
 from services.report import ReportEngine
-from services.safety import SafetyEngine
+from services.safety import SafetyEngine, ClinicalSafetyController, ClinicalDecisionReadinessEngine
 from services.vision import VisionEngine
 from schemas.clinical import Finding
 
@@ -48,6 +48,8 @@ class Pipeline:
         # classical logits with the quantum temperature (0.46 vs 0.99), silently
         # distorting every served probability, conformal set and abstention decision.
         self.safety = SafetyEngine(backend=self.fusion.backend)
+        self.safety_controller = ClinicalSafetyController(settings=get_settings())
+        self.cdre = ClinicalDecisionReadinessEngine(settings=get_settings())
         self.explain = ExplainEngine()
         self.recommend = RecommendEngine()
         self.reasoner = ClinicalReasoner()
@@ -96,13 +98,35 @@ class Pipeline:
         evidence = to_evidence_items(x, study.priors)
         await self.bus.publish(ev.FUSION_COMPLETED, study_id=study.study_id)
 
+        # Run Clinical Safety Controller check
+        resolved_logits = self.fusion.resolved_logits(x, fusion)
+        safety_output = self.safety_controller.assess(
+            study=study,
+            img=img,
+            x=x,
+            fusion_model=self.fusion.model,
+            resolved_logits=resolved_logits,
+            safety_engine=self.safety
+        )
+        if safety_output.status == "FAILED":
+            from services.safety.controller import ClinicalSafetyException
+            raise ClinicalSafetyException(
+                reason=safety_output.detail or f"Clinical safety check failed: {', '.join(safety_output.failed_checks)}",
+                detail={
+                    "error": "clinical_safety_violation",
+                    "checks": safety_output.scores,
+                    "thresholds": safety_output.thresholds,
+                    "recommendation": safety_output.recommendation,
+                    "reason": safety_output.detail or f"Clinical safety check failed: {', '.join(safety_output.failed_checks)}"
+                }
+            )
+
         # 3) Clinical reasoning — fuse the calibrated imaging posterior with
         # labs/symptoms/history + guideline likelihood ratios, BEFORE safety, so the
         # posterior that safety validates is the *final* one shown to the clinician
         # (audit F10). With no multimodal evidence the reasoner is inert and the
         # adjusted posterior equals the imaging posterior — imaging behaviour is
         # unchanged. The conflict-guard-resolved logits feed this (audit F2).
-        resolved_logits = self.fusion.resolved_logits(x, fusion)
         imaging_probs = self.safety.calibrated_posterior(resolved_logits)
         imaging_prior = {d: float(imaging_probs[i]) for i, d in enumerate(DIAGNOSES)}
         findings_map = {fs.finding: fs.probability for fs in vision.findings}
@@ -131,6 +155,18 @@ class Pipeline:
         # 6) Missing-evidence recommendations
         recommendations = self.recommend.recommend(self.fusion.model, x)
 
+        # Run Clinical Decision Readiness Engine to compile readiness profile (DRP)
+        drp = self.cdre.assess(
+            study=study,
+            img=img,
+            x=x,
+            fusion_engine=self.fusion,
+            reasoning=reasoning,
+            findings_map=findings_map,
+            safety_assessment=safety,
+            vision_engine=self.vision
+        )
+
         # 8) Report (grounded in findings, safety, recommendations, reasoning, and fusion)
         report = self.report.compose(vision, safety, recommendations, reasoning, fusion)
 
@@ -156,6 +192,8 @@ class Pipeline:
             report=report,
             multimodal=study.multimodal,
             ground_truth=study.ground_truth,
+            drp=drp,
+            safety_controller=safety_output,
         )
         await self.bus.publish(ev.CASE_READY, case_id=case_id, study_id=study.study_id,
                                state=state.value)

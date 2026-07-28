@@ -303,6 +303,7 @@ window.CONSOLE = (() => {
       ["evidence", drawEvidence],
       ["posterior", drawPosterior],
       ["safety", drawSafety],
+      ["drp", drawDRP],
       ["recommendations", drawRecs],
       ["report", drawReport],
     ];
@@ -670,6 +671,126 @@ window.CONSOLE = (() => {
       : "CANDIDATE SET — no conformal calibration fitted for this engine, so no coverage is claimed";
     $("conf-chips").innerHTML = (s.conformal_set || [])
       .map((d, i) => `<span class="conf-chip ${s.conformal_set.length > 2 && i > 0 ? "hot" : ""}" style="animation-delay:${i * 0.1}s">${DX_LABEL[d] || d}</span>`).join("");
+  }
+
+  function drawDRP(b) {
+    const sidebar = $("drp-sidebar-panel");
+    if (!sidebar) return;
+
+    // Check if safety controller failed
+    const reportOverlay = $("report-safety-overlay");
+    if (b.safety_controller && b.safety_controller.status === "FAILED") {
+      if (reportOverlay) {
+        reportOverlay.style.display = "flex";
+        $("safety-overlay-msg").textContent = b.safety_controller.detail || "Clinical safety thresholds breached.";
+        
+        let checklistHtml = "<strong>Mitigation Checklist:</strong><ul style='margin-top:5px; padding-left:15px; list-style-type: disc;'>";
+        if (b.safety_controller.failed_checks.includes("DATA_INTEGRITY")) {
+          checklistHtml += "<li>Verify upload aspect ratio and image quality.</li>";
+          checklistHtml += "<li>Ensure all MRI sequences are fully uploaded and complete.</li>";
+        }
+        if (b.safety_controller.failed_checks.includes("OOD")) {
+          checklistHtml += "<li>Perform human verification of input labels.</li>";
+          checklistHtml += "<li>Review clinical history for unusual anomalies.</li>";
+        }
+        if (b.safety_controller.failed_checks.includes("EPISTEMIC")) {
+          checklistHtml += "<li>Consult senior radiologist / repeat scan if uncertainty remains high.</li>";
+        }
+        checklistHtml += "</ul>";
+        $("safety-mitigation-checklist").innerHTML = checklistHtml;
+      }
+      sidebar.style.display = "none";
+      return;
+    } else {
+      if (reportOverlay) reportOverlay.style.display = "none";
+    }
+
+    const drp = b.drp;
+    if (!drp) {
+      sidebar.style.display = "none";
+      return;
+    }
+
+    sidebar.style.display = "block";
+
+    // Update status chip
+    const statusChip = $("drp-status-chip");
+    if (drp.status === "READY") {
+      statusChip.innerHTML = `<span class="flag ok" style="padding: 2px 6px; font-size: 10px;">DECISION READINESS: READY</span>`;
+    } else {
+      statusChip.innerHTML = `<span class="flag abst" style="padding: 2px 6px; font-size: 10px; background: #ff5d5d;">DECISION READINESS: NOT READY</span>`;
+    }
+
+    // Render dimensions
+    const dims = [
+      ["Coverage", drp.coverage],
+      ["Quality", drp.quality],
+      ["Consistency", drp.consistency],
+      ["Robustness", drp.robustness],
+      ["Stability", drp.stability],
+      ["Consensus", drp.consensus]
+    ];
+
+    let barsHtml = "";
+    dims.forEach(([name, val]) => {
+      const pct = (val * 100).toFixed(0);
+      let color = "#4be1c3";
+      if (val < 0.6) color = "#ff5d5d";
+      else if (val < 0.8) color = "#ffd166";
+
+      barsHtml += `
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div style="display: flex; justify-content: space-between; font-size: 10.5px;">
+            <span style="color: var(--faint);">${name}</span>
+            <span style="color: ${color}; font-weight: bold;">${pct}%</span>
+          </div>
+          <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;">
+            <div style="height: 100%; width: ${pct}%; background: ${color}; transition: width 0.6s ease-out;"></div>
+          </div>
+        </div>
+      `;
+    });
+    $("drp-bars").innerHTML = barsHtml;
+
+    // Show limiting factor
+    const limitingDiv = $("drp-limiting");
+    if (drp.status === "NOT_READY") {
+      limitingDiv.style.display = "block";
+      let linkHtml = "";
+      if (drp.limiting_dimension === "coverage" || drp.limiting_dimension === "quality") {
+        linkHtml = `<div style="margin-top: 6px;"><a href="#" onclick="alert('Order request for required test submitted.'); return false;" style="color: #ffd166; text-decoration: underline; font-weight: bold;">Order Required Test &rarr;</a></div>`;
+      }
+      limitingDiv.innerHTML = `
+        <div style="color: #ff5d5d; font-weight: bold; font-size: 11px;">LIMITING FACTOR:</div>
+        <div style="color: #fff; font-size: 11px; margin-top: 2px;">${drp.limiting_factor}</div>
+        ${linkHtml}
+      `;
+    } else {
+      limitingDiv.style.display = "none";
+    }
+
+    // Render EDP
+    const edpPanel = $("edp-panel");
+    const edpList = $("edp-list");
+    if (drp.evidence_dependency_profile && Object.keys(drp.evidence_dependency_profile).length > 0) {
+      edpPanel.style.display = "block";
+      let edpHtml = "";
+      Object.entries(drp.evidence_dependency_profile).forEach(([finding, w]) => {
+        const obs = w.observed;
+        const clin = w.clinical;
+        const label = EV_LABEL[finding] || finding;
+
+        edpHtml += `
+          <div style="display: flex; justify-content: space-between; font-size: 10.5px; border-bottom: 1px dashed rgba(255,255,255,0.03); padding-bottom: 2px;">
+            <span style="color: #fff; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; max-width: 110px;" title="${label}">${label}</span>
+            <span style="font-size: 9.5px; color: var(--faint);">obs: <b style="color: #8b7cf7;">${obs.toFixed(2)}</b> / clin: <b>${clin.toFixed(2)}</b></span>
+          </div>
+        `;
+      });
+      edpList.innerHTML = edpHtml;
+    } else {
+      edpPanel.style.display = "none";
+    }
   }
 
   /* ================= recommendations ================= */
@@ -1050,7 +1171,23 @@ window.CONSOLE = (() => {
       
       const why = d.reason || d.message || err.message || "upload failed";
       
-      if (is422 && (REFUSAL[code] || code === "study_validation_failed")) {
+      if (code === "clinical_safety_violation") {
+        txt.innerHTML += `<span class="bad">✕ SAFETY BREACH DETECTED</span>\n<span class="bad">  ${why}</span>\n`;
+        const reportOverlay = $("report-safety-overlay");
+        if (reportOverlay) {
+          reportOverlay.style.display = "flex";
+          $("safety-overlay-msg").textContent = why;
+          
+          let checklistHtml = "<strong>Mitigation Checklist:</strong><ul style='margin-top:5px; padding-left:15px; list-style-type: disc;'>";
+          checklistHtml += "<li>Verify upload aspect ratio and image quality.</li>";
+          checklistHtml += "<li>Ensure all MRI sequences are fully uploaded and complete.</li>";
+          checklistHtml += "<li>Perform human verification of input labels.</li>";
+          checklistHtml += "<li>Review clinical history for unusual anomalies.</li>";
+          checklistHtml += "<li>Consult senior radiologist / repeat scan if uncertainty remains high.</li>";
+          checklistHtml += "</ul>";
+          $("safety-mitigation-checklist").innerHTML = checklistHtml;
+        }
+      } else if (is422 && (REFUSAL[code] || code === "study_validation_failed")) {
         const title = REFUSAL[code] || "REJECTED — validation failed";
         txt.innerHTML += `<span class="bad">✕ ${title}</span>\n<span class="bad">  ${why}</span>\n`;
         const lines = gateCheckLines(d.checks);

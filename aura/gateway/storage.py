@@ -316,3 +316,38 @@ class Store:
                 }
                 for r in rows
             ]
+
+def compute_provenance_hash(bundle: CaseBundle) -> str:
+    import hashlib
+    import json
+    
+    # 1. Image Hash
+    img_str = "".join(map(str, bundle.image))
+    image_hash = hashlib.sha256(img_str.encode()).hexdigest()
+    
+    # 2. Vision Result
+    vision_dict = bundle.vision.model_dump() if bundle.vision else None
+    
+    # 3. Evidence Graph
+    evidence_list = [e.model_dump() for e in bundle.evidence] if bundle.evidence else []
+    
+    # 4. Reasoning Steps
+    reasoning_list = [s.model_dump() for s in bundle.reasoning.steps] if bundle.reasoning else []
+    
+    # 5. Safety Verification
+    safety_dict = bundle.safety.model_dump() if bundle.safety else None
+    
+    # 6. DRP
+    drp_dict = bundle.drp.model_dump() if bundle.drp else None
+    
+    path_dict = {
+        "image_hash": image_hash,
+        "vision_result": vision_dict,
+        "evidence_graph": evidence_list,
+        "reasoning_steps": reasoning_list,
+        "safety_verification": safety_dict,
+        "drp": drp_dict
+    }
+    
+    serialized = json.dumps(path_dict, sort_keys=True)
+    return hashlib.sha256(serialized.encode()).hexdigest()

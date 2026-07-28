@@ -103,19 +103,15 @@ class ReportEngine:
                              "within normal limits.")
             grounding.setdefault("findings", []).append("no_positive_findings")
 
-        # ---- Quantum register and entanglement details ----
-        if fusion and fusion.quantum_entanglement:
-            q_ent = fusion.quantum_entanglement
-            top_pairs = q_ent.get("top_pairs") or []
-            if top_pairs:
-                pairs_str = "; ".join(
-                    f"{p['channels'][0].replace('_', ' ')} & {p['channels'][1].replace('_', ' ')} (corr: {p['correlation']:.4f})"
-                    for p in top_pairs[:3]
-                )
-                findings_text += (
-                    f" Quantum VQC Register: measurement entropy {q_ent['measurement_entropy_bits']:.4f} bits "
-                    f"(shift: {q_ent['entropy_shift_bits']:.4f} bits). Top entangled evidence channels: {pairs_str}."
-                )
+        # NOTE: fusion-internal quantum telemetry (measurement entropy, entangled
+        # evidence-channel pairs) is deliberately NOT appended to the clinical
+        # Findings narrative. The Findings section is a radiology observation field
+        # and must describe only radiographic findings; quantum register metrics are
+        # model diagnostics with no clinical meaning there. That data is already
+        # surfaced verbatim in the dedicated quantum-entanglement telemetry panel
+        # (apps/web/js/console.js, from bundle.fusion.quantum_entanglement), so it is
+        # not lost — only kept out of the clinician-facing findings text. The `fusion`
+        # argument is retained on the signature for API stability and future use.
 
         # ---- Impression: the final validated posterior. ----
         # When the clinical reasoner fired on real labs/symptoms/history it produces

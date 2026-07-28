@@ -151,7 +151,10 @@ class Settings:
     qae_enabled: bool = False
     neuro_qkl_enabled: bool = False
     reasoner_backend: str = "classical"
-
+    active_policy: str = "community_conservative"
+    ood_threshold: float = 2.5
+    epistemic_threshold: float = 0.15
+    min_coverage: float = 0.70
 
 
 def _as_bool(v) -> bool:
@@ -170,6 +173,18 @@ def _from_pyproject() -> dict:
     return data.get("tool", {}).get("aura", {})
 
 
+def _load_safety_policy() -> dict:
+    import yaml
+    yaml_path = ROOT / "common" / "config" / "safety_policy.yaml"
+    if not yaml_path.exists():
+        return {}
+    try:
+        with open(yaml_path, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f) or {}
+    except Exception:
+        return {}
+
+
 @lru_cache
 def get_settings() -> Settings:
     base = Settings()
@@ -182,6 +197,17 @@ def get_settings() -> Settings:
         if name in over:
             return cast(over[name])
         return default
+
+    policy_data = _load_safety_policy()
+    default_policy_name = policy_data.get("default_policy", "community_conservative")
+    active_policy_name = pick("active_policy", str, default_policy_name)
+
+    policies = policy_data.get("policies", {})
+    policy_cfg = policies.get(active_policy_name, policies.get(default_policy_name, {}))
+
+    def_ood = float(policy_cfg.get("ood_threshold", 2.5))
+    def_epistemic = float(policy_cfg.get("epistemic_threshold", 0.15))
+    def_min_coverage = float(policy_cfg.get("min_coverage", 0.70))
 
     return Settings(
         fusion_backend=pick("fusion_backend", str, base.fusion_backend),
@@ -218,6 +244,10 @@ def get_settings() -> Settings:
         qae_enabled=pick("qae_enabled", _as_bool, base.qae_enabled),
         neuro_qkl_enabled=pick("neuro_qkl_enabled", _as_bool, base.neuro_qkl_enabled),
         reasoner_backend=pick("reasoner_backend", str, base.reasoner_backend),
+        active_policy=active_policy_name,
+        ood_threshold=pick("ood_threshold", float, def_ood),
+        epistemic_threshold=pick("epistemic_threshold", float, def_epistemic),
+        min_coverage=pick("min_coverage", float, def_min_coverage),
     )
 
 

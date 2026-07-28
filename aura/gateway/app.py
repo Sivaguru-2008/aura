@@ -268,9 +268,15 @@ def sign_report(case_id: str, payload: dict = Body(default={})):
         raise HTTPException(404, "case not found")
     from schemas.contracts import CaseState
     b.state = CaseState.SIGNED
+    
+    # Calculate provenance hash
+    from gateway.storage import compute_provenance_hash
+    p_hash = compute_provenance_hash(b)
+    
     store().save_case(b)
     store().audit("report.signed", "case", case_id,
-                  actor=payload.get("signed_by", "clinician"))
+                  actor=payload.get("signed_by", "clinician"),
+                  detail={"provenance_hash": p_hash})
     return {"ok": True, "state": b.state.value}
 
 
@@ -332,7 +338,13 @@ async def upload_study(file: UploadFile = File(...)):
 
         import time as _time
         _t0 = _time.perf_counter()
-        bundle = await pipeline().run(study, case_id=case_id)
+        from services.safety import ClinicalSafetyException
+        try:
+            bundle = await pipeline().run(study, case_id=case_id)
+        except ClinicalSafetyException as exc:
+            store().audit("case.upload_rejected", "study", file.filename or "upload",
+                          detail={"reason": exc.reason})
+            raise HTTPException(422, exc.to_payload())
         infer_s = _time.perf_counter() - _t0
         store().save_case(bundle)
         session_case_ids.append(case_id)

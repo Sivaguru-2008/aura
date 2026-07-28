@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional
+from typing import Optional, Any
 
 from pydantic import BaseModel, Field
 
@@ -355,3 +355,5 @@ class CaseBundle(BaseModel):
     created_at: datetime = Field(default_factory=_now)
     dx_labels: dict[str, str] = Field(default_factory=dict)
     ev_labels: dict[str, str] = Field(default_factory=dict)
+    drp: Optional[Any] = None
+    safety_controller: Optional[Any] = None
