@@ -172,22 +172,30 @@ def build_router(dispatch: DispatchService) -> APIRouter:
 
             affine_repr = f"Diagonal spacing affine matrix [{spacing[0]}mm, {spacing[1]}mm, {spacing[2]}mm]"
 
+            # Everything reported here is read off the parsed study. Fields the
+            # intake layer does not carry (``MultiSequenceStudy`` holds volumes,
+            # sequence keys, spacing and channel-order provenance — no DICOM
+            # demographics, no scanner tags, no affine orientation) are returned as
+            # null so the console renders "—". A preview that invents a patient id,
+            # an orientation or a scanner make is indistinguishable from one that
+            # read them off the file, which is exactly the confusion a clinical
+            # intake screen must not create.
+            seq_keys = list(getattr(study, "sequence_keys", ()) or [])
+            n_seq = len(seq_keys) or study.volumes.shape[0]
+
             return {
                 "status": "success",
-                "patient_id": "PAT-HACKATHON-PREVIEW",
+                "patient_id": None,               # not carried by the intake layer
                 "study_id": f"STU-MR-{asset.sha256[:12]}",
-                "detected_modalities": ["FLAIR", "T1", "T1ce", "T2"],
+                "detected_modalities": [s.upper() for s in seq_keys],
                 "voxel_spacing": spacing,
-                "orientation": "RAS",
+                "orientation": None,              # no affine is retained upstream
                 "original_dimensions": [H, W, Z],
                 "number_of_slices": Z,
                 "affine_matrix_summary": affine_repr,
-                "sequence_type": "Multispectral 3D MRI Study",
-                "scanner_metadata": {
-                    "Modality": "MR",
-                    "MagneticFieldStrength": "3.0T",
-                    "Manufacturer": "AURA Premium Scanner",
-                },
+                "sequence_type": f"Multi-sequence 3D MRI study ({n_seq} sequences)",
+                "channel_order_source": getattr(study, "order_source", None),
+                "scanner_metadata": None,         # no DICOM tags retained upstream
                 "thumbnails": thumbnails
             }
 

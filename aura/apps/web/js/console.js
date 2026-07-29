@@ -10,6 +10,7 @@ window.CONSOLE = (() => {
 
   let DX_LABEL = {};
   let EV_LABEL = {};
+  let currentSaliencyTab = "heatmap";
   // report grounding uses Finding enum values; evidence nodes use channel names
   const FINDING_TO_CHANNEL = {
     opacity: "opacity", consolidation: "consolidation", pleural_effusion: "effusion",
@@ -25,7 +26,7 @@ window.CONSOLE = (() => {
     low_quality: "Measured image quality is below the floor for a reportable result.",
   };
 
-  const S = { cases: [], current: null, bundles: new Map(), booted: false, offline: false };
+  const S = { cases: [], current: null, bundles: new Map(), booted: false, offline: false, health: null };
   const $ = (id) => document.getElementById(id);
 
   /* ================= boot & assembly ================= */
@@ -61,6 +62,8 @@ window.CONSOLE = (() => {
   }
 
   function renderChips(h) {
+    S.health = h;   // every health payload flows through here; telemetry reads the
+                    // serving backend from it to pick the right calibration column.
     $("c-chips").innerHTML = `
       <span class="c-chip ${h.backend === "quantum" ? "q" : ""}">fusion <b>${h.backend}</b></span>
       <span class="c-chip">coverage <b>90%</b></span>
@@ -90,6 +93,66 @@ window.CONSOLE = (() => {
       b.addEventListener("click", () => feedback(b.dataset.verdict, b));
     });
     $("btn-sign").addEventListener("click", sign);
+    
+    // FHIR & HL7 exports (Task 6)
+    $("btn-export-fhir").addEventListener("click", exportFHIR);
+    $("btn-export-hl7").addEventListener("click", exportHL7);
+    
+    // Admin Audit modal (Task 6)
+    const auditTrigger = $("tel-audit-health");
+    if (auditTrigger) {
+      auditTrigger.style.cursor = "pointer";
+      auditTrigger.style.textDecoration = "underline";
+      auditTrigger.addEventListener("click", showAuditLog);
+    }
+    $("btn-close-audit").addEventListener("click", () => {
+      $("audit-modal").style.display = "none";
+    });
+    
+    // Explainability Dashboard Tabs (Task 5)
+    setupExplainTabs();
+
+    // Clinical Priors sidebar checkboxes (Task 2)
+    const priorsList = ["fever", "cough", "bnp", "cardiopathy", "diabetes", "hypertension", "smoking", "crp"];
+    priorsList.forEach((c) => {
+      const checkbox = $(`prior-${c}`);
+      if (checkbox) {
+        checkbox.addEventListener("change", async () => {
+          const id = S.current;
+          if (!id) return;
+          const grid = $("c-grid");
+          grid.classList.add("switching");
+          try {
+            const payload = {
+              priors: {
+                fever: $("prior-fever").checked,
+                cough: $("prior-cough").checked,
+                high_bnp: $("prior-bnp").checked,
+                prior_cardiopathy: $("prior-cardiopathy").checked,
+                diabetes: $("prior-diabetes").checked,
+                hypertension: $("prior-hypertension").checked,
+                smoker: $("prior-smoking").checked,
+                elevated_crp: $("prior-crp").checked
+              }
+            };
+            const updated = await api(`/v1/cases/${id}/recompute`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            });
+            S.bundles.set(id, updated);
+            populate(updated);
+            toast("Clinical priors updated & reasoning recomputed");
+          } catch (err) {
+            console.error("Recomputation failed:", err);
+            toast("Recomputation failed — check input");
+          } finally {
+            grid.classList.remove("switching");
+          }
+        });
+      }
+    });
+
     // Synthetic study generation removed — AURA runs real inference on uploaded
     // radiographs only. The upload paths below are the sole ways to create a case.
     // upload
@@ -121,10 +184,17 @@ window.CONSOLE = (() => {
 
     $("btn-upload-xray").addEventListener("click", () => { $("input-file-xray").click(); });
     $("btn-history").addEventListener("click", () => { window.open("/history", "_blank"); });
-    
+    $("btn-agent").addEventListener("click", () => { $("input-file-agent").click(); });
+
     $("input-file-xray").addEventListener("change", (e) => {
       if (e.target.files && e.target.files[0]) {
         uploadImage(e.target.files[0], "CHEST_XRAY");
+      }
+    });
+
+    $("input-file-agent").addEventListener("change", (e) => {
+      if (e.target.files && e.target.files[0]) {
+        runAgent(e.target.files[0]);
       }
     });
     
@@ -306,6 +376,10 @@ window.CONSOLE = (() => {
       ["drp", drawDRP],
       ["recommendations", drawRecs],
       ["report", drawReport],
+      ["evolution", drawEvolution],
+      ["longitudinal", drawLongitudinal],
+      ["discussion", drawDiscussion],
+      ["priors_sidebar", updatePriorsSidebar],
     ];
     for (const [name, fn] of steps) {
       try { fn(b); }
@@ -345,34 +419,53 @@ window.CONSOLE = (() => {
         return [v, v, Math.min(255, v + 6), 255];
       });
     }
-    const sal = (b.explanation && b.explanation.saliency) || [];
+    
+    let sal = [];
+    if (currentSaliencyTab === "heatmap") {
+      sal = (b.explanation && b.explanation.saliency) || [];
+    } else if (currentSaliencyTab === "occlusion") {
+      sal = (b.explanation && b.explanation.saliency_methods && b.explanation.saliency_methods.occlusion) || [];
+    } else if (currentSaliencyTab === "integrated") {
+      sal = (b.explanation && b.explanation.saliency_methods && b.explanation.saliency_methods.integrated_gradients) || [];
+    } else if (currentSaliencyTab === "importance" || currentSaliencyTab === "counterfactual") {
+      sal = (b.explanation && b.explanation.saliency) || [];
+    }
+    
     if (sal.length) {
-      paintGrid($("xray-sal"), sal, b.explanation.saliency_shape || b.image_shape, (t) => {
+      paintGrid($("xray-sal"), sal, (b.explanation && b.explanation.saliency_shape) || b.image_shape, (t) => {
         // heat: transparent → cyan → amber
         const a = Math.round(Math.pow(t, 1.4) * 235);
         return t < 0.55 ? [40, 210, 190, a * 0.7] : [245, 182, 78, a];
       });
+    } else {
+      const cv = $("xray-sal");
+      if (cv) {
+        const ctx = cv.getContext("2d");
+        ctx.clearRect(0, 0, cv.width, cv.height);
+      }
     }
-    // finding regions materialize
+    
     const wrap = $("xray-regions");
     wrap.innerHTML = "";
-    // Show exactly the findings the model asserts, at the *calibrated* per-finding
-    // operating point the report uses (server attaches f.present/f.threshold from
-    // vision_serving_calibration.json). Falls back to 0.5 only for legacy responses
-    // that lack the flag. Previously a hardcoded 0.5 hid genuine detections between
-    // the calibrated threshold (0.13–0.29) and 0.5 (audit H1).
-    const found = ((b.vision && b.vision.findings) || []).filter(
-      (f) => (f.present !== undefined ? f.present : f.probability >= 0.5));
-    found.forEach((f, i) => {
-      const [r0, c0, r1, c1] = f.region;
-      const d = document.createElement("div");
-      d.className = "region";
-      d.style.cssText = `top:${r0 * 100}%;left:${c0 * 100}%;height:${(r1 - r0) * 100}%;width:${(c1 - c0) * 100}%;animation-delay:${0.25 + i * 0.18}s`;
-      // EV_LABEL is keyed by finding value (API ev_labels); look it up directly.
-      // The old FINDING_TO_CHANNEL hop mislabeled pleural_effusion (value ≠ channel).
-      d.innerHTML = `<span class="r-lbl">${(EV_LABEL[f.finding] || f.finding)} · ${f.probability.toFixed(2)}</span>`;
-      wrap.appendChild(d);
-    });
+    
+    if (currentSaliencyTab === "importance") {
+      showFeatureImportanceOverlay(b);
+    } else if (currentSaliencyTab === "counterfactual") {
+      showCounterfactualOverlay(b);
+    } else {
+      // finding regions materialize
+      const found = ((b.vision && b.vision.findings) || []).filter(
+        (f) => (f.present !== undefined ? f.present : f.probability >= 0.5));
+      found.forEach((f, i) => {
+        const [r0, c0, r1, c1] = f.region;
+        const d = document.createElement("div");
+        d.className = "region";
+        d.style.cssText = `top:${r0 * 100}%;left:${c0 * 100}%;height:${(r1 - r0) * 100}%;width:${(c1 - c0) * 100}%;animation-delay:${0.25 + i * 0.18}s`;
+        d.innerHTML = `<span class="r-lbl">${(EV_LABEL[f.finding] || f.finding)} · ${f.probability.toFixed(2)}</span>`;
+        wrap.appendChild(d);
+      });
+    }
+    
     const p = b.priors || {};
     const modalityLabel = (b.study_id && b.study_id.startsWith("STU-MR")) ? "MRI" : "CXR";
     $("xray-meta").innerHTML = `
@@ -994,20 +1087,28 @@ window.CONSOLE = (() => {
         overlay.hidden = true;
         f.destroy();
 
-        // Populate the preview modal elements
-        $("preview-patient-id").textContent = previewData.patient_id || "n/a";
+        // Populate the preview modal elements. A field the server could not read
+        // off the file comes back null and must render as an explicit "not in file"
+        // — never as a plausible-looking value.
+        const NOT_IN_FILE = "— not present in study";
+        $("preview-patient-id").textContent = previewData.patient_id || NOT_IN_FILE;
         $("preview-study-id").textContent = previewData.study_id || "n/a";
         $("preview-seq-type").textContent = previewData.sequence_type || "n/a";
         $("preview-dims").textContent = previewData.original_dimensions ? previewData.original_dimensions.join(" x ") : "n/a";
         $("preview-spacing").textContent = previewData.voxel_spacing ? previewData.voxel_spacing.map(v => Number(v).toFixed(3)).join(" x ") + " mm" : "n/a";
-        $("preview-orientation").textContent = previewData.orientation || "n/a";
+        $("preview-orientation").textContent = previewData.orientation || NOT_IN_FILE;
         $("preview-slices").textContent = previewData.number_of_slices || "n/a";
         $("preview-affine").textContent = previewData.affine_matrix_summary || "n/a";
-        
-        const scannerText = previewData.scanner_metadata 
-          ? `Manufacturer: ${previewData.scanner_metadata.Manufacturer}\nStrength: ${previewData.scanner_metadata.MagneticFieldStrength}\nModality: ${previewData.scanner_metadata.Modality}`
-          : "n/a";
-        $("preview-scanner").innerText = scannerText;
+
+        const sm = previewData.scanner_metadata;
+        $("preview-scanner").innerText = sm
+          ? Object.entries(sm).map(([k, v]) => `${k}: ${v}`).join("\n")
+          : NOT_IN_FILE;
+
+        // Real, measured: which sequences the intake layer actually identified.
+        const mods = previewData.detected_modalities || [];
+        $("preview-modalities").textContent = mods.length ? mods.join(" · ") : NOT_IN_FILE;
+        $("preview-order-source").textContent = previewData.channel_order_source || NOT_IN_FILE;
 
         // Populate thumbnails
         const t = previewData.thumbnails || {};
@@ -1111,11 +1212,15 @@ window.CONSOLE = (() => {
     ];
     const stages = modality === "BRAIN_MRI" ? mriStages : xrayStages;
     
+    drawInferenceTimeline(0);
     let alive = true;
     (async () => {
+      let idx = 0;
       for (const line of stages) {
         if (!alive) return;
         txt.innerHTML += `<span class="ok">▸</span> ${line}\n`;
+        drawInferenceTimeline(Math.min(8, Math.round(idx * (8 / (stages.length - 1)))));
+        idx++;
         await wait(REDUCED ? 30 : 340);
       }
     })();
@@ -1289,16 +1394,774 @@ window.CONSOLE = (() => {
       if ($("tel-total-studies")) $("tel-total-studies").textContent = Math.max(total, totalStudies);
       if ($("tel-rejected-studies")) $("tel-rejected-studies").textContent = rejectedCount;
       if ($("tel-ood-count")) $("tel-ood-count").textContent = oodCount;
+      // Calibration ECE is read from the benchmark artifact for the backend that is
+      // actually serving (health.backend), not fixed to the quantum column — the two
+      // are calibrated separately and differ. No artifact -> "—", never a stand-in
+      // number: an invented ECE on a calibration readout is the one value in this
+      // console that must never be guessed.
       if ($("tel-calib-status")) {
-        const ece = stats.benchmark && stats.benchmark.quantum ? stats.benchmark.quantum.ece : 0.2087;
-        $("tel-calib-status").textContent = ece;
+        const el = $("tel-calib-status");
+        const bench = stats.benchmark || {};
+        const served = (S.health && S.health.backend) || null;
+        const row = (served && bench[served]) || null;
+        if (row && typeof row.ece === "number") {
+          el.textContent = row.ece.toFixed(4);
+          el.title = `ECE for the serving ${served} backend, from artifacts/benchmark.json (n=${bench.n_eval ?? "?"})`;
+          el.style.color = "#4be1c3";
+        } else {
+          el.textContent = "—";
+          el.title = "no benchmark artifact on this deployment — run `aura_cli evaluate`";
+          el.style.color = "var(--faint)";
+        }
       }
-      if ($("tel-audit-health")) $("tel-audit-health").textContent = "Healthy";
+      // Audit health is a real check: the store must be returning audit rows.
+      if ($("tel-audit-health")) {
+        const el = $("tel-audit-health");
+        const rows = Array.isArray(stats.recent_audit) ? stats.recent_audit.length : 0;
+        el.textContent = rows > 0 ? "Healthy" : "No audit rows";
+        el.style.color = rows > 0 ? "#4be1c3" : "#ffd166";
+      }
     } catch (err) {
       console.warn("Failed to load telemetry:", err);
     }
   }
 
+  /* ================= explainability tabs (Task 5) ================= */
+  function setupExplainTabs() {
+    const tabs = ["heatmap", "importance", "counterfactual", "occlusion", "integrated"];
+    tabs.forEach((t) => {
+      const el = $(`tab-${t}`);
+      if (el) {
+        // Remove old listener
+        const newEl = el.cloneNode(true);
+        el.parentNode.replaceChild(newEl, el);
+        
+        newEl.addEventListener("click", () => {
+          tabs.forEach((x) => $(`tab-${x}`).classList.remove("active-tab"));
+          newEl.classList.add("active-tab");
+          currentSaliencyTab = t;
+          const case_id = S.current;
+          if (case_id) {
+            const b = S.bundles.get(case_id);
+            if (b) drawXray(b);
+          }
+        });
+      }
+    });
+  }
+
+  function showFeatureImportanceOverlay(b) {
+    const wrap = $("xray-regions");
+    wrap.innerHTML = "";
+    const overlay = document.createElement("div");
+    overlay.className = "explain-hud mono";
+    overlay.style.cssText = "position:absolute; inset: 12px; background:rgba(10,10,15,0.85); border: 1px solid rgba(75, 225, 195, 0.2); border-radius: 8px; padding: 12px; font-size:11px; overflow-y:auto; color:#fff; z-index:5;";
+    
+    let html = `<h5 style="color:#4be1c3; margin:0 0 10px 0; text-transform:uppercase;">Shapley Feature Importance</h5>`;
+    const attr = (b.explanation && b.explanation.evidence_attribution) || {};
+    const sorted = Object.entries(attr).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]));
+    
+    if (sorted.length === 0) {
+      html += `<div style="color:var(--dim)">No attributions available.</div>`;
+    } else {
+      sorted.forEach(([k, v]) => {
+        const pct = Math.min(100, Math.round(Math.abs(v) * 100));
+        const color = v >= 0 ? "#4be1c3" : "#ff5d5d";
+        const sign = v >= 0 ? "+" : "";
+        html += `
+          <div style="margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+              <span>${EV_LABEL[k] || k}</span>
+              <span style="color:${color}; font-weight:bold;">${sign}${v.toFixed(4)}</span>
+            </div>
+            <div style="height:4px; background:rgba(255,255,255,0.05); border-radius:2px;">
+              <div style="width:${pct}%; height:100%; background:${color}; border-radius:2px;"></div>
+            </div>
+          </div>
+        `;
+      });
+    }
+    overlay.innerHTML = html;
+    wrap.appendChild(overlay);
+  }
+
+  function showCounterfactualOverlay(b) {
+    const wrap = $("xray-regions");
+    wrap.innerHTML = "";
+    const overlay = document.createElement("div");
+    overlay.className = "explain-hud mono";
+    overlay.style.cssText = "position:absolute; inset: 12px; background:rgba(10,10,15,0.85); border: 1px solid rgba(139, 124, 247, 0.2); border-radius: 8px; padding: 12px; font-size:11px; overflow-y:auto; color:#fff; z-index:5;";
+    
+    let html = `<h5 style="color:#8b7cf7; margin:0 0 10px 0; text-transform:uppercase;">Counterfactual Scenarios</h5>`;
+    html += `<p style="color:var(--dim); margin-bottom:12px; font-size:10px;">Change in top diagnosis probability if evidence is removed:</p>`;
+    const cf = (b.explanation && b.explanation.counterfactuals) || {};
+    const sorted = Object.entries(cf).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]));
+    
+    if (sorted.length === 0) {
+      html += `<div style="color:var(--dim)">No counterfactuals available.</div>`;
+    } else {
+      sorted.forEach(([k, v]) => {
+        const pct = Math.min(100, Math.round(Math.abs(v) * 100));
+        const color = v < 0 ? "#ff5d5d" : "#4be1c3";
+        const sign = v >= 0 ? "+" : "";
+        html += `
+          <div style="margin-bottom:8px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+              <span>Remove "${EV_LABEL[k] || k}"</span>
+              <span style="color:${color}; font-weight:bold;">${sign}${v.toFixed(4)}</span>
+            </div>
+            <div style="height:4px; background:rgba(255,255,255,0.05); border-radius:2px;">
+              <div style="width:${pct}%; height:100%; background:${color}; border-radius:2px;"></div>
+            </div>
+          </div>
+        `;
+      });
+    }
+    overlay.innerHTML = html;
+    wrap.appendChild(overlay);
+  }
+
+  /* ================= priors sidebar (Task 2) ================= */
+  function updatePriorsSidebar(b) {
+    const sidebar = $("priors-sidebar-panel");
+    if (!b) {
+      sidebar.style.display = "none";
+      return;
+    }
+    
+    // Only show priors for X-rays (since MRI has no classical reasoning backend rules)
+    const is_brain = b.study_id.startsWith("STU-MR") || (b.fusion && b.fusion.backend === "brain-vision-presence-head");
+    if (is_brain) {
+      // For brain cases, let's keep the panel visible but only enable Age band or relevant fields
+      sidebar.style.display = "block";
+      // disable most checkboxes except fever/smoking/prior-cancer which act as clinical contexts
+      document.querySelectorAll(".priors-checkboxes input").forEach(cb => cb.disabled = false);
+    } else {
+      sidebar.style.display = "block";
+      document.querySelectorAll(".priors-checkboxes input").forEach(cb => cb.disabled = false);
+    }
+    
+    const p = b.priors || {};
+    const m = b.multimodal || { symptoms: {}, history: {}, labs: {} };
+    
+    $("prior-fever").checked = !!p.fever;
+    $("prior-cough").checked = !!(m.symptoms && m.symptoms.productive_cough);
+    $("prior-bnp").checked = !!(m.labs && m.labs.bnp && m.labs.bnp >= 400);
+    $("prior-cardiopathy").checked = !!(m.history && m.history.heart_failure);
+    $("prior-diabetes").checked = !!(m.history && m.history.diabetes);
+    $("prior-hypertension").checked = !!(m.history && m.history.hypertension);
+    $("prior-smoking").checked = !!p.smoker;
+    $("prior-crp").checked = !!(m.labs && m.labs.crp && m.labs.crp > 50);
+  }
+
+  /* ================= confidence evolution flow (Task 3) ================= */
+  function drawEvolution(b) {
+    const top_dx = b.safety && b.safety.top;
+    
+    const vis_max = b.vision && b.vision.findings && b.vision.findings.length ? 
+      Math.max(...b.vision.findings.map(f => f.probability)) : 0.0;
+      
+    const fus_val = b.fusion && b.fusion.posterior && top_dx && b.fusion.posterior[top_dx] !== undefined ? 
+      b.fusion.posterior[top_dx] : 0.0;
+      
+    const rea_val = b.reasoning && b.reasoning.adjusted_posterior && top_dx && b.reasoning.adjusted_posterior[top_dx] !== undefined ? 
+      b.reasoning.adjusted_posterior[top_dx] : fus_val;
+      
+    const cal_pred = b.safety && b.safety.predictions ? 
+      b.safety.predictions.find(p => p.diagnosis === top_dx) : null;
+    const cal_val = cal_pred ? cal_pred.probability : rea_val;
+    
+    const final_val = b.safety ? b.safety.top_probability : cal_val;
+    
+    $("val-vision").textContent = vis_max ? `${Math.round(vis_max * 100)}%` : "—";
+    $("val-fusion").textContent = fus_val ? `${Math.round(fus_val * 100)}%` : "—";
+    $("val-reasoning").textContent = rea_val ? `${Math.round(rea_val * 100)}%` : "—";
+    $("val-calibration").textContent = cal_val ? `${Math.round(cal_val * 100)}%` : "—";
+    $("val-final").textContent = final_val ? `${Math.round(final_val * 100)}%` : "—";
+    
+    const setupNodeHover = (nodeId, title, content) => {
+      const el = $(nodeId);
+      if (!el) return;
+      
+      const newEl = el.cloneNode(true);
+      el.parentNode.replaceChild(newEl, el);
+      
+      newEl.addEventListener("mouseenter", () => {
+        const tip = $("evo-tooltip-area");
+        tip.innerHTML = `<strong style="color:#8b7cf7">${title}</strong><br><div style="margin-top:6px; font-family:var(--sans);">${content}</div>`;
+        tip.style.display = "block";
+      });
+      newEl.addEventListener("mouseleave", () => {
+        $("evo-tooltip-area").style.display = "none";
+      });
+    };
+    
+    const vis_content = b.vision && b.vision.findings && b.vision.findings.length ? 
+      b.vision.findings.map(f => `• ${(EV_LABEL[f.finding] || f.finding)}: <b>${Math.round(f.probability*100)}%</b>`).join("<br>") : 
+      "No vision findings detected.";
+      
+    const fus_content = b.fusion && b.fusion.posterior ? 
+      Object.entries(b.fusion.posterior).map(([k, v]) => `• ${(DX_LABEL[k] || k)}: <b>${Math.round(v*100)}%</b>`).join("<br>") : 
+      "No multimodal fusion output.";
+      
+    const rea_content = b.reasoning && b.reasoning.steps && b.reasoning.steps.length ? 
+      b.reasoning.steps.map(s => `• Step ${s.step}: ${s.rationale}`).join("<br>") : 
+      "No clinical reasoning adjustments applied (behaved as prior).";
+      
+    const cal_content = b.safety ? 
+      `Conformal Set: [<b>${b.safety.conformal_set.map(d => DX_LABEL[d] || d).join(", ")}</b>]<br>` +
+      `Calibration Method: <b>${b.safety.conformal_method}</b><br>` +
+      `Aleatoric Uncertainty: <b>${b.safety.aleatoric_uncertainty ? b.safety.aleatoric_uncertainty.toFixed(4) : "N/A"}</b>` : 
+      "No safety calibration assessments.";
+      
+    const final_content = b.safety ? 
+      `Top Diagnosis: <b>${DX_LABEL[b.safety.top] || b.safety.top}</b><br>` +
+      `Final Calibrated Probability: <b>${Math.round(b.safety.top_probability*100)}%</b><br>` +
+      `Abstained: <b>${b.safety.abstained ? "YES (" + b.safety.abstention_reason + ")" : "NO"}</b>` : 
+      "No final diagnosis signed.";
+      
+    setupNodeHover("node-vision", "Vision Stage Findings", vis_content);
+    setupNodeHover("node-fusion", "Multimodal Fusion Posterior", fus_content);
+    setupNodeHover("node-reasoning", "Clinical Reasoning Adjustments", rea_content);
+    setupNodeHover("node-calibration", "Safety Conformal Calibration", cal_content);
+    setupNodeHover("node-final", "Final Signed Diagnosis", final_content);
+  }
+
+  /* ================= longitudinal tracking (Task 1) ================= */
+  async function drawLongitudinal(b) {
+    const is_brain = b.study_id.startsWith("STU-MR") || (b.fusion && b.fusion.backend === "brain-vision-presence-head");
+    const panel = $("panel-longitudinal");
+    
+    if (!is_brain) {
+      panel.style.display = "none";
+      return;
+    }
+    
+    panel.style.display = "block";
+    
+    // Clear previous details
+    $("long-studies-list").innerHTML = `<span style="color:var(--faint); font-size:11px;">Loading patient scans...</span>`;
+    $("long-timeline-flow").innerHTML = "";
+    $("long-comparison-metrics").innerHTML = "";
+    $("btn-compare-studies").style.display = "none";
+    $("long-changed-regions").innerHTML = "No comparison run yet. Select a prior scan and click \"Compare Study\".";
+    $("long-comparison-report").style.display = "none";
+    
+    try {
+      const data = await api(`/v1/cases/${b.case_id}/tracking`);
+      const timeline = data.timeline || [];
+      
+      if (timeline.length <= 1) {
+        $("long-studies-list").innerHTML = `<span style="color:var(--faint); font-size:11px;">No prior scans found.</span>`;
+        return;
+      }
+      
+      // Populate previous scans sidebar
+      let listHtml = "";
+      timeline.forEach((scan) => {
+        if (scan.case_id === b.case_id) return;
+        const volText = scan.wt_volume_mm3 ? `${(scan.wt_volume_mm3 / 1000).toFixed(1)} cc` : "N/A";
+        listHtml += `
+          <button class="tg slim long-scan-btn" data-prev-id="${scan.case_id}" style="width:100%; text-align:left; justify-content:flex-start; margin-bottom:4px; font-size:11px;">
+            📅 ${scan.date}<br>
+            <span style="color:var(--faint); font-size:10px;">${scan.case_id} · WT: ${volText}</span>
+          </button>
+        `;
+      });
+      $("long-studies-list").innerHTML = listHtml;
+      
+      let selectedPrevId = null;
+      document.querySelectorAll(".long-scan-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".long-scan-btn").forEach(x => x.classList.remove("on"));
+          btn.classList.add("on");
+          selectedPrevId = btn.dataset.prevId;
+          $("btn-compare-studies").style.display = "block";
+        });
+      });
+      
+      // Populate timeline flow
+      let timelineHtml = "";
+      timeline.forEach((scan) => {
+        const isCurrent = scan.case_id === b.case_id;
+        const color = isCurrent ? "#8b7cf7" : "#4be1c3";
+        timelineHtml += `
+          <div style="display:flex; flex-direction:column; gap:4px; min-width:80px; align-items:center; opacity:${isCurrent ? 1.0 : 0.7}">
+            <div style="font-weight:bold; color:${color};">${scan.date.slice(5)}</div>
+            <div style="width:10px; height:10px; border-radius:50%; background:${color}; box-shadow:0 0 6px ${color};"></div>
+            <div style="font-size:10px; color:var(--faint);">${scan.case_id.slice(-6)}</div>
+          </div>
+        `;
+      });
+      $("long-timeline-flow").innerHTML = timelineHtml;
+      
+      plotVolumeTrend(timeline, b.case_id);
+      
+      const compareBtn = $("btn-compare-studies");
+      compareBtn.onclick = null;
+      compareBtn.onclick = async () => {
+        if (!selectedPrevId) return;
+        
+        compareBtn.disabled = true;
+        compareBtn.querySelector("span").textContent = "Comparing...";
+        
+        try {
+          const comp = await api(`/v1/cases/progression?previous_case_id=${selectedPrevId}&current_case_id=${b.case_id}`, {
+            method: "POST"
+          });
+          
+          $("long-comparison-report").innerHTML = parseMarkdown(comp.report_md || "");
+          $("long-comparison-report").style.display = "block";
+          
+          let metricsHtml = "";
+          let changedHtml = `<h6 style="color:#ffd166; margin-bottom:6px; font-size:10.5px;">CHANGED REGIONS:</h6>`;
+          let anyChange = false;
+          
+          if (comp.volume_changes) {
+            Object.entries(comp.volume_changes).forEach(([region, c]) => {
+              const diffPct = c.percent_change;
+              const sign = diffPct >= 0 ? "+" : "";
+              const color = diffPct > 10 ? "#ff5d5d" : (diffPct < -10 ? "#4be1c3" : "#ffd166");
+              const label = region.replace("_", " ").toUpperCase();
+              
+              metricsHtml += `
+                <div style="font-size:11px; margin-bottom:8px;">
+                  <div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+                    <span>${label}</span>
+                    <span style="color:${color}; font-weight:bold;">${sign}${diffPct.toFixed(1)}%</span>
+                  </div>
+                  <div style="height:3px; background:rgba(255,255,255,0.05); border-radius:1.5px;">
+                    <div style="width:${Math.min(100, Math.abs(diffPct))}%; height:100%; background:${color}; border-radius:1.5px;"></div>
+                  </div>
+                </div>
+              `;
+              
+              if (Math.abs(diffPct) >= 5.0) {
+                anyChange = true;
+                const changeType = diffPct > 0 ? "Growth" : "Regression";
+                changedHtml += `
+                  <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <span style="color:#fff;">${label}</span>
+                    <span style="color:${color}">${changeType} (${sign}${diffPct.toFixed(1)}%)</span>
+                  </div>
+                `;
+              }
+            });
+          }
+          
+          if (!anyChange) {
+            changedHtml += `<div style="color:var(--dim)">No significant changes detected (stable &lt; 5%).</div>`;
+          }
+          
+          $("long-comparison-metrics").innerHTML = metricsHtml;
+          $("long-changed-regions").innerHTML = changedHtml;
+          
+          toast("Volumetric progression compared");
+        } catch (e) {
+          console.error("Progression comparison failed", e);
+          toast("Failed to run study comparison");
+        } finally {
+          compareBtn.disabled = false;
+          compareBtn.querySelector("span").textContent = "Compare Study";
+        }
+      };
+      
+    } catch (e) {
+      console.error("Longitudinal tracking failed", e);
+      $("long-studies-list").innerHTML = `<span style="color:var(--red); font-size:11px;">Failed to load history.</span>`;
+    }
+  }
+
+  function plotVolumeTrend(timeline, currentCaseId) {
+    const canvas = $("long-trend-canvas");
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext("2d");
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const rect = canvas.getBoundingClientRect();
+    
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    
+    ctx.fillStyle = "rgba(10, 10, 15, 0.3)";
+    ctx.fillRect(0, 0, rect.width, rect.height);
+    
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+    ctx.lineWidth = 1;
+    for (let y = 20; y < rect.height; y += 40) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(rect.width, y);
+      ctx.stroke();
+    }
+    
+    const volumes = timeline.map(s => s.wt_volume_mm3 || 0);
+    const maxVol = Math.max(...volumes, 1000);
+    
+    const n = timeline.length;
+    const paddingX = 40;
+    const paddingY = 20;
+    const graphWidth = rect.width - paddingX * 2;
+    const graphHeight = rect.height - paddingY * 2;
+    
+    const points = timeline.map((scan, idx) => {
+      const x = paddingX + (idx / Math.max(1, n - 1)) * graphWidth;
+      const y = rect.height - paddingY - ((scan.wt_volume_mm3 || 0) / maxVol) * graphHeight;
+      return { x, y, case_id: scan.case_id, wt: scan.wt_volume_mm3 };
+    });
+    
+    ctx.strokeStyle = "#8b7cf7";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    points.forEach((p, idx) => {
+      if (idx === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    });
+    ctx.stroke();
+    
+    points.forEach((p) => {
+      const isCurrent = p.case_id === currentCaseId;
+      ctx.fillStyle = isCurrent ? "#8b7cf7" : "#4be1c3";
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, isCurrent ? 6 : 4, 0, Math.PI * 2);
+      ctx.fill();
+      
+      if (isCurrent) {
+        ctx.strokeStyle = "rgba(139, 124, 247, 0.4)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 9, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      
+      ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+      ctx.font = "9px monospace";
+      ctx.fillText(`${(p.wt / 1000).toFixed(1)} cc`, p.x - 15, p.y - 10);
+    });
+  }
+
+  /* ================= multi-agent specialist discussion (Task 7) ================= */
+  async function drawDiscussion(b) {
+    const chat = $("discussion-chat");
+    const cons = $("discussion-consensus");
+    
+    chat.innerHTML = `<span style="color:var(--faint); font-size:11px;">Generating clinical specialist debate...</span>`;
+    cons.innerHTML = "";
+    
+    try {
+      const data = await api(`/v1/cases/${b.case_id}/discussion`);
+      
+      let chatHtml = "";
+      data.opinions.forEach((o) => {
+        const colors = {
+          "Radiologist": { bg: "rgba(75, 225, 195, 0.08)", border: "rgba(75, 225, 195, 0.25)", color: "#4be1c3" },
+          "Pulmonologist": { bg: "rgba(247, 124, 163, 0.08)", border: "rgba(247, 124, 163, 0.25)", color: "#f77ca3" },
+          "Cardiologist": { bg: "rgba(253, 209, 102, 0.08)", border: "rgba(253, 209, 102, 0.25)", color: "#ffd166" },
+          "Neurologist": { bg: "rgba(93, 193, 247, 0.08)", border: "rgba(93, 193, 247, 0.25)", color: "#5dc1f7" },
+          "Oncologist": { bg: "rgba(139, 124, 247, 0.08)", border: "rgba(139, 124, 247, 0.25)", color: "#8b7cf7" }
+        }[o.specialist] || { bg: "rgba(255,255,255,0.03)", border: "rgba(255,255,255,0.1)", color: "#fff" };
+        
+        chatHtml += `
+          <div style="background:${colors.bg}; border:1px solid ${colors.border}; padding:10px 14px; border-radius:10px; font-family:var(--sans); font-size:12px; line-height:1.45;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-family:var(--mono); font-size:11px; font-weight:bold; color:${colors.color};">
+              <span>👨‍⚕️ ${o.specialist.toUpperCase()}</span>
+              <span title="${o.confidence_basis === "rule_weight"
+                ? "Strength of the rule that fired — not a calibrated model probability."
+                : "Read from the model's own output for this case."}">${
+                o.confidence_basis === "rule_weight" ? "Rule strength" : "Model confidence"
+              }: ${Math.round(o.confidence * 100)}%</span>
+            </div>
+            <div style="color:#e2e8f0;">${o.opinion}</div>
+            ${o.supporting_evidence.length ? `
+              <div style="margin-top:6px; font-family:var(--mono); font-size:10px; color:var(--faint);">
+                Supporting Evidence: ${o.supporting_evidence.join(", ")}
+              </div>
+            ` : ""}
+          </div>
+        `;
+      });
+      chat.innerHTML = chatHtml;
+      
+      cons.innerHTML = `
+        <div style="font-weight:bold; color:#8b7cf7; margin-bottom:4px; text-transform:uppercase; letter-spacing:0.05em;">
+          🤝 Consensus Recommendation
+        </div>
+        <div style="color:#e2e8f0; font-family:var(--sans); font-size:12px; line-height:1.4;">
+          ${data.consensus.opinion}
+        </div>
+        <div style="margin-top:6px; font-size:10.5px; color:var(--faint);">
+          ${data.consensus.confidence_basis === "model" ? "Consensus Confidence" : "Consensus Rule Strength"}:
+          <span style="color:#4be1c3; font-weight:bold;">${Math.round(data.consensus.confidence * 100)}%</span>
+          <span style="opacity:0.7;">· mean of contributing specialists</span>
+        </div>
+      `;
+      
+    } catch (e) {
+      console.error("Discussion generation failed", e);
+      chat.innerHTML = `<span style="color:var(--red); font-size:11px;">Failed to generate discussion.</span>`;
+    }
+  }
+
+  /* ================= Active Diagnosis Agent (sequential EIG testing) ================= */
+  const dxLabel = (v) => DX_LABEL[v] || String(v || "").replace(/_/g, " ");
+
+  async function runAgent(file) {
+    const panel = $("panel-agent");
+    const summary = $("agent-summary");
+    const stepsWrap = $("agent-steps");
+
+    // reveal the panel and scroll it into view
+    panel.style.display = "";
+    stepsWrap.innerHTML = "";
+    summary.innerHTML = `<span style="color:var(--faint); font-size:12px;">
+      <i class="dot" style="display:inline-block; width:6px; height:6px; background:#ffd166; border-radius:50%; margin-right:6px;"></i>
+      running sequential agent on <b style="color:#ffd166;">${file.name}</b> …</span>`;
+    panel.scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "center" });
+
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const traj = await api(`/v1/studies/agent`, {
+        method: "POST",
+        headers: { "x-aura-user": "clinician" },
+        body: fd,
+      });
+      renderAgent(traj, file.name);
+    } catch (err) {
+      const d = (err && err.detail) || {};
+      const why = d.reason || d.message || err.message || "agent run failed";
+      const rejected = err && err.status === 422;
+      summary.innerHTML = `<div style="background:var(--red-dim); border:1px solid rgba(255,93,93,0.35); border-radius:8px; padding:12px; color:#ff8a8a; font-size:12px;">
+        <b>${rejected ? "✕ REJECTED — not a chest X-ray" : "✕ agent run failed"}</b><br>
+        <span style="color:var(--dim);">${why}</span></div>`;
+      toast(rejected ? "agent: not a chest X-ray" : "agent run failed");
+    } finally {
+      $("input-file-agent").value = "";
+    }
+  }
+
+  function renderAgent(t, fileName) {
+    const summary = $("agent-summary");
+    const stepsWrap = $("agent-steps");
+
+    const committed = !!t.committed;
+    const badge = committed
+      ? `<span style="background:var(--cyan-dim); border:1px solid rgba(75,225,195,0.4); color:#4be1c3; padding:3px 10px; border-radius:999px; font-weight:bold;">COMMITTED</span>`
+      : `<span style="background:rgba(255,209,102,0.12); border:1px solid rgba(255,209,102,0.4); color:#ffd166; padding:3px 10px; border-radius:999px; font-weight:bold;">ABSTAINED</span>`;
+
+    const e0 = Number(t.initial_entropy) || 0;
+    const eN = Number(t.final_entropy) || 0;
+    const remaining = e0 > 1e-9 ? Math.max(0, Math.min(1, eN / e0)) : 0;
+
+    const cell = (label, val, color) => `
+      <div style="flex:1 1 120px; min-width:120px; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:10px 12px;">
+        <div style="color:var(--faint); font-size:10px; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">${label}</div>
+        <div style="color:${color || "#fff"}; font-weight:bold; font-size:15px;">${val}</div>
+      </div>`;
+
+    summary.innerHTML = `
+      <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:12px; font-size:12px;">
+        ${badge}
+        <span style="color:var(--dim);">on <b style="color:#fff;">${fileName || "study"}</b></span>
+        <span style="color:var(--faint);">status: <b style="color:var(--dim);">${t.status || "—"}</b></span>
+        <span style="color:var(--faint); margin-left:auto;">fusion backend: <b style="color:#8b7cf7;">${t.backend || "—"}</b></span>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+        ${cell("Final diagnosis", committed ? dxLabel(t.final_diagnosis) : "— (escalated)", committed ? "#4be1c3" : "#ffd166")}
+        ${cell("Final confidence", (Number(t.final_probability) * 100).toFixed(1) + "%", "#fff")}
+        ${cell("Tests ordered", t.n_tests, "#8b7cf7")}
+        ${cell("Bits resolved", Number(t.bits_resolved).toFixed(2) + " bits", "#4be1c3")}
+      </div>
+      <div style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:8px; padding:10px 12px;">
+        <div style="display:flex; justify-content:space-between; color:var(--faint); font-size:10.5px; margin-bottom:6px;">
+          <span>ENTROPY  ${e0.toFixed(2)} bits <span style="color:#4be1c3;">&rarr;</span> ${eN.toFixed(2)} bits</span>
+          <span>uncertainty resolved: <b style="color:#4be1c3;">${(100 * (1 - remaining)).toFixed(0)}%</b></span>
+        </div>
+        <div style="height:8px; border-radius:999px; background:rgba(255,255,255,0.06); overflow:hidden;">
+          <div style="height:100%; width:${(100 * (1 - remaining)).toFixed(1)}%; background:linear-gradient(90deg,#8b7cf7,#4be1c3); border-radius:999px;"></div>
+        </div>
+      </div>`;
+
+    const steps = Array.isArray(t.steps) ? t.steps : [];
+    stepsWrap.innerHTML = steps.map((s) => {
+      // Intermediate steps carry no `decision` — the agent is still gathering
+      // evidence, so the action it chose *is* the decision worth showing.
+      const dec = String(s.decision || "").toLowerCase();
+      const label = s.decision || (s.action_display ? "order test" : "step");
+      const accent = /commit/.test(dec) ? "#4be1c3"
+        : /abstain|stop/.test(dec) ? "#ff8a8a"
+        : "#8b7cf7"; // order test / continue
+      const top = (Array.isArray(s.top) ? s.top : []).slice(0, 3);
+      const bars = top.map(([dx, p]) => {
+        const pct = (Number(p) * 100);
+        return `
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:3px;">
+            <span style="width:130px; color:var(--dim); font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${dxLabel(dx)}</span>
+            <div style="flex:1; height:6px; background:rgba(255,255,255,0.06); border-radius:999px; overflow:hidden;">
+              <div style="height:100%; width:${pct.toFixed(1)}%; background:${accent}; opacity:0.85;"></div>
+            </div>
+            <span style="width:44px; text-align:right; color:#fff; font-size:11px;">${pct.toFixed(1)}%</span>
+          </div>`;
+      }).join("");
+
+      const eig = (s.action_eig_bits !== null && s.action_eig_bits !== undefined)
+        ? ` · EIG <b style="color:#4be1c3;">${Number(s.action_eig_bits).toFixed(3)}</b> bits` : "";
+      const action = s.action_display
+        ? `<div style="color:var(--dim); font-size:11.5px; margin-top:6px;">action: <b style="color:${accent};">${s.action_display}</b>${eig}</div>` : "";
+      const resolved = (Array.isArray(s.resolved) && s.resolved.length)
+        ? `<div style="color:var(--faint); font-size:10.5px; margin-top:4px;">resolved: ${s.resolved.map(([c, v]) => `${c}=${Number(v).toFixed(2)}`).join(" · ")}</div>` : "";
+      const rationale = s.rationale
+        ? `<div style="color:var(--dim); font-size:11.5px; margin-top:8px; font-family:var(--sans); line-height:1.4;">${s.rationale}</div>` : "";
+
+      return `
+        <div style="border:1px solid rgba(255,255,255,0.06); border-left:3px solid ${accent}; border-radius:8px; padding:12px 14px; background:rgba(255,255,255,0.015);">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px; font-family:var(--mono); font-size:11.5px;">
+            <span style="width:22px; height:22px; border-radius:50%; border:2px solid ${accent}; color:${accent}; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:11px;">${s.step}</span>
+            <span style="color:${accent}; font-weight:bold; text-transform:uppercase; letter-spacing:0.04em;">${label}</span>
+            ${s.confident ? `<span style="color:#4be1c3; font-size:10px;">✓ confident</span>` : ""}
+            <span style="margin-left:auto; color:var(--faint);">entropy <b style="color:#fff;">${Number(s.entropy_bits).toFixed(2)}</b> bits</span>
+          </div>
+          ${bars}
+          ${action}
+          ${resolved}
+          ${rationale}
+        </div>`;
+    }).join("");
+  }
+
+  /* ================= live evidence timeline (Task 4) ================= */
+  function drawInferenceTimeline(activeIndex) {
+    const timeline = $("inference-timeline");
+    if (!timeline) return;
+    
+    const stages = [
+      { name: "Upload", val: 0 },
+      { name: "Vision", val: 1 },
+      { name: "Evidence", val: 2 },
+      { name: "Fusion", val: 3 },
+      { name: "Reasoning", val: 4 },
+      { name: "Safety", val: 5 },
+      { name: "Explanation", val: 6 },
+      { name: "Recommendation", val: 7 },
+      { name: "Report", val: 8 }
+    ];
+    
+    let html = "";
+    stages.forEach((s, idx) => {
+      const isActive = idx === activeIndex;
+      const isCompleted = idx < activeIndex;
+      const color = isActive ? "#8b7cf7" : (isCompleted ? "#4be1c3" : "var(--faint)");
+      const glow = isActive ? "box-shadow: 0 0 10px rgba(139, 124, 247, 0.4);" : "";
+      
+      html += `
+        <div style="display:flex; flex-direction:column; align-items:center; gap:4px; opacity:${isActive ? 1.0 : (isCompleted ? 0.8 : 0.4)}">
+          <div style="width:24px; height:24px; border-radius:50%; background:rgba(0,0,0,0.3); border:2px solid ${color}; display:flex; align-items:center; justify-content:center; color:${color}; font-weight:bold; font-size:10px; ${glow}">
+            ${idx + 1}
+          </div>
+          <span style="color:${color}; font-size:9.5px; font-weight:${isActive ? 'bold' : 'normal'}">${s.name}</span>
+        </div>
+      `;
+      if (idx < stages.length - 1) {
+        const nextColor = (idx < activeIndex) ? "#4be1c3" : "rgba(255,255,255,0.05)";
+        html += `<div style="width:20px; height:1px; background:${nextColor}; margin-bottom:12px; align-self:center;"></div>`;
+      }
+    });
+    timeline.innerHTML = html;
+  }
+
+  /* ================= FHIR & HL7 exports (Task 6) ================= */
+  async function exportFHIR() {
+    const id = S.current;
+    if (!id) { toast("no case loaded to export"); return; }
+    
+    try {
+      const data = await api(`/v1/cases/${id}/export/fhir`);
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `FHIR_DiagnosticReport_${id}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast("FHIR DiagnosticReport exported");
+    } catch (e) {
+      console.error(e);
+      toast("FHIR export failed");
+    }
+  }
+  
+  async function exportHL7() {
+    const id = S.current;
+    if (!id) { toast("no case loaded to export"); return; }
+    
+    try {
+      const resp = await fetch(`/v1/cases/${id}/export/hl7`);
+      const hl7Text = await resp.text();
+      const blob = new Blob([hl7Text], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `HL7_ORU_R01_${id}.txt`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast("HL7 ORU^R01 exported");
+    } catch (e) {
+      console.error(e);
+      toast("HL7 export failed");
+    }
+  }
+
+  /* ================= admin audit viewer (Task 6) ================= */
+  async function showAuditLog() {
+    const modal = $("audit-modal");
+    const rowsWrap = $("audit-log-rows");
+    rowsWrap.innerHTML = `<tr><td colspan="5" style="color:var(--faint); text-align:center; padding:20px;">Fetching system audit trail...</td></tr>`;
+    modal.style.display = "flex";
+    
+    try {
+      const data = await api("/v1/admin/safety");
+      const logs = data.recent_audit || [];
+      
+      if (!logs.length) {
+        rowsWrap.innerHTML = `<tr><td colspan="5" style="color:var(--faint); text-align:center; padding:20px;">No audit records found.</td></tr>`;
+        return;
+      }
+      
+      let rowsHtml = "";
+      logs.forEach((log) => {
+        const date = new Date(log.created_at).toISOString().replace("T", " ").slice(0, 19);
+        rowsHtml += `
+          <tr style="border-bottom:1px solid rgba(255,255,255,0.03);">
+            <td style="padding:6px 4px; color:var(--dim); white-space:nowrap;">${date}</td>
+            <td style="padding:6px 4px; color:#4be1c3;">${log.actor}</td>
+            <td style="padding:6px 4px; color:#fff; font-weight:bold;">${log.action}</td>
+            <td style="padding:6px 4px; color:var(--dim);">${log.entity_type} (${log.entity_id || "—"})</td>
+            <td style="padding:6px 4px; color:var(--faint); font-size:10.5px; word-break:break-all;">${JSON.stringify(log.detail || {})}</td>
+          </tr>
+        `;
+      });
+      rowsWrap.innerHTML = rowsHtml;
+      
+    } catch (e) {
+      console.error("Audit log fetch failed", e);
+      rowsWrap.innerHTML = `<tr><td colspan="5" style="color:var(--red); text-align:center; padding:20px;">Failed to load audit logs.</td></tr>`;
+    }
+  }
+
+  function parseMarkdown(md) {
+    return md
+      .replace(/\n\n/g, "<br><br>")
+      .replace(/\n/g, "<br>")
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*([^*]+)\*/g, "<em>$1</em>")
+      .replace(/- `\[ \]` (.*)/g, '<div class="todo"><input type="checkbox" disabled> $1</div>')
+      .replace(/- `\[x\]` (.*)/g, '<div class="todo"><input type="checkbox" checked disabled> $1</div>')
+      .replace(/### (.*)/g, "<h3 style='color:#8b7cf7; margin-top:10px; margin-bottom:6px;'>$1</h3>")
+      .replace(/## (.*)/g, "<h2 style='color:#4be1c3; margin-top:14px; margin-bottom:8px;'>$1</h2>")
+      .replace(/# (.*)/g, "<h1 style='color:#fff; margin-top:18px; margin-bottom:10px;'>$1</h1>");
+  }
 
   return { boot };
+
 })();
