@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  aura:
+    build: .
+    container_name: aura-copilot
+    ports:
+      - "8000:8000"
+      - "11112:11112"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - PORT=8000
+      - AURA_ALLOW_FALLBACK_VISION=1
+      - AURA_DATA_DIR=/app/data
+    restart: unless-stopped
