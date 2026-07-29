@@ -12,8 +12,8 @@ from pathlib import Path
 import numpy as np
 from scipy.optimize import minimize_scalar
 
-from common.config import ARTIFACTS
-from common.mathx import energy_score, softmax
+from aura.common.config import ARTIFACTS
+from aura.common.mathx import energy_score, softmax
 
 
 @dataclass

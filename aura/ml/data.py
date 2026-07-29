@@ -22,14 +22,14 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from schemas.clinical import CHEST_FINDINGS, Diagnosis, Finding
-from schemas.contracts import StructuredPriors
+from aura.schemas.clinical import CHEST_FINDINGS, Diagnosis, Finding
+from aura.schemas.contracts import StructuredPriors
 
 # The grid + anatomy primitives now live in the dependency-free ``common`` layer so
 # request-serving ``services/`` code no longer has to import this synthetic-data
 # module (fixes the ml→services layering violation). Re-exported here to keep
 # ``ml.data.IMG`` / ``REGIONS`` / ``_px`` a stable public API.
-from common.anatomy import IMG, REGIONS, _px  # noqa: F401  (re-export)
+from aura.common.anatomy import IMG, REGIONS, _px  # noqa: F401  (re-export)
 
 
 @dataclass
@@ -156,7 +156,7 @@ def make_multimodal(dx: Diagnosis, rng: np.random.Generator):
     key off BNP, WBC, procalcitonin, symptoms, and history). Deliberately noisy so
     reasoning must weigh, not memorize.
     """
-    from schemas.contracts import (
+    from aura.schemas.contracts import (
         ClinicalHistory, LabPanel, MultimodalContext, Symptoms,
     )
     labs, sym, hist = LabPanel(), Symptoms(), ClinicalHistory()

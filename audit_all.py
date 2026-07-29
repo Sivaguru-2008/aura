@@ -168,7 +168,7 @@ def capture_environment(outdir: Path, seed: int) -> dict:
         env["torch_cuda_available"] = None
         env["torch_import_error"] = repr(e)
     # dataset / weight hashes (integrity of the artifacts we read)
-    from common.config import ARTIFACTS
+    from aura.common.config import ARTIFACTS
     hashes = {}
     for rel in ["fusion_quantum.npz", "fusion_classical.npz", "fusion_ensemble.npz",
                 "fusion_learnable.npz", "safety.npz", "vision.npz", "benchmark.json"]:
@@ -304,20 +304,20 @@ def cohens_d_paired(x, y):
 # 3. Core audit                                                                #
 # --------------------------------------------------------------------------- #
 def softmax_rows(logits, T=1.0):
-    from common.mathx import softmax
+    from aura.common.mathx import softmax
     return np.array([softmax(np.asarray(r, float) / T) for r in logits])
 
 
 def run_audit() -> Path:
-    from common.config import ARTIFACTS, get_settings
-    from services.fusion.quantum import QuantumFusion
-    from services.fusion.classical import ClassicalFusion
-    from services.safety.calibration import (
+    from aura.common.config import ARTIFACTS, get_settings
+    from aura.services.fusion.quantum import QuantumFusion
+    from aura.services.fusion.classical import ClassicalFusion
+    from aura.services.safety.calibration import (
         Calibration, fit_temperature, fit_conformal, expected_calibration_error,
     )
-    from ml.training.dataset import build_evidence_dataset, make_splits
-    from ml.evaluation.metrics import evaluate
-    from schemas.clinical import DIAGNOSES
+    from aura.ml.training.dataset import build_evidence_dataset, make_splits
+    from aura.ml.evaluation.metrics import evaluate
+    from aura.schemas.clinical import DIAGNOSES
 
     settings = get_settings()
     global SEED
@@ -403,8 +403,8 @@ def run_audit() -> Path:
         "classical_fair":  softmax_rows(c_logits, T_c),   # apples-to-apples
     }
     # optional extra backends
-    for name, mod, cls in [("ensemble", "services.fusion.ensemble", "DeepEnsemble"),
-                           ("learnable", "services.fusion.learnable", "LearnableFusion")]:
+    for name, mod, cls in [("ensemble", "aura.services.fusion.ensemble", "DeepEnsemble"),
+                           ("learnable", "aura.services.fusion.learnable", "LearnableFusion")]:
         try:
             import importlib
             obj = getattr(importlib.import_module(mod), cls).load()
@@ -675,7 +675,7 @@ def _make_figures(outdir, backends, yte, labels, metrics, stats, log):
 
     # Prediction-set-size histogram (conformal efficiency)
     fig, ax = plt.subplots(figsize=(6, 4))
-    from services.safety.calibration import fit_conformal
+    from aura.services.safety.calibration import fit_conformal
     for name, color in [("quantum", "C0"), ("classical_fair", "C1")]:
         P = backends[name]
         qhat = fit_conformal(P, yte, 0.90)

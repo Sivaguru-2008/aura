@@ -27,9 +27,9 @@ from typing import Optional
 import numpy as np
 from scipy.optimize import minimize_scalar
 
-from common.config import ARTIFACTS
-from schemas.clinical import FINDINGS
-from ml.evaluation.clinical_eval import binary_ece, load_validation
+from aura.common.config import ARTIFACTS
+from aura.schemas.clinical import FINDINGS
+from .clinical_eval import binary_ece, load_validation
 
 FINDING_NAMES = [f.value for f in FINDINGS]
 CAL_DIR = ARTIFACTS / "calibration"
@@ -52,8 +52,8 @@ def _infer_logits(image_paths, labels, batch_size: int = 32, model_path: Optiona
     import torch
     from torch.utils.data import DataLoader
 
-    from ml.vision_cxr.dataset import ChestXrayDataset, get_transforms
-    from ml.vision_cxr.inference import VisionModel
+    from ..vision_cxr.dataset import ChestXrayDataset, get_transforms
+    from ..vision_cxr.inference import VisionModel
 
     vm = VisionModel(model_path or str(ARTIFACTS / "best_model.pt"))
     ds = ChestXrayDataset(image_paths, labels, transform=get_transforms(train=False))
@@ -178,8 +178,8 @@ def mc_dropout_uncertainty(vm, image_paths, k: int = 20, batch_size: int = 16,
     import torch
     from torch.utils.data import DataLoader
 
-    from ml.vision_cxr.dataset import ChestXrayDataset, get_transforms
-    from services.safety.uncertainty import enable_dropout
+    from ..vision_cxr.dataset import ChestXrayDataset, get_transforms
+    from aura.services.safety.uncertainty import enable_dropout
 
     n_dropout = sum(1 for m in vm.model.modules()
                     if m.__class__.__name__.startswith("Dropout"))

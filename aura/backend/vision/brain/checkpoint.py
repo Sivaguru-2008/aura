@@ -34,10 +34,10 @@ from typing import Any
 
 import torch
 
-from backend.core.shared.logging import get_logger
-from backend.vision.brain.config import BrainVisionConfig, PathsConfig
-from backend.vision.brain.errors import CheckpointError
-from backend.vision.brain.types import BRAIN_VISION_VERSION
+from aura.backend.core.shared.logging import get_logger
+from .config import BrainVisionConfig, PathsConfig
+from .errors import CheckpointError
+from .types import BRAIN_VISION_VERSION
 
 log = get_logger("vision.brain.checkpoint")
 

@@ -7,7 +7,7 @@ from pathlib import Path
 
 # Add project root to python path
 sys.path.append(str(Path(__file__).resolve().parents[2]))
-from schemas.clinical import FINDINGS, Finding
+from aura.schemas.clinical import FINDINGS, Finding
 
 def check_keyword(text: str, keywords: list, negations: list = None) -> float:
     if negations is None:

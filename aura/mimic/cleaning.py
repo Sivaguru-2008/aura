@@ -14,7 +14,7 @@ concern from the plan is handled or explicitly marked not-applicable:
     outlier detection       -> flag extreme image/report counts per patient
 
 The value-add specific to this corpus: attaching structured labels extracted
-from the report text (see :mod:`mimic.labeling`) so every real patient carries a
+from the report text (see :mod:`aura.mimic.labeling`) so every real patient carries a
 ground-truth :class:`Diagnosis` — the honest replacement for the synthetic one.
 """
 from __future__ import annotations
@@ -25,9 +25,9 @@ from collections.abc import Iterator
 from dataclasses import dataclass, field
 from typing import Optional
 
-from mimic.labeling import ReportLabel, label_patient_reports
-from mimic.loaders import MimicCxrLoader, PatientRecord
-from schemas.clinical import Diagnosis, Finding
+from .labeling import ReportLabel, label_patient_reports
+from .loaders import MimicCxrLoader, PatientRecord
+from aura.schemas.clinical import Diagnosis, Finding
 
 log = logging.getLogger("mimic.cleaning")
 

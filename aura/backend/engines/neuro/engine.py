@@ -22,7 +22,7 @@ channel where the model produces nothing. There is no operating point here that 
 honest, so the format is refused with the numbers attached.
 
 **An uncalibrated presence probability is refused.** See
-:mod:`backend.engines.neuro.calibration`.
+:mod:`aura.backend.engines.neuro.calibration`.
 
 The engine that this replaced accepted any PNG and derived its diagnosis from
 ``int(sha256[:12], 16) % 5``, with a fixed 0.85 posterior, a ``random.random()``
@@ -36,10 +36,10 @@ from typing import Any, Callable
 
 import numpy as np
 
-from backend.core.shared.errors import EngineExecutionError, UnreadableImage
-from backend.core.shared.logging import get_logger
-from backend.core.shared.types import EngineStatus, ImageAsset, ImagingModality
-from backend.engines.base.contract import (
+from aura.backend.core.shared.errors import EngineExecutionError, UnreadableImage
+from aura.backend.core.shared.logging import get_logger
+from aura.backend.core.shared.types import EngineStatus, ImageAsset, ImagingModality
+from ..base.contract import (
     AnalysisEngine,
     AnalysisResult,
     EngineDescriptor,
@@ -47,14 +47,14 @@ from backend.engines.base.contract import (
     PreparedStudy,
     ValidationOutcome,
 )
-from backend.engines.base.registry import EngineRegistry, default_registry
-from backend.engines.neuro.multisequence import (
+from ..base.registry import EngineRegistry, default_registry
+from .multisequence import (
     ChannelOrderRejected,
     MultiSequenceStudy,
     load_multisequence,
     looks_multisequence,
 )
-from schemas.contracts import StructuredPriors
+from aura.schemas.contracts import StructuredPriors
 
 log = get_logger("engine.neuromind")
 
@@ -128,13 +128,13 @@ class NeuroMindEngine(AnalysisEngine):
     # Lazily-constructed collaborators
     # ------------------------------------------------------------------ #
     def _qkl_classifier(self):
-        from backend.engines.neuro.qkl import QKLClassifier
+        from .qkl import QKLClassifier
         if self._qkl is None:
             self._qkl = QKLClassifier.load()
         return self._qkl
 
     def _foundation_pipeline(self):
-        from backend.foundation.mri import FoundationConfig, MRIFoundationPipeline
+        from aura.backend.foundation.mri import FoundationConfig, MRIFoundationPipeline
 
         if self._foundation is None:
             self._foundation = MRIFoundationPipeline(
@@ -143,7 +143,7 @@ class NeuroMindEngine(AnalysisEngine):
 
     def _vision_engine(self):
         """The trained network. Constructed once, on first real study."""
-        from backend.vision.brain.inference import BrainVisionEngine
+        from aura.backend.vision.brain.inference import BrainVisionEngine
 
         if self._vision is None:
             self._vision = BrainVisionEngine.load()
@@ -154,7 +154,7 @@ class NeuroMindEngine(AnalysisEngine):
         return self._vision
 
     def _presence_calibrator(self):
-        from backend.engines.neuro.calibration import load_calibrator
+        from .calibration import load_calibrator
 
         if self._calibrator is None:
             self._calibrator = load_calibrator()
@@ -165,9 +165,9 @@ class NeuroMindEngine(AnalysisEngine):
     # ------------------------------------------------------------------ #
     def validate_input(self, asset: ImageAsset) -> ValidationOutcome:
         """Accept volumetric MR studies. Refuse everything else, with the reason."""
-        from backend.foundation.mri.io.dicom_reader import DicomSeriesReader
-        from backend.foundation.mri.io.nifti_reader import NiftiReader
-        from backend.foundation.mri.io.nrrd_reader import NrrdReader
+        from aura.backend.foundation.mri.io.dicom_reader import DicomSeriesReader
+        from aura.backend.foundation.mri.io.nifti_reader import NiftiReader
+        from aura.backend.foundation.mri.io.nrrd_reader import NrrdReader
         import zipfile
 
         readers = (DicomSeriesReader(), NiftiReader(), NrrdReader())
@@ -199,8 +199,8 @@ class NeuroMindEngine(AnalysisEngine):
             if nii_files:
                 claimed_by = "NIfTI"
 
-        from backend.core.router.router import ModalityRouter
-        from backend.core.shared.types import ImagingModality
+        from aura.backend.core.router.router import ModalityRouter
+        from aura.backend.core.shared.types import ImagingModality
         
         router = ModalityRouter()
         metadata = router.route(asset)
@@ -296,15 +296,15 @@ class NeuroMindEngine(AnalysisEngine):
         except Exception:
             # Falls back to the shipped spec only so validation can answer before the
             # network is constructed; analysis always uses the checkpoint's own order.
-            from backend.vision.brain.types import DEFAULT_MODALITIES
+            from aura.backend.vision.brain.types import DEFAULT_MODALITIES
 
             return tuple(spec.key for spec in DEFAULT_MODALITIES)
 
     def preprocess(self, asset: ImageAsset) -> PreparedStudy:
         """Standardise the study through the MRI Foundation Layer."""
-        from backend.foundation.mri.intake_manager import MRIIntakeManager
-        from backend.foundation.mri.errors import StudyValidationError
-        from backend.engines.neuro.multisequence import looks_multisequence
+        from aura.backend.foundation.mri.intake_manager import MRIIntakeManager
+        from aura.backend.foundation.mri.errors import StudyValidationError
+        from .multisequence import looks_multisequence
         import zipfile
         import shutil
         import tempfile
@@ -382,8 +382,8 @@ class NeuroMindEngine(AnalysisEngine):
             study_path = temp_dir_path
 
         try:
-            from backend.foundation.mri.errors import MRIFoundationError
-            from backend.core.shared.errors import UnreadableImage
+            from aura.backend.foundation.mri.errors import MRIFoundationError
+            from aura.backend.core.shared.errors import UnreadableImage
             try:
                 study = self._foundation_pipeline().run(
                     study_path,
@@ -455,9 +455,9 @@ class NeuroMindEngine(AnalysisEngine):
     # ------------------------------------------------------------------ #
     async def analyze(self, prepared: PreparedStudy) -> AnalysisResult:
         """Run the trained network, calibrate, and assemble the case bundle."""
-        from backend.engines.neuro.bundle import build_case_bundle
-        from backend.foundation.mri.errors import StudyValidationError
-        from backend.foundation.mri.types import SequenceType
+        from .bundle import build_case_bundle
+        from aura.backend.foundation.mri.errors import StudyValidationError
+        from aura.backend.foundation.mri.types import SequenceType
 
         case_id = prepared.metadata["case_id"]
         study = prepared.payload
@@ -504,7 +504,7 @@ class NeuroMindEngine(AnalysisEngine):
                 detail={"case_id": case_id, "model": output.model_version})
         presence = calibrator(raw)
 
-        from common.config import get_settings
+        from aura.common.config import get_settings
         qkl_res = None
         if get_settings().neuro_qkl_enabled and getattr(output, "features", None) is not None and getattr(output.features, "pooled", None) is not None:
             try:
@@ -573,7 +573,7 @@ class NeuroMindEngine(AnalysisEngine):
 
     def _build_neuroview(self, case_id: str, study, output) -> dict[str, Any]:
         """Create the MRI-only NeuroView artifact from NeuroMind inputs."""
-        from backend.engines.neuro.neuroview import build_neuroview_payload
+        from .neuroview import build_neuroview_payload
 
         engine = self._vision_engine()
         return build_neuroview_payload(
@@ -615,8 +615,8 @@ class NeuroMindEngine(AnalysisEngine):
         Returns:
             ``(caveats, abstention_reason, abstention_detail)``.
         """
-        from schemas.contracts import AbstentionReason
-        from common.config import get_settings
+        from aura.schemas.contracts import AbstentionReason
+        from aura.common.config import get_settings
         import math
 
         settings = get_settings()
@@ -682,7 +682,7 @@ class NeuroMindEngine(AnalysisEngine):
         segmentation the network produced from all of them and any single channel is an
         equally arbitrary backdrop.
         """
-        from backend.engines.neuro.bundle import _representative_index
+        from .bundle import _representative_index
 
         try:
             if isinstance(study, MultiSequenceStudy):

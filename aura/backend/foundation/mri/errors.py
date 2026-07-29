@@ -1,6 +1,6 @@
 """Error taxonomy for the MRI Foundation Layer.
 
-Every failure below extends :class:`~backend.core.shared.errors.AuraBackendError`,
+Every failure below extends :class:`~aura.backend.core.shared.errors.AuraBackendError`,
 so the API layer renders foundation failures exactly like routing failures — one
 error shape for the whole backend, no handler inventing its own.
 
@@ -11,7 +11,7 @@ The split follows *who has to act*:
 * :class:`StudyValidationError` — the study is readable but internally inconsistent
   (mixed geometry, no complete series). Fixable at the scanner or by re-exporting.
 * :class:`StudyRejected` — the study loaded and was measured, and quality control
-  refused it. Carries the :class:`~backend.foundation.mri.quality.QualityReport`
+  refused it. Carries the :class:`~aura.backend.foundation.mri.quality.QualityReport`
   in ``detail`` so the refusal is always accompanied by the numbers behind it.
 * :class:`StageUnavailable` — a standardisation stage is declared but has no working
   backend in this deployment (N4 without SimpleITK, skull stripping without a
@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from backend.core.shared.errors import AuraBackendError
+from aura.backend.core.shared.errors import AuraBackendError
 
 
 class MRIFoundationError(AuraBackendError):

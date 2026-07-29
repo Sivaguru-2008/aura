@@ -20,7 +20,7 @@ from typing import Sequence
 import torch
 from torch import nn
 
-from backend.vision.brain.model.blocks import make_activation
+from .blocks import make_activation
 
 
 class SegmentationHead(nn.Module):

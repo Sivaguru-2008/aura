@@ -27,8 +27,8 @@ from typing import Optional
 
 import numpy as np
 
-from mimic.config import MimicPaths, get_mimic_paths
-from mimic.tasks import TaskDataset, TaskDatasetBuilder
+from .config import MimicPaths, get_mimic_paths
+from .tasks import TaskDataset, TaskDatasetBuilder
 
 log = logging.getLogger("mimic.training")
 

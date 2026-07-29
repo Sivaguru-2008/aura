@@ -21,7 +21,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Optional
 
-from schemas.clinical import CHEST_DIAGNOSES, Diagnosis, Finding
+from aura.schemas.clinical import CHEST_DIAGNOSES, Diagnosis, Finding
 
 # --------------------------------------------------------------------------- #
 # Concept lexicon — regexes matched against lowercased sentences.

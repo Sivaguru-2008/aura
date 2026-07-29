@@ -7,9 +7,9 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from pathlib import Path
 import albumentations as A
-from schemas.clinical import FINDINGS, Finding
-from mimic.parsing import safe_str_list
-from mimic.labeling import label_report
+from aura.schemas.clinical import FINDINGS, Finding
+from aura.mimic.parsing import safe_str_list
+from aura.mimic.labeling import label_report
 
 # MIMIC image paths embed the study id: files/pXX/pXXXXXXX/sYYYYYYYY/<dicom>.jpg
 _STUDY_RE = re.compile(r"[\\/](s\d+)[\\/]")
@@ -25,7 +25,7 @@ def _study_of(rel_path) -> str | None:
 # validated labeler (mimic.labeling_v2 — fixes cardiomegaly/opacity/temporal-negation).
 _USE_V2_LABELER = os.environ.get("AURA_LABELER", "v1").strip().lower() == "v2"
 if _USE_V2_LABELER:
-    from mimic.labeling_v2 import label_v2
+    from aura.mimic.labeling_v2 import label_v2
 
 
 def _label_vec(text: str) -> list[float]:

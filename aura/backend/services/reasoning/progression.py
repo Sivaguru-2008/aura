@@ -4,8 +4,8 @@ from __future__ import annotations
 from typing import Any, Optional
 from pydantic import BaseModel
 
-from common.config import get_settings
-from schemas.contracts import CaseBundle
+from aura.common.config import get_settings
+from aura.schemas.contracts import CaseBundle
 
 class ProgressionMetrics(BaseModel):
     whole_tumor_prev_mm3: Optional[float] = None

@@ -1,7 +1,7 @@
 """Errors raised by the Brain Vision Engine.
 
 Same shape as the foundation layer's error family (``code`` / ``reason`` / ``detail``)
-so a caller that already handles :class:`~backend.foundation.mri.errors.MRIFoundationError`
+so a caller that already handles :class:`~aura.backend.foundation.mri.errors.MRIFoundationError`
 handles these the same way, and so a failure that crosses the engine boundary arrives
 as a structured payload rather than a string.
 """

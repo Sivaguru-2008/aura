@@ -24,7 +24,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from typing import Any
 
-from backend.foundation.mri.types import NormalizationMethod
+from .types import NormalizationMethod
 
 
 @dataclass(frozen=True)
@@ -182,7 +182,7 @@ class FoundationConfig:
     quality: QualityThresholds = field(default_factory=QualityThresholds)
     standardization: StandardizationConfig = field(default_factory=StandardizationConfig)
 
-    #: Raise :class:`~backend.foundation.mri.errors.StudyRejected` when quality
+    #: Raise :class:`~aura.backend.foundation.mri.errors.StudyRejected` when quality
     #: control rejects a study. Off by default: the report travels with the study and
     #: the caller decides, because "usable for triage, not for volumetry" is a real
     #: verdict a hard reject cannot express.

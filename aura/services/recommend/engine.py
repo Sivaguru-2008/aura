@@ -22,11 +22,11 @@ import itertools
 
 import numpy as np
 
-from common.mathx import entropy, softmax
-from schemas.clinical import DIAGNOSES, Diagnosis
-from schemas.contracts import Recommendation
-from services.fusion.evidence import EVIDENCE_CHANNELS
-from services.recommend.causal import CausalDependencyGraph, JointEIGSelector
+from aura.common.mathx import entropy, softmax
+from aura.schemas.clinical import DIAGNOSES, Diagnosis
+from aura.schemas.contracts import Recommendation
+from ..fusion.evidence import EVIDENCE_CHANNELS
+from .causal import CausalDependencyGraph, JointEIGSelector
 
 _COST_W = {"low": 1.0, "medium": 2.0, "high": 4.0}
 _RISK_W = {"none": 1.0, "low": 1.5, "medium": 2.5}

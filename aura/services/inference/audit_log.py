@@ -17,8 +17,8 @@ from typing import Optional
 
 import numpy as np
 
-from common.config import ARTIFACTS, finding_present_threshold
-from schemas.clinical import FINDINGS
+from aura.common.config import ARTIFACTS, finding_present_threshold
+from aura.schemas.clinical import FINDINGS
 
 LOG_PATH = ARTIFACTS / "inference_log.jsonl"
 _CAL_PATH = ARTIFACTS / "vision_serving_calibration.json"

@@ -43,35 +43,35 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Sequence
 
-from backend.core.shared.logging import get_logger
-from backend.foundation.mri.config import FoundationConfig
-from backend.foundation.mri.errors import (
+from aura.backend.core.shared.logging import get_logger
+from .config import FoundationConfig
+from .errors import (
     MRIFoundationError,
     StageFailed,
     StageUnavailable,
     StudyRejected,
     StudyValidationError,
 )
-from backend.foundation.mri.io.base import RawSeries
-from backend.foundation.mri.loader import LoadedStudy, MRIStudyLoader
-from backend.foundation.mri.metadata import MetadataExtractor, MRIMetadata
-from backend.foundation.mri.quality import MRIQualityInspector, QualityReport
-from backend.foundation.mri.registration import RegistrationPreparer
-from backend.foundation.mri.sequence import RuleBasedSequenceDetector, SequenceDetector
-from backend.foundation.mri.standardize import (
+from .io.base import RawSeries
+from .loader import LoadedStudy, MRIStudyLoader
+from .metadata import MetadataExtractor, MRIMetadata
+from .quality import MRIQualityInspector, QualityReport
+from .registration import RegistrationPreparer
+from .sequence import RuleBasedSequenceDetector, SequenceDetector
+from .standardize import (
     StandardizationContext,
     VolumeTransform,
     default_pipeline_stages,
 )
-from backend.foundation.mri.study import (
+from .study import (
     FoundationStudy,
     ProcessingHistory,
     StandardizedSeries,
     StepTimer,
     step,
 )
-from backend.foundation.mri.types import FileFormat, QualityVerdict, StepStatus
-from backend.foundation.mri.volume import MRIVolume, VolumeBuilder
+from .types import FileFormat, QualityVerdict, StepStatus
+from .volume import MRIVolume, VolumeBuilder
 
 log = get_logger("foundation.mri.pipeline")
 

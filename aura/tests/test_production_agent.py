@@ -6,7 +6,7 @@ import pytest
 pytest.importorskip("torch")
 from fastapi.testclient import TestClient
 
-from gateway.app import app
+from aura.gateway.app import app
 
 
 @pytest.fixture(scope="module")
@@ -18,8 +18,8 @@ def client():
 @pytest.fixture()
 def synthetic_cxr(tmp_path):
     """A synthetic chest-like grayscale image written to a PNG file."""
-    from ml.data import make_sample
-    from schemas.clinical import Diagnosis
+    from aura.ml.data import make_sample
+    from aura.schemas.clinical import Diagnosis
 
     s = make_sample(Diagnosis.PNEUMONIA, np.random.default_rng(3))
     img = (np.clip(s.image, 0, 1) * 255).astype(np.uint8)
@@ -83,8 +83,8 @@ def test_agent_endpoint_rejects_non_cxr(client, tmp_path):
 
 
 def test_agent_quantum_trajectory():
-    from services.fusion.engine import FusionEngine
-    from services.agent.active_diagnosis import ActiveDiagnosisAgent
+    from aura.services.fusion.engine import FusionEngine
+    from aura.services.agent.active_diagnosis import ActiveDiagnosisAgent
     import numpy as np
 
     # Ensure we load with quantum backend

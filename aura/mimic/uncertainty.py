@@ -19,12 +19,12 @@ from typing import Optional
 
 import numpy as np
 
-from services.safety.calibration import (
+from aura.services.safety.calibration import (
     expected_calibration_error,
     fit_conformal,
     fit_temperature,
 )
-from services.safety.uncertainty import (
+from aura.services.safety.uncertainty import (
     ensemble_decomposition,
     mondrian_qhats,
     mondrian_set,
@@ -99,7 +99,7 @@ class DeepEnsemble:
 
 def train_gbm_ensemble(train_ds, val_ds, k: int = 5, backend: str = "auto") -> DeepEnsemble:
     """Train ``k`` gradient boosters with different seeds → a deep ensemble."""
-    from mimic.training import GBMTrainer
+    from .training import GBMTrainer
     models = []
     for s in range(k):
         t = GBMTrainer(train_ds, backend=backend, seed=100 + s)
@@ -118,7 +118,7 @@ def mc_dropout_proba(trainer, X_raw: np.ndarray, k: int = 30) -> tuple[np.ndarra
     Returns (mean_proba (N,C), epistemic_std (N,)). Reuses ``enable_dropout``.
     """
     torch = trainer.torch
-    from services.safety.uncertainty import enable_dropout
+    from aura.services.safety.uncertainty import enable_dropout
 
     X = ((np.asarray(X_raw, float) - trainer.mu) / trainer.sd).astype("float32")
     Xt = torch.tensor(X, device=trainer.device)

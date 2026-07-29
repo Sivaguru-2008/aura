@@ -24,8 +24,8 @@ from typing import Any, Sequence
 
 import numpy as np
 
-from backend.foundation.mri.masking import BrainMaskSlot
-from backend.foundation.mri.volume import MRIVolume
+from .masking import BrainMaskSlot
+from .volume import MRIVolume
 
 
 @dataclass(frozen=True)

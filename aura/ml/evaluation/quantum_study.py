@@ -20,7 +20,7 @@ that scoring one backend at another's temperature is what produced the original
 inflated quantum win (audit F6), so that mistake is not repeated here.
 
 **Q3 — What does measurement budget buy?**
-Runs :class:`~services.fusion.qmba.QuantumMeasurementBudget` over the whole test set:
+Runs :class:`~aura.services.fusion.qmba.QuantumMeasurementBudget` over the whole test set:
 commit rate, accuracy at commit, shots spent, and the split between decisions that
 were measurement-limited (more shots would settle it) and model-limited (nothing
 would). This is the number with no classical analogue.
@@ -42,14 +42,14 @@ from pathlib import Path
 
 import numpy as np
 
-from common.config import ARTIFACTS, ensure_dirs, get_settings
-from common.mathx import softmax
-from schemas.clinical import DIAGNOSES
-from services.fusion.device import make_qnode
-from services.fusion.qmba import QuantumMeasurementBudget
-from services.fusion.qmeasure import measure_entanglement
-from services.fusion.quantum import QuantumFusion
-from services.safety.calibration import (
+from aura.common.config import ARTIFACTS, ensure_dirs, get_settings
+from aura.common.mathx import softmax
+from aura.schemas.clinical import DIAGNOSES
+from aura.services.fusion.device import make_qnode
+from aura.services.fusion.qmba import QuantumMeasurementBudget
+from aura.services.fusion.qmeasure import measure_entanglement
+from aura.services.fusion.quantum import QuantumFusion
+from aura.services.safety.calibration import (
     expected_calibration_error,
     fit_temperature,
 )
@@ -76,7 +76,7 @@ def load_evidence(n: int, seed: int, refresh: bool = False):
         return (d["Xtr"], d["ytr"], d["Xcal"], d["ycal"], d["Xte"], d["yte"],
                 str(d["source"]))
 
-    from ml.training.dataset import build_evidence_dataset, make_splits, \
+    from ..training.dataset import build_evidence_dataset, make_splits, \
         real_evidence_splits
 
     print(f"[data] building real MIMIC evidence set (target n={n}) ...")
@@ -180,7 +180,7 @@ def score(logits_cal, y_cal, logits_test, y_test) -> dict:
 # Q1 + Q2: entanglement ablation
 # --------------------------------------------------------------------------- #
 def run_ablation(Xtr, ytr, Xcal, ycal, Xte, yte, s, epochs: int) -> dict:
-    from ml.training.train_fusion import train_classical, train_quantum
+    from ..training.train_fusion import train_classical, train_quantum
 
     results: dict = {}
     probs: dict[str, np.ndarray] = {}
@@ -283,7 +283,7 @@ def run_budget_study(model: QuantumFusion, Xte, yte, seed: int) -> dict:
 # Q4: what does the entanglement encode?
 # --------------------------------------------------------------------------- #
 def run_coupling_study(model: QuantumFusion, Xte, top_k: int = 6) -> dict:
-    from services.fusion.evidence import EVIDENCE_CHANNELS
+    from aura.services.fusion.evidence import EVIDENCE_CHANNELS
 
     n_q = model.n_qubits
     accumulated = np.zeros((n_q, n_q), dtype=float)

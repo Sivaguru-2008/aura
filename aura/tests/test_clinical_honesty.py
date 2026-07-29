@@ -11,11 +11,11 @@ from fastapi.testclient import TestClient
 from pydicom.dataset import FileDataset, FileMetaDataset
 from pydicom.uid import ExplicitVRLittleEndian, MRImageStorage, generate_uid
 
-from gateway.app import app
-from backend.core.shared.errors import UnsupportedModality, ModalityConflict
-from schemas.contracts import CaseBundle, CaseState, AbstentionReason
-from backend.services.reasoning.progression import LongitudinalAnalyzer
-from backend.services.reasoning.tracking import TumorTracker
+from aura.gateway.app import app
+from aura.backend.core.shared.errors import UnsupportedModality, ModalityConflict
+from aura.schemas.contracts import CaseBundle, CaseState, AbstentionReason
+from aura.backend.services.reasoning.progression import LongitudinalAnalyzer
+from aura.backend.services.reasoning.tracking import TumorTracker
 
 @pytest.fixture(scope="module")
 def client():
@@ -190,8 +190,8 @@ def test_sequence_validation_mixed_patients(client, tmp_path):
 
 # 5. Test Longitudinal Analysis calculation and status
 def test_longitudinal_analyzer():
-    from schemas.clinical import Diagnosis
-    from schemas.contracts import CaseState, SafetyAssessment, VisionResult
+    from aura.schemas.clinical import Diagnosis
+    from aura.schemas.contracts import CaseState, SafetyAssessment, VisionResult
     
     # Create two stub bundles
     prev_bundle = CaseBundle(

@@ -29,10 +29,10 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
-from backend.foundation.mri.types import SequenceType
+from aura.backend.foundation.mri.types import SequenceType
 
 #: Output-format version for everything this module writes — checkpoints, embedding
-#: stores, cached studies, :class:`~backend.vision.brain.output.BrainVisionOutput`.
+#: stores, cached studies, :class:`~aura.backend.vision.brain.output.BrainVisionOutput`.
 #: Bumped when the shape of any of those changes in a way a consumer could notice, so
 #: an artefact found on disk can always be matched against the code that produced it.
 BRAIN_VISION_VERSION = "1.0.0"
@@ -195,7 +195,7 @@ class ModalitySpec:
 
 #: The four structural sequences BraTS provides, in the channel order the corpus
 #: stores them. That order was verified by measurement, not assumed — see
-#: :mod:`backend.vision.brain.io.brats_h5`.
+#: :mod:`aura.backend.vision.brain.io.brats_h5`.
 DEFAULT_MODALITIES: tuple[ModalitySpec, ...] = (
     ModalitySpec("flair", SequenceType.FLAIR, "FLAIR", True,
                  "BraTS2020 HDF5 image channel 0"),

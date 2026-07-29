@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import pennylane as qml
 
-from common.config import ARTIFACTS
+from aura.common.config import ARTIFACTS
 
 
 class QKLClassifier:
@@ -94,7 +94,7 @@ class QKLClassifier:
         scores += self.b_svm
 
         # Softmax decision values to yield calibrated probabilities
-        from common.mathx import softmax
+        from aura.common.mathx import softmax
         probs = softmax(scores)
 
         return {

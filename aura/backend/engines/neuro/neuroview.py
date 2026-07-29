@@ -13,8 +13,8 @@ from typing import Any, Sequence
 
 import numpy as np
 
-from backend.engines.neuro.multisequence import MultiSequenceStudy
-from backend.vision.brain.types import ModalitySpec, TumorRegion
+from .multisequence import MultiSequenceStudy
+from aura.backend.vision.brain.types import ModalitySpec, TumorRegion
 
 UNAVAILABLE = "Unable to compute from current MRI study."
 NOT_AVAILABLE = "Not Available"
@@ -49,7 +49,7 @@ def build_neuroview_payload(
         )
 
     # Calculate NeuroInsight post-processing clinical intelligence
-    from backend.engines.neuro.neuroinsight import compute_neuroinsight
+    from .neuroinsight import compute_neuroinsight
     insight = compute_neuroinsight(study, output)
     insight_payload = {k: v for k, v in insight.items() if k != "labeled_mask"}
 

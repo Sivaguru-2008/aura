@@ -20,8 +20,8 @@ from typing import Any, Protocol, Sequence, runtime_checkable
 
 import numpy as np
 
-from backend.foundation.mri.geometry import VoxelGeometry
-from backend.foundation.mri.types import FileFormat
+from ..geometry import VoxelGeometry
+from ..types import FileFormat
 
 
 @dataclass(frozen=True)
@@ -99,7 +99,7 @@ class SeriesIntegrity:
 class RawSeries:
     """One decoded series, before any standardisation.
 
-    ``voxels`` is indexed ``[i, j, k]`` (see :mod:`backend.foundation.mri.geometry`)
+    ``voxels`` is indexed ``[i, j, k]`` (see :mod:`aura.backend.foundation.mri.geometry`)
     and is 4D only when the source genuinely holds several volumes on one grid — a
     multi-b-value DWI, say. It is kept 4D rather than silently collapsed so the volume
     builder has to make an explicit, recorded choice about which frame to use.

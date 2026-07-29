@@ -10,13 +10,13 @@ from typing import Any, Dict, List
 
 import numpy as np
 
-from backend.core.shared.logging import get_logger
-from backend.foundation.mri.errors import StudyValidationError
-from backend.foundation.mri.io.nifti_reader import NiftiReader
-from backend.foundation.mri.metadata import MetadataExtractor
-from backend.foundation.mri.sequence import RuleBasedSequenceDetector
-from backend.foundation.mri.types import FileFormat, SequenceType
-from backend.engines.neuro.multisequence import MultiSequenceStudy, looks_multisequence, load_multisequence
+from aura.backend.core.shared.logging import get_logger
+from .errors import StudyValidationError
+from .io.nifti_reader import NiftiReader
+from .metadata import MetadataExtractor
+from .sequence import RuleBasedSequenceDetector
+from .types import FileFormat, SequenceType
+from aura.backend.engines.neuro.multisequence import MultiSequenceStudy, looks_multisequence, load_multisequence
 
 log = get_logger("foundation.mri.intake_manager")
 

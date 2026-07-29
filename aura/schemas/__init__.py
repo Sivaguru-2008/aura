@@ -4,14 +4,14 @@ Every engine consumes and produces these Pydantic models. Changing a contract
 here is the *only* way to change an inter-service interface; implementations
 behind the contract are freely replaceable. Import from `schemas` everywhere.
 """
-from schemas.clinical import (
+from .clinical import (
     DIAGNOSES,
     FINDINGS,
     Diagnosis,
     Finding,
     Modality,
 )
-from schemas.contracts import (
+from .contracts import (
     AbstentionReason,
     CaseBundle,
     CaseState,

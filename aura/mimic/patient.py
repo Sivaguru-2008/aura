@@ -21,13 +21,13 @@ from collections.abc import Iterator
 from dataclasses import dataclass, field
 from typing import Optional
 
-from mimic.cleaning import CleanedPatient, clean_record
-from mimic.config import MimicPaths, get_mimic_paths
-from mimic.labeling import ReportLabel
-from mimic.loaders import MimicCxrLoader, PatientRecord
-from mimic.timeline import PatientTimeline, StudyEvent, build_timeline
-from schemas.clinical import Diagnosis, Finding
-from schemas.contracts import MultimodalContext, StructuredPriors, StudyInput
+from .cleaning import CleanedPatient, clean_record
+from .config import MimicPaths, get_mimic_paths
+from .labeling import ReportLabel
+from .loaders import MimicCxrLoader, PatientRecord
+from .timeline import PatientTimeline, StudyEvent, build_timeline
+from aura.schemas.clinical import Diagnosis, Finding
+from aura.schemas.contracts import MultimodalContext, StructuredPriors, StudyInput
 
 log = logging.getLogger("mimic.patient")
 
@@ -101,7 +101,7 @@ class Patient:
         ``study_index=-1`` selects the most recent study. ``grid=None`` (default)
         uses the intake's full-fidelity grid (224 — audit F5).
         """
-        from services.vision.io import study_from_cxr  # lazy: pulls numpy/PIL
+        from aura.services.vision.io import study_from_cxr  # lazy: pulls numpy/PIL
 
         if self.n_studies == 0:
             raise ValueError(f"patient {self.subject_id} has no studies")

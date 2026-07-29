@@ -10,7 +10,7 @@ Two things this module refuses to do, and both refusals matter more than what it
 segmentation that is visually obvious nonsense in a debug viewer and completely
 plausible in a JSON payload — a mask, some confidences, a tumour probability of 0.5.
 There is no downstream check that would catch it, so
-:class:`~backend.vision.brain.errors.ModelNotTrained` is raised at load rather than a
+:class:`~aura.backend.vision.brain.errors.ModelNotTrained` is raised at load rather than a
 warning being logged at inference.
 
 **It will not silently substitute a missing sequence.** The network is trained on four
@@ -33,13 +33,13 @@ from typing import Any, Sequence
 import numpy as np
 import torch
 
-from backend.core.shared.logging import get_logger
-from backend.vision.brain.checkpoint import CheckpointMeta, load_network_checkpoint
-from backend.vision.brain.config import BrainVisionConfig, ModelConfig
-from backend.vision.brain.dataset import decode_size, fit_to_grid, normalize_slice
-from backend.vision.brain.errors import ModelNotTrained
-from backend.vision.brain.model.network import BrainVisionNetwork, build_network
-from backend.vision.brain.output import (
+from aura.backend.core.shared.logging import get_logger
+from .checkpoint import CheckpointMeta, load_network_checkpoint
+from .config import BrainVisionConfig, ModelConfig
+from .dataset import decode_size, fit_to_grid, normalize_slice
+from .errors import ModelNotTrained
+from .model.network import BrainVisionNetwork, build_network
+from .output import (
     QUALITY_VALIDITY_THRESHOLD,
     BrainVisionOutput,
     FeatureMaps,
@@ -47,7 +47,7 @@ from backend.vision.brain.output import (
     QualityMetadata,
     build_regions,
 )
-from backend.vision.brain.types import BRAIN_VISION_VERSION, ModalitySpec
+from .types import BRAIN_VISION_VERSION, ModalitySpec
 
 log = get_logger("vision.brain.inference")
 
@@ -102,10 +102,10 @@ class BrainVisionEngine:
     def analyze_study(self, study: Any, *, batch_size: int = 8,
                       return_probabilities: bool = False,
                       return_feature_maps: bool = True) -> BrainVisionOutput:
-        """Analyse a :class:`~backend.foundation.mri.study.FoundationStudy`.
+        """Analyse a :class:`~aura.backend.foundation.mri.study.FoundationStudy`.
 
         The study's series are matched to the network's declared modalities by their
-        detected :class:`~backend.foundation.mri.types.SequenceType`. A sequence the
+        detected :class:`~aura.backend.foundation.mri.types.SequenceType`. A sequence the
         study does not have is reported as missing rather than substituted.
         """
         started = time.perf_counter()
@@ -413,7 +413,7 @@ def _model_config_from_checkpoint(path: Path, fallback: ModelConfig,
 
 
 def _sequence(value: str):
-    from backend.foundation.mri.types import SequenceType
+    from aura.backend.foundation.mri.types import SequenceType
 
     try:
         return SequenceType(value)

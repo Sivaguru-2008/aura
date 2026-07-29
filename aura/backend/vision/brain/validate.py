@@ -14,7 +14,7 @@ degradation severities. Those two numbers are the test; the MAE is a description
 
 Everything here is deterministic. Validation samples are degraded on a fixed
 per-sample seed with a fixed artefact rotation (see
-:meth:`~backend.vision.brain.dataset.BrainSliceDataset._forced_artifact`), so a change
+:meth:`~aura.backend.vision.brain.dataset.BrainSliceDataset._forced_artifact`), so a change
 in a validation number between epochs is a change in the model and not a change in the
 draw.
 """
@@ -27,13 +27,13 @@ from typing import Any, Iterable
 import numpy as np
 import torch
 
-from backend.core.shared.logging import get_logger
-from backend.vision.brain.config import BrainVisionConfig
-from backend.vision.brain.dataset import TARGET_REGIONS, decode_size
-from backend.vision.brain.degradations import ARTIFACT_CLASSES, ARTIFACT_ORDER
-from backend.vision.brain.embeddings import EmbeddingBatch, EmbeddingStore
-from backend.vision.brain.losses import MultiTaskLoss
-from backend.vision.brain.metrics import (
+from aura.backend.core.shared.logging import get_logger
+from .config import BrainVisionConfig
+from .dataset import TARGET_REGIONS, decode_size
+from .degradations import ARTIFACT_CLASSES, ARTIFACT_ORDER
+from .embeddings import EmbeddingBatch, EmbeddingStore
+from .losses import MultiTaskLoss
+from .metrics import (
     ClassificationMeter,
     EmbeddingMeter,
     LossMeter,
@@ -41,8 +41,8 @@ from backend.vision.brain.metrics import (
     RegressionMeter,
     SegmentationMeter,
 )
-from backend.vision.brain.model.network import BrainVisionNetwork
-from backend.vision.brain.types import HeadName
+from .model.network import BrainVisionNetwork
+from .types import HeadName
 
 log = get_logger("vision.brain.validate")
 

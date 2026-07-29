@@ -14,11 +14,11 @@ from pathlib import Path
 # Add project root to path
 sys.path.append(str(Path(__file__).resolve().parent / "aura"))
 
-from backend.core.upload.intake import stage_bytes
-from backend.core.router.router import ModalityRouter
-from backend.engines.neuro.engine import NeuroMindEngine
-from backend.core.shared.errors import UnsupportedModality, ModalityConflict, AuraBackendError
-from backend.models.routing import ResultStatus
+from aura.backend.core.upload.intake import stage_bytes
+from aura.backend.core.router.router import ModalityRouter
+from aura.backend.engines.neuro.engine import NeuroMindEngine
+from aura.backend.core.shared.errors import UnsupportedModality, ModalityConflict, AuraBackendError
+from aura.backend.models.routing import ResultStatus
 
 # Set paths
 AURA_DIR = Path(__file__).resolve().parent
@@ -27,7 +27,7 @@ DOCS_DIR = AURA_DIR / "docs"
 DOCS_DIR.mkdir(parents=True, exist_ok=True)
 
 async def run_case(filepath: Path, filename: str) -> dict:
-    from backend.core.upload.intake import stage_bytes
+    from aura.backend.core.upload.intake import stage_bytes
     
     # We stage the file
     payload = filepath.read_bytes()

@@ -64,7 +64,7 @@ python -c "import pandas, torch, pydicom, nibabel, nrrd; print('deps ok')"
 python -m pytest tests/test_mri_foundation.py -q
 
 # 3. Bring up the gateway
-python -m aura_cli serve 8000
+python -m aura.aura_cli serve 8000
 #    → open http://127.0.0.1:8000 and confirm the dashboard renders live counts
 
 # 4. End-to-end demo

@@ -8,15 +8,15 @@ from pathlib import Path
 PKG_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PKG_ROOT))
 
-from common.mathx import softmax
-from schemas.clinical import DIAGNOSES
-from services.fusion.quantum import QuantumFusion
-from services.fusion.classical import ClassicalFusion
-from services.fusion.learnable import LearnableFusion
-from services.agent.active_diagnosis import ActiveDiagnosisAgent
-from services.recommend.engine import RecommendEngine
-from services.safety.calibration import fit_temperature, expected_calibration_error
-from ml.training.dataset import build_real_evidence_dataset
+from aura.common.mathx import softmax
+from aura.schemas.clinical import DIAGNOSES
+from aura.services.fusion.quantum import QuantumFusion
+from aura.services.fusion.classical import ClassicalFusion
+from aura.services.fusion.learnable import LearnableFusion
+from aura.services.agent.active_diagnosis import ActiveDiagnosisAgent
+from aura.services.recommend.engine import RecommendEngine
+from aura.services.safety.calibration import fit_temperature, expected_calibration_error
+from aura.ml.training.dataset import build_real_evidence_dataset
 
 class CalibratedModel:
     def __init__(self, model, temperature: float):
@@ -45,7 +45,7 @@ def main():
     X, y = build_real_evidence_dataset(n=600, split="validate")
     if X is None or len(X) < 50:
         # Fallback to synthetic split if MIMIC is unavailable or empty
-        from ml.training.dataset import make_splits, build_evidence_dataset
+        from aura.ml.training.dataset import make_splits, build_evidence_dataset
         print("MIMIC dataset not found or too small. Falling back to synthetic split...")
         samples_val, samples_cal, samples_te = make_splits(500, seed=7)
         Xva, yva = build_evidence_dataset(samples_cal)

@@ -32,11 +32,11 @@ from typing import Any, BinaryIO, Sequence
 
 import numpy as np
 
-from backend.core.shared.logging import get_logger
-from backend.foundation.mri.errors import CorruptStudy, UnsupportedStudyFormat
-from backend.foundation.mri.geometry import VoxelGeometry, affine_from_quaternion
-from backend.foundation.mri.io.base import RawSeries, SeriesIntegrity
-from backend.foundation.mri.types import FileFormat
+from aura.backend.core.shared.logging import get_logger
+from ..errors import CorruptStudy, UnsupportedStudyFormat
+from ..geometry import VoxelGeometry, affine_from_quaternion
+from .base import RawSeries, SeriesIntegrity
+from ..types import FileFormat
 
 log = get_logger("foundation.mri.io.nifti")
 

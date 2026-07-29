@@ -12,11 +12,11 @@ from pathlib import Path
 
 import numpy as np
 
-from common.config import ARTIFACTS
-from common.mathx import sigmoid
-from schemas.clinical import CHEST_FINDINGS, Finding
-from schemas.contracts import FindingScore, VisionResult
-from services.vision.features import FEATURE_NAMES, extract_features, feature_vector
+from aura.common.config import ARTIFACTS
+from aura.common.mathx import sigmoid
+from aura.schemas.clinical import CHEST_FINDINGS, Finding
+from aura.schemas.contracts import FindingScore, VisionResult
+from .features import FEATURE_NAMES, extract_features, feature_vector
 
 MODEL_VERSION = "vision-cxr-region-v1"
 N_FEAT = len(FEATURE_NAMES)
@@ -72,8 +72,8 @@ def _make_diagnostic_report(best_model_path: Path, original_exc: Exception) -> s
     # 4. Model construction
     model = None
     try:
-        from ml.vision_cxr.model import DenseNet121CXR
-        from schemas.clinical import FINDINGS
+        from aura.ml.vision_cxr.model import DenseNet121CXR
+        from aura.schemas.clinical import FINDINGS
         model = DenseNet121CXR(num_classes=len(FINDINGS))
         model_ok = "PASS"
     except Exception:
@@ -175,13 +175,13 @@ class VisionEngine:
         # Set AURA_ALLOW_FALLBACK_VISION=1 for dev/test only.
         import os
 
-        from common.config import ARTIFACTS
+        from aura.common.config import ARTIFACTS
         best_model_path = ARTIFACTS / "best_model.pt"
         allow_fallback = os.environ.get("AURA_ALLOW_FALLBACK_VISION", "0") == "1"
         backbone, load_err = None, None
         if best_model_path.exists():
             try:
-                from ml.vision_cxr.inference import VisionModel
+                from aura.ml.vision_cxr.inference import VisionModel
                 backbone = VisionModel(str(best_model_path))
             except Exception as e:
                 load_err = e
@@ -207,12 +207,12 @@ class VisionEngine:
     @staticmethod
     def _maybe_backbone():
         """Build the configured CNN backbone, or None to keep the feature path."""
-        from common.config import get_settings
+        from aura.common.config import get_settings
 
         kind = get_settings().vision_backend
         if kind in (None, "", "features"):
             return None
-        from services.vision.cnn import get_backbone
+        from .cnn import get_backbone
 
         s = get_settings()
         if kind == "densenet_mimic":

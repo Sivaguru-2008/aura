@@ -46,12 +46,25 @@ disclose it before they ask trusts everything else.
 
 **Answer:** "No — and that's our most important integrity point. On real held-out MIMIC-CXR evidence, with **each backend temperature-scaled on its own split** (a fair fight), classical wins: accuracy 0.696 vs 0.638, ECE 0.219 vs 0.238. The earlier 'quantum wins' result was an artifact of applying the quantum temperature to classical logits — we found and fixed that. So we lead with calibration discipline, not an unverifiable quantum claim. The VQC is real, competitive, and correctly placed — not magic."
 
-**Evidence:** `benchmark.json` (`quantum.accuracy 0.6377` vs `classical.accuracy 0.6957`); regenerate live with `py -m aura_cli bench` then `python ../audit_all.py`.
+**Evidence:** `benchmark.json` (`quantum.accuracy 0.6377` vs `classical.accuracy 0.6957`); regenerate live with `py -m aura.aura_cli bench` then `python ../audit_all.py`.
+
+### Q5b. "If classical wins, why does your config serve quantum?" *(they can read `pyproject.toml`)*
+**The trap:** being caught not knowing your own serving config, or pretending the benchmark decided it. Own the decision.
+
+**Answer:** "Correct — `fusion_backend = "quantum"`, and that's deliberate, not an oversight. The benchmark decides what we *claim*, not what we *serve*. Three things make serving the VQC safe. One: each backend is calibrated on its own logits — quantum T = 0.9057, classical T = 0.479, a 1.89× spread — so the served posterior isn't borrowing another model's temperature. That exact bug is what produced our earlier fake 'quantum wins' result; we found it and fixed it. Two: the Wasserstein conflict guard is armed *only* when quantum serves, and it defers to the classical twin whenever the two posteriors diverge — so the classical model is a live safety net, not a benchmark trophy. Three: on this held-out split the gap is ~6 accuracy points at n=69, and the classical head's advantage is real but not so large that keeping the research substrate in the serving path is reckless — especially with the guard behind it. If I were shipping this to a hospital tomorrow I'd serve classical and say so; for a research prototype I want the quantum path exercised by real traffic."
+
+**Evidence:** `aura/pyproject.toml:44`; `backend_calibration.json` (`temperature_spread: 1.89`); `_guard_enabled` in [engine.py](aura/services/fusion/engine.py) requires `backend == "quantum"`.
 
 ### Q6. "Then why include quantum at all if it loses?"
-**Answer:** "Three reasons. One, scientific honesty demands the comparison exist. Two, it's a genuine research result — we ran an **entanglement ablation** and found entanglement *hurts* here (Δaccuracy −0.029, Δnll +0.056, statistically significant) — a clean negative result worth publishing. Three, we actually ran the fusion circuit on **real IBM quantum hardware** (`ibm_marrakesh`) and the top-1 diagnosis survived device noise. It's a forward-looking substrate we've de-risked, presented truthfully rather than hyped."
+**Answer:** "Four reasons. One, scientific honesty demands the comparison exist. Two, it's a genuine research result — we ran an **entanglement ablation** at matched parameter count and found entanglement *hurts* on NLL: Δnll +0.056, 95% bootstrap CI [0.022, 0.090], which excludes zero. Accuracy and ECE moved too, but their intervals **include** zero, so I'll only claim the NLL result. A clean negative result worth publishing.
 
-**Evidence:** `quantum_study.json` `q1_q2_ablation` + bootstrap; `ibm_hardware_run.json` (job on `ibm_marrakesh`).
+Three — and this is the one I'd actually defend as a quantum advantage — **QMBA**, our measurement-budget allocator. Because a quantum model has a measurement budget, we can spend shots adaptively: the median study resolves in **128 shots against the 8 192-shot per-circuit device ceiling — 64× fewer measurements**. Better, it tells us *which kind* of uncertainty we hit: across 447 studies, 1 abstention was measurement-limited — more shots would fix it — and 60 were model-limited, genuinely tied at infinite precision, so they need a human. **A classical fusion model cannot make that distinction, because it has no measurement budget to vary.** That's a capability, not a speedup, and it's measured.
+
+Four, we ran the fusion circuit on **real IBM quantum hardware** (`ibm_marrakesh`, 156 qubits, job `d9js49rjf64c739haeg0`) — device noise attenuated every expectation value, mean absolute error 0.186 versus analytic, and the top-1 diagnosis survived anyway."
+
+**Evidence:** `quantum_study.json` → `q1_q2_ablation.entanglement_effect.bootstrap` (read the CIs, not the point estimates) and `q3_measurement_budget`; shot ceiling at [qmba.py:67](aura/services/fusion/qmba.py); `ibm_hardware_run.json` (real QPU job).
+
+**Say the boundary out loud:** the ablation and QMBA numbers are statevector simulation; the hardware run is one case on a real QPU. Don't let the two blur — the quantum jury is listening for exactly that.
 
 ### Q7. "Isn't 102 parameters / 8 qubits a toy?"
 **Answer:** "Yes, intentionally — it fuses an 8-dimensional evidence vector, not raw pixels. Quantum isn't placed where it can't scale (imaging). It's placed at low-dimensional evidence fusion where an 8-qubit circuit is exactly sized, runs on a laptop simulator in seconds, and can run on today's real QPUs. We chose the one spot in the pipeline where NISQ-era quantum is honestly applicable."
@@ -138,9 +151,9 @@ disclose it before they ask trusts everything else.
 ## Category H — Engineering / reproducibility
 
 ### Q19. "How do I know these numbers aren't hand-typed into a README?"
-**Answer:** "Regenerate them live. `py -m aura_cli bench` rewrites `benchmark.json`; `python audit_all.py` runs DeLong / McNemar / bootstrap significance tests. The whole thing trains from scratch in ~30 seconds on a laptop CPU and passes 366 automated test functions across 32 test files. Nothing here is asserted; it's all reproducible."
+**Answer:** "Regenerate them live. `py -m aura.aura_cli bench` rewrites `benchmark.json`; `python audit_all.py` runs DeLong / McNemar / bootstrap significance tests. The whole thing trains from scratch in ~30 seconds on a laptop CPU and passes 366 automated test functions across 32 test files. Nothing here is asserted; it's all reproducible."
 
-**Evidence:** `py -m aura_cli bench`, `audit_all.py`; 366 `def test_` across `aura/tests/`.
+**Evidence:** `py -m aura.aura_cli bench`, `audit_all.py`; 366 `def test_` across `aura/tests/`.
 
 ### Q20. "Why offline? Isn't cloud easier?"
 **Answer:** "Because PHI. AURA runs fully offline on local CPU — no cloud, no API keys, no patient data leaving the box. In healthcare that's not a nice-to-have, it's the difference between deployable and not. It also means our reproducibility claims are real: the judge can run the entire system air-gapped."

@@ -13,8 +13,8 @@ import numpy as np
 
 def _mimic_available() -> bool:
     try:
-        from mimic.config import get_mimic_paths
-        from mimic.parsing import safe_str_list
+        from aura.mimic.config import get_mimic_paths
+        from aura.mimic.parsing import safe_str_list
         import pandas as pd
 
         paths = get_mimic_paths()
@@ -34,7 +34,7 @@ mimic = pytest.mark.skipif(not _mimic_available(), reason="MIMIC-CXR images not 
 
 
 def test_binary_ece_bounds():
-    from ml.evaluation.clinical_eval import binary_ece
+    from aura.ml.evaluation.clinical_eval import binary_ece
 
     y = np.array([0, 0, 1, 1])
     # Predicting the empirical rate (0.5) on a balanced set is perfectly calibrated.
@@ -50,7 +50,7 @@ def test_binary_ece_bounds():
 
 
 def test_conformal_evaluation_coverage():
-    from ml.evaluation.vision_calibration import conformal_evaluation
+    from aura.ml.evaluation.vision_calibration import conformal_evaluation
 
     rng = np.random.default_rng(0)
     n, c = 200, 7
@@ -64,7 +64,7 @@ def test_conformal_evaluation_coverage():
 
 @mimic
 def test_evaluate_validation_small(tmp_path):
-    from ml.evaluation.clinical_eval import evaluate_validation
+    from aura.ml.evaluation.clinical_eval import evaluate_validation
 
     rep = evaluate_validation(limit=3, n_bootstrap=20, make_plots=False, out_dir=tmp_path)
     assert rep["n_images"] > 0
@@ -75,7 +75,7 @@ def test_evaluate_validation_small(tmp_path):
 
 @mimic
 def test_calibration_small(tmp_path):
-    from ml.evaluation.vision_calibration import run_calibration, SERVING_CAL_PATH
+    from aura.ml.evaluation.vision_calibration import run_calibration, SERVING_CAL_PATH
 
     # A redirected (out_dir given) run must NOT clobber the production serving
     # calibration — a limit=3 smoke fit would otherwise overwrite it with a
@@ -93,7 +93,7 @@ def test_calibration_small(tmp_path):
 
 
 def test_perf_benchmark_smoke(tmp_path):
-    from ml.evaluation.perf_benchmark import run
+    from aura.ml.evaluation.perf_benchmark import run
 
     r = run(iters=2, out_dir=tmp_path)
     assert "cpu_latency" in r

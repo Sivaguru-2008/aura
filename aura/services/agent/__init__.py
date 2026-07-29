@@ -5,6 +5,6 @@ Turns AURA from a one-shot classifier into an agent that quantifies what it does
 NOT know and closes that uncertainty by acquiring the single most informative next
 test — measured in bits — abstaining until confident.
 """
-from services.agent.active_diagnosis import ActiveDiagnosisAgent, DiagnosisTrajectory
+from .active_diagnosis import ActiveDiagnosisAgent, DiagnosisTrajectory
 
 __all__ = ["ActiveDiagnosisAgent", "DiagnosisTrajectory"]

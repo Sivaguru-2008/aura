@@ -9,16 +9,16 @@ This document describes how to execute model training, calibrate output probabil
 AURA's vision model is a 7-label multi-label DenseNet-121 classifier. Fine-tuning runs via PyTorch and supports synthetic generator runs or real MIMIC-CXR training:
 
 ```bash
-# Run from the aura directory:
-cd aura
+# Run from the repository root:
+cd aura-main   # the repository root: `aura` is the import root, so -m resolves from here
 
 # Option A: Fine-tune on synthetic radiographs (dev check)
-venv\Scripts\python.exe -m aura_cli train-cnn densenet121
+venv\Scripts\python.exe -m aura.aura_cli train-cnn densenet121
 
 # Option B: Fine-tune on real chest radiographs
 # Provide path to the manifest CSV linking image files to CheXpert-style labels
 set AURA_CNN_MANIFEST=..\datasets\mimiciv\mimic_cxr_aug_train.csv
-venv\Scripts\python.exe -m aura_cli train-cnn densenet121
+venv\Scripts\python.exe -m aura.aura_cli train-cnn densenet121
 ```
 
 *Supported architectures for `--arch` are `densenet121`, `efficientnetv2`, `convnext`, and `swin`.*
@@ -31,7 +31,7 @@ After training the CNN backbone, run the calibration script to fit per-finding P
 
 ```bash
 # Run validation calibration on the held-out split (e.g. n=2099)
-venv\Scripts\python.exe -m aura_cli calibrate --limit 2099
+venv\Scripts\python.exe -m aura.aura_cli calibrate --limit 2099
 ```
 
 This updates the following files in `artifacts/`:
@@ -48,7 +48,7 @@ To train the fusion layer on real MIMIC-CXR evidence distributions:
 
 ```bash
 # Train the classical and quantum fusion models on n=700 patient splits
-venv\Scripts\python.exe -m aura_cli train 700
+venv\Scripts\python.exe -m aura.aura_cli train 700
 ```
 
 This command:

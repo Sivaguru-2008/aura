@@ -3,7 +3,7 @@ import os
 import pytest
 pytest.importorskip("torch")
 from unittest import mock
-from services.vision.engine import VisionEngine
+from aura.services.vision.engine import VisionEngine
 
 
 def test_vision_engine_load_success():
@@ -14,7 +14,7 @@ def test_vision_engine_load_success():
 
 def test_vision_engine_load_failure_diagnostics():
     # Force loading failure by mocking VisionModel to raise an error
-    with mock.patch("ml.vision_cxr.inference.VisionModel", side_effect=ValueError("Simulated DLL loading failure")):
+    with mock.patch("aura.ml.vision_cxr.inference.VisionModel", side_effect=ValueError("Simulated DLL loading failure")):
         with mock.patch.dict(os.environ, {"AURA_ALLOW_FALLBACK_VISION": "0"}):
             with pytest.raises(RuntimeError) as exc_info:
                 VisionEngine.load()

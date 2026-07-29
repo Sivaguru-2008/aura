@@ -12,9 +12,9 @@ from pathlib import Path
 
 import numpy as np
 
-from common.config import ARTIFACTS
-from common.mathx import softmax
-from schemas.clinical import DIAGNOSES, Diagnosis
+from aura.common.config import ARTIFACTS
+from aura.common.mathx import softmax
+from aura.schemas.clinical import DIAGNOSES, Diagnosis
 
 MODEL_VERSION = "fusion-poe-v1"
 

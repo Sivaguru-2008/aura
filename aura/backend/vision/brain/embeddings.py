@@ -26,9 +26,9 @@ from typing import Any, Iterable, Sequence
 
 import numpy as np
 
-from backend.core.shared.logging import get_logger
-from backend.vision.brain.errors import BrainVisionError
-from backend.vision.brain.types import BRAIN_VISION_VERSION, EmbeddingSpec
+from aura.backend.core.shared.logging import get_logger
+from .errors import BrainVisionError
+from .types import BRAIN_VISION_VERSION, EmbeddingSpec
 
 log = get_logger("vision.brain.embeddings")
 

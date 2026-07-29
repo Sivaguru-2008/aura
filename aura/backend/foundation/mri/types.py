@@ -26,10 +26,10 @@ class FileFormat(str, Enum):
     ``HDF5`` is not a clinical interchange format and no clinical upload will ever
     arrive as one. It is here because research corpora are redistributed that way —
     BraTS2020's slice-wise HDF5 release is what
-    :mod:`backend.vision.brain.io.brats_h5` reads — and a training corpus that flowed
+    :mod:`aura.backend.vision.brain.io.brats_h5` reads — and a training corpus that flowed
     through this layer should be able to say so rather than be recorded as
     ``UNKNOWN``. It sits last in
-    :data:`~backend.foundation.mri.loader.FORMAT_PREFERENCE` so no existing
+    :data:`~aura.backend.foundation.mri.loader.FORMAT_PREFERENCE` so no existing
     discovery decision changes.
     """
 
@@ -143,7 +143,7 @@ class QualityVerdict(str, Enum):
 
 
 class MaskProvenance(str, Enum):
-    """How the mask in a :class:`~backend.foundation.mri.masking.BrainMaskSlot` arose.
+    """How the mask in a :class:`~aura.backend.foundation.mri.masking.BrainMaskSlot` arose.
 
     The distinction between ``FOREGROUND_HEURISTIC`` and ``SKULL_STRIPPED`` is the
     whole point of this enum. A threshold-and-largest-component mask captures the
@@ -186,7 +186,7 @@ class NormalizationMethod(str, Enum):
 
 
 #: Foundation output format version. Bumped when the shape of a
-#: :class:`~backend.foundation.mri.study.FoundationStudy` changes in a way a
+#: :class:`~aura.backend.foundation.mri.study.FoundationStudy` changes in a way a
 #: consumer could notice. Stamped into every study so a cached artefact can be
 #: matched against the code that produced it.
 FOUNDATION_VERSION = "1.0.0"

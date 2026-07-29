@@ -20,7 +20,7 @@ Per-sample pipeline::
 Normalisation is per slice, over brain voxels, per channel — not per volume. Two
 measured reasons. The corpus arrives per-slice z-scored, so a volume-level statistic is
 partly meaningless anyway (the per-slice scale factor is unrecoverable; see
-:mod:`backend.vision.brain.io.brats_h5`), and the residual inter-slice scale spread is
+:mod:`aura.backend.vision.brain.io.brats_h5`), and the residual inter-slice scale spread is
 a factor of 1.4-1.8 within a volume, which per-slice normalisation removes outright.
 Over brain voxels rather than the whole frame because the frame is mostly air: including
 it makes the statistics a function of how much of the head is in this slice.
@@ -34,14 +34,14 @@ from typing import Any, Sequence
 import numpy as np
 from torch.utils.data import Dataset
 
-from backend.core.shared.logging import get_logger
-from backend.vision.brain.augment import SliceAugmenter
-from backend.vision.brain.config import BrainVisionConfig
-from backend.vision.brain.degradations import Degradation, DegradationSimulator
-from backend.vision.brain.errors import CacheUnavailable
-from backend.vision.brain.ingest import CacheManifest, load_manifest, load_slice_index
-from backend.vision.brain.sampling import SliceTable
-from backend.vision.brain.types import (
+from aura.backend.core.shared.logging import get_logger
+from .augment import SliceAugmenter
+from .config import BrainVisionConfig
+from .degradations import Degradation, DegradationSimulator
+from .errors import CacheUnavailable
+from .ingest import CacheManifest, load_manifest, load_slice_index
+from .sampling import SliceTable
+from .types import (
     CompositeRegion,
     FOREGROUND_REGIONS,
     SplitName,

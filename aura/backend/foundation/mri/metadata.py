@@ -26,8 +26,8 @@ from typing import Any, Iterable, Mapping, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.foundation.mri.geometry import VoxelGeometry
-from backend.foundation.mri.types import (
+from .geometry import VoxelGeometry
+from .types import (
     AnatomicalPlane,
     FileFormat,
     MRAcquisitionType,

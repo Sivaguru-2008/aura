@@ -28,7 +28,7 @@ def get_file_size_mb(path: Path) -> float:
 def run_evaluation_pipeline():
     print("[AURA Eval] Running performance profiling...")
     # Run the perf benchmark to generate local CPU latency/throughput
-    from ml.evaluation.perf_benchmark import run as run_perf
+    from .perf_benchmark import run as run_perf
     perf_results = run_perf(iters=15, out_dir=ARTIFACTS_DIR / "performance")
 
     print("[AURA Eval] Loading evaluation artifacts...")

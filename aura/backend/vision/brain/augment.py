@@ -14,7 +14,7 @@ label)``. There is no way to transform one without the other.
 
 Left-right flipping is available and off by default. Laterality is a reportable
 finding, and this corpus's laterality is unverified (see
-:mod:`backend.vision.brain.io.brats_h5`); mirroring on top of that would build a model
+:mod:`aura.backend.vision.brain.io.brats_h5`); mirroring on top of that would build a model
 that is explicitly invariant to a distinction a radiologist has to make.
 """
 from __future__ import annotations
@@ -23,7 +23,7 @@ from typing import Any
 
 import numpy as np
 
-from backend.vision.brain.config import AugmentationConfig
+from .config import AugmentationConfig
 
 
 class SliceAugmenter:

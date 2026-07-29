@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Any
-from schemas.contracts import CaseBundle
-from schemas.clinical import Diagnosis, Finding, DIAGNOSIS_LABELS, FINDING_LABELS
+from aura.schemas.contracts import CaseBundle
+from aura.schemas.clinical import Diagnosis, Finding, DIAGNOSIS_LABELS, FINDING_LABELS
 
 class SpecialistOpinion:
     """One specialist's view, produced by deterministic rules over the case.

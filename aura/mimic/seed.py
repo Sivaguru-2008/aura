@@ -1,10 +1,10 @@
 """Step 13 — Seed the worklist with real MIMIC-CXR patients.
 
 Drop-in replacement for ``gateway.seed.seed`` that runs the *same* pipeline over
-*real* patients from :func:`mimic.patient.iter_patients` instead of the synthetic
+*real* patients from :func:`aura.mimic.patient.iter_patients` instead of the synthetic
 ``ml.data.make_dataset`` world. Identical side effects (``store.save_case`` +
 ``store.audit``) and an identical async signature, so the gateway calls it the
-same way — see :func:`gateway.app` (switched via ``AURA_DATA_SOURCE``).
+same way — see :func:`aura.gateway.app` (switched via ``AURA_DATA_SOURCE``).
 
 No API, schema, or service is modified; this only changes *where patients come
 from*. Real studies currently trip the vision OOD guard and abstain (the vision
@@ -15,10 +15,10 @@ from __future__ import annotations
 
 import logging
 
-from gateway.pipeline import Pipeline
-from gateway.storage import Store
-from mimic.config import get_mimic_paths
-from mimic.patient import iter_patients
+from aura.gateway.pipeline import Pipeline
+from aura.gateway.storage import Store
+from .config import get_mimic_paths
+from .patient import iter_patients
 
 log = logging.getLogger("mimic.seed")
 

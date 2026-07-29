@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from sklearn.ensemble import HistGradientBoostingClassifier
 
-from mimic.uncertainty import (
+from aura.mimic.uncertainty import (
     ConformalPredictor,
     DeepEnsemble,
     TemperatureScaler,

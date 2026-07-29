@@ -184,9 +184,9 @@ Vision Engine ─► Evidence Encoder ─► Fusion (VQC / PoE) ─► Conflict 
 
 ```bash
 git clone https://github.com/Sivaguru-2008/aura
-cd aura/aura
-py -m pip install -r requirements.txt
-py -m aura_cli serve      # → http://localhost:8000
+cd aura
+py -m pip install -r aura/requirements.txt
+py -m aura.aura_cli serve      # → http://localhost:8000
 ```
 
 ---
@@ -199,14 +199,14 @@ not imaging), and competitive** — but a built‑in, reproducible benchmark on 
 evidence, with **each backend temperature‑scaled on its own calibration split** (a *fair*
 fight), shows it does **not** beat a fairly‑calibrated classical head:
 
-| backend (real held‑out) | accuracy | ECE | macro AUROC |
+| backend (real held‑out, n=69) | accuracy | ECE | macro AUROC |
 |---|---|---|---|
-| quantum VQC | 0.667 | 0.237 | 0.765 |
-| classical PoE | **0.710** | **0.215** | **0.782** |
-| learnable head | 0.652 | 0.189 | 0.747 |
+| quantum VQC | 0.6377 | 0.2381 | 0.7696 |
+| classical PoE | **0.6957** | 0.2194 | **0.7875** |
+| learnable head | 0.6232 | **0.1879** | 0.7306 |
 
 ```bash
-py -m aura_cli bench            # writes artifacts/benchmark.json
+py -m aura.aura_cli bench            # writes artifacts/benchmark.json
 python ../audit_all.py          # DeLong / McNemar / bootstrap significance tests
 ```
 

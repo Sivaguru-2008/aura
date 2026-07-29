@@ -35,7 +35,7 @@ from collections import deque
 import numpy as np
 from scipy.stats import wasserstein_distance
 
-from schemas.clinical import DIAGNOSES, Diagnosis
+from aura.schemas.clinical import DIAGNOSES, Diagnosis
 
 # Clinical severity coordinate per diagnosis — the ground metric for the EMD.
 # Same ordering intent as recommend.engine._SEVERITY: the cost of being wrong

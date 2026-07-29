@@ -19,10 +19,10 @@ from __future__ import annotations
 from fastapi import APIRouter, File, UploadFile
 from fastapi.responses import JSONResponse
 
-from backend.core.shared.errors import AuraBackendError
-from backend.core.shared.logging import get_logger, new_correlation_id, use_correlation_id
-from backend.models.routing import AnalysisEnvelope, RoutingMetadata
-from backend.services.dispatch import DispatchService
+from ..core.shared.errors import AuraBackendError
+from ..core.shared.logging import get_logger, new_correlation_id, use_correlation_id
+from ..models.routing import AnalysisEnvelope, RoutingMetadata
+from ..services.dispatch import DispatchService
 
 log = get_logger("api")
 
@@ -56,7 +56,7 @@ def build_router(dispatch: DispatchService) -> APIRouter:
         identify this" is a successful inspection, and the body explains why. Only a
         transport-level rejection (disallowed type, oversized) is an error status.
         """
-        from backend.core.upload import UploadIntake
+        from ..core.upload import UploadIntake
 
         request_id = new_correlation_id()
         with use_correlation_id(request_id):
@@ -68,7 +68,7 @@ def build_router(dispatch: DispatchService) -> APIRouter:
                     async with UploadIntake().receive(file) as asset:
                         return dispatch.inspect(asset)
                 else:
-                    from backend.core.shared.errors import UploadRejected
+                    from ..core.shared.errors import UploadRejected
                     raise UploadRejected("No file or files uploaded.", http_status=400)
             except AuraBackendError as exc:
                 return _error(exc)
@@ -89,7 +89,7 @@ def build_router(dispatch: DispatchService) -> APIRouter:
                             chemotherapy: bool | None = None,
                             clinical_notes: str | None = None):
         """Route and analyse in one call — the modality-agnostic upload endpoint."""
-        from backend.core.upload import UploadIntake
+        from ..core.upload import UploadIntake
 
         request_id = new_correlation_id()
         with use_correlation_id(request_id):
@@ -120,7 +120,7 @@ def build_router(dispatch: DispatchService) -> APIRouter:
                             declared_modality=declared_modality or force_modality,
                             clinical_context=clinical_context)
                 else:
-                    from backend.core.shared.errors import UploadRejected
+                    from ..core.shared.errors import UploadRejected
                     raise UploadRejected("No file or files uploaded.", http_status=400)
             except AuraBackendError as exc:
                 return _error(exc)
@@ -131,8 +131,8 @@ def build_router(dispatch: DispatchService) -> APIRouter:
     async def preview_study(file: UploadFile | None = File(None),
                             files: list[UploadFile] | None = File(None)):
         """Parse and validate the upload, generating preview thumbnails and metadata without running AI inference."""
-        from backend.core.upload import UploadIntake
-        from backend.foundation.mri.intake_manager import MRIIntakeManager
+        from ..core.upload import UploadIntake
+        from ..foundation.mri.intake_manager import MRIIntakeManager
         from PIL import Image
         import io
         import base64
@@ -209,12 +209,12 @@ def build_router(dispatch: DispatchService) -> APIRouter:
                     async with UploadIntake().receive(file) as asset:
                         return await _do_preview(asset)
                 else:
-                    from backend.core.shared.errors import UploadRejected
+                    from ..core.shared.errors import UploadRejected
                     raise UploadRejected("No file or files uploaded.", http_status=400)
             except AuraBackendError as exc:
                 return _error(exc)
             except Exception as exc:
-                from backend.foundation.mri.errors import StudyValidationError
+                from ..foundation.mri.errors import StudyValidationError
                 return _error(StudyValidationError(f"Preview failed: {exc}"))
 
     # ------------------------------------------------------------------ #
@@ -226,8 +226,8 @@ def build_router(dispatch: DispatchService) -> APIRouter:
         growth_threshold: float | None = None,
         regression_threshold: float | None = None,
     ):
-        from gateway.app import store
-        from backend.services.reasoning.progression import LongitudinalAnalyzer
+        from aura.gateway.app import store
+        from ..services.reasoning.progression import LongitudinalAnalyzer
         from fastapi import HTTPException
 
         prev = store().get_case(previous_case_id)
@@ -248,8 +248,8 @@ def build_router(dispatch: DispatchService) -> APIRouter:
     @api.get("/v1/cases/{case_id}/tracking",
              summary="Get historical tumor tracking timeline for a case")
     def track_case(case_id: str):
-        from gateway.app import store
-        from backend.services.reasoning.tracking import TumorTracker
+        from aura.gateway.app import store
+        from ..services.reasoning.tracking import TumorTracker
         from fastapi import HTTPException
 
         case = store().get_case(case_id)

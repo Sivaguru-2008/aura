@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import datetime, timezone
-from schemas.contracts import CaseBundle
-from schemas.clinical import DIAGNOSIS_LABELS
+from aura.schemas.contracts import CaseBundle
+from aura.schemas.clinical import DIAGNOSIS_LABELS
 
 def export_hl7_oru_r01(b: CaseBundle) -> str:
     now_str = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")

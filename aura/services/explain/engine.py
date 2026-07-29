@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import numpy as np
 
-from common.anatomy import IMG, resize_to as _resize_to
-from common.mathx import softmax
-from schemas.clinical import DIAGNOSES, Diagnosis
-from schemas.contracts import Explanation
-from services.fusion.evidence import EVIDENCE_CHANNELS
+from aura.common.anatomy import IMG, resize_to as _resize_to
+from aura.common.mathx import softmax
+from aura.schemas.clinical import DIAGNOSES, Diagnosis
+from aura.schemas.contracts import Explanation
+from ..fusion.evidence import EVIDENCE_CHANNELS
 
 
 class ExplainEngine:
@@ -77,7 +77,7 @@ class ExplainEngine:
         top_finding = self._top_finding(vision_engine, img)
         backbone = getattr(vision_engine, "backbone", None)
         if backbone is not None:
-            from services.explain import methods as M
+            from . import methods as M
 
             # Gradient methods only in the live path (each is 1–30 passes); the
             # 100+-pass occlusion map stays available via methods.occlusion for

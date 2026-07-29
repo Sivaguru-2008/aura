@@ -15,18 +15,18 @@ import time
 
 import numpy as np
 
-from common.config import ARTIFACTS, ensure_dirs, get_settings
-from common.mathx import softmax
-from schemas.clinical import DIAGNOSES
-from services.fusion.device import make_qnode
-from services.safety.calibration import (
+from aura.common.config import ARTIFACTS, ensure_dirs, get_settings
+from aura.common.mathx import softmax
+from aura.schemas.clinical import DIAGNOSES
+from aura.services.fusion.device import make_qnode
+from aura.services.safety.calibration import (
     Calibration,
     expected_calibration_error,
     fit_conformal,
     fit_temperature,
     ood_stats,
 )
-from ml.training.dataset import (
+from .dataset import (
     build_evidence_dataset,
     make_splits,
     real_evidence_splits,
@@ -173,7 +173,7 @@ def run(n_samples: int = 700) -> dict:
     np.savez(ARTIFACTS / "fusion_ensemble.npz", Ws=Ws, bs=bs)
 
     print("[train] fitting learnable attention-gated fusion ...")
-    from services.fusion.learnable import train_learnable
+    from aura.services.fusion.learnable import train_learnable
     A, cvec, Wl, bl = train_learnable(Xtr, ytr, seed=s.seed)
     np.savez(ARTIFACTS / "fusion_learnable.npz", A=A, c=cvec, W=Wl, b=bl)
 
@@ -198,7 +198,7 @@ def run(n_samples: int = 700) -> dict:
                 ood_mean=om, ood_std=osd, ece=ece).save()
 
     # Class-conditional (Mondrian) conformal thresholds on the calibration split.
-    from services.safety.uncertainty import mondrian_qhats
+    from aura.services.safety.uncertainty import mondrian_qhats
     mq = mondrian_qhats(cal_probs, ycal, s.conformal_coverage, N_DX)
     np.save(ARTIFACTS / "conformal_mondrian.npy", mq)
 

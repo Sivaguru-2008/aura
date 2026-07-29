@@ -44,7 +44,7 @@ Four properties this module holds to, each because the alternative fails invisib
 """
 from typing import TYPE_CHECKING, Any
 
-from backend.vision.brain.config import (
+from .config import (
     AugmentationConfig,
     BrainVisionConfig,
     CurriculumConfig,
@@ -59,7 +59,7 @@ from backend.vision.brain.config import (
     ValidationConfig,
     smoke_config,
 )
-from backend.vision.brain.errors import (
+from .errors import (
     ArchitectureUnavailable,
     BrainVisionError,
     CacheUnavailable,
@@ -69,7 +69,7 @@ from backend.vision.brain.errors import (
     CorpusNotFound,
     ModelNotTrained,
 )
-from backend.vision.brain.types import (
+from .types import (
     BRAIN_VISION_VERSION,
     CACHE_VERSION,
     CompositeRegion,
@@ -83,30 +83,32 @@ from backend.vision.brain.types import (
 )
 
 if TYPE_CHECKING:                                        # pragma: no cover
-    from backend.vision.brain.dataset import BrainSliceDataset
-    from backend.vision.brain.ingest import BrainCorpusIngestor, CacheManifest
-    from backend.vision.brain.inference import BrainVisionEngine
-    from backend.vision.brain.model import BrainVisionNetwork
-    from backend.vision.brain.output import BrainVisionOutput
-    from backend.vision.brain.train import BrainVisionTrainer
+    from .dataset import BrainSliceDataset
+    from .ingest import BrainCorpusIngestor, CacheManifest
+    from .inference import BrainVisionEngine
+    from .model import BrainVisionNetwork
+    from .output import BrainVisionOutput
+    from .train import BrainVisionTrainer
 
 #: Names that pull in torch. Resolved on first attribute access rather than at import,
 #: so ``import backend.vision.brain`` stays cheap and works in a deployment that has the
 #: foundation layer but no deep-learning stack — the registry imports engine metadata at
 #: startup and must not pay for CUDA initialisation to do it.
+#: Values are relative to this package, so they survive the package being moved or
+#: renamed — ``importlib.import_module`` resolves them against ``__name__`` below.
 _LAZY: dict[str, str] = {
-    "BrainCorpusIngestor": "backend.vision.brain.ingest",
-    "CacheManifest": "backend.vision.brain.ingest",
-    "load_manifest": "backend.vision.brain.ingest",
-    "BrainSliceDataset": "backend.vision.brain.dataset",
-    "build_datasets": "backend.vision.brain.dataset",
-    "BrainVisionNetwork": "backend.vision.brain.model",
-    "build_network": "backend.vision.brain.model",
-    "BrainVisionTrainer": "backend.vision.brain.train",
-    "BrainVisionEngine": "backend.vision.brain.inference",
-    "BrainVisionOutput": "backend.vision.brain.output",
-    "RegionFinding": "backend.vision.brain.output",
-    "EmbeddingStore": "backend.vision.brain.embeddings",
+    "BrainCorpusIngestor": ".ingest",
+    "CacheManifest": ".ingest",
+    "load_manifest": ".ingest",
+    "BrainSliceDataset": ".dataset",
+    "build_datasets": ".dataset",
+    "BrainVisionNetwork": ".model",
+    "build_network": ".model",
+    "BrainVisionTrainer": ".train",
+    "BrainVisionEngine": ".inference",
+    "BrainVisionOutput": ".output",
+    "RegionFinding": ".output",
+    "EmbeddingStore": ".embeddings",
 }
 
 
@@ -114,7 +116,7 @@ def __getattr__(name: str) -> Any:
     if name in _LAZY:
         import importlib
 
-        return getattr(importlib.import_module(_LAZY[name]), name)
+        return getattr(importlib.import_module(_LAZY[name], __name__), name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 

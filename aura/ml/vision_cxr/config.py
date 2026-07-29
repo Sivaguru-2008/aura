@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
-from common.config import ARTIFACTS
-from mimic.config import get_mimic_paths
+from aura.common.config import ARTIFACTS
+from aura.mimic.config import get_mimic_paths
 
 class TrainConfig:
     def __init__(self, **kwargs):

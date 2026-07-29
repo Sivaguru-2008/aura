@@ -16,7 +16,7 @@ NOT the official Stanford CheXpert labeler (Python2/credentialed) — an improve
 transparent rule labeler validated against report reading.
 """
 import re
-from schemas.clinical import CHEST_FINDINGS, Finding
+from aura.schemas.clinical import CHEST_FINDINGS, Finding
 
 CONCEPTS = {
     "effusion":      r"effusion|pleural fluid",

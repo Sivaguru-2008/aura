@@ -4,28 +4,28 @@ Importing this package registers the implemented architectures and the declared-
 unimplemented ones, so :func:`available_encoders` and :func:`declared_architectures`
 answer correctly from the first import.
 """
-from backend.vision.brain.model.blocks import (
+from .blocks import (
     ConvNormAct,
     ResidualBlock,
     ResidualStage,
     UpsampleBlock,
 )
-from backend.vision.brain.model.decoder import UNetDecoder2D
-from backend.vision.brain.model.encoder import ModalityStem, ResidualUNetEncoder2D
-from backend.vision.brain.model.heads import (
+from .decoder import UNetDecoder2D
+from .encoder import ModalityStem, ResidualUNetEncoder2D
+from .heads import (
     EmbeddingHead,
     PresenceHead,
     QualityHead,
     SegmentationHead,
     SizeHead,
 )
-from backend.vision.brain.model.network import (
+from .network import (
     BrainVisionNetwork,
     NetworkOutput,
     build_network,
     downsample_label,
 )
-from backend.vision.brain.model.registry import (
+from .registry import (
     DecoderBackbone,
     EncoderBackbone,
     available_decoders,

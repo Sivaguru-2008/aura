@@ -22,8 +22,8 @@ from typing import Optional
 
 import numpy as np
 
-from common.config import ARTIFACTS
-from schemas.clinical import FINDINGS
+from aura.common.config import ARTIFACTS
+from aura.schemas.clinical import FINDINGS
 
 FINDING_NAMES = [f.value for f in FINDINGS]
 EVAL_DIR = ARTIFACTS / "evaluation"
@@ -34,8 +34,8 @@ EVAL_DIR = ARTIFACTS / "evaluation"
 # --------------------------------------------------------------------------- #
 def load_validation(limit: Optional[int] = None):
     """Return (image_paths, labels[N,7]) for the MIMIC validation split."""
-    from ml.vision_cxr.config import TrainConfig
-    from ml.vision_cxr.dataset import load_mimic_samples
+    from ..vision_cxr.config import TrainConfig
+    from ..vision_cxr.dataset import load_mimic_samples
 
     cfg = TrainConfig()
     paths = cfg.mimic_paths
@@ -48,8 +48,8 @@ def run_inference(image_paths, labels, model_path: Optional[str] = None,
     import torch
     from torch.utils.data import DataLoader
 
-    from ml.vision_cxr.dataset import ChestXrayDataset, get_transforms
-    from ml.vision_cxr.inference import VisionModel
+    from ..vision_cxr.dataset import ChestXrayDataset, get_transforms
+    from ..vision_cxr.inference import VisionModel
 
     model_path = model_path or str(ARTIFACTS / "best_model.pt")
     vm = VisionModel(model_path)

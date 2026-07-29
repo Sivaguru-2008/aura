@@ -21,10 +21,10 @@ import logging
 
 import numpy as np
 
-from schemas.clinical import DIAGNOSES
-from services.fusion.evidence import encode
-from services.vision import VisionEngine
-from ml.data import Sample, make_dataset
+from aura.schemas.clinical import DIAGNOSES
+from aura.services.fusion.evidence import encode
+from aura.services.vision import VisionEngine
+from ..data import Sample, make_dataset
 
 log = logging.getLogger("ml.training.dataset")
 
@@ -71,8 +71,8 @@ def build_real_evidence_dataset(
     Returns ``(X, y)`` numpy arrays, or ``(None, None)`` if the corpus is absent so
     callers can fall back to the synthetic path.
     """
-    from mimic.config import get_mimic_paths
-    from mimic.patient import iter_patients
+    from aura.mimic.config import get_mimic_paths
+    from aura.mimic.patient import iter_patients
 
     paths = get_mimic_paths()
     if not paths.validate_csv.is_file():

@@ -30,11 +30,11 @@ from typing import Any
 
 import numpy as np
 
-from backend.core.shared.logging import get_logger
-from backend.vision.brain.output import BrainVisionOutput
-from backend.vision.brain.types import CompositeRegion, TumorRegion
-from schemas.clinical import Diagnosis, Finding
-from schemas.contracts import (
+from aura.backend.core.shared.logging import get_logger
+from aura.backend.vision.brain.output import BrainVisionOutput
+from aura.backend.vision.brain.types import CompositeRegion, TumorRegion
+from aura.schemas.clinical import Diagnosis, Finding
+from aura.schemas.contracts import (
     AbstentionReason,
     CaseBundle,
     CaseState,

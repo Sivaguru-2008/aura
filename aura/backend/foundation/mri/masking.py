@@ -21,8 +21,8 @@ from typing import Any
 
 import numpy as np
 
-from backend.core.shared.logging import get_logger
-from backend.foundation.mri.types import MaskProvenance
+from aura.backend.core.shared.logging import get_logger
+from .types import MaskProvenance
 
 log = get_logger("foundation.mri.masking")
 

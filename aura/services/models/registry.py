@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from common.config import ARTIFACTS
+from aura.common.config import ARTIFACTS
 
 
 class ModelRegistry:

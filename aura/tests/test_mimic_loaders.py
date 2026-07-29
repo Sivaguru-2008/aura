@@ -11,9 +11,9 @@ import dataclasses
 import pandas as pd
 import pytest
 
-from mimic.config import get_mimic_paths
-from mimic.loaders import MimicCxrLoader, PatientRecord, SchemaError
-from mimic.parsing import safe_list, safe_str_list
+from aura.mimic.config import get_mimic_paths
+from aura.mimic.loaders import MimicCxrLoader, PatientRecord, SchemaError
+from aura.mimic.parsing import safe_list, safe_str_list
 
 PATHS = get_mimic_paths()
 HAS_DATA = PATHS.train_csv.is_file() and PATHS.validate_csv.is_file()

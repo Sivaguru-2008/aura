@@ -36,9 +36,9 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from backend.vision.brain.config import LossConfig
-from backend.vision.brain.model.network import NetworkOutput, downsample_label
-from backend.vision.brain.types import HeadName, TumorRegion
+from .config import LossConfig
+from .model.network import NetworkOutput, downsample_label
+from .types import HeadName, TumorRegion
 
 
 @dataclass

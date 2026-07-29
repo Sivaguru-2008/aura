@@ -5,7 +5,7 @@ import asyncio
 
 import pytest
 
-from mimic.config import get_mimic_paths
+from aura.mimic.config import get_mimic_paths
 
 PATHS = get_mimic_paths()
 HAS_DATA = PATHS.validate_csv.is_file()
@@ -14,14 +14,14 @@ needs_data = pytest.mark.skipif(not HAS_DATA, reason="MIMIC-CXR corpus not mount
 
 def test_app_imports_with_integration_wired():
     # The gateway must import cleanly with the new seeder branch in place.
-    import gateway.app as app
+    import aura.gateway.app as app
     assert hasattr(app, "app")
     assert hasattr(app, "seed")           # synthetic fallback still imported
 
 
 def test_seed_mimic_is_drop_in_signature():
     import inspect
-    from mimic.seed import seed_mimic
+    from aura.mimic.seed import seed_mimic
     sig = inspect.signature(seed_mimic)
     # same leading params as gateway.seed.seed (store, pipeline, ...)
     params = list(sig.parameters)
@@ -31,9 +31,9 @@ def test_seed_mimic_is_drop_in_signature():
 
 @needs_data
 def test_seed_mimic_populates_real_cases(tmp_path):
-    from gateway.pipeline import Pipeline
-    from gateway.storage import Store
-    from mimic.seed import seed_mimic
+    from aura.gateway.pipeline import Pipeline
+    from aura.gateway.storage import Store
+    from aura.mimic.seed import seed_mimic
 
     store = Store(tmp_path / "t.db")
     pipe = Pipeline()
@@ -50,9 +50,9 @@ def test_seed_mimic_populates_real_cases(tmp_path):
 
 @needs_data
 def test_seed_mimic_is_idempotent(tmp_path):
-    from gateway.pipeline import Pipeline
-    from gateway.storage import Store
-    from mimic.seed import seed_mimic
+    from aura.gateway.pipeline import Pipeline
+    from aura.gateway.storage import Store
+    from aura.mimic.seed import seed_mimic
 
     store = Store(tmp_path / "t.db")
     pipe = Pipeline()

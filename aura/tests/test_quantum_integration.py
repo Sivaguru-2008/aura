@@ -5,11 +5,11 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from backend.engines.neuro.qkl import QKLClassifier
-from schemas.clinical import Diagnosis
-from services.fusion.multimodal import UnifiedFusionEngine
-from services.fusion.qae import QuantumAutoencoder
-from services.reasoning.qbn import QuantumBayesianNetwork
+from aura.backend.engines.neuro.qkl import QKLClassifier
+from aura.schemas.clinical import Diagnosis
+from aura.services.fusion.multimodal import UnifiedFusionEngine
+from aura.services.fusion.qae import QuantumAutoencoder
+from aura.services.reasoning.qbn import QuantumBayesianNetwork
 
 
 def test_qae_compression():

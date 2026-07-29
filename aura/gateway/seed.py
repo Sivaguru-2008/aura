@@ -6,10 +6,10 @@ from __future__ import annotations
 
 import numpy as np
 
-from ml.data import make_dataset, make_multimodal, make_ood_sample, IMG
-from schemas.contracts import StudyInput, StructuredPriors
-from gateway.pipeline import Pipeline
-from gateway.storage import Store
+from aura.ml.data import make_dataset, make_multimodal, make_ood_sample, IMG
+from aura.schemas.contracts import StudyInput, StructuredPriors
+from .pipeline import Pipeline
+from .storage import Store
 
 
 async def seed(store: Store, pipeline: Pipeline, n: int = 12, seed: int = 202) -> int:

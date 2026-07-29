@@ -5,6 +5,6 @@ Three grounded explanation types:
   * evidence attribution — each evidence node's contribution to the top diagnosis.
   * counterfactuals      — "if this evidence were absent, the top prob shifts by X".
 """
-from services.explain.engine import ExplainEngine
+from .engine import ExplainEngine
 
 __all__ = ["ExplainEngine"]

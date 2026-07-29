@@ -2,6 +2,6 @@
 of their own beyond sequencing and error translation.
 """
 
-from backend.services.dispatch import DispatchService
+from .dispatch import DispatchService
 
 __all__ = ["DispatchService"]

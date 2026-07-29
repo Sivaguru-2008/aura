@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from schemas.clinical import Finding
-from schemas.contracts import EvidenceItem, EvidenceKind, StructuredPriors, VisionResult
+from aura.schemas.clinical import Finding
+from aura.schemas.contracts import EvidenceItem, EvidenceKind, StructuredPriors, VisionResult
 
 EVIDENCE_CHANNELS = [
     "opacity",

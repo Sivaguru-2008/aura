@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from mimic.evaluation import (
+from aura.mimic.evaluation import (
     confusion_matrix,
     evaluate_binary,
     evaluate_multiclass,

@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from schemas.clinical import Finding
+from aura.schemas.clinical import Finding
 
 
 def _resize01(m: np.ndarray, size: int) -> np.ndarray:
@@ -131,7 +131,7 @@ def occlusion(score_fn, img: np.ndarray, finding: Finding,
               window: int = 12, stride: int = 6, out_size: int = 64,
               baseline_val: float = 0.18) -> np.ndarray:
     """Model-agnostic occlusion saliency for one finding (works without gradients)."""
-    from common.anatomy import resize_to
+    from aura.common.anatomy import resize_to
 
     g = resize_to(img, out_size).astype(float).copy()
     base_p = score_fn(g)[finding]
@@ -168,7 +168,7 @@ def all_methods(backbone, img: np.ndarray, finding: Finding,
         ("smoothgrad", lambda: smoothgrad(backbone, img, finding, out_size=out_size)),
     ]
     if include_scorecam:
-        from services.explain.scorecam import score_cam
+        from .scorecam import score_cam
         methods.append(
             ("score_cam", lambda: score_cam(backbone, img, finding, out_size=out_size))
         )

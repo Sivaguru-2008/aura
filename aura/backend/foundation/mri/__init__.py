@@ -13,7 +13,7 @@ looking at a volume it can trust, and knows exactly what was done to it.
         affine = t1.volume.affine         # world coordinates preserved throughout
         assert t1.history.was_applied("voxel_resampling")
 
-The pipeline (see :mod:`backend.foundation.mri.pipeline`)::
+The pipeline (see :mod:`aura.backend.foundation.mri.pipeline`)::
 
     study path
         -> study validation      loader: mixed formats, mixed studies, empty paths
@@ -38,13 +38,13 @@ invisible downstream:
   labelled corpus here, so those checks carry ``calibrated=False`` and cannot reject a
   study. A head mask is never called a brain mask.
 """
-from backend.foundation.mri.config import (
+from .config import (
     FoundationConfig,
     LoaderConfig,
     QualityThresholds,
     StandardizationConfig,
 )
-from backend.foundation.mri.errors import (
+from .errors import (
     CorruptStudy,
     MRIFoundationError,
     StageFailed,
@@ -54,37 +54,37 @@ from backend.foundation.mri.errors import (
     StudyValidationError,
     UnsupportedStudyFormat,
 )
-from backend.foundation.mri.geometry import VoxelGeometry
-from backend.foundation.mri.loader import LoadedStudy, MRIStudyLoader, load_study
-from backend.foundation.mri.masking import BrainMaskSlot
-from backend.foundation.mri.metadata import MetadataExtractor, MRIMetadata
-from backend.foundation.mri.pipeline import (
+from .geometry import VoxelGeometry
+from .loader import LoadedStudy, MRIStudyLoader, load_study
+from .masking import BrainMaskSlot
+from .metadata import MetadataExtractor, MRIMetadata
+from .pipeline import (
     MRIFoundationPipeline,
     build_foundation_pipeline,
 )
-from backend.foundation.mri.quality import (
+from .quality import (
     MRIQualityInspector,
     QualityCheck,
     QualityReport,
 )
-from backend.foundation.mri.registration import RegistrationPlan, RegistrationPreparer
-from backend.foundation.mri.sequence import (
+from .registration import RegistrationPlan, RegistrationPreparer
+from .sequence import (
     RuleBasedSequenceDetector,
     SequenceAssignment,
     SequenceDetector,
 )
-from backend.foundation.mri.standardize import (
+from .standardize import (
     StandardizationContext,
     TransformResult,
     VolumeTransform,
 )
-from backend.foundation.mri.study import (
+from .study import (
     FoundationStudy,
     ProcessingHistory,
     ProcessingStep,
     StandardizedSeries,
 )
-from backend.foundation.mri.types import (
+from .types import (
     FOUNDATION_VERSION,
     AnatomicalPlane,
     CheckStatus,
@@ -96,7 +96,7 @@ from backend.foundation.mri.types import (
     SequenceType,
     StepStatus,
 )
-from backend.foundation.mri.volume import MRIVolume, VolumeBuilder
+from .volume import MRIVolume, VolumeBuilder
 
 __all__ = [
     # pipeline

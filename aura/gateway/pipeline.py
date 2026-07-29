@@ -10,27 +10,27 @@ from __future__ import annotations
 
 import numpy as np
 
-from common import eventbus as ev
-from common.config import get_settings
-from common.eventbus import EventBus
-from common.mathx import entropy, softmax
-from schemas.clinical import DIAGNOSES, Diagnosis
-from schemas.contracts import (
+from aura.common import eventbus as ev
+from aura.common.config import get_settings
+from aura.common.eventbus import EventBus
+from aura.common.mathx import entropy, softmax
+from aura.schemas.clinical import DIAGNOSES, Diagnosis
+from aura.schemas.contracts import (
     CaseBundle,
     CaseState,
     StructuredPriors,
     StudyInput,
 )
-from services.explain import ExplainEngine
-from services.fusion import FusionEngine
-from services.fusion.evidence import encode, to_evidence_items
-from services.memory import MemoryEngine
-from services.reasoning import ClinicalReasoner
-from services.recommend import RecommendEngine
-from services.report import ReportEngine
-from services.safety import SafetyEngine, ClinicalSafetyController, ClinicalDecisionReadinessEngine
-from services.vision import VisionEngine
-from schemas.clinical import Finding
+from aura.services.explain import ExplainEngine
+from aura.services.fusion import FusionEngine
+from aura.services.fusion.evidence import encode, to_evidence_items
+from aura.services.memory import MemoryEngine
+from aura.services.reasoning import ClinicalReasoner
+from aura.services.recommend import RecommendEngine
+from aura.services.report import ReportEngine
+from aura.services.safety import SafetyEngine, ClinicalSafetyController, ClinicalDecisionReadinessEngine
+from aura.services.vision import VisionEngine
+from aura.schemas.clinical import Finding
 
 
 class Pipeline:
@@ -109,7 +109,7 @@ class Pipeline:
             safety_engine=self.safety
         )
         if safety_output.status == "FAILED":
-            from services.safety.controller import ClinicalSafetyException
+            from aura.services.safety.controller import ClinicalSafetyException
             raise ClinicalSafetyException(
                 reason=safety_output.detail or f"Clinical safety check failed: {', '.join(safety_output.failed_checks)}",
                 detail={

@@ -9,8 +9,8 @@ from pathlib import Path
 import numpy as np
 import pennylane as qml
 
-from common.config import ARTIFACTS
-from schemas.clinical import DIAGNOSES, Diagnosis
+from aura.common.config import ARTIFACTS
+from aura.schemas.clinical import DIAGNOSES, Diagnosis
 
 
 class QuantumBayesianNetwork:

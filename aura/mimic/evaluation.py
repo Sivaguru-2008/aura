@@ -18,8 +18,8 @@ from pathlib import Path
 
 import numpy as np
 
-from ml.evaluation.metrics import evaluate as evaluate_diagnosis_core
-from services.safety.uncertainty import brier_score
+from aura.ml.evaluation.metrics import evaluate as evaluate_diagnosis_core
+from aura.services.safety.uncertainty import brier_score
 
 
 def confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray, n_classes: int) -> np.ndarray:

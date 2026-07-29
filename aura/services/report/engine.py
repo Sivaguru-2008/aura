@@ -9,13 +9,13 @@ with its supporting/opposing evidence) and an explicit **confidence explanation*
 """
 from __future__ import annotations
 
-from schemas.clinical import (
+from aura.schemas.clinical import (
     DIAGNOSIS_LABELS,
     FINDING_LABELS,
     Diagnosis,
     Finding,
 )
-from schemas.contracts import (
+from aura.schemas.contracts import (
     AbstentionReason,
     Recommendation,
     ReasoningTrace,
@@ -88,7 +88,7 @@ class ReportEngine:
         grounding: dict[str, list[str]] = {}
 
         # ---- Findings: only findings the vision engine actually asserted. ----
-        from common.config import finding_present_threshold
+        from aura.common.config import finding_present_threshold
         positives = [f for f in vision.findings
                      if f.probability >= finding_present_threshold(f.finding.value)]
         if positives:

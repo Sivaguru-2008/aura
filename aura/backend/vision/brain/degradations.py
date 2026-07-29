@@ -43,7 +43,7 @@ from typing import Any, Callable
 
 import numpy as np
 
-from backend.vision.brain.config import DegradationConfig
+from .config import DegradationConfig
 
 
 #: Canonical artefact ordering. Fixed here rather than derived from configuration so

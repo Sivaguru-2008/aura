@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from sklearn.ensemble import HistGradientBoostingClassifier
 
-from mimic.explain import (
+from aura.mimic.explain import (
     counterfactual,
     native_importance,
     occlusion_attribution,

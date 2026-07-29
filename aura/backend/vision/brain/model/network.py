@@ -8,7 +8,7 @@
                                              -> embedding
 
 :class:`NetworkOutput` is an *internal* container of tensors. It never leaves this
-package: :class:`~backend.vision.brain.output.BrainVisionOutput` is the public object,
+package: :class:`~aura.backend.vision.brain.output.BrainVisionOutput` is the public object,
 and it holds numpy arrays and plain Python. The separation exists because a tensor that
 escapes carries an autograd graph and a CUDA context with it, and something downstream
 will eventually hold one alive for the lifetime of a request.
@@ -21,25 +21,25 @@ from typing import Any, Sequence
 import torch
 from torch import nn
 
-from backend.core.shared.logging import get_logger
-from backend.vision.brain.config import ModelConfig
-from backend.vision.brain.degradations import ARTIFACT_CLASSES, ARTIFACT_ORDER
+from aura.backend.core.shared.logging import get_logger
+from ..config import ModelConfig
+from ..degradations import ARTIFACT_CLASSES, ARTIFACT_ORDER
 
 # Load-bearing despite looking unused: importing these modules is what registers
 # "residual_unet2d" and "unet2d" with the architecture registry, and the network
 # resolves both by *string* rather than by class. Remove them and every build fails
 # with "no encoder named 'residual_unet2d' is registered".
-from backend.vision.brain.model import decoder as _register_decoders  # noqa: F401
-from backend.vision.brain.model import encoder as _register_encoders  # noqa: F401
-from backend.vision.brain.model.heads import (
+from . import decoder as _register_decoders  # noqa: F401
+from . import encoder as _register_encoders  # noqa: F401
+from .heads import (
     EmbeddingHead,
     PresenceHead,
     QualityHead,
     SegmentationHead,
     SizeHead,
 )
-from backend.vision.brain.model.registry import build_decoder, build_encoder
-from backend.vision.brain.types import (
+from .registry import build_decoder, build_encoder
+from ..types import (
     BRAIN_VISION_VERSION,
     EmbeddingSpec,
     HeadName,
@@ -86,7 +86,7 @@ class BrainVisionNetwork(nn.Module):
     Built entirely from configuration through the architecture registry, so replacing
     the 2D residual U-Net with a 3D one or a transformer is a string change plus a
     registered factory — see
-    :mod:`backend.vision.brain.model.registry`.
+    :mod:`aura.backend.vision.brain.model.registry`.
     """
 
     def __init__(self, config: ModelConfig) -> None:

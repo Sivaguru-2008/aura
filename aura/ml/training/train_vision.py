@@ -9,11 +9,11 @@ from __future__ import annotations
 
 import numpy as np
 
-from common.config import ARTIFACTS, ensure_dirs
-from common.mathx import sigmoid
-from schemas.clinical import CHEST_FINDINGS, Finding
-from services.vision.features import FEATURE_NAMES, extract_features
-from ml.data import Sample, make_dataset
+from aura.common.config import ARTIFACTS, ensure_dirs
+from aura.common.mathx import sigmoid
+from aura.schemas.clinical import CHEST_FINDINGS, Finding
+from aura.services.vision.features import FEATURE_NAMES, extract_features
+from ..data import Sample, make_dataset
 
 
 def _features(samples: list[Sample]) -> np.ndarray:

@@ -66,7 +66,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent          # the aura/ directory
 ARTIFACTS = ROOT / "artifacts"                          # trained params, calibration
 DATA = ROOT / "data"
-DB_PATH = ARTIFACTS / "aura.db"
+# The case store defaults to artifacts/, which in a container lives inside the
+# image layer — so every restart discards the worklist. AURA_DB_PATH points it at
+# a mounted volume instead; unset, behaviour is unchanged.
+DB_PATH = Path(os.environ["AURA_DB_PATH"]) if os.environ.get("AURA_DB_PATH") else ARTIFACTS / "aura.db"
 
 _PRESENT_THR: dict | None = None
 
@@ -254,3 +257,6 @@ def get_settings() -> Settings:
 def ensure_dirs() -> None:
     ARTIFACTS.mkdir(parents=True, exist_ok=True)
     DATA.mkdir(parents=True, exist_ok=True)
+    # AURA_DB_PATH may point outside ARTIFACTS (a mounted volume); SQLite will
+    # not create the parent directory for us.
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)

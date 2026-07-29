@@ -20,9 +20,9 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from backend.core.shared.logging import get_logger
-from backend.engines.base.registry import EngineRegistry, default_registry
-from backend.services.dispatch import DispatchService
+from .core.shared.logging import get_logger
+from .engines.base.registry import EngineRegistry, default_registry
+from .services.dispatch import DispatchService
 
 log = get_logger("bootstrap")
 
@@ -52,8 +52,8 @@ def install_router(
     """
     reg = registry or default_registry
 
-    from backend.engines.neuro.engine import register_neuromind_engine
-    from backend.engines.thorax.engine import register_thorax_engine
+    from .engines.neuro.engine import register_neuromind_engine
+    from .engines.thorax.engine import register_thorax_engine
 
     register_thorax_engine(pipeline, store, on_case_created, registry=reg)
     register_neuromind_engine(pipeline, store, on_case_created, registry=reg)
@@ -65,7 +65,7 @@ def install_router(
 
     dispatch = DispatchService(registry=reg)
 
-    from backend.api.routes import build_router
+    from .api.routes import build_router
 
     app.include_router(build_router(dispatch))
 

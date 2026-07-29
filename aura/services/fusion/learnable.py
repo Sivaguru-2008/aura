@@ -20,9 +20,9 @@ from pathlib import Path
 
 import numpy as np
 
-from common.config import ARTIFACTS
-from common.mathx import sigmoid, softmax
-from schemas.clinical import DIAGNOSES
+from aura.common.config import ARTIFACTS
+from aura.common.mathx import sigmoid, softmax
+from aura.schemas.clinical import DIAGNOSES
 
 MODEL_VERSION = "fusion-gated-v1"
 

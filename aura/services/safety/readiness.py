@@ -6,11 +6,11 @@ import cv2
 from pydantic import BaseModel
 from typing import Dict, List, Optional
 
-from common.config import get_settings
-from common.mathx import softmax
-from schemas.clinical import DIAGNOSES, Diagnosis, Finding
-from knowledge.guidelines.templates import GUIDELINE_TEMPLATES
-from services.recommend.engine import RecommendEngine, CATALOG, _COST_W, _RISK_W
+from aura.common.config import get_settings
+from aura.common.mathx import softmax
+from aura.schemas.clinical import DIAGNOSES, Diagnosis, Finding
+from aura.knowledge.guidelines.templates import GUIDELINE_TEMPLATES
+from ..recommend.engine import RecommendEngine, CATALOG, _COST_W, _RISK_W
 
 class DecisionReadinessProfile(BaseModel):
     status: str  # "READY" or "NOT_READY"
@@ -96,7 +96,7 @@ class ClinicalDecisionReadinessEngine:
             is_cxr = (modality.value == "CXR" if hasattr(modality, "value") else str(modality) == "CXR")
             
         if is_cxr:
-            from services.vision.xray_gate import _structural_score
+            from ..vision.xray_gate import _structural_score
             score, _ = _structural_score(img)
             img_quality = float(score / 3.0)
         else:
@@ -212,7 +212,7 @@ class ClinicalDecisionReadinessEngine:
                 
                 # Run vision and fusion
                 vision_perturbed = vision_engine.analyze(study.study_id, perturbed_img)
-                from services.fusion.evidence import encode
+                from ..fusion.evidence import encode
                 xp = encode(vision_perturbed, study.priors)
                 p_perturbed, _ = fusion_engine.model.fuse(xp)
                 p_array = np.array([p_perturbed.get(d, 0.0) for d in DIAGNOSES])

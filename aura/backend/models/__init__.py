@@ -7,7 +7,7 @@ apart is what lets a future engine return a completely different clinical payloa
 without touching the routing schema.
 """
 
-from backend.models.routing import (
+from .routing import (
     AnalysisEnvelope,
     EngineDescriptorModel,
     EngineOutcome,

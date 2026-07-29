@@ -3,10 +3,10 @@
 This is the ``BraTS Dataset -> MRI Foundation Layer -> Study -> Brain Dataset`` leg of
 the pipeline, run once and cached. The foundation layer is not bypassed and not
 re-implemented: every subject is read into :class:`RawSeries` objects and handed to
-:meth:`~backend.foundation.mri.pipeline.MRIFoundationPipeline.run_series`, which
+:meth:`~aura.backend.foundation.mri.pipeline.MRIFoundationPipeline.run_series`, which
 reorients it to canonical RAS, checks its resolution and field of view, measures seven
 quality checks, estimates a foreground mask, and records every stage it ran. What comes
-out is a real :class:`~backend.foundation.mri.study.FoundationStudy` per subject, kept
+out is a real :class:`~aura.backend.foundation.mri.study.FoundationStudy` per subject, kept
 alongside the voxels as JSON.
 
 Why cache at all
@@ -32,12 +32,12 @@ metric compares the prediction to the label, and both would have moved.
 a permutation and some flips; applying it to the image and not the label produces a
 model trained on mirrored ground truth, which converges perfectly well to something
 useless. :func:`_align_label` puts the label through
-:func:`~backend.foundation.mri.geometry.to_canonical` with the same source affine, and
+:func:`~aura.backend.foundation.mri.geometry.to_canonical` with the same source affine, and
 then asserts the shapes agree.
 
 **Intensity normalisation is deliberately not run here.** The corpus arrives per-slice
 z-scored and the reader restores background to exactly zero (see
-:mod:`backend.vision.brain.io.brats_h5`). That zero is what the dataset's per-slice
+:mod:`aura.backend.vision.brain.io.brats_h5`). That zero is what the dataset's per-slice
 brain-voxel normalisation keys off, and a volume-level z-score applied first would
 destroy it while changing nothing the network could benefit from. The stage is recorded
 as ``skipped`` with that reason in every subject's processing history rather than
@@ -54,27 +54,32 @@ from typing import Any, Iterable, Sequence
 
 import numpy as np
 
-from backend.core.shared.logging import get_logger
-from backend.foundation.mri import (
+from aura.backend.core.shared.logging import get_logger
+from aura.backend.foundation.mri import (
     FoundationConfig,
     FoundationStudy,
     MRIFoundationPipeline,
     StandardizationConfig,
     StandardizedSeries,
 )
-from backend.foundation.mri.geometry import to_canonical
-from backend.foundation.mri.study import ProcessingHistory, StepTimer, step
-from backend.foundation.mri.types import NormalizationMethod, StepStatus
-from backend.vision.brain.config import BrainVisionConfig
-from backend.vision.brain.errors import CacheUnavailable, CorpusIntegrityError
-from backend.vision.brain.io.brats_h5 import (
+from aura.backend.foundation.mri.geometry import to_canonical
+from aura.backend.foundation.mri.study import ProcessingHistory, StepTimer, step
+from aura.backend.foundation.mri.types import (
+    FOUNDATION_VERSION,
+    NormalizationMethod,
+    StepStatus,
+)
+from .config import BrainVisionConfig
+from .errors import CacheUnavailable, CorpusIntegrityError
+from .io.brats_h5 import (
     BratsCorpusIndex,
     BratsH5Reader,
     BratsSubject,
     ChannelVerification,
     SubjectVolumes,
 )
-from backend.vision.brain.types import (
+from .types import (
+    BRAIN_VISION_VERSION,
     CACHE_VERSION,
     CompositeRegion,
     FOREGROUND_REGIONS,
@@ -332,12 +337,8 @@ class BrainCorpusIngestor:
 
         manifest = CacheManifest(
             cache_version=CACHE_VERSION,
-            brain_vision_version=__import__(
-                "backend.vision.brain.types", fromlist=["BRAIN_VISION_VERSION"]
-            ).BRAIN_VISION_VERSION,
-            foundation_version=__import__(
-                "backend.foundation.mri.types", fromlist=["FOUNDATION_VERSION"]
-            ).FOUNDATION_VERSION,
+            brain_vision_version=BRAIN_VISION_VERSION,
+            foundation_version=FOUNDATION_VERSION,
             created_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
             corpus_root=str(paths.corpus_root),
             modalities=[m.to_dict() for m in self.config.model.modalities],
@@ -534,7 +535,7 @@ class BrainCorpusIngestor:
     def _standardize(self, volumes: SubjectVolumes
                      ) -> tuple[FoundationStudy, np.ndarray, ProcessingHistory]:
         """Run the foundation pipeline on each sequence and carry the label with it."""
-        from backend.foundation.mri.io.base import RawSeries
+        from aura.backend.foundation.mri.io.base import RawSeries
 
         history = ProcessingHistory()
         timer = StepTimer()
@@ -562,7 +563,7 @@ class BrainCorpusIngestor:
                     "training dataset normalises per slice over brain voxels. A "
                     "volume z-score here would destroy the background-zero property "
                     "without changing what the network sees.",
-            implementation="backend.vision.brain.ingest"))
+            implementation="aura.backend.vision.brain.ingest"))
 
         study = FoundationStudy(
             study_id=volumes.subject.subject_id,

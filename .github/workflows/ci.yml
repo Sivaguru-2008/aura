@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  # Keep the app off the fallback vision model: a green CI run must mean the
+  # real DenseNet-121 loaded, not that the numpy stand-in covered for it.
+  AURA_ALLOW_FALLBACK_VISION: "0"
+  MPLBACKEND: Agg
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements-docker.txt
+            aura/requirements.txt
+
+      - name: Install system libraries
+        # libgomp1 for torch/scikit-learn OpenMP, libglib2.0-0 for
+        # opencv-python-headless. Mirrors the Dockerfile runtime stage.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libgomp1 libglib2.0-0
+
+      - name: Install PyTorch (CPU wheels)
+        # The default PyPI wheel pulls ~2.5 GB of unused nvidia-* packages and
+        # regularly exhausts the runner's disk.
+        run: |
+          python -m pip install --upgrade pip
+          pip install --index-url https://download.pytorch.org/whl/cpu \
+            "torch>=2.2,<3" "torchvision>=0.17,<1"
+
+      - name: Install dependencies
+        run: pip install -r requirements-docker.txt
+
+      - name: Preflight
+        # --skip-brain: the BraTS checkpoint is gitignored, so a fresh clone
+        # never has it. Everything the chest path needs IS tracked, so this
+        # still fails the build if a served artifact goes missing.
+        run: python -m deploy.preflight --skip-brain
+
+      - name: Tests
+        working-directory: aura
+        # -m "not slow" deselects the batch runs over the real image corpora,
+        # which need MIMIC/BraTS data that is not in the repo.
+        run: python -m pytest -q -m "not slow" --durations=10
+
+      - name: End-to-end smoke test
+        # Boots the real ASGI app through its lifespan (which is where the
+        # modality router installs) and pushes sample.jpg through the full
+        # pipeline, asserting a normalised, non-uniform posterior comes back.
+        # --expect-brain is omitted: the BraTS weight is not in a fresh clone.
+        run: python -m deploy.smoke_test

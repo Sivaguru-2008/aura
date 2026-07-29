@@ -529,7 +529,7 @@ for fx, fy, wdt, lab in fchips:
 box(s, 5.05, 2.14, 4.45, 3.16, fill=INK, line=None, radius=0.05)
 mono = {"font": "Courier New", "size": 8.8}
 tlines = [
-    [("$ py -m aura_cli bench", {**mono, "color": NEONHI, "bold": True})],
+    [("$ py -m aura.aura_cli bench", {**mono, "color": NEONHI, "bold": True})],
     [("fusion benchmark - held-out test (seeded run)", {**mono, "color": DIM, "size": 8})],
     [("            quantum   classical", {**mono, "color": WHITE, "bold": True})],
     [("accuracy      0.87      0.85", {**mono, "color": WHITE})],
@@ -537,7 +537,7 @@ tlines = [
     [("coverage@90%  0.91      0.88", {**mono, "color": WHITE})],
     [("→ quantum path ships this build ✓", {**mono, "color": NEON, "bold": True})],
     [("", mono)],
-    [("$ py -m aura_cli serve", {**mono, "color": NEONHI, "bold": True})],
+    [("$ py -m aura.aura_cli serve", {**mono, "color": NEONHI, "bold": True})],
     [("AURA console → http://localhost:8000", {**mono, "color": WHITE})],
 ]
 yy = 2.34

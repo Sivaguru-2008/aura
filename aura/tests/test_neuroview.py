@@ -8,16 +8,16 @@ import json
 
 import numpy as np
 
-from backend.engines.neuro.multisequence import MultiSequenceStudy
-from backend.engines.neuro.neuroview import build_neuroview_payload
-from backend.vision.brain.output import (
+from aura.backend.engines.neuro.multisequence import MultiSequenceStudy
+from aura.backend.engines.neuro.neuroview import build_neuroview_payload
+from aura.backend.vision.brain.output import (
     BrainVisionOutput,
     FeatureMaps,
     ProcessingMetadata,
     QualityMetadata,
     build_regions,
 )
-from backend.vision.brain.types import DEFAULT_MODALITIES
+from aura.backend.vision.brain.types import DEFAULT_MODALITIES
 
 
 def _output(segmentation: np.ndarray) -> BrainVisionOutput:

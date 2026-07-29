@@ -7,16 +7,16 @@ from __future__ import annotations
 
 import numpy as np
 
-from common.config import get_settings
-from common.mathx import softmax
-from schemas.clinical import DIAGNOSES
-from schemas.contracts import FusionResult, StructuredPriors, VisionResult
-from services.fusion.classical import ClassicalFusion
-from services.fusion.conflict import WassersteinTieBreaker
-from services.fusion.evidence import encode
-from services.fusion.learnable import LearnableFusion
-from services.fusion.quantum import QuantumFusion
-from services.fusion.qae import QuantumAutoencoder
+from aura.common.config import get_settings
+from aura.common.mathx import softmax
+from aura.schemas.clinical import DIAGNOSES
+from aura.schemas.contracts import FusionResult, StructuredPriors, VisionResult
+from .classical import ClassicalFusion
+from .conflict import WassersteinTieBreaker
+from .evidence import encode
+from .learnable import LearnableFusion
+from .quantum import QuantumFusion
+from .qae import QuantumAutoencoder
 
 
 class FusionEngine:
@@ -84,7 +84,7 @@ class FusionEngine:
 
         quantum_entanglement = None
         if self.backend == "quantum" and self.quantum is not None:
-            from services.fusion.qmeasure import measure_entanglement
+            from .qmeasure import measure_entanglement
             try:
                 entanglement = measure_entanglement(self.quantum, x)
                 quantum_entanglement = {
@@ -121,7 +121,7 @@ class FusionEngine:
     def fuse(self, vision: VisionResult, priors: StructuredPriors) -> FusionResult:
         s = get_settings()
         if getattr(s, "qae_enabled", False) and vision.embedding and self.qae is not None:
-            from services.fusion.evidence import prior_risk_score
+            from .evidence import prior_risk_score
             img_feat = self.qae.compress(np.array(vision.embedding, dtype=float))
             x = np.zeros(8, dtype=float)
             x[:7] = img_feat[:7]

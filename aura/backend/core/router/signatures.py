@@ -31,9 +31,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
-from backend.core.router.features import ImageFingerprint
-from backend.core.shared.logging import get_logger
-from backend.core.shared.types import MODALITY_LABELS, ImagingModality
+from .features import ImageFingerprint
+from ..shared.logging import get_logger
+from ..shared.types import MODALITY_LABELS, ImagingModality
 
 log = get_logger("router.signatures")
 
@@ -101,7 +101,7 @@ class ModalitySignature(Protocol):
 class ChestRadiographSignature:
     """Detects chest radiographs — the modality AURA Thorax serves.
 
-    The pixel channel delegates to :func:`services.vision.xray_gate.validate_cxr`,
+    The pixel channel delegates to :func:`aura.services.vision.xray_gate.validate_cxr`,
     the production intake gate that already guards ``POST /v1/studies/upload``. It is
     reused rather than reimplemented for three reasons: it is the component that has
     been validated against the 261k-image MIMIC-CXR corpus, a second implementation
@@ -182,7 +182,7 @@ class ChestRadiographSignature:
     def _run_gate(self, fingerprint: ImageFingerprint, evidence: dict[str, Any]):
         """Invoke the production CXR gate, recording its checks as evidence."""
         try:
-            from services.vision.xray_gate import validate_cxr
+            from aura.services.vision.xray_gate import validate_cxr
 
             result = validate_cxr(fingerprint.path)
         except Exception:
@@ -209,7 +209,7 @@ class _HeadGeometry:
 
     An axial slice through a head — MR or CT — puts a compact subject in a field of
     signal-free air. The scoring lives in
-    :func:`services.vision.xray_gate.head_geometry_score`, which is shared with the
+    :func:`aura.services.vision.xray_gate.head_geometry_score`, which is shared with the
     chest intake gate so the router and the gate cannot disagree about what a head
     slice looks like; that module's docstring carries the measurement table.
 
@@ -242,7 +242,7 @@ class _HeadGeometry:
 
 
 def _test_head_geometry(fingerprint: ImageFingerprint) -> _HeadGeometry:
-    from services.vision.xray_gate import HEAD_COMMIT_SCORE, head_geometry_from_path
+    from aura.services.vision.xray_gate import HEAD_COMMIT_SCORE, head_geometry_from_path
 
     px = fingerprint.pixels
     if not px.decodable:

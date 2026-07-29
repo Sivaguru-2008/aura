@@ -18,11 +18,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Sequence
 
-from backend.core.shared.logging import get_logger
-from backend.foundation.mri.config import LoaderConfig
-from backend.foundation.mri.errors import StudyNotFound
-from backend.foundation.mri.io.base import StudyReader
-from backend.foundation.mri.types import FileFormat
+from aura.backend.core.shared.logging import get_logger
+from ..config import LoaderConfig
+from ..errors import StudyNotFound
+from .base import StudyReader
+from ..types import FileFormat
 
 log = get_logger("foundation.mri.io.discovery")
 

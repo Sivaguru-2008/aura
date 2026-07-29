@@ -27,8 +27,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from mimic.config import MimicPaths, get_mimic_paths
-from mimic.parsing import safe_list as _safe_list
+from .config import MimicPaths, get_mimic_paths
+from .parsing import safe_list as _safe_list
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] mimic.verify: %(message)s"

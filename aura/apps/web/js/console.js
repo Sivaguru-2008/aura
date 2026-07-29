@@ -57,7 +57,7 @@ window.CONSOLE = (() => {
     } catch (err) {
       S.offline = true;
       grid.classList.remove("assembling");
-      $("c-chips").innerHTML = `<span class="c-chip" style="color:var(--red)">GATEWAY OFFLINE — run \`py -m aura_cli serve\`</span>`;
+      $("c-chips").innerHTML = `<span class="c-chip" style="color:var(--red)">GATEWAY OFFLINE — run \`py -m aura.aura_cli serve\`</span>`;
     }
   }
 

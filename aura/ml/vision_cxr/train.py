@@ -6,13 +6,13 @@ from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
 import asyncio
 
-from ml.vision_cxr.config import TrainConfig
-from ml.vision_cxr.dataset import build_loaders
-from ml.vision_cxr.model import DenseNet121CXR
-from ml.vision_cxr.losses import MultiLabelLoss, RegularizedMultiLabelLoss
-from ml.vision_cxr.validate import evaluate_model
-from ml.vision_cxr.checkpoint import save_model_checkpoint, save_best_model, load_model_checkpoint
-from ml.vision_cxr.utils import set_seed, HistoryLogger, plot_training_history
+from .config import TrainConfig
+from .dataset import build_loaders
+from .model import DenseNet121CXR
+from .losses import MultiLabelLoss, RegularizedMultiLabelLoss
+from .validate import evaluate_model
+from .checkpoint import save_model_checkpoint, save_best_model, load_model_checkpoint
+from .utils import set_seed, HistoryLogger, plot_training_history
 
 def train_one_epoch(model, dataloader, optimizer, loss_fn, scaler, device, grad_clip):
     model.train()
@@ -56,10 +56,10 @@ def train_one_epoch(model, dataloader, optimizer, loss_fn, scaler, device, grad_
 def run_post_training_validation(config):
     """Post-training verification validating end-to-end functionality of AURA after integration."""
     import asyncio
-    from gateway.pipeline import Pipeline
-    from schemas.contracts import StructuredPriors
-    from mimic.loaders import MimicCxrLoader
-    from services.vision.io import load_cxr, study_from_cxr
+    from aura.gateway.pipeline import Pipeline
+    from aura.schemas.contracts import StructuredPriors
+    from aura.mimic.loaders import MimicCxrLoader
+    from aura.services.vision.io import load_cxr, study_from_cxr
     
     print("\n" + "="*60)
     print("RUNNING AUTOMATIC POST-TRAINING VALIDATION")
@@ -170,7 +170,7 @@ def main():
     # TV-regularised loss (Module 2): penalise high-frequency noise in the latent
     # feature maps so Grad-CAM++ locks onto anatomy. λ from config (0 disables TV).
     try:
-        from common.config import get_settings
+        from aura.common.config import get_settings
         tv_weight = get_settings().vision_tv_weight
     except Exception:
         tv_weight = 1e-4

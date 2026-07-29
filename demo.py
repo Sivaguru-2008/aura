@@ -17,10 +17,10 @@ import numpy as np
 # Add project root to path
 sys.path.append(str(Path(__file__).resolve().parent / "aura"))
 
-from backend.core.upload.intake import stage_bytes
-from backend.services.dispatch import DispatchService
-from backend.models.routing import ResultStatus
-from backend.core.shared.errors import UnsupportedModality, ModalityConflict
+from aura.backend.core.upload.intake import stage_bytes
+from aura.backend.services.dispatch import DispatchService
+from aura.backend.models.routing import ResultStatus
+from aura.backend.core.shared.errors import UnsupportedModality, ModalityConflict
 
 # Set paths
 AURA_DIR = Path(__file__).resolve().parent
@@ -31,10 +31,10 @@ RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 # --------------------------------------------------------------------------- #
 # Bootstrap production engines and dispatch service
 # --------------------------------------------------------------------------- #
-from backend.bootstrap import install_router
-from gateway.pipeline import Pipeline
-from gateway.storage import Store
-from common.config import DB_PATH
+from aura.backend.bootstrap import install_router
+from aura.gateway.pipeline import Pipeline
+from aura.gateway.storage import Store
+from aura.common.config import DB_PATH
 
 class MockApp:
     def include_router(self, router):

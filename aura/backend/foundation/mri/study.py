@@ -25,19 +25,19 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Iterator, Sequence
 
-from backend.foundation.mri.masking import BrainMaskSlot
-from backend.foundation.mri.metadata import MRIMetadata
-from backend.foundation.mri.quality import QualityReport
-from backend.foundation.mri.registration import RegistrationPlan
-from backend.foundation.mri.sequence import SequenceAssignment
-from backend.foundation.mri.types import (
+from .masking import BrainMaskSlot
+from .metadata import MRIMetadata
+from .quality import QualityReport
+from .registration import RegistrationPlan
+from .sequence import SequenceAssignment
+from .types import (
     FOUNDATION_VERSION,
     FileFormat,
     QualityVerdict,
     SequenceType,
     StepStatus,
 )
-from backend.foundation.mri.volume import MRIVolume
+from .volume import MRIVolume
 
 
 @dataclass(frozen=True)
@@ -203,7 +203,7 @@ class StandardizedSeries:
 class FoundationStudy:
     """A complete standardised MRI study: one or more :class:`StandardizedSeries`.
 
-    This is what :class:`~backend.foundation.mri.pipeline.MRIFoundationPipeline`
+    This is what :class:`~aura.backend.foundation.mri.pipeline.MRIFoundationPipeline`
     returns and what every future NeuroMind module takes as input.
     """
 

@@ -11,5 +11,5 @@ downstream NeuroMind module (segmentation, classification, registration, digital
 twin, longitudinal analysis) consumes the *same* foundation output, so a
 preprocessing fix lands in one place instead of in each model's data loader.
 
-Currently one layer lives here: :mod:`backend.foundation.mri`.
+Currently one layer lives here: :mod:`aura.backend.foundation.mri`.
 """

@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import pytest
 
-from mimic.config import get_mimic_paths
-from mimic.loaders import MimicCxrLoader, PatientRecord
-from mimic.timeline import StudyEvent, build_timeline, _study_of
-from schemas.clinical import Diagnosis, Finding
+from aura.mimic.config import get_mimic_paths
+from aura.mimic.loaders import MimicCxrLoader, PatientRecord
+from aura.mimic.timeline import StudyEvent, build_timeline, _study_of
+from aura.schemas.clinical import Diagnosis, Finding
 
 PATHS = get_mimic_paths()
 HAS_DATA = PATHS.validate_csv.is_file()

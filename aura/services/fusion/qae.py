@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import pennylane as qml
 
-from common.config import ARTIFACTS
+from aura.common.config import ARTIFACTS
 
 
 class QuantumAutoencoder:

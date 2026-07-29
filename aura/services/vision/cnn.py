@@ -30,8 +30,8 @@ from typing import Optional
 
 import numpy as np
 
-from common.config import ARTIFACTS
-from schemas.clinical import Finding
+from aura.common.config import ARTIFACTS
+from aura.schemas.clinical import Finding
 
 # torchxrayvision pathology name -> AURA Finding. Hyperinflation has no MIMIC
 # label; VisionEngine fills it from the feature model so all 7 findings stay live.

@@ -1,0 +1,32 @@
+# AURA — container runtime dependency set.
+#
+# Source of truth for the core stack stays aura/requirements.txt; this file adds
+# the pieces the *served* image needs that the offline numpy demo does not.
+#
+# Install order matters: torch/torchvision come from the CPU wheel index in the
+# Dockerfile (a separate pip call), because pulling the default CUDA build adds
+# ~2.5 GB of nvidia-* wheels that never get used on a CPU host.
+
+-r aura/requirements.txt
+
+# --- production vision stack ------------------------------------------------ #
+# services/vision/engine.py loads artifacts/best_model.pt (DenseNet-121) through
+# torchvision; without these the engine silently degrades to the numpy fallback.
+albumentations>=2.0
+opencv-python-headless>=4.9
+
+# --- DICOM intake ----------------------------------------------------------- #
+# pydicom is imported lazily (inside functions) in backend/core/router/features.py,
+# backend/core/upload/intake.py and backend/foundation/mri/io/dicom_reader.py, so a
+# missing wheel does NOT fail at startup — it fails the first time a judge uploads a
+# real DICOM. It was absent from both requirements.txt and the old Dockerfile.
+pydicom>=2.4
+pynetdicom>=2.0
+
+# --- tabular MIMIC path ----------------------------------------------------- #
+# Top-level import in mimic/{features,loaders,performance,splits,tasks,verify}.py
+# and ml/vision_cxr/dataset.py. Also absent from both lists.
+pandas>=2.0
+
+# --- ops -------------------------------------------------------------------- #
+psutil>=5.9

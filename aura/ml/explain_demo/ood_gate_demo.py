@@ -16,10 +16,10 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw
 
-from common.config import ARTIFACTS
-from mimic.config import get_mimic_paths
-from mimic.parsing import safe_str_list
-from services.vision.xray_gate import validate_cxr
+from aura.common.config import ARTIFACTS
+from aura.mimic.config import get_mimic_paths
+from aura.mimic.parsing import safe_str_list
+from aura.services.vision.xray_gate import validate_cxr
 
 OUT = ARTIFACTS / "explain_demo"
 PROBE_DIR = OUT / "ood_probes"

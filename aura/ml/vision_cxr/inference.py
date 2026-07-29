@@ -2,8 +2,8 @@ import torch
 import torch.nn.functional as F
 import cv2
 import numpy as np
-from ml.vision_cxr.model import DenseNet121CXR
-from schemas.clinical import FINDINGS, Finding
+from .model import DenseNet121CXR
+from aura.schemas.clinical import FINDINGS, Finding
 
 class VisionModel:
     """Wrapper for the trained production DenseNet121 chest X-ray model.
@@ -49,7 +49,7 @@ class VisionModel:
         may be None when that calibration form is unavailable."""
         import json
         from pathlib import Path
-        from common.config import ARTIFACTS
+        from aura.common.config import ARTIFACTS
 
         path = ARTIFACTS / "vision_serving_calibration.json"
         if not Path(path).exists():

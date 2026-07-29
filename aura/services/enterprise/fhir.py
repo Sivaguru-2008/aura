@@ -1,8 +1,8 @@
 from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
-from schemas.contracts import CaseBundle
-from schemas.clinical import DIAGNOSIS_LABELS
+from aura.schemas.contracts import CaseBundle
+from aura.schemas.clinical import DIAGNOSIS_LABELS
 
 def export_fhir_diagnostic_report(b: CaseBundle) -> dict[str, Any]:
     issued_str = b.created_at.isoformat() if hasattr(b.created_at, "isoformat") else datetime.now(timezone.utc).isoformat()

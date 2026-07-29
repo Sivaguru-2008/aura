@@ -15,18 +15,18 @@ from fastapi import Body, FastAPI, HTTPException, Request, UploadFile, File
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from common.config import DB_PATH, ensure_dirs, get_settings
-from ml.data import IMG, make_multimodal, make_sample
-from schemas.clinical import DIAGNOSES, Diagnosis
-from schemas.contracts import StudyInput, StructuredPriors
-from services.models import ModelRegistry
-from gateway.pipeline import Pipeline
-from gateway.seed import seed
-from gateway.storage import Store
+from aura.common.config import DB_PATH, ensure_dirs, get_settings
+from aura.ml.data import IMG, make_multimodal, make_sample
+from aura.schemas.clinical import DIAGNOSES, Diagnosis
+from aura.schemas.contracts import StudyInput, StructuredPriors
+from aura.services.models import ModelRegistry
+from .pipeline import Pipeline
+from .seed import seed
+from .storage import Store
 
-from services.enterprise.fhir import export_fhir_diagnostic_report, export_fhir_observations
-from services.enterprise.hl7 import export_hl7_oru_r01
-from services.agent.discussion import SpecialistDiscussionEngine
+from aura.services.enterprise.fhir import export_fhir_diagnostic_report, export_fhir_observations
+from aura.services.enterprise.hl7 import export_hl7_oru_r01
+from aura.services.agent.discussion import SpecialistDiscussionEngine
 
 
 WEB_DIR = Path(__file__).resolve().parent.parent / "apps" / "web"
@@ -52,7 +52,7 @@ async def lifespan(app: FastAPI):
     # pipeline and the legacy /v1/studies/upload endpoint are unchanged. A router
     # failure must not prevent the chest-X-ray service from starting.
     try:
-        from backend.bootstrap import install_router
+        from aura.backend.bootstrap import install_router
 
         state["dispatch"] = install_router(
             app, pipeline, store, on_case_created=session_case_ids.append
@@ -60,7 +60,7 @@ async def lifespan(app: FastAPI):
         
         # Start mock PACS DICOM listener on port 11112
         try:
-            from services.enterprise.dicom_listener import DicomListener
+            from aura.services.enterprise.dicom_listener import DicomListener
             listener = DicomListener(state["dispatch"], store, port=11112)
             listener.start()
             state["dicom_listener"] = listener
@@ -97,7 +97,7 @@ async def audit_mw(request: Request, call_next):
     # authorization, and rate limiting (all inert unless configured). A rejection
     # here is itself audited, then returned, so blocked calls are attributable.
     if request.method in ("POST", "PUT", "DELETE"):
-        from gateway.security import enforce
+        from .security import enforce
         try:
             enforce(request)
         except HTTPException as exc:
@@ -156,7 +156,7 @@ def health():
 @app.get("/v1/studies")
 def list_studies():
     out = []
-    from schemas.clinical import DIAGNOSIS_LABELS, Diagnosis
+    from aura.schemas.clinical import DIAGNOSIS_LABELS, Diagnosis
     for cid in session_case_ids:
         b = store().get_case(cid)
         if b:
@@ -180,7 +180,7 @@ def list_studies():
                 "priors": b.priors or {},
                 "created_at": b.created_at.isoformat() if hasattr(b.created_at, "isoformat") else b.created_at,
             })
-    from schemas.clinical import DIAGNOSIS_LABELS, FINDING_LABELS
+    from aura.schemas.clinical import DIAGNOSIS_LABELS, FINDING_LABELS
     dx_lbls = {d.value: l for d, l in DIAGNOSIS_LABELS.items()}
     ev_lbls = {f.value: l for f, l in FINDING_LABELS.items()}
     return {
@@ -192,7 +192,7 @@ def list_studies():
 
 @app.get("/v1/cases")
 def list_cases(state_filter: str | None = None):
-    from schemas.clinical import DIAGNOSIS_LABELS, FINDING_LABELS
+    from aura.schemas.clinical import DIAGNOSIS_LABELS, FINDING_LABELS
     dx_lbls = {d.value: l for d, l in DIAGNOSIS_LABELS.items()}
     ev_lbls = {f.value: l for f, l in FINDING_LABELS.items()}
     return {
@@ -215,7 +215,7 @@ def get_case(case_id: str):
     # hid genuine detections between the calibrated threshold and 0.5, so a diagnosis
     # could render with its supporting findings invisible (audit H1). The threshold
     # is data-derived (vision_serving_calibration.json), never a static default.
-    from common.config import finding_present_threshold
+    from aura.common.config import finding_present_threshold
     vis = d.get("vision") or {}
     for f in (vis.get("findings") or []):
         try:
@@ -288,11 +288,11 @@ def sign_report(case_id: str, payload: dict = Body(default={})):
     b = store().get_case(case_id)
     if b is None:
         raise HTTPException(404, "case not found")
-    from schemas.contracts import CaseState
+    from aura.schemas.contracts import CaseState
     b.state = CaseState.SIGNED
     
     # Calculate provenance hash
-    from gateway.storage import compute_provenance_hash
+    from .storage import compute_provenance_hash
     p_hash = compute_provenance_hash(b)
     
     store().save_case(b)
@@ -322,7 +322,7 @@ async def recompute_case(case_id: str, payload: dict = Body(...)):
             if hasattr(b.clinical_context, k):
                 setattr(b.clinical_context, k, v)
     else:
-        from schemas.contracts import ClinicalContext
+        from aura.schemas.contracts import ClinicalContext
         b.clinical_context = ClinicalContext(**context_payload)
         
     # Update multimodal symptoms/history/labs from the priors/context payload if chest case
@@ -359,7 +359,7 @@ async def recompute_case(case_id: str, payload: dict = Body(...)):
     if is_brain_case:
         # Brain MRI has no clinical reasoning, but we update prior risk score and regenerate report
         # Let's regenerate the report with the new priors
-        from backend.engines.neuro.bundle import _findings_text, _impression_text, _recommendation_text, _confidence_text, _recommendations, _priority
+        from aura.backend.engines.neuro.bundle import _findings_text, _impression_text, _recommendation_text, _confidence_text, _recommendations, _priority
         # Determine top/probs
         presence_probability = b.safety.top_probability if (b.safety.top == Diagnosis.BRAIN_TUMOR) else (1.0 - b.safety.top_probability)
         caveats = []
@@ -377,7 +377,7 @@ async def recompute_case(case_id: str, payload: dict = Body(...)):
         
     else:
         # Chest case: full re-run of pipeline downstream steps!
-        from services.fusion.evidence import encode, to_evidence_items
+        from aura.services.fusion.evidence import encode, to_evidence_items
         img = np.array(b.image, dtype=float).reshape(b.image_shape)
         
         x = encode(b.vision, b.priors)
@@ -416,7 +416,7 @@ async def recompute_case(case_id: str, payload: dict = Body(...)):
         b.recommendations = pipeline().recommend.recommend(pipeline().fusion.model, x)
         
         # CDRE
-        from schemas.contracts import StudyInput
+        from aura.schemas.contracts import StudyInput
         study_in = StudyInput(
             study_id=b.study_id,
             image=b.image,
@@ -500,7 +500,7 @@ async def upload_study(file: UploadFile = File(...)):
     """
     import tempfile
     import os
-    from gateway.security import validate_upload_name, read_capped, validate_mri_content
+    from .security import validate_upload_name, read_capped, validate_mri_content
 
     # Type allowlist (extension + declared MIME) and a hard size cap enforced while
     # streaming, so a hostile upload can neither smuggle a non-image type nor
@@ -516,7 +516,7 @@ async def upload_study(file: UploadFile = File(...)):
         tmp_path = tmp.name
 
     try:
-        from services.vision.xray_gate import validate_cxr
+        from aura.services.vision.xray_gate import validate_cxr
         gate = validate_cxr(tmp_path)
         if not gate.ok:
             store().audit("case.upload_rejected", "study", file.filename or "upload",
@@ -524,7 +524,7 @@ async def upload_study(file: UploadFile = File(...)):
             raise HTTPException(422, {"error": "not_a_cxr", "reason": gate.reason,
                                       "checks": gate.checks})
 
-        from services.vision.io import study_from_cxr
+        from aura.services.vision.io import study_from_cxr
         # Full 224 fidelity through the pipeline (same resolution the DenseNet trains at),
         # not the 64-px thumbnail default.
         study = study_from_cxr(tmp_path, grid=224)
@@ -535,7 +535,7 @@ async def upload_study(file: UploadFile = File(...)):
 
         import time as _time
         _t0 = _time.perf_counter()
-        from services.safety import ClinicalSafetyException
+        from aura.services.safety import ClinicalSafetyException
         try:
             bundle = await pipeline().run(study, case_id=case_id)
         except ClinicalSafetyException as exc:
@@ -551,7 +551,7 @@ async def upload_study(file: UploadFile = File(...)):
                               "gate_checks": gate.checks})
         # Production audit trail: full-provenance record per real upload (req 8).
         try:
-            from services.inference.audit_log import log_inference
+            from aura.services.inference.audit_log import log_inference
             log_inference(bundle, tmp_path, infer_s,
                           backbone=getattr(pipeline().vision, "backbone", None))
         except Exception as _e:
@@ -587,7 +587,7 @@ async def run_agent_study(
     """
     import tempfile
     import os
-    from gateway.security import validate_upload_name, read_capped, validate_mri_content
+    from .security import validate_upload_name, read_capped, validate_mri_content
 
     validate_upload_name(file.filename, file.content_type)
     max_bytes = int(get_settings().max_upload_mb * 1024 * 1024)
@@ -600,7 +600,7 @@ async def run_agent_study(
         tmp_path = tmp.name
 
     try:
-        from services.vision.xray_gate import validate_cxr
+        from aura.services.vision.xray_gate import validate_cxr
         gate = validate_cxr(tmp_path)
         if not gate.ok:
             store().audit("agent.upload_rejected", "study", file.filename or "upload",
@@ -608,7 +608,7 @@ async def run_agent_study(
             raise HTTPException(422, {"error": "not_a_cxr", "reason": gate.reason,
                                        "checks": gate.checks})
 
-        from services.vision.io import study_from_cxr
+        from aura.services.vision.io import study_from_cxr
         # Full 224 fidelity through the pipeline
         study = study_from_cxr(tmp_path, grid=224)
 
@@ -618,11 +618,11 @@ async def run_agent_study(
         vision_result = pipeline().vision.analyze(study.study_id, img)
         
         # Encode evidence
-        from services.fusion.evidence import encode
+        from aura.services.fusion.evidence import encode
         x = encode(vision_result, study.priors)
         
         # Run agent
-        from services.agent.active_diagnosis import ActiveDiagnosisAgent
+        from aura.services.agent.active_diagnosis import ActiveDiagnosisAgent
         agent = ActiveDiagnosisAgent(
             fusion_model=pipeline().fusion,
             entropy_target_bits=entropy_target,
@@ -702,8 +702,8 @@ def model_card():
     any source that hasn't been produced returns null so the UI shows '—', not a
     placeholder number. Evaluation numbers appear only after `aura_cli evaluate` runs."""
     import hashlib
-    from common.config import ARTIFACTS
-    from schemas.clinical import DIAGNOSIS_LABELS, FINDING_LABELS
+    from aura.common.config import ARTIFACTS
+    from aura.schemas.clinical import DIAGNOSIS_LABELS, FINDING_LABELS
     labels = {}
     for d, l in DIAGNOSIS_LABELS.items():
         labels[d.value] = l
@@ -850,7 +850,7 @@ def admin_safety():
 
 
 def get_settings_artifacts() -> str:
-    from common.config import ARTIFACTS
+    from aura.common.config import ARTIFACTS
     return str(ARTIFACTS)
 
 

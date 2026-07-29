@@ -45,7 +45,7 @@ from pathlib import Path
 
 import numpy as np
 
-from common.config import ARTIFACTS
+from aura.common.config import ARTIFACTS
 
 MODEL_VERSION = "fusion-projection-v1"
 

@@ -37,14 +37,14 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
 
-from backend.core.shared.errors import (
+from aura.backend.core.shared.errors import (
     AuraBackendError,
     EngineExecutionError,
     EngineNotImplemented,
 )
-from backend.core.shared.logging import get_logger
-from backend.core.shared.types import EngineStatus, ImageAsset, ImagingModality
-from backend.models.routing import EngineOutcome, ResultStatus
+from aura.backend.core.shared.logging import get_logger
+from aura.backend.core.shared.types import EngineStatus, ImageAsset, ImagingModality
+from aura.backend.models.routing import EngineOutcome, ResultStatus
 
 
 @dataclass(frozen=True)
@@ -153,7 +153,7 @@ class AnalysisEngine(ABC):
     def preprocess(self, asset: ImageAsset) -> PreparedStudy:
         """Turn a validated file into a model-ready study.
 
-        Raise :class:`~backend.core.shared.errors.UnreadableImage` if decoding fails.
+        Raise :class:`~aura.backend.core.shared.errors.UnreadableImage` if decoding fails.
         """
 
     @abstractmethod

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import List
-from schemas.clinical import Finding, Diagnosis
+from aura.schemas.clinical import Finding, Diagnosis
 
 @dataclass
 class GuidelineTemplate:

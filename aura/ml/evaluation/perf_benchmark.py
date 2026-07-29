@@ -20,8 +20,8 @@ from typing import Optional
 
 import numpy as np
 
-from common.config import ARTIFACTS
-from schemas.clinical import FINDINGS
+from aura.common.config import ARTIFACTS
+from aura.schemas.clinical import FINDINGS
 
 PERF_DIR = ARTIFACTS / "performance"
 
@@ -40,7 +40,7 @@ def _percentiles(times: list[float]) -> dict:
 def _build_model(device: str):
     import torch
 
-    from ml.vision_cxr.model import DenseNet121CXR
+    from ..vision_cxr.model import DenseNet121CXR
 
     model = DenseNet121CXR(num_classes=len(FINDINGS))
     ckpt = ARTIFACTS / "best_model.pt"

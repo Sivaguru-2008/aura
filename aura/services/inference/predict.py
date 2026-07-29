@@ -15,11 +15,11 @@ from typing import Optional
 
 import numpy as np
 
-from common.config import ARTIFACTS
-from schemas.clinical import FINDING_LABELS, Finding
-from schemas.contracts import StructuredPriors, StudyInput
-from services.report.clinical_report import build_clinical_report, save_report
-from services.vision.io import load_cxr, study_from_cxr
+from aura.common.config import ARTIFACTS
+from aura.schemas.clinical import FINDING_LABELS, Finding
+from aura.schemas.contracts import StructuredPriors, StudyInput
+from ..report.clinical_report import build_clinical_report, save_report
+from ..vision.io import load_cxr, study_from_cxr
 
 # The CNN resizes internally to 224; feeding a 224 grid preserves image fidelity
 # through the pipeline while keeping the stored bundle image reasonably small.
@@ -64,7 +64,7 @@ def predict_image(
         raise FileNotFoundError(f"image not found: {image_path}")
 
     if pipeline is None:
-        from gateway.pipeline import Pipeline
+        from aura.gateway.pipeline import Pipeline
 
         pipeline = Pipeline()
 
@@ -97,13 +97,13 @@ def predict_image(
 
     # Production audit trail: one immutable record per real inference (req 8).
     try:
-        from services.inference.audit_log import log_inference
+        from .audit_log import log_inference
         log_inference(bundle, image_path, inference_time,
                       backbone=getattr(pipeline.vision, "backbone", None))
     except Exception as e:
         print(f"[predict] inference logging failed: {e!r}")
 
-    from common.config import finding_present_threshold
+    from aura.common.config import finding_present_threshold
     findings = [
         {"finding": FINDING_LABELS.get(fs.finding, fs.finding.value),
          "key": fs.finding.value, "probability": round(float(fs.probability), 4),
@@ -127,8 +127,8 @@ def predict_image(
 
 def _write_explanations(pipeline, bundle, image_path, out_dir, include_scorecam) -> dict[str, str]:
     """Compute high-resolution saliency (incl. Score-CAM) and write PNG/HTML overlays."""
-    from services.explain import methods as M
-    from services.explain import overlays as O
+    from ..explain import methods as M
+    from ..explain import overlays as O
 
     full = load_cxr(image_path)
     size = _hi_res_size(full)

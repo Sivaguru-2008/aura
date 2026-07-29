@@ -35,7 +35,7 @@ orderings: images are ``(FLAIR, T1, T1ce, T2)`` and masks are
 ``(NCR/NET, oedema, enhancing)``.
 
 :meth:`BratsH5Reader._verify_channels` re-runs that test on every subject it reads, and
-:class:`~backend.vision.brain.ingest.BrainCorpusIngestor` refuses to build a cache if
+:class:`~aura.backend.vision.brain.ingest.BrainCorpusIngestor` refuses to build a cache if
 agreement falls below a configured floor. The evidence stays live rather than becoming
 a comment that was true once.
 
@@ -79,7 +79,7 @@ is the right input if one becomes available.
 ---------------------------------------------------------------
 There is no geometry in these files at all. BraTS distributes its NIfTI volumes on a
 1 mm isotropic grid in a standard LPS-oriented frame, so that is what the reader
-declares, and :class:`~backend.foundation.mri.standardize.CanonicalOrientation` then
+declares, and :class:`~aura.backend.foundation.mri.standardize.CanonicalOrientation` then
 converts it to RAS+ through the real code path. The assumption is recorded as
 ``affine_source="assumed_from_brats_convention"`` and ``laterality_verified=False`` on
 every series, and it propagates into the model card. **Nothing downstream may report
@@ -96,12 +96,12 @@ from typing import Any, Iterator, Sequence
 
 import numpy as np
 
-from backend.core.shared.logging import get_logger
-from backend.foundation.mri.geometry import VoxelGeometry
-from backend.foundation.mri.io.base import RawSeries, SeriesIntegrity
-from backend.foundation.mri.types import FileFormat
-from backend.vision.brain.errors import CorpusIntegrityError, CorpusNotFound
-from backend.vision.brain.types import (
+from aura.backend.core.shared.logging import get_logger
+from aura.backend.foundation.mri.geometry import VoxelGeometry
+from aura.backend.foundation.mri.io.base import RawSeries, SeriesIntegrity
+from aura.backend.foundation.mri.types import FileFormat
+from ..errors import CorpusIntegrityError, CorpusNotFound
+from ..types import (
     DEFAULT_MODALITIES,
     BRATS_LABEL_REMAP,
     ModalitySpec,
@@ -133,7 +133,7 @@ _MIN_VERIFICATION_VOXELS = 200
 
 #: Mask channel -> dense class index. The corpus already one-hots BraTS labels 1/2/4
 #: into three disjoint planes (verified: pairwise intersections are empty), so the
-#: remap that :data:`~backend.vision.brain.types.BRATS_LABEL_REMAP` describes is
+#: remap that :data:`~aura.backend.vision.brain.types.BRATS_LABEL_REMAP` describes is
 #: applied by writing plane *i* as class *i+1*.
 _MASK_CHANNEL_TO_CLASS: tuple[int, ...] = (
     TumorRegion.NECROTIC_CORE.value, TumorRegion.EDEMA.value,
@@ -145,7 +145,7 @@ class BratsSubject:
     """One BraTS subject: its files and everything the corpus knows about it.
 
     ``grade`` is carried but must never be used as a training target — see
-    :class:`~backend.vision.brain.types.TumorGrade`.
+    :class:`~aura.backend.vision.brain.types.TumorGrade`.
     """
 
     volume_id: int
@@ -343,11 +343,11 @@ class BratsCorpusIndex:
 class BratsH5Reader:
     """Reads one BraTS subject into foundation-layer volumes.
 
-    Implements :class:`~backend.foundation.mri.io.base.StudyReader` so it *can* be
-    injected into :class:`~backend.foundation.mri.loader.MRIStudyLoader` for a directory
+    Implements :class:`~aura.backend.foundation.mri.io.base.StudyReader` so it *can* be
+    injected into :class:`~aura.backend.foundation.mri.loader.MRIStudyLoader` for a directory
     holding a single subject's slices. The path the ingest actually takes is
     :meth:`read_subject` followed by
-    :meth:`~backend.foundation.mri.pipeline.MRIFoundationPipeline.run_series`, because
+    :meth:`~aura.backend.foundation.mri.pipeline.MRIFoundationPipeline.run_series`, because
     the corpus keeps all 369 subjects' slices in one flat directory and directory-level
     discovery would treat them as a single 57 195-file study.
     """
@@ -631,7 +631,7 @@ def brats_geometry(shape: Sequence[int]) -> VoxelGeometry:
 
     LPS rather than RAS because that is the convention the BraTS NIfTI release uses,
     and declaring it here means
-    :class:`~backend.foundation.mri.standardize.CanonicalOrientation` performs a real
+    :class:`~aura.backend.foundation.mri.standardize.CanonicalOrientation` performs a real
     conversion rather than a no-op — the same code path a clinical DICOM study takes.
     The centring is cosmetic: it puts the volume's middle near the world origin so a
     world coordinate printed in a log is a small number.

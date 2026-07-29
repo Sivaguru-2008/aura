@@ -29,7 +29,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from backend.foundation.mri import (
+from aura.backend.foundation.mri import (
     FoundationConfig,
     MRIFoundationPipeline,
     MRIQualityInspector,
@@ -39,8 +39,8 @@ from backend.foundation.mri import (
     SequenceType,
     VolumeBuilder,
 )
-from backend.foundation.mri.config import StandardizationConfig
-from backend.foundation.mri.errors import (
+from aura.backend.foundation.mri.config import StandardizationConfig
+from aura.backend.foundation.mri.errors import (
     CorruptStudy,
     StageFailed,
     StageUnavailable,
@@ -48,7 +48,7 @@ from backend.foundation.mri.errors import (
     StudyValidationError,
     UnsupportedStudyFormat,
 )
-from backend.foundation.mri.geometry import (
+from aura.backend.foundation.mri.geometry import (
     VoxelGeometry,
     affine_from_dicom,
     axis_codes,
@@ -56,17 +56,17 @@ from backend.foundation.mri.geometry import (
     to_canonical,
     voxel_to_world,
 )
-from backend.foundation.mri.io.nifti_reader import NiftiReader
-from backend.foundation.mri.io.nrrd_reader import NrrdReader
-from backend.foundation.mri.masking import BrainMaskSlot, estimate_foreground_mask
-from backend.foundation.mri.metadata import (
+from aura.backend.foundation.mri.io.nifti_reader import NiftiReader
+from aura.backend.foundation.mri.io.nrrd_reader import NrrdReader
+from aura.backend.foundation.mri.masking import BrainMaskSlot, estimate_foreground_mask
+from aura.backend.foundation.mri.metadata import (
     DICOM_KEYWORDS,
     PATIENT_IDENTIFYING_KEYWORDS,
     assert_patient_independent,
     normalise_vendor,
 )
-from backend.foundation.mri.quality import _check
-from backend.foundation.mri.standardize import (
+from aura.backend.foundation.mri.quality import _check
+from aura.backend.foundation.mri.standardize import (
     CanonicalOrientation,
     ForegroundMaskEstimator,
     IntensityNormalizer,
@@ -75,7 +75,7 @@ from backend.foundation.mri.standardize import (
     MorphologicalSkullStripper,
     VoxelResampler,
 )
-from backend.foundation.mri.types import (
+from aura.backend.foundation.mri.types import (
     CheckStatus,
     FileFormat,
     MaskProvenance,
@@ -84,7 +84,7 @@ from backend.foundation.mri.types import (
     ScannerVendor,
     StepStatus,
 )
-from backend.foundation.mri.volume import MRIVolume
+from aura.backend.foundation.mri.volume import MRIVolume
 
 pydicom = pytest.importorskip("pydicom", reason="DICOM tests need pydicom")
 
@@ -124,7 +124,7 @@ def write_nifti1(path: Path, array: np.ndarray, affine: np.ndarray, *,
                  gzipped: bool = False, sform_code: int = 1,
                  datatype: int = 16, descrip: bytes = b"") -> Path:
     """Write a real NIfTI-1 file to the published header layout."""
-    from backend.foundation.mri.io.nifti_reader import _NIFTI1_DTYPE
+    from aura.backend.foundation.mri.io.nifti_reader import _NIFTI1_DTYPE
 
     header = np.zeros(1, dtype=_NIFTI1_DTYPE)[0]
     header["sizeof_hdr"] = 348
@@ -159,7 +159,7 @@ def write_nifti1(path: Path, array: np.ndarray, affine: np.ndarray, *,
 
 def write_nifti2(path: Path, array: np.ndarray, affine: np.ndarray) -> Path:
     """Write a real NIfTI-2 file."""
-    from backend.foundation.mri.io.nifti_reader import _NIFTI2_DTYPE
+    from aura.backend.foundation.mri.io.nifti_reader import _NIFTI2_DTYPE
 
     header = np.zeros(1, dtype=_NIFTI2_DTYPE)[0]
     header["sizeof_hdr"] = 540
@@ -933,7 +933,7 @@ def test_quality_report_is_json_serialisable(phantom):
 # 7. Volume builder and masking
 # =========================================================================== #
 def test_volume_builder_rejects_a_degenerate_affine(phantom):
-    from backend.foundation.mri.io.base import RawSeries
+    from aura.backend.foundation.mri.io.base import RawSeries
 
     affine = np.eye(4)
     affine[:3, :3] = 0.0
@@ -1132,13 +1132,13 @@ def test_pipeline_records_every_stage_in_the_processing_history(dicom_study):
 def test_unavailable_stages_are_recorded_not_silently_skipped(dicom_study):
     """N4 and skull stripping have no backend here; the history must say so."""
     from unittest.mock import patch
-    from backend.foundation.mri.errors import StageUnavailable
+    from aura.backend.foundation.mri.errors import StageUnavailable
     
     def raise_unavailable(*args, **kwargs):
         raise StageUnavailable("mocked_stage", "mocked reason")
         
-    with patch("backend.foundation.mri.standardize.GaussianBiasFieldCorrector.apply", side_effect=raise_unavailable), \
-         patch("backend.foundation.mri.standardize.MorphologicalSkullStripper.apply", side_effect=raise_unavailable):
+    with patch("aura.backend.foundation.mri.standardize.GaussianBiasFieldCorrector.apply", side_effect=raise_unavailable), \
+         patch("aura.backend.foundation.mri.standardize.MorphologicalSkullStripper.apply", side_effect=raise_unavailable):
         series = MRIFoundationPipeline().run(dicom_study).series[0]
         unavailable = series.history.unavailable_stages
 
@@ -1148,14 +1148,14 @@ def test_unavailable_stages_are_recorded_not_silently_skipped(dicom_study):
 
 def test_strict_mode_turns_an_unavailable_stage_into_a_failure(dicom_study):
     from unittest.mock import patch
-    from backend.foundation.mri.errors import StageUnavailable
+    from aura.backend.foundation.mri.errors import StageUnavailable
     
     def raise_unavailable(*args, **kwargs):
         raise StageUnavailable("skull_stripping", "mocked reason")
         
     config = FoundationConfig(
         standardization=StandardizationConfig(strict=True))
-    with patch("backend.foundation.mri.standardize.MorphologicalSkullStripper.apply", side_effect=raise_unavailable):
+    with patch("aura.backend.foundation.mri.standardize.MorphologicalSkullStripper.apply", side_effect=raise_unavailable):
         with pytest.raises(StudyValidationError):
             MRIFoundationPipeline(config).run(dicom_study)
 
@@ -1259,7 +1259,7 @@ def test_retaining_the_source_volume_is_opt_in(dicom_study):
 # =========================================================================== #
 def _staged(path: Path):
     """Stage a file as the routing layer's ImageAsset, as an upload would arrive."""
-    from backend.core.upload.intake import stage_bytes
+    from aura.backend.core.upload.intake import stage_bytes
 
     return stage_bytes(path.read_bytes(), path.name)
 
@@ -1268,8 +1268,8 @@ def test_neuromind_preprocess_runs_the_foundation_layer(tmp_path, phantom):
     """The engine's preprocessing is the foundation pipeline, not a stub."""
     import asyncio
 
-    from backend.engines.neuro.engine import NeuroMindEngine
-    from backend.foundation.mri.study import FoundationStudy
+    from aura.backend.engines.neuro.engine import NeuroMindEngine
+    from aura.backend.foundation.mri.study import FoundationStudy
 
     volume_path = write_nifti1(tmp_path / "brain_t1.nii", phantom, ras_affine())
     engine = NeuroMindEngine()
@@ -1301,7 +1301,7 @@ def test_neuromind_foundation_evidence_carries_no_clinical_claim(tmp_path, phant
     the volume was read. Keeping the two separable is what lets a reviewer check the
     preprocessing without wading through the diagnosis.
     """
-    from backend.engines.neuro.engine import NeuroMindEngine
+    from aura.backend.engines.neuro.engine import NeuroMindEngine
 
     volume_path = write_nifti1(tmp_path / "brain.nii", phantom, ras_affine())
     with _staged(volume_path) as asset:
@@ -1330,7 +1330,7 @@ def test_neuromind_declines_a_single_slice_with_a_specific_reason(tmp_path, phan
     """One slice is not a volume, and the refusal has to say which problem it is."""
     import asyncio
 
-    from backend.engines.neuro.engine import NeuroMindEngine
+    from aura.backend.engines.neuro.engine import NeuroMindEngine
 
     slice_path = write_nifti1(tmp_path / "one_slice.nii", phantom[:, :, :1],
                               ras_affine())
@@ -1343,7 +1343,7 @@ def test_neuromind_declines_a_single_slice_with_a_specific_reason(tmp_path, phan
 
 
 def test_neuromind_only_claims_capabilities_it_has(tmp_path):
-    from backend.engines.neuro.engine import NeuroMindEngine
+    from aura.backend.engines.neuro.engine import NeuroMindEngine
 
     descriptor = NeuroMindEngine.descriptor
     assert "sequence_identification" in descriptor.capabilities

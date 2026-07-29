@@ -26,8 +26,8 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
-from backend.vision.brain.errors import ConfigurationError
-from backend.vision.brain.types import (
+from .errors import ConfigurationError
+from .types import (
     DEFAULT_MODALITIES,
     CurriculumStage,
     HeadName,
@@ -43,7 +43,7 @@ def _artifacts_root() -> Path:
     fallback walks up from this file, which gives the same answer for the same tree.
     """
     try:
-        from common.config import ARTIFACTS
+        from aura.common.config import ARTIFACTS
 
         return Path(ARTIFACTS)
     except Exception:                                    # pragma: no cover - layout dep
@@ -172,7 +172,7 @@ class IngestConfig:
     store_float16: bool = True
     #: Verify the modality channel order on every subject that has an enhancing region,
     #: by testing that the post-contrast channel is the most hyperintense one there.
-    #: See :mod:`backend.vision.brain.io.brats_h5` for why this is not optional.
+    #: See :mod:`aura.backend.vision.brain.io.brats_h5` for why this is not optional.
     verify_channel_assignment: bool = True
     #: Fraction of verified subjects that must agree before ingest refuses to continue.
     min_channel_agreement: float = 0.90

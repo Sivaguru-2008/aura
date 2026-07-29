@@ -5,12 +5,12 @@ import numpy as np
 import pytest
 pytest.importorskip("torch")
 
-from services.inference.predict import predict_image
+from aura.services.inference.predict import predict_image
 
 
 @pytest.fixture(scope="module")
 def pipeline():
-    from gateway.pipeline import Pipeline
+    from aura.gateway.pipeline import Pipeline
 
     return Pipeline()
 
@@ -18,8 +18,8 @@ def pipeline():
 @pytest.fixture()
 def synthetic_cxr(tmp_path):
     """A synthetic chest-like grayscale image written to a PNG file."""
-    from ml.data import make_sample
-    from schemas.clinical import Diagnosis
+    from aura.ml.data import make_sample
+    from aura.schemas.clinical import Diagnosis
 
     s = make_sample(Diagnosis.PNEUMONIA, np.random.default_rng(3))
     img = (np.clip(s.image, 0, 1) * 255).astype(np.uint8)

@@ -40,9 +40,9 @@ from typing import Any, Iterator, Sequence
 
 import numpy as np
 
-from backend.core.shared.logging import get_logger
-from backend.vision.brain.config import CurriculumConfig, SamplingConfig
-from backend.vision.brain.types import CurriculumStage
+from aura.backend.core.shared.logging import get_logger
+from .config import CurriculumConfig, SamplingConfig
+from .types import CurriculumStage
 
 log = get_logger("vision.brain.sampling")
 

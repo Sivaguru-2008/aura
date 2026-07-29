@@ -27,10 +27,10 @@ from __future__ import annotations
 import threading
 from typing import Callable, Iterable
 
-from backend.core.shared.errors import EngineNotAvailable
-from backend.core.shared.logging import get_logger
-from backend.core.shared.types import EngineStatus, ImagingModality
-from backend.engines.base.contract import AnalysisEngine, EngineDescriptor
+from aura.backend.core.shared.errors import EngineNotAvailable
+from aura.backend.core.shared.logging import get_logger
+from aura.backend.core.shared.types import EngineStatus, ImagingModality
+from .contract import AnalysisEngine, EngineDescriptor
 
 log = get_logger("registry")
 

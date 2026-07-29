@@ -1113,9 +1113,9 @@ txt(s, 5.36, 3.80, 3.95, 0.44,
 
 box(s, 5.15, 4.55, 4.35, 1.35, fill=WHITE, line=BORDER)
 txt(s, 5.36, 4.68, 4.0, 0.24, "LIVE DEMO PATH", size=9, color=TEAL, bold=True, spc=200)
-demo = [("py -m aura_cli train", "fit fusion + calibration (seconds)"),
-        ("py -m aura_cli bench", "quantum vs classical, head-to-head"),
-        ("py -m aura_cli serve", "doctor dashboard on :8000")]
+demo = [("py -m aura.aura_cli train", "fit fusion + calibration (seconds)"),
+        ("py -m aura.aura_cli bench", "quantum vs classical, head-to-head"),
+        ("py -m aura.aura_cli serve", "doctor dashboard on :8000")]
 dyy = 4.94
 for cmd, what in demo:
     txt(s, 5.36, dyy, 2.2, 0.24, cmd, size=9, color=INK, font="Courier New", bold=True)

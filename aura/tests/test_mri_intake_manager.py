@@ -5,11 +5,11 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from backend.foundation.mri.intake_manager import MRIIntakeManager
-from backend.foundation.mri.errors import StudyValidationError
-from backend.foundation.mri.types import SequenceType
-from backend.engines.neuro.multisequence import MultiSequenceStudy
-from tests.test_mri_foundation import write_nifti1, ras_affine, head_phantom
+from aura.backend.foundation.mri.intake_manager import MRIIntakeManager
+from aura.backend.foundation.mri.errors import StudyValidationError
+from aura.backend.foundation.mri.types import SequenceType
+from aura.backend.engines.neuro.multisequence import MultiSequenceStudy
+from .test_mri_foundation import write_nifti1, ras_affine, head_phantom
 
 def create_phantom_study(temp_dir: Path, shapes=None, spacings=None, affines=None, file_names=None):
     if file_names is None:
@@ -181,7 +181,7 @@ def test_intake_manager_4d_nifti_success():
             "slices_voted": 9,
         }
 
-        with patch("backend.engines.neuro.multisequence._check_order", return_value=mock_endorsement):
+        with patch("aura.backend.engines.neuro.multisequence._check_order", return_value=mock_endorsement):
             manager = MRIIntakeManager()
             study = manager.process(nii_path)
 
@@ -191,7 +191,7 @@ def test_intake_manager_4d_nifti_success():
 
 
 def test_upload_guard_valid_nifti_gz():
-    from gateway.security import validate_mri_content
+    from aura.gateway.security import validate_mri_content
     with tempfile.TemporaryDirectory() as tmp:
         temp_path = Path(tmp)
         arr = head_phantom((40, 40, 30))
@@ -205,7 +205,7 @@ def test_upload_guard_valid_nifti_gz():
 
 
 def test_upload_guard_corrupted_gzip():
-    from gateway.security import validate_mri_content
+    from aura.gateway.security import validate_mri_content
     from fastapi import HTTPException
     
     payload = b"not a gzip archive at all"
@@ -216,7 +216,7 @@ def test_upload_guard_corrupted_gzip():
 
 
 def test_upload_guard_arbitrary_gzip():
-    from gateway.security import validate_mri_content
+    from aura.gateway.security import validate_mri_content
     from fastapi import HTTPException
     import gzip
     
@@ -228,7 +228,7 @@ def test_upload_guard_arbitrary_gzip():
 
 
 def test_upload_guard_invalid_nifti():
-    from gateway.security import validate_mri_content
+    from aura.gateway.security import validate_mri_content
     from fastapi import HTTPException
     
     payload = b"just some text, not a nifti"

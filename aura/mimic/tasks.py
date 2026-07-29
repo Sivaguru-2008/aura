@@ -24,10 +24,10 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from mimic.config import MimicPaths, get_mimic_paths
-from mimic.features import FeatureEngineer, feature_names
-from mimic.splits import DatasetBuilder
-from schemas.clinical import DIAGNOSES, FINDINGS
+from .config import MimicPaths, get_mimic_paths
+from .features import FeatureEngineer, feature_names
+from .splits import DatasetBuilder
+from aura.schemas.clinical import DIAGNOSES, FINDINGS
 
 log = logging.getLogger("mimic.tasks")
 

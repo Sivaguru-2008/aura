@@ -49,6 +49,6 @@ AURA's `SafetyEngine` constructs conformal prediction sets with a target margina
 To re-run the clinical evaluation and regenerate metrics and plots:
 
 ```bash
-cd aura
-venv\Scripts\python.exe -m aura_cli evaluate --limit 2099 --bootstrap 1000
+cd aura-main   # the repository root: `aura` is the import root, so -m resolves from here
+venv\Scripts\python.exe -m aura.aura_cli evaluate --limit 2099 --bootstrap 1000
 ```

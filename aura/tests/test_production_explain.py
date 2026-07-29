@@ -6,8 +6,8 @@ pytest.importorskip("torch")
 
 import numpy as np
 
-from schemas.clinical import Finding
-from services.explain import overlays as O
+from aura.schemas.clinical import Finding
+from aura.services.explain import overlays as O
 
 
 def test_bboxes_and_norm():
@@ -53,12 +53,12 @@ def test_png_and_html_writers(tmp_path):
 @pytest.mark.parametrize("include_scorecam", [False, True])
 def test_gradient_methods_on_backbone(include_scorecam):
     """Score-CAM + gradient methods run end-to-end on the production backbone."""
-    from common.config import ARTIFACTS
+    from aura.common.config import ARTIFACTS
 
     if not (ARTIFACTS / "best_model.pt").exists():
         pytest.skip("best_model.pt not present")
-    from ml.vision_cxr.inference import VisionModel
-    from services.explain import methods as M
+    from aura.ml.vision_cxr.inference import VisionModel
+    from aura.services.explain import methods as M
 
     vm = VisionModel(str(ARTIFACTS / "best_model.pt"))
     img = np.clip(np.random.rand(224, 224), 0, 1).astype("float32")

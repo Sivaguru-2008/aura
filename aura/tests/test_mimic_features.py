@@ -4,8 +4,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from mimic.config import get_mimic_paths
-from mimic.features import (
+from aura.mimic.config import get_mimic_paths
+from aura.mimic.features import (
     CLINICAL_NA_FEATURES,
     FeatureEngineer,
     _clinical_na_features,

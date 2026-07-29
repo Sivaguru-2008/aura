@@ -8,13 +8,17 @@ This document records the quantitative results of AURA's performance benchmarks 
 
 AURA evaluates evidence fusion models on a held-out test split of the real MIMIC-CXR evidence distribution. To make the comparison fair, **each backend is temperature-scaled on its own calibration split** before evaluation.
 
-The results, reproducible via `py -m aura_cli bench`, are summarized below:
+The results, reproducible via `py -m aura.aura_cli bench`, are summarized below:
+
+All figures below are read directly from `aura/artifacts/benchmark.json` (`metrics_full`), the
+file `bench` writes — they are not transcribed by hand. `n_eval = 69`.
 
 | Backend | Accuracy | ECE (Calibration) | Macro AUROC |
 |---|---|---|---|
-| **Classical PoE** (Bayesian) | **0.710** | **0.215** | **0.782** |
-| **Quantum VQC** (8-qubit) | 0.667 | 0.237 | 0.765 |
-| **Learnable Head** (Linear) | 0.652 | 0.189 | 0.747 |
+| **Classical PoE** (Bayesian) | **0.6957** | 0.2194 | **0.7875** |
+| **Quantum VQC** (8-qubit) | 0.6377 | 0.2381 | 0.7696 |
+| **Learnable Head** (Linear) | 0.6232 | **0.1879** | 0.7306 |
+| Ensemble (quantum + classical) | 0.6957 | 0.2267 | 0.7798 |
 
 ### Analysis
 * **Classical Superiority**: On the current real MIMIC-CXR distribution, the classical Product-of-Experts model slightly outperforms the 8-qubit quantum variational circuit (VQC) in accuracy, calibration, and classification performance.
@@ -65,6 +69,6 @@ Inference performance was measured on a standard evaluation platform:
 To run the latency and throughput benchmark suite locally:
 
 ```bash
-cd aura
-venv\Scripts\python.exe -m aura_cli benchmark --iters 50
+cd aura-main   # the repository root: `aura` is the import root, so -m resolves from here
+venv\Scripts\python.exe -m aura.aura_cli benchmark --iters 50
 ```

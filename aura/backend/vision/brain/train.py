@@ -28,7 +28,7 @@ which looks like a slightly-worse-than-expected model rather than like a bug.
 Validation runs on the EMA weights when EMA is enabled, and the best checkpoint is
 selected on that. Serving the raw weights after selecting on the EMA ones would mean
 deploying a model that was never the one measured, so the checkpoint carries both and
-:func:`~backend.vision.brain.checkpoint.load_network_checkpoint` prefers the EMA copy.
+:func:`~aura.backend.vision.brain.checkpoint.load_network_checkpoint` prefers the EMA copy.
 """
 from __future__ import annotations
 
@@ -44,22 +44,22 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader
 
-from backend.core.shared.logging import get_logger
-from backend.vision.brain.checkpoint import (
+from aura.backend.core.shared.logging import get_logger
+from .checkpoint import (
     CheckpointMeta,
     CheckpointWriter,
     load_training_state,
 )
-from backend.vision.brain.config import BrainVisionConfig
-from backend.vision.brain.dataset import build_datasets
-from backend.vision.brain.embeddings import EmbeddingStore
-from backend.vision.brain.errors import ConfigurationError
-from backend.vision.brain.losses import MultiTaskLoss
-from backend.vision.brain.metrics import LossMeter
-from backend.vision.brain.model.network import BrainVisionNetwork, build_network
-from backend.vision.brain.sampling import AdaptiveSliceSampler
-from backend.vision.brain.types import BRAIN_VISION_VERSION, SplitName
-from backend.vision.brain.validate import BrainValidator, ValidationReport
+from .config import BrainVisionConfig
+from .dataset import build_datasets
+from .embeddings import EmbeddingStore
+from .errors import ConfigurationError
+from .losses import MultiTaskLoss
+from .metrics import LossMeter
+from .model.network import BrainVisionNetwork, build_network
+from .sampling import AdaptiveSliceSampler
+from .types import BRAIN_VISION_VERSION, SplitName
+from .validate import BrainValidator, ValidationReport
 
 log = get_logger("vision.brain.train")
 
@@ -616,7 +616,7 @@ def _head_validity(best: dict[str, Any] | None) -> dict[str, Any]:
     quality, a cross-subject probe for the embedding — and the verdict is derived from
     that metric rather than asserted.
     """
-    from backend.vision.brain.output import QUALITY_VALIDITY_THRESHOLD
+    from .output import QUALITY_VALIDITY_THRESHOLD
 
     validation = (best or {}).get("validation") or {}
     verdicts: dict[str, Any] = {}

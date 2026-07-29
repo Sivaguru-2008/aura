@@ -1,6 +1,6 @@
 """The engine contract and the plug-in registry that resolves it."""
 
-from backend.engines.base.contract import (
+from .contract import (
     AnalysisEngine,
     AnalysisResult,
     EngineDescriptor,
@@ -8,7 +8,7 @@ from backend.engines.base.contract import (
     PreparedStudy,
     ValidationOutcome,
 )
-from backend.engines.base.registry import (
+from .registry import (
     EngineRegistry,
     default_registry,
     register_engine,

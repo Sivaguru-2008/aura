@@ -3,11 +3,11 @@ from __future__ import annotations
 
 import pytest
 
-from mimic.config import get_mimic_paths
-from mimic.loaders import MimicCxrLoader, PatientRecord
-from mimic.patient import Patient, build_patient, iter_patients
-from schemas.clinical import Diagnosis
-from schemas.contracts import StructuredPriors, StudyInput
+from aura.mimic.config import get_mimic_paths
+from aura.mimic.loaders import MimicCxrLoader, PatientRecord
+from aura.mimic.patient import Patient, build_patient, iter_patients
+from aura.schemas.clinical import Diagnosis
+from aura.schemas.contracts import StructuredPriors, StudyInput
 
 PATHS = get_mimic_paths()
 HAS_DATA = PATHS.validate_csv.is_file()

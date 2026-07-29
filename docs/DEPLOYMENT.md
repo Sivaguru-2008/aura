@@ -25,7 +25,7 @@ AURA is configured as a Python-native application. Install standard dependencies
 ```bash
 # Clone the repository
 git clone https://github.com/Sivaguru-2008/aura
-cd aura/aura-main/aura
+cd aura/aura-main
 
 # Create a virtual environment
 python -m venv venv
@@ -46,7 +46,7 @@ pip install torch torchvision torchxrayvision timm albumentations opencv-python 
 
 ```bash
 # Start the FastAPI gateway and doctor dashboard on port 8000:
-venv\Scripts\python.exe -m aura_cli serve 8000
+venv\Scripts\python.exe -m aura.aura_cli serve 8000
 ```
 
 Open **http://127.0.0.1:8000** in your browser to access the static clinical dashboard.

@@ -11,10 +11,10 @@ from pathlib import Path
 
 import numpy as np
 
-from common.config import ARTIFACTS, get_settings
-from common.mathx import softmax
-from schemas.clinical import DIAGNOSES, Diagnosis
-from services.fusion.device import make_qnode
+from aura.common.config import ARTIFACTS, get_settings
+from aura.common.mathx import softmax
+from aura.schemas.clinical import DIAGNOSES, Diagnosis
+from .device import make_qnode
 
 MODEL_VERSION = "fusion-vqc-v1"
 
@@ -82,7 +82,7 @@ class QuantumFusion:
     def probs(self, x: np.ndarray) -> np.ndarray:
         """Get the joint probability distribution of the n_qubits measurement basis states."""
         if not hasattr(self, "_probs_circuit"):
-            from services.fusion.device import make_probs_qnode
+            from .device import make_probs_qnode
             self._probs_circuit = make_probs_qnode(
                 self.n_qubits, self.n_layers, interface="numpy",
                 entangler=self.entangler)

@@ -31,7 +31,7 @@ from pathlib import Path
 
 from fastapi import HTTPException, Request
 
-from common.config import get_settings
+from aura.common.config import get_settings
 
 # Accepted upload types — layered in front of the content-based xray_gate. DICOM
 # often has no extension, so the empty suffix is permitted and content-sniffed.

@@ -17,10 +17,10 @@ from typing import Any
 
 import numpy as np
 
-from backend.core.shared.logging import get_logger
-from backend.foundation.mri.errors import StudyValidationError
-from backend.foundation.mri.geometry import VoxelGeometry
-from backend.foundation.mri.io.base import RawSeries
+from aura.backend.core.shared.logging import get_logger
+from .errors import StudyValidationError
+from .geometry import VoxelGeometry
+from .io.base import RawSeries
 
 log = get_logger("foundation.mri.volume")
 

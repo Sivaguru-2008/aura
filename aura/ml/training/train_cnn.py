@@ -25,10 +25,10 @@ from pathlib import Path
 
 import numpy as np
 
-from common.config import ARTIFACTS, ensure_dirs
-from schemas.clinical import FINDINGS
-from services.vision.cnn import TIMM_ARCHES, select_device
-from ml.training.cxr_dataset import (
+from aura.common.config import ARTIFACTS, ensure_dirs
+from aura.schemas.clinical import FINDINGS
+from aura.services.vision.cnn import TIMM_ARCHES, select_device
+from .cxr_dataset import (
     CXRManifestDataset,
     SyntheticCXRDataset,
     make_loader,

@@ -23,7 +23,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
-from schemas.contracts import CaseBundle
+from aura.schemas.contracts import CaseBundle
 
 
 class Base(DeclarativeBase):
@@ -146,7 +146,7 @@ class Store:
             if not row:
                 return None
             b = CaseBundle.model_validate(row.bundle)
-            from schemas.clinical import DIAGNOSIS_LABELS, FINDING_LABELS
+            from aura.schemas.clinical import DIAGNOSIS_LABELS, FINDING_LABELS
             b.dx_labels = {d.value: l for d, l in DIAGNOSIS_LABELS.items()}
             b.ev_labels = {f.value: l for f, l in FINDING_LABELS.items()}
             return b
@@ -160,7 +160,7 @@ class Store:
             stmt = stmt.order_by(CaseRow.priority_score.desc()).limit(limit)
             rows = ses.execute(stmt).scalars().all()
             out = []
-            from schemas.clinical import DIAGNOSIS_LABELS, Diagnosis
+            from aura.schemas.clinical import DIAGNOSIS_LABELS, Diagnosis
             for r in rows:
                 b = r.bundle
                 try:
@@ -247,8 +247,8 @@ class Store:
         telemetry so the caller can surface the live coverage. Import of the ACI
         engine is local to keep ``storage`` free of a service dependency at import.
         """
-        from common.config import get_settings
-        from services.safety.aci import AdaptiveConformalInference, ACIState
+        from aura.common.config import get_settings
+        from aura.services.safety.aci import AdaptiveConformalInference, ACIState
 
         s = get_settings()
         row = self.load_aci_state(stream)

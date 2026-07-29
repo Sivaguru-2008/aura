@@ -30,9 +30,9 @@ import tempfile
 from pathlib import Path
 from typing import Any, AsyncIterator, Iterator
 
-from backend.core.shared.errors import UploadRejected
-from backend.core.shared.logging import get_logger
-from backend.core.shared.types import ImageAsset
+from ..shared.errors import UploadRejected
+from ..shared.logging import get_logger
+from ..shared.types import ImageAsset
 
 log = get_logger("upload")
 
@@ -119,7 +119,7 @@ class UploadIntake:
         """Hard size cap, read from settings unless explicitly overridden."""
         if self._max_upload_mb is not None:
             return int(self._max_upload_mb * 1024 * 1024)
-        from common.config import get_settings
+        from aura.common.config import get_settings
 
         return int(get_settings().max_upload_mb * 1024 * 1024)
 
@@ -133,7 +133,7 @@ class UploadIntake:
         """
         from fastapi import HTTPException
 
-        from gateway.security import read_capped, validate_upload_name, validate_mri_content
+        from aura.gateway.security import read_capped, validate_upload_name, validate_mri_content
 
         filename = getattr(file, "filename", None) or "upload"
         content_type = getattr(file, "content_type", None)
@@ -168,7 +168,7 @@ class UploadIntake:
         from fastapi import HTTPException
         import hashlib
         import shutil
-        from gateway.security import read_capped, validate_upload_name, validate_mri_content
+        from aura.gateway.security import read_capped, validate_upload_name, validate_mri_content
 
         if not files:
             raise UploadRejected("no files uploaded", http_status=400)

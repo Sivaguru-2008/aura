@@ -15,7 +15,7 @@ from scipy.ndimage import label
 from scipy.spatial import ConvexHull
 from scipy.spatial.distance import pdist
 
-from backend.foundation.mri.geometry import voxel_to_world
+from aura.backend.foundation.mri.geometry import voxel_to_world
 
 
 def get_study_affine(study: Any, shape: tuple[int, int, int]) -> np.ndarray:

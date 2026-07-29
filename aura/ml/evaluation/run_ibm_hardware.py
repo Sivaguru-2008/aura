@@ -74,10 +74,10 @@ def resolved_token() -> str | None:
     tok = os.environ.get("QISKIT_IBM_TOKEN", "").strip()
     return tok or None
 
-from common.config import ARTIFACTS
-from common.mathx import softmax
-from schemas.clinical import DIAGNOSES
-from services.fusion.quantum import QuantumFusion
+from aura.common.config import ARTIFACTS
+from aura.common.mathx import softmax
+from aura.schemas.clinical import DIAGNOSES
+from aura.services.fusion.quantum import QuantumFusion
 
 
 def _label(i: int) -> str:

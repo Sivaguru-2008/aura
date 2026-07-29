@@ -1,19 +1,21 @@
 """AURA command-line entry point.
 
-Model / training / serving (unchanged):
-    py -m aura_cli train [n]        fit vision detectors + fusion models + calibration
-    py -m aura_cli train-cnn [arch] fine-tune a CNN vision backbone on GPU (timm)
-    py -m aura_cli bench [n]        quantum-vs-classical fusion benchmark + full metrics
-    py -m aura_cli serve [port]     start gateway + dashboard
-    py -m aura_cli demo             train (if needed) then serve
+Model / training / serving:
+    py -m aura.aura_cli train [n]        fit vision detectors + fusion models + calibration
+    py -m aura.aura_cli train-cnn [arch] fine-tune a CNN vision backbone on GPU (timm)
+    py -m aura.aura_cli bench [n]        quantum-vs-classical fusion benchmark + full metrics
+    py -m aura.aura_cli serve [port]     start gateway + dashboard
+    py -m aura.aura_cli demo             train (if needed) then serve
 
-Production evaluation (new):
-    py -m aura_cli predict --image sample.jpg [--out DIR] [--no-explain]
-    py -m aura_cli evaluate [--limit N] [--bootstrap N] [--no-plots]
-    py -m aura_cli explain --image sample.jpg [--out DIR] [--no-scorecam]
-    py -m aura_cli benchmark [--iters N]
+Production evaluation:
+    py -m aura.aura_cli predict --image sample.jpg [--out DIR] [--no-explain]
+    py -m aura.aura_cli evaluate [--limit N] [--bootstrap N] [--no-plots]
+    py -m aura.aura_cli explain --image sample.jpg [--out DIR] [--no-scorecam]
+    py -m aura.aura_cli benchmark [--iters N]
 
-Run from the aura/ directory.  train-cnn arch in {densenet121, efficientnetv2,
+Run from the repository root (the directory *containing* aura/): `aura` is the import
+root, so every module is addressed as aura.<...> and -m has to resolve it from there.
+train-cnn arch in {densenet121, efficientnetv2,
 convnext, swin}; pass a manifest CSV via AURA_CNN_MANIFEST to train on real CXRs.
 The predict/evaluate/explain/benchmark commands use the trained DenseNet-121 in
 artifacts/best_model.pt, loaded automatically by the vision engine.
@@ -24,9 +26,10 @@ from __future__ import annotations
 import os
 import sys
 import subprocess
+from pathlib import Path
 
 if sys.platform == "win32":
-    venv_python = r"E:\AURA\venv\Scripts\python.exe"
+    venv_python = os.environ.get("AURA_VENV_PYTHON", r"E:\AURA\venv\Scripts\python.exe")
     if os.path.exists(venv_python) and sys.executable.lower() != venv_python.lower():
         torch_ok = False
         try:
@@ -36,7 +39,15 @@ if sys.platform == "win32":
             pass
 
         if not torch_ok:
-            code = subprocess.call([venv_python] + sys.argv)
+            # Re-exec as a *module* from the repository root. Handing the venv
+            # interpreter sys.argv verbatim would run this file by path, which puts
+            # aura/ (not the repo root) on sys.path — every `aura.*` import would
+            # then fail in the child with the error this redirect exists to avoid.
+            repo_root = Path(__file__).resolve().parent.parent
+            code = subprocess.call(
+                [venv_python, "-m", "aura.aura_cli", *sys.argv[1:]],
+                cwd=str(repo_root),
+            )
             sys.exit(code)
 # ---------------------------------------------------------------------
 
@@ -44,7 +55,7 @@ import argparse
 import os
 import sys
 
-from common.config import ARTIFACTS
+from aura.common.config import ARTIFACTS
 
 
 def _utf8_stdout() -> None:
@@ -65,13 +76,13 @@ def _need_training() -> bool:
 # --------------------------------------------------------------------------- #
 def cmd_train(argv: list[str]) -> None:
     n = int(argv[0]) if argv else 700
-    from ml.training import train_vision, train_fusion
+    from aura.ml.training import train_vision, train_fusion
     train_vision.run(n)
     train_fusion.run(n)
 
 
 def cmd_train_cnn(argv: list[str]) -> None:
-    from ml.training.train_cnn import run, TrainConfig
+    from aura.ml.training.train_cnn import run, TrainConfig
     arch = argv[0] if argv else "densenet121"
     manifest = os.environ.get("AURA_CNN_MANIFEST")
     run(manifest=manifest, synthetic=manifest is None, cfg=TrainConfig(arch=arch))
@@ -79,7 +90,7 @@ def cmd_train_cnn(argv: list[str]) -> None:
 
 def cmd_bench(argv: list[str]) -> None:
     n = int(argv[0]) if argv else 500
-    from ml.evaluation import benchmark
+    from aura.ml.evaluation import benchmark
     benchmark.run(n)
 
 
@@ -89,7 +100,7 @@ def cmd_serve(argv: list[str]) -> None:
     if _need_training():
         print("[aura] no trained models found - training first ...")
         cmd_train([])
-    uvicorn.run("gateway.app:app", host="127.0.0.1", port=port, log_level="info")
+    uvicorn.run("aura.gateway.app:app", host="127.0.0.1", port=port, log_level="info")
 
 
 def cmd_demo(argv: list[str]) -> None:
@@ -103,7 +114,7 @@ def cmd_demo(argv: list[str]) -> None:
 # New production-evaluation commands
 # --------------------------------------------------------------------------- #
 def cmd_predict(args: argparse.Namespace) -> None:
-    from services.inference.predict import predict_image
+    from aura.services.inference.predict import predict_image
 
     if not args.image:
         print("error: predict requires --image PATH")
@@ -117,7 +128,7 @@ def cmd_predict(args: argparse.Namespace) -> None:
 
 
 def cmd_evaluate(args: argparse.Namespace) -> None:
-    from ml.evaluation import clinical_eval
+    from aura.ml.evaluation import clinical_eval
 
     clinical_eval.evaluate_validation(
         limit=args.limit, n_bootstrap=args.bootstrap, make_plots=not args.no_plots,
@@ -126,13 +137,13 @@ def cmd_evaluate(args: argparse.Namespace) -> None:
     print(rep_path.read_text(encoding="utf-8"))
 
     if args.calibrate:
-        from ml.evaluation import vision_calibration
+        from aura.ml.evaluation import vision_calibration
         vision_calibration.run_calibration(limit=args.limit, make_plots=not args.no_plots)
         print((vision_calibration.CAL_DIR / "CALIBRATION_SUMMARY.md").read_text(encoding="utf-8"))
 
 
 def cmd_explain(args: argparse.Namespace) -> None:
-    from services.inference.predict import predict_image
+    from aura.services.inference.predict import predict_image
 
     if not args.image:
         print("error: explain requires --image PATH")
@@ -152,13 +163,13 @@ def cmd_explain(args: argparse.Namespace) -> None:
 
 
 def cmd_benchmark(args: argparse.Namespace) -> None:
-    from ml.evaluation import perf_benchmark
+    from aura.ml.evaluation import perf_benchmark
 
     perf_benchmark.run(iters=args.iters)
 
 
 def cmd_calibrate(args: argparse.Namespace) -> None:
-    from ml.evaluation import vision_calibration
+    from aura.ml.evaluation import vision_calibration
 
     vision_calibration.run_calibration(limit=args.limit, make_plots=not args.no_plots)
     print((vision_calibration.CAL_DIR / "CALIBRATION_SUMMARY.md").read_text(encoding="utf-8"))
@@ -168,11 +179,11 @@ def cmd_agent(args: argparse.Namespace) -> None:
     import cv2
     import numpy as np
     from pathlib import Path
-    from services.vision.engine import VisionEngine
-    from services.fusion.engine import FusionEngine
-    from services.fusion.evidence import encode
-    from services.agent.active_diagnosis import ActiveDiagnosisAgent
-    from schemas.contracts import StructuredPriors
+    from aura.services.vision.engine import VisionEngine
+    from aura.services.fusion.engine import FusionEngine
+    from aura.services.fusion.evidence import encode
+    from aura.services.agent.active_diagnosis import ActiveDiagnosisAgent
+    from aura.schemas.contracts import StructuredPriors
 
     if not args.image:
         print("error: agent requires --image PATH")
@@ -260,7 +271,7 @@ def _print_prediction(res: dict, show_report: bool = True) -> None:
         if k in res["artifacts"]:
             print(f"  {k:22} {res['artifacts'][k]}")
     if show_report:
-        from services.report.clinical_report import render_text
+        from aura.services.report.clinical_report import render_text
         print("\n" + "-" * 68)
         print(render_text(res["clinical_report"]))
 

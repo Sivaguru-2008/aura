@@ -60,7 +60,7 @@ from typing import Any
 
 import numpy as np
 
-from services.fusion.evidence import EVIDENCE_CHANNELS
+from .evidence import EVIDENCE_CHANNELS
 
 #: Correlator magnitudes below this are numerical noise from the simulator, not
 #: entanglement. float64 expectation values carry ~1e-16 error and the products
@@ -265,7 +265,7 @@ def measure_entanglement(model: Any, x: np.ndarray,
     """Measure the evidence-entanglement map for one evidence vector.
 
     Args:
-        model: a trained :class:`~services.fusion.quantum.QuantumFusion`.
+        model: a trained :class:`~aura.services.fusion.quantum.QuantumFusion`.
         x: the 8-channel evidence vector this patient produced.
         reference: the baseline to attribute against. Defaults to the zero vector —
             every finding absent, no prior risk — which is the clinically meaningful

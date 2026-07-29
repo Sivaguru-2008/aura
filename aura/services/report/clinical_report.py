@@ -20,15 +20,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from schemas.clinical import (
+from aura.schemas.clinical import (
     DIAGNOSIS_LABELS,
     FINDING_LABELS,
     Diagnosis,
     Finding,
 )
-from schemas.contracts import CaseBundle
-from services.fusion.evidence import EVIDENCE_CHANNELS
-from common.config import finding_present_threshold
+from aura.schemas.contracts import CaseBundle
+from ..fusion.evidence import EVIDENCE_CHANNELS
+from aura.common.config import finding_present_threshold
 
 # Clinical acuity → risk band for the top diagnosis.
 _RISK_BAND: dict[Diagnosis, str] = {
@@ -188,7 +188,7 @@ def _evidence_used(bundle: CaseBundle) -> list[str]:
 def _evidence_missing(bundle: CaseBundle) -> list[str]:
     missing: list[str] = []
     # Evidence flagged absent by the evidence graph.
-    from schemas.contracts import EvidenceKind
+    from aura.schemas.contracts import EvidenceKind
 
     for ev in bundle.evidence:
         if ev.kind == EvidenceKind.ABSENT_EVIDENCE and 0.08 < ev.value < 0.5:
@@ -248,7 +248,7 @@ def _label_provenance_lines() -> list[str]:
     if _PROV_CACHE is not None:
         return _PROV_CACHE
     import json
-    from common.config import ARTIFACTS
+    from aura.common.config import ARTIFACTS
     lines: list[str] = []
     try:
         lv = ARTIFACTS / "labeler_validation.json"

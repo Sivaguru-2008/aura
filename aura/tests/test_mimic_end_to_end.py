@@ -10,7 +10,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from mimic.config import get_mimic_paths
+from aura.mimic.config import get_mimic_paths
 
 PATHS = get_mimic_paths()
 HAS_DATA = PATHS.train_csv.is_file() and PATHS.validate_csv.is_file()
@@ -22,9 +22,9 @@ needs_splits = pytest.mark.skipif(not SPLITS_BUILT, reason="run DatasetBuilder.b
 
 @needs_data
 def test_full_prediction_pipeline_diagnosis():
-    from mimic.tasks import TaskDatasetBuilder
-    from mimic.training import GBMTrainer
-    from mimic.evaluation import evaluate_multiclass
+    from aura.mimic.tasks import TaskDatasetBuilder
+    from aura.mimic.training import GBMTrainer
+    from aura.mimic.evaluation import evaluate_multiclass
 
     tdb = TaskDatasetBuilder()
     train = tdb.build("diagnosis_prediction", "train", limit=1500)
@@ -46,7 +46,7 @@ def test_full_prediction_pipeline_diagnosis():
 @needs_splits
 def test_test_split_is_predictable_and_disjoint():
     import pandas as pd
-    from mimic.tasks import TaskDatasetBuilder
+    from aura.mimic.tasks import TaskDatasetBuilder
 
     out = get_mimic_paths().cache_dir / "splits"
     train_ids = set(pd.read_csv(out / "train.csv")["subject_id"])
@@ -63,8 +63,8 @@ def test_test_split_is_predictable_and_disjoint():
 def test_patient_merge_to_pipeline_bundle():
     """Patient Object -> StudyInput -> full pipeline -> CaseBundle (no synthetic data)."""
     import asyncio
-    from gateway.pipeline import Pipeline
-    from mimic.patient import iter_patients
+    from aura.gateway.pipeline import Pipeline
+    from aura.mimic.patient import iter_patients
 
     patient = next(p for p in iter_patients("validate", limit=10) if p.n_studies >= 1)
     study = patient.to_study_input(-1)

@@ -20,9 +20,9 @@ import re
 from dataclasses import dataclass, field
 from typing import Optional
 
-from mimic.labeling import ReportLabel, label_report
-from mimic.loaders import PatientRecord
-from schemas.clinical import Diagnosis, Finding
+from .labeling import ReportLabel, label_report
+from .loaders import PatientRecord
+from aura.schemas.clinical import Diagnosis, Finding
 
 log = logging.getLogger("mimic.timeline")
 

@@ -19,14 +19,14 @@ import sys
 
 import numpy as np
 
-from common.config import ARTIFACTS, get_settings
-from common.mathx import energy_score
-from ml.data import make_sample
-from mimic.patient import iter_patients
-from services.fusion import FusionEngine
-from services.fusion.evidence import encode
-from services.safety.calibration import Calibration
-from services.vision import VisionEngine
+from aura.common.config import ARTIFACTS, get_settings
+from aura.common.mathx import energy_score
+from ..data import make_sample
+from aura.mimic.patient import iter_patients
+from aura.services.fusion import FusionEngine
+from aura.services.fusion.evidence import encode
+from aura.services.safety.calibration import Calibration
+from aura.services.vision import VisionEngine
 
 
 def _energy(vision_engine, fusion, temperature, study) -> float:
@@ -60,9 +60,9 @@ def run(n_real: int = 150, n_synth: int = 200) -> Calibration:
 
     rng = np.random.default_rng(11)
     synth: list[float] = []
-    from ml.data import IMG
-    from schemas.clinical import DIAGNOSES
-    from schemas.contracts import StudyInput
+    from ..data import IMG
+    from aura.schemas.clinical import DIAGNOSES
+    from aura.schemas.contracts import StudyInput
     for i in range(n_synth):
         s = make_sample(DIAGNOSES[int(rng.integers(len(DIAGNOSES)))], rng)
         synth.append(_energy(vision, fusion, cal.temperature, StudyInput(

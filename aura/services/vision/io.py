@@ -12,8 +12,8 @@ from pathlib import Path
 
 import numpy as np
 
-from schemas.clinical import Modality
-from schemas.contracts import StructuredPriors, StudyInput
+from aura.schemas.clinical import Modality
+from aura.schemas.contracts import StructuredPriors, StudyInput
 
 
 def _normalize01(a: np.ndarray) -> np.ndarray:

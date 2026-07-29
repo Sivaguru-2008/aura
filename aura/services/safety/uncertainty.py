@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from common.mathx import entropy
+from aura.common.mathx import entropy
 
 
 # --------------------------------------------------------------------------- #

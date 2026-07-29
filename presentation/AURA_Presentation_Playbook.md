@@ -41,6 +41,7 @@ If you have IBM Plex Sans / SF Pro installed on the presentation machine, you ma
 | 5 | AURA pipeline | 1:00 | 3:10 |
 | 6 | Architecture | 0:40 | 3:50 |
 | 7 | **Quantum core** | 1:30 | 5:20 |
+| 7b | **Quantum scorecard** *(new — see `DECK_PATCH_QUANTUM_RESULTS.md`)* | 0:45 | 6:05 |
 | 8 | Reasoning graph | 0:45 | 6:05 |
 | 9 | Explainability | 0:45 | 6:50 |
 | 10 | Uncertainty | 1:00 | 7:50 |
@@ -50,7 +51,9 @@ If you have IBM Plex Sans / SF Pro installed on the presentation machine, you ma
 | 14–15 | Roadmap + Impact | 0:35 + 0:35 | *(cut both if running long — say one sentence each)* |
 | 16 | Closing | 0:25 | — |
 
-**If given only 5 minutes:** slides 2 → 3 → 5 → 7 → 10 → 11 → 16. That's the spine.
+**If given only 5 minutes:** slides 2 → 3 → 5 → 7 → **7b** → 10 → 11 → 16. That's the spine.
+Keep 7b even in the short cut — at a quantum event, the scorecard is the slide that decides
+whether the judges believe the rest of the deck.
 
 ---
 
@@ -131,7 +134,7 @@ A: The uncertainty engine, planner, and reports — yes, and they run classicall
 
 ## 5. Demo insurance
 
-- `cd aura && py -m aura_cli train && py -m aura_cli bench && py -m aura_cli serve` → dashboard at `http://localhost:8000`. Rehearse once on the venue machine; it's offline-capable by design.
+- `cd aura-main && py -m aura.aura_cli train && py -m aura.aura_cli bench && py -m aura.aura_cli serve` → dashboard at `http://localhost:8000`. Rehearse once on the venue machine; it's offline-capable by design.
 - Pre-record a 60-second screen capture of the dashboard as backup.
 - If asked live: run `bench` — the quantum-vs-classical table printing in front of judges is the single most credible artifact you have.
 

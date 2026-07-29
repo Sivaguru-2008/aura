@@ -99,7 +99,7 @@ def integrated_gradients_mlp(
 ) -> np.ndarray:
     """Integrated gradients for the MLP w.r.t. the (standardized) input features.
 
-    ``trainer`` is a fitted :class:`mimic.training.MLPTrainer`. Attribution is
+    ``trainer`` is a fitted :class:`aura.mimic.training.MLPTrainer`. Attribution is
     returned in the original feature space (rescaled by the trainer's std).
     """
     torch = trainer.torch

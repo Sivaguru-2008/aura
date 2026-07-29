@@ -41,7 +41,7 @@ estimate converges to the analytic expectation the serving path already uses; it
 not converge to the truth. Spending more measurements makes a confident wrong answer
 *more* confident and *still* wrong. So QMBA is a resolution budget, not a correctness
 guarantee, and it composes with — never replaces — the conformal and OOD abstention
-in :mod:`services.safety`. A study that QMBA commits can still be abstained on by the
+in :mod:`aura.services.safety`. A study that QMBA commits can still be abstained on by the
 safety engine, and that ordering is deliberate.
 
 The analytic path stays the default for serving. QMBA is what makes the *cost* of a
@@ -54,8 +54,8 @@ from typing import Any
 
 import numpy as np
 
-from common.mathx import softmax
-from schemas.clinical import DIAGNOSES
+from aura.common.mathx import softmax
+from aura.schemas.clinical import DIAGNOSES
 
 #: Shot budget the first stage spends. Small on purpose: most studies separate here,
 #: and the whole point is not to pay for precision nobody needed.

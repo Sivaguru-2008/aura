@@ -46,8 +46,8 @@ from typing import Any, Sequence
 
 import numpy as np
 
-from backend.core.shared.logging import get_logger
-from backend.engines.neuro.sequence_features import FEATURE_DIM, sequence_features
+from aura.backend.core.shared.logging import get_logger
+from .sequence_features import FEATURE_DIM, sequence_features
 
 log = get_logger("engine.neuromind.multisequence")
 
@@ -274,7 +274,7 @@ def _load_checker(artifacts_root: Path | str | None):
     import json
 
     if artifacts_root is None:
-        from common.config import ARTIFACTS
+        from aura.common.config import ARTIFACTS
 
         artifacts_root = ARTIFACTS
     model_path = Path(artifacts_root) / "brain" / "sequence_check.joblib"

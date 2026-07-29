@@ -45,13 +45,13 @@ from typing import Any, Sequence
 import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.core.shared.logging import get_logger
-from backend.foundation.mri.config import QualityThresholds
-from backend.foundation.mri.io.base import SeriesIntegrity
-from backend.foundation.mri.masking import estimate_foreground_mask
-from backend.foundation.mri.metadata import MRIMetadata
-from backend.foundation.mri.types import CheckStatus, QualityVerdict
-from backend.foundation.mri.volume import MRIVolume
+from aura.backend.core.shared.logging import get_logger
+from .config import QualityThresholds
+from .io.base import SeriesIntegrity
+from .masking import estimate_foreground_mask
+from .metadata import MRIMetadata
+from .types import CheckStatus, QualityVerdict
+from .volume import MRIVolume
 
 log = get_logger("foundation.mri.quality")
 

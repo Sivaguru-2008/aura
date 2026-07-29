@@ -1,0 +1,102 @@
+# AURA — Docker build context filter.
+#
+# Without this file the build context is ~16 GB (.venv 1.4G + .git 1.2G +
+# artifacts 13G) and `docker build` stalls before it runs a single instruction.
+# With it the context is ~196 MB (measured): 193 MB of served weights and
+# calibration, 3 MB of source and the web UI.
+#
+# Rule of thumb: if `aura_cli train` / `cli ingest` can regenerate it, it does
+# not belong in the image.
+
+# --- environments & VCS ---------------------------------------------------- #
+.venv/
+venv/
+.git/
+.github/
+**/__pycache__/
+**/*.py[cod]
+**/*.egg-info/
+**/.pytest_cache/
+aura/pytest-tmp/
+
+# --- editor / OS noise ----------------------------------------------------- #
+.vscode/
+.idea/
+.claude/
+Thumbs.db
+.DS_Store
+
+# --- datasets & local-only bulk -------------------------------------------- #
+datasets/
+demo_data/
+aura/demo_data/
+mimic_cxr_data/
+archive.zip
+structure.txt
+manifest.jsonl
+media/
+presentation/
+presentation_assets/
+demo_exports/
+demo_results/
+audit_artifacts/
+
+# --- secrets (never bake into a layer) ------------------------------------- #
+ibm_quantum.env
+**/*.pem
+**/*.key
+.env
+.env.*
+
+# --- artifacts: runtime state (regenerated on first boot) ------------------ #
+# aura.db is 110 MB of accumulated case history and is recreated empty by
+# ensure_dirs(); baking it in ships stale demo cases and bloats the image.
+aura/artifacts/aura.db
+aura/artifacts/inference_log.jsonl
+aura/artifacts/eval_watch*.log
+
+# --- artifacts: training-only state (never read while serving) ------------- #
+aura/artifacts/optimizer.pt
+aura/artifacts/last_checkpoint.pt
+aura/artifacts/scheduler.pt
+aura/artifacts/vision_cnn.zip
+aura/artifacts/tb/
+aura/artifacts/tensorboard/
+**/tensorboard/
+
+# --- artifacts: superseded / backup copies --------------------------------- #
+# best_model.pt IS the promoted retrain_v2 epoch-7 checkpoint, so the source
+# run directories are redundant duplicates (162 MB each).
+aura/artifacts/_smoke/
+aura/artifacts/_smoke2/
+aura/artifacts/_synthetic_fusion_backup/
+aura/artifacts/retrain_v2/
+aura/artifacts/retrain_v3/
+# NOTE the **/ prefixes: in .dockerignore a bare `*` does not cross a `/`, so
+# `*.bak` would only match files at the context root and would leave every
+# backup under aura/artifacts/ in the image.
+**/*.bak
+**/*.bak.*
+**/*.prequantumflip.bak
+**/*.superseded-*
+
+# --- artifacts: brain (NeuroMind) ------------------------------------------ #
+# cache/  11 GB of standardised voxels — rebuild with `cli ingest`
+# v1_broken_quality_head/  401 MB, known-bad, kept locally as evidence only
+# checkpoints/  only best_brain_model.pt is served; the other two files are
+#               a 90 MB optimizer/training state and a duplicate `latest`.
+# embeddings/  latest.npz is the store downstream modules must not recompute;
+#              the 60 per-epoch dumps are history.
+aura/artifacts/brain/cache/
+aura/artifacts/brain/v1_broken_quality_head/
+aura/artifacts/brain/checkpoints/training_state.pt
+aura/artifacts/brain/checkpoints/latest_brain_model.pt
+aura/artifacts/brain/embeddings/epoch_*.npz
+aura/artifacts/brain/embeddings/epoch_*.json
+
+# --- docs (not needed at runtime; keep the image lean) --------------------- #
+# Only the top-level bibles/audits — the .md evidence files under
+# aura/artifacts/ (model cards, calibration + evaluation summaries) are KB-sized
+# and stay, because the model-card surface cites them.
+/*.md
+docs/

@@ -1,7 +1,7 @@
 import torch
 import numpy as np
-from ml.vision_cxr.metrics import compute_multilabel_metrics
-from ml.vision_cxr.losses import RegularizedMultiLabelLoss
+from .metrics import compute_multilabel_metrics
+from .losses import RegularizedMultiLabelLoss
 
 def evaluate_model(model, dataloader, loss_fn, device):
     """Evaluates the model on the validation set, returning average loss and computed metrics."""

@@ -6,6 +6,6 @@ where it always has (``gateway.pipeline``, ``services.vision``, ``services.fusio
 reimplemented here.
 """
 
-from backend.engines.thorax.engine import ThoraxEngine, register_thorax_engine
+from .engine import ThoraxEngine, register_thorax_engine
 
 __all__ = ["ThoraxEngine", "register_thorax_engine"]

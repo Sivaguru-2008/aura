@@ -5,8 +5,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from mimic.tasks import TaskDataset, TaskSpec
-from mimic.training import (
+from aura.mimic.tasks import TaskDataset, TaskSpec
+from aura.mimic.training import (
     GBMTrainer,
     MLPConfig,
     MLPTrainer,

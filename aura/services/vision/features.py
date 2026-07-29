@@ -10,7 +10,7 @@ from scipy.ndimage import uniform_filter
 
 # Grid/anatomy primitives come from the dependency-free common layer, not the
 # synthetic-data module — keeps the serving path free of an ml/ import (audit §11.3).
-from common.anatomy import IMG, REGIONS, _px, resize_to
+from aura.common.anatomy import IMG, REGIONS, _px, resize_to
 
 FEATURE_NAMES = [
     "right_lung_bright",

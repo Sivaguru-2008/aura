@@ -14,14 +14,14 @@ Extension points, in the order you are likely to need them:
 * **new engine for an existing modality** — register it; the router needs no change.
 """
 
-from backend.core.router.detector import (
+from .detector import (
     DetectionResult,
     ModalityDetector,
     SignatureModalityDetector,
 )
-from backend.core.router.features import ImageFingerprint, fingerprint
-from backend.core.router.router import ModalityRouter
-from backend.core.router.signatures import (
+from .features import ImageFingerprint, fingerprint
+from .router import ModalityRouter
+from .signatures import (
     ModalitySignature,
     SignatureScore,
     default_signatures,

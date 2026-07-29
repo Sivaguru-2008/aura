@@ -20,13 +20,13 @@ from typing import Sequence
 import torch
 from torch import nn
 
-from backend.vision.brain.model.blocks import UpsampleBlock
-from backend.vision.brain.model.registry import register_decoder
+from .blocks import UpsampleBlock
+from .registry import register_decoder
 
 
 class UNetDecoder2D(nn.Module):
     """Skip-connected upsampling path. Satisfies
-    :class:`~backend.vision.brain.model.registry.DecoderBackbone`."""
+    :class:`~aura.backend.vision.brain.model.registry.DecoderBackbone`."""
 
     def __init__(self, *, encoder_channels: Sequence[int],
                  blocks_per_stage: int = 2, norm: str = "instance",

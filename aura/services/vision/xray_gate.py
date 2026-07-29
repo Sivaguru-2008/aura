@@ -152,7 +152,7 @@ def head_geometry_score(background_fraction: float, dark_edge_count: int,
     a feature deep in chest territory contributes nothing rather than going negative.
 
     Shared by the intake gate and by
-    :class:`~backend.core.router.signatures.BrainMRISignature` so the two cannot drift
+    :class:`~aura.backend.core.router.signatures.BrainMRISignature` so the two cannot drift
     apart: the router and the gate must agree about what a head slice looks like.
     """
     def ramp(value: float, lo: float, hi: float) -> float:
@@ -229,7 +229,7 @@ def cropped_head_shape(gray: np.ndarray) -> tuple[bool, dict]:
 def _head_geometry(gray: np.ndarray) -> tuple[float, dict]:
     """Head-geometry evidence for a [0,1] grayscale array, over both routes.
 
-    The framing formulas match :func:`backend.core.router.features._measure` exactly;
+    The framing formulas match :func:`aura.backend.core.router.features._measure` exactly;
     the router's fingerprint and this gate must produce the same numbers for the same
     image. The score is the stronger of the two routes, so a well-framed head still
     reports the framing evidence and a cropped one is not missed for lacking it.
@@ -280,7 +280,7 @@ def head_geometry_from_path(path: str | Path) -> tuple[float, dict]:
         ext = Path(path).suffix.lower()
         if ext in (".dcm", ".dicom", ""):
             try:
-                from services.vision.io import load_dicom
+                from .io import load_dicom
 
                 return _head_geometry(load_dicom(path))
             except Exception:
@@ -388,7 +388,7 @@ def _gate_gray(gray: np.ndarray, checks: dict) -> GateResult:
 
 def _validate_dicom(path: str | Path) -> GateResult:
     import pydicom
-    from services.vision.io import load_dicom
+    from .io import load_dicom
 
     checks: dict = {"format": "dicom"}
     ds = pydicom.dcmread(str(path), stop_before_pixels=True)

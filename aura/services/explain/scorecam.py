@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from schemas.clinical import Finding
-from services.explain.methods import _resize01, _target_index
+from aura.schemas.clinical import Finding
+from .methods import _resize01, _target_index
 
 
 def score_cam(backbone, img: np.ndarray, finding: Finding,

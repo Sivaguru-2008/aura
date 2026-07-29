@@ -35,7 +35,7 @@ from typing import Any, Mapping, Sequence
 
 import numpy as np
 
-from backend.vision.brain.types import (
+from .types import (
     COMPOSITE_MEMBERS,
     CompositeRegion,
     FOREGROUND_REGIONS,

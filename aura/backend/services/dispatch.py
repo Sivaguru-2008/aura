@@ -20,12 +20,12 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from backend.core.router.router import ModalityRouter
-from backend.core.shared.errors import AuraBackendError, EngineNotAvailable
-from backend.core.shared.logging import get_logger, use_correlation_id
-from backend.core.shared.types import ImageAsset
-from backend.engines.base.registry import EngineRegistry, default_registry
-from backend.models.routing import (
+from ..core.router.router import ModalityRouter
+from ..core.shared.errors import AuraBackendError, EngineNotAvailable
+from ..core.shared.logging import get_logger, use_correlation_id
+from ..core.shared.types import ImageAsset
+from ..engines.base.registry import EngineRegistry, default_registry
+from ..models.routing import (
     AnalysisEnvelope,
     EngineOutcome,
     ResultStatus,
@@ -79,13 +79,13 @@ class DispatchService:
         :meth:`_declared_routing` for how it is weighed against detection — in short,
         it breaks ties and fills silences but never overrules a confident measurement.
 
-        Raises :class:`~backend.core.shared.errors.ModalityUndetermined` (from the
-        router) and :class:`~backend.core.shared.errors.ModalityConflict` (from the
+        Raises :class:`~aura.backend.core.shared.errors.ModalityUndetermined` (from the
+        router) and :class:`~aura.backend.core.shared.errors.ModalityConflict` (from the
         declaration check). Engine-level problems are reported inside the envelope.
         """
         with use_correlation_id(request_id) as cid:
             watch = _Stopwatch()
-            from backend.core.shared.errors import UnsupportedModality, ModalityConflict
+            from ..core.shared.errors import UnsupportedModality, ModalityConflict
             try:
                 if declared_modality:
                     routing = self._declared_routing(asset, declared_modality, cid)
@@ -93,7 +93,7 @@ class DispatchService:
                     routing = self.router.route_or_raise(asset)
             except (UnsupportedModality, ModalityConflict) as exc:
                 try:
-                    from gateway.app import store
+                    from aura.gateway.app import store
                     detail = {
                         "reason": exc.reason,
                         "confidence": exc.detail.get("confidence", 0.0),
@@ -179,8 +179,8 @@ class DispatchService:
         NeuroMind's own validation accepts any 2D image, so nothing further downstream
         would catch it. Ignoring the declaration is how CASE-UPLOAD-27 happened.
         """
-        from backend.core.shared.errors import ModalityConflict
-        from backend.core.shared.types import MODALITY_LABELS, ImagingModality
+        from ..core.shared.errors import ModalityConflict
+        from ..core.shared.types import MODALITY_LABELS, ImagingModality
 
         wanted = declared.strip().lower()
         modality = next(

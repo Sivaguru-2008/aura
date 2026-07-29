@@ -17,19 +17,19 @@ import pytest
 
 pytest.importorskip("pennylane", reason="quantum tests need PennyLane")
 
-from services.fusion.device import make_probs_qnode, make_qnode          # noqa: E402
-from services.fusion.qmba import (                                       # noqa: E402
+from aura.services.fusion.device import make_probs_qnode, make_qnode          # noqa: E402
+from aura.services.fusion.qmba import (                                       # noqa: E402
     PLAUSIBLE_SHOT_CEILING,
     QuantumMeasurementBudget,
     shot_sweep,
 )
-from services.fusion.qmeasure import (                                   # noqa: E402
+from aura.services.fusion.qmeasure import (                                   # noqa: E402
     CORRELATION_FLOOR,
     coupling_summary,
     measure_entanglement,
 )
-from services.fusion.quantum import QuantumFusion                        # noqa: E402
-from schemas.clinical import DIAGNOSES                                   # noqa: E402
+from aura.services.fusion.quantum import QuantumFusion                        # noqa: E402
+from aura.schemas.clinical import DIAGNOSES                                   # noqa: E402
 
 N_QUBITS = 4          # small on purpose: 2**4 states keeps the suite fast
 N_LAYERS = 2
@@ -336,7 +336,7 @@ def test_decision_is_json_serialisable(evidence):
 # =========================================================================== #
 def test_calibration_prefers_the_backend_specific_file(tmp_path, monkeypatch):
     """Serving one backend with another's temperature is the bug this prevents."""
-    from services.safety import calibration as calibration_module
+    from aura.services.safety import calibration as calibration_module
 
     monkeypatch.setattr(calibration_module, "ARTIFACTS", tmp_path)
     Calibration = calibration_module.Calibration
@@ -350,7 +350,7 @@ def test_calibration_prefers_the_backend_specific_file(tmp_path, monkeypatch):
 
 
 def test_calibration_falls_back_when_no_backend_file_exists(tmp_path, monkeypatch):
-    from services.safety import calibration as calibration_module
+    from aura.services.safety import calibration as calibration_module
 
     monkeypatch.setattr(calibration_module, "ARTIFACTS", tmp_path)
     Calibration = calibration_module.Calibration
@@ -361,7 +361,7 @@ def test_calibration_falls_back_when_no_backend_file_exists(tmp_path, monkeypatc
 
 
 def test_saving_with_a_backend_writes_both_files(tmp_path, monkeypatch):
-    from services.safety import calibration as calibration_module
+    from aura.services.safety import calibration as calibration_module
 
     monkeypatch.setattr(calibration_module, "ARTIFACTS", tmp_path)
     calibration_module.Calibration(temperature=0.77).save(

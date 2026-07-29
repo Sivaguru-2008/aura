@@ -34,14 +34,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Protocol, Sequence, runtime_checkable
 
-from backend.core.router.features import ImageFingerprint, fingerprint
-from backend.core.router.signatures import (
+from .features import ImageFingerprint, fingerprint
+from .signatures import (
     ModalitySignature,
     SignatureScore,
     default_signatures,
 )
-from backend.core.shared.logging import get_logger
-from backend.core.shared.types import ImageAsset, ImagingModality
+from ..shared.logging import get_logger
+from ..shared.types import ImageAsset, ImagingModality
 
 log = get_logger("router.detector")
 
@@ -70,7 +70,7 @@ class DetectionResult:
     @property
     def label(self) -> str:
         """Human-readable name of the detected modality."""
-        from backend.core.shared.types import MODALITY_LABELS
+        from ..shared.types import MODALITY_LABELS
 
         return MODALITY_LABELS.get(self.modality, self.modality.value)
 

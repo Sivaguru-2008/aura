@@ -28,8 +28,8 @@ from typing import Optional
 
 import pandas as pd
 
-from mimic.config import MimicPaths, get_mimic_paths
-from mimic.parsing import safe_str_list
+from .config import MimicPaths, get_mimic_paths
+from .parsing import safe_str_list
 
 log = logging.getLogger("mimic.loaders")
 

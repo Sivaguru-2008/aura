@@ -15,7 +15,7 @@ well-formed posterior.
 
 This script fits all three calibration quantities separately for each backend and
 writes ``artifacts/safety_<backend>.npz``, which
-:meth:`services.safety.calibration.Calibration.load` prefers when the corresponding
+:meth:`aura.services.safety.calibration.Calibration.load` prefers when the corresponding
 backend is served. The shared ``safety.npz`` is left in place for the default backend
 so nothing that reads it breaks.
 
@@ -31,13 +31,13 @@ import json
 
 import numpy as np
 
-from common.config import ARTIFACTS, ensure_dirs, get_settings
-from common.mathx import softmax
-from schemas.clinical import DIAGNOSES
-from services.fusion.classical import ClassicalFusion
-from services.fusion.learnable import LearnableFusion
-from services.fusion.quantum import QuantumFusion
-from services.safety.calibration import (
+from aura.common.config import ARTIFACTS, ensure_dirs, get_settings
+from aura.common.mathx import softmax
+from aura.schemas.clinical import DIAGNOSES
+from aura.services.fusion.classical import ClassicalFusion
+from aura.services.fusion.learnable import LearnableFusion
+from aura.services.fusion.quantum import QuantumFusion
+from aura.services.safety.calibration import (
     Calibration,
     expected_calibration_error,
     fit_conformal,
@@ -72,7 +72,7 @@ def _evidence_splits(n: int, seed: int):
               f"(cal={len(d['ycal'])} test={len(d['yte'])})")
         return d["Xcal"], d["ycal"], d["Xte"], d["yte"], str(d["source"])
 
-    from ml.training.dataset import real_evidence_splits
+    from .dataset import real_evidence_splits
 
     print(f"[data] building evidence set (n={n}) ...")
     real = real_evidence_splits(n=n, split="train", seed=seed,

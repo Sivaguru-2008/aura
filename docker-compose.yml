@@ -1,16 +1,89 @@
-version: '3.8'
+# AURA — local / single-host deployment.
+#
+#   docker compose up --build          start
+#   docker compose logs -f aura        follow
+#   docker compose run --rm aura preflight   diagnose a bad deploy
+#
+# The `version:` key is obsolete in Compose v2 and emits a warning on every
+# invocation, so it is gone.
 
 services:
   aura:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Set to 1 to build without the 86 MB brain checkpoint (chest-only image).
+        AURA_SKIP_BRAIN: "${AURA_SKIP_BRAIN:-0}"
+        # Optional: base URL of a release that serves the model_export file names.
+        AURA_MODELS_URL: "${AURA_MODELS_URL:-}"
+    image: aura:local
     container_name: aura-copilot
+
     ports:
-      - "8000:8000"
-      - "11112:11112"
-    volumes:
-      - ./data:/app/data
+      - "${AURA_PORT:-8000}:8000"
+      - "${AURA_DICOM_PORT:-11112}:11112"
+
     environment:
-      - PORT=8000
-      - AURA_ALLOW_FALLBACK_VISION=1
-      - AURA_DATA_DIR=/app/data
+      PORT: "8000"
+      HOST: "0.0.0.0"
+      # strict  -> a failed preflight check stops the container (default)
+      # warn    -> report problems, start anyway
+      # skip    -> do not check
+      AURA_PREFLIGHT: "${AURA_PREFLIGHT:-strict}"
+      AURA_SKIP_BRAIN: "${AURA_SKIP_BRAIN:-0}"
+      AURA_LOG_LEVEL: "${AURA_LOG_LEVEL:-info}"
+      # Deliberately NOT set to 1. The numpy fallback vision model exists for
+      # dev and tests; with it enabled a container whose DenseNet weights failed
+      # to load serves fabricated findings and still reports healthy.
+      AURA_ALLOW_FALLBACK_VISION: "0"
+      OMP_NUM_THREADS: "${AURA_THREADS:-4}"
+      # Redirect the SQLite case store onto the mounted volume below. The
+      # previous compose file set AURA_DATA_DIR, which nothing in the codebase
+      # reads, so the store stayed at aura/artifacts/aura.db inside the image
+      # layer and every restart silently discarded the worklist.
+      AURA_DB_PATH: "/var/lib/aura/aura.db"
+
+    # Deliberately NOT listed above: AURA_FUSION_BACKEND. common/config.py picks
+    # an env override on `is not None`, so a compose default of "" would be read
+    # as a real backend name and break fusion. Left unset, the container serves
+    # exactly what [tool.aura] in aura/pyproject.toml selects, same as a local
+    # run. To override, export it on the host and uncomment the pass-through:
+    #   - AURA_FUSION_BACKEND
+    # (pyproject currently says "quantum" while artifacts/registry.json marks
+    #  classical `role: served` and quantum `status: research`; that
+    #  disagreement predates this file and is not resolved here.)
+
+    volumes:
+      # Named volume, not a bind mount onto aura/artifacts: mounting over that
+      # directory would shadow the baked-in weights and calibration files.
+      - aura-state:/var/lib/aura
+
     restart: unless-stopped
+    stop_grace_period: 30s
+
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/v1/health', timeout=5).status==200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      # Cold start loads DenseNet-121 + the BraTS checkpoint through torch on CPU;
+      # 90s keeps a slow first boot from being restart-looped as "unhealthy".
+      start_period: 90s
+      retries: 3
+
+    deploy:
+      resources:
+        limits:
+          # torch on CPU with a 3D BraTS model is memory-hungry; below ~4 GB the
+          # first brain study OOM-kills the container mid-request.
+          memory: ${AURA_MEM_LIMIT:-6g}
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  aura-state:

@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 import pennylane as qml
 
-from common.config import ARTIFACTS
+from aura.common.config import ARTIFACTS
 
 
 class UnifiedFusionEngine:
@@ -74,7 +74,7 @@ class UnifiedFusionEngine:
             joint_logits[i] = res[i]
         joint_logits[8:] = 0.1 * np.array(res[:4])
 
-        from common.mathx import softmax
+        from aura.common.mathx import softmax
         return softmax(joint_logits)
 
     def save(self, path: Path | None = None) -> None:

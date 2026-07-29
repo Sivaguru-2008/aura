@@ -24,14 +24,14 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any, Sequence
 
-from backend.core.shared.logging import get_logger
-from backend.vision.brain.config import (
+from aura.backend.core.shared.logging import get_logger
+from .config import (
     BrainVisionConfig,
     IngestConfig,
     PathsConfig,
     smoke_config,
 )
-from backend.vision.brain.types import SplitName
+from .types import SplitName
 
 log = get_logger("vision.brain.cli")
 
@@ -142,7 +142,7 @@ def config_from_args(args: argparse.Namespace) -> BrainVisionConfig:
 
 # --------------------------------------------------------------------------- #
 def command_ingest(config: BrainVisionConfig) -> dict[str, Any]:
-    from backend.vision.brain.ingest import BrainCorpusIngestor
+    from .ingest import BrainCorpusIngestor
 
     manifest = BrainCorpusIngestor(config).run()
     return {
@@ -155,7 +155,7 @@ def command_ingest(config: BrainVisionConfig) -> dict[str, Any]:
 
 
 def command_train(config: BrainVisionConfig) -> dict[str, Any]:
-    from backend.vision.brain.train import BrainVisionTrainer
+    from .train import BrainVisionTrainer
 
     trainer = BrainVisionTrainer(config)
     history = trainer.fit()
@@ -186,11 +186,11 @@ def command_evaluate(config: BrainVisionConfig, split: str,
                      full: bool = False) -> dict[str, Any]:
     import torch
 
-    from backend.vision.brain.checkpoint import load_network_checkpoint
-    from backend.vision.brain.dataset import build_datasets
-    from backend.vision.brain.losses import MultiTaskLoss
-    from backend.vision.brain.model.network import build_network
-    from backend.vision.brain.validate import BrainValidator
+    from .checkpoint import load_network_checkpoint
+    from .dataset import build_datasets
+    from .losses import MultiTaskLoss
+    from .model.network import build_network
+    from .validate import BrainValidator
     from torch.utils.data import DataLoader
 
     if full:
@@ -214,8 +214,8 @@ def command_evaluate(config: BrainVisionConfig, split: str,
 
 
 def command_smoke(config: BrainVisionConfig) -> dict[str, Any]:
-    from backend.vision.brain.ingest import BrainCorpusIngestor
-    from backend.vision.brain.train import BrainVisionTrainer
+    from .ingest import BrainCorpusIngestor
+    from .train import BrainVisionTrainer
 
     manifest = BrainCorpusIngestor(config).run()
     trainer = BrainVisionTrainer(config)
@@ -231,12 +231,11 @@ def command_smoke(config: BrainVisionConfig) -> dict[str, Any]:
 
 
 def command_info(config: BrainVisionConfig) -> dict[str, Any]:
-    from backend.vision.brain.model import available_encoders, declared_architectures
+    from .model import available_encoders, declared_architectures
+    from .types import BRAIN_VISION_VERSION
 
     info: dict[str, Any] = {
-        "brain_vision_version": __import__(
-            "backend.vision.brain.types", fromlist=["BRAIN_VISION_VERSION"]
-        ).BRAIN_VISION_VERSION,
+        "brain_vision_version": BRAIN_VISION_VERSION,
         "artifacts_root": str(config.paths.artifacts_root),
         "corpus_root": str(config.paths.corpus_root) if config.paths.corpus_root
                        else None,
@@ -253,7 +252,7 @@ def command_info(config: BrainVisionConfig) -> dict[str, Any]:
                 ("training_state", config.paths.training_state_path))},
     }
     if config.paths.manifest_path.exists():
-        from backend.vision.brain.ingest import load_manifest
+        from .ingest import load_manifest
 
         manifest = load_manifest(config)
         info["cache"] = {

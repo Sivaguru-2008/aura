@@ -19,11 +19,11 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from common.config import ARTIFACTS
-from mimic.config import get_mimic_paths
-from ml.vision_cxr.dataset import load_mimic_samples
-from ml.vision_cxr.inference import VisionModel
-from schemas.clinical import FINDINGS
+from aura.common.config import ARTIFACTS
+from aura.mimic.config import get_mimic_paths
+from ..vision_cxr.dataset import load_mimic_samples
+from ..vision_cxr.inference import VisionModel
+from aura.schemas.clinical import FINDINGS
 import cv2
 
 OUT = ARTIFACTS / "explain_demo"

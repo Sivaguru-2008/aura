@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import pytest
 
-from mimic.cleaning import CleanedPatient, _clean_text, _dedup, clean_record
-from mimic.labeling import label_report, label_patient_reports
-from mimic.loaders import PatientRecord
-from schemas.clinical import Diagnosis, Finding
+from aura.mimic.cleaning import CleanedPatient, _clean_text, _dedup, clean_record
+from aura.mimic.labeling import label_report, label_patient_reports
+from aura.mimic.loaders import PatientRecord
+from aura.schemas.clinical import Diagnosis, Finding
 
 
 # --------------------------------------------------------------------------- #

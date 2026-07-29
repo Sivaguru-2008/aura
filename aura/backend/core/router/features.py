@@ -39,7 +39,7 @@ from typing import Any
 
 import numpy as np
 
-from backend.core.shared.logging import get_logger
+from ..shared.logging import get_logger
 
 log = get_logger("router.features")
 

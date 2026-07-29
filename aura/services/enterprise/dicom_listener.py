@@ -74,7 +74,7 @@ class DicomListener:
 
     def _process_dicom(self, path: Path, patient_id: str) -> None:
         try:
-            from backend.core.upload.intake import stage_bytes
+            from aura.backend.core.upload.intake import stage_bytes
             payload = path.read_bytes()
             filename = f"dicom_upload_{patient_id}.dcm"
             

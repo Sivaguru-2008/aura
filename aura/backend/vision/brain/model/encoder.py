@@ -28,9 +28,9 @@ from typing import Sequence
 import torch
 from torch import nn
 
-from backend.vision.brain.model.blocks import ConvNormAct, ResidualStage
-from backend.vision.brain.model.registry import register_encoder
-from backend.vision.brain.types import DEFAULT_MODALITIES, ModalitySpec
+from .blocks import ConvNormAct, ResidualStage
+from .registry import register_encoder
+from ..types import DEFAULT_MODALITIES, ModalitySpec
 
 
 class ModalityStem(nn.Module):
@@ -67,7 +67,7 @@ class ModalityStem(nn.Module):
 
 class ResidualUNetEncoder2D(nn.Module):
     """Five-stage residual encoder. Satisfies
-    :class:`~backend.vision.brain.model.registry.EncoderBackbone`."""
+    :class:`~aura.backend.vision.brain.model.registry.EncoderBackbone`."""
 
     def __init__(self, *, modalities: Sequence[ModalitySpec] = DEFAULT_MODALITIES,
                  stage_channels: Sequence[int] = (32, 64, 128, 256, 320),

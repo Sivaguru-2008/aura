@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import pytest
 
-from mimic.config import get_mimic_paths
-from mimic.splits import (
+from aura.mimic.config import get_mimic_paths
+from aura.mimic.splits import (
     DEFAULT_TEST_FRAC,
     DatasetBuilder,
     _hash_frac,

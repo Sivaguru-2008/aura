@@ -52,13 +52,13 @@ from typing import Any, Sequence
 
 import numpy as np
 
-from backend.core.shared.logging import get_logger
-from backend.foundation.mri.config import LoaderConfig
-from backend.foundation.mri.errors import CorruptStudy, StudyValidationError
-from backend.foundation.mri.geometry import VoxelGeometry, affine_from_dicom
-from backend.foundation.mri.io.base import RawSeries, SeriesIntegrity, SliceIssue
-from backend.foundation.mri.metadata import dicom_header_subset
-from backend.foundation.mri.types import FileFormat
+from aura.backend.core.shared.logging import get_logger
+from ..config import LoaderConfig
+from ..errors import CorruptStudy, StudyValidationError
+from ..geometry import VoxelGeometry, affine_from_dicom
+from .base import RawSeries, SeriesIntegrity, SliceIssue
+from ..metadata import dicom_header_subset
+from ..types import FileFormat
 
 log = get_logger("foundation.mri.io.dicom")
 
@@ -173,7 +173,7 @@ class DicomSeriesReader:
     def _group(self, paths: Sequence[Path]
                ) -> tuple[dict[str, list[_SliceRef]], list[SliceIssue]]:
         import pydicom
-        from backend.foundation.mri.errors import StudyValidationError
+        from ..errors import StudyValidationError
 
         groups: dict[str, list[_SliceRef]] = defaultdict(list)
         unreadable: list[SliceIssue] = []

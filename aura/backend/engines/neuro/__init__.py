@@ -5,6 +5,6 @@ in routing, but ``analyze`` deliberately refuses rather than returning a fabrica
 result. See ``engine.py`` for what is real today and what must be built.
 """
 
-from backend.engines.neuro.engine import NeuroMindEngine
+from .engine import NeuroMindEngine
 
 __all__ = ["NeuroMindEngine"]

@@ -15,7 +15,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 
-from schemas.clinical import FINDINGS, Finding
+from aura.schemas.clinical import FINDINGS, Finding
 
 IMG_SIZE = 224
 _MEAN, _STD = 0.5, 0.5
@@ -59,7 +59,7 @@ class CXRManifestDataset(Dataset):
             self._load = self._load_raw
 
     def _load_raw(self, path: str) -> np.ndarray:
-        from services.vision.io import load_cxr
+        from aura.services.vision.io import load_cxr
         return load_cxr(path)
 
     def __len__(self):
@@ -75,7 +75,7 @@ class SyntheticCXRDataset(Dataset):
     """Synthetic world as a multi-label finding dataset (harness smoke test)."""
 
     def __init__(self, n: int, seed: int = 7, train: bool = True):
-        from ml.data import make_dataset
+        from ..data import make_dataset
         self.samples = make_dataset(n, seed=seed)
         self.tf = build_transforms(train)
         self.labels = np.array(

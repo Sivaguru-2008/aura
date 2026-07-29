@@ -11,10 +11,11 @@ import asyncio
 import numpy as np
 import pytest
 
-from schemas.clinical import DIAGNOSES, Diagnosis, Finding
-from schemas.contracts import (
+from aura.schemas.clinical import DIAGNOSES, Diagnosis, Finding
+from aura.schemas.contracts import (
     AbstentionReason,
     DifferentialItem,
+    ReasoningStep,
     ReasoningTrace,
     Recommendation,
     SafetyAssessment,
@@ -30,8 +31,8 @@ from schemas.contracts import (
 def test_f2_resolved_logits_drive_safety_top():
     """safety.top must reflect the logits actually passed in (the resolved backend),
     not a recomputation from the default model."""
-    from services.safety import SafetyEngine
-    from services.fusion import FusionEngine
+    from aura.services.safety import SafetyEngine
+    from aura.services.fusion import FusionEngine
 
     fe = FusionEngine()
     se = SafetyEngine()
@@ -51,8 +52,8 @@ def test_f2_resolved_logits_drive_safety_top():
 def test_f2_guard_fallback_removes_contradiction():
     """When the Wasserstein guard fires, the pipeline feeds the classical logits to
     safety, so safety.top equals the guard-resolved top (no contradiction)."""
-    from services.safety import SafetyEngine
-    from services.fusion import FusionEngine
+    from aura.services.safety import SafetyEngine
+    from aura.services.fusion import FusionEngine
 
     fe = FusionEngine()
     if not fe._guard_enabled:
@@ -76,7 +77,7 @@ def test_f2_guard_fallback_removes_contradiction():
 # F7 — Mondrian conformal thresholds are no longer degenerate.
 # --------------------------------------------------------------------------- #
 def test_f7_min_calibration_count():
-    from services.safety.uncertainty import min_calibration_count
+    from aura.services.safety.uncertainty import min_calibration_count
 
     assert min_calibration_count(0.90) == 19     # need n>=19 for a non-max quantile
     assert min_calibration_count(0.95) == 39
@@ -85,7 +86,7 @@ def test_f7_min_calibration_count():
 def test_f7_mondrian_no_saturation():
     """Small per-class calibration sets fall back to the pooled marginal instead of
     saturating to the class maximum (which put malignancy in ~78% of sets)."""
-    from services.safety.uncertainty import mondrian_qhats
+    from aura.services.safety.uncertainty import mondrian_qhats
 
     rng = np.random.default_rng(0)
     C = len(DIAGNOSES)
@@ -100,7 +101,7 @@ def test_f7_mondrian_no_saturation():
 
 
 def test_f7_quantile_hi_returns_none_when_degenerate():
-    from services.safety.uncertainty import _quantile_hi
+    from aura.services.safety.uncertainty import _quantile_hi
 
     assert _quantile_hi(np.array([0.3] * 5), 0.90) is None       # too few points
     assert _quantile_hi(np.array([]), 0.90) is None
@@ -111,8 +112,8 @@ def test_f7_quantile_hi_returns_none_when_degenerate():
 # F9 — the online ACI threshold reaches the conformal set.
 # --------------------------------------------------------------------------- #
 def test_f9_aci_qhat_tags_and_widens_conformal():
-    from services.safety import SafetyEngine
-    from services.fusion import FusionEngine
+    from aura.services.safety import SafetyEngine
+    from aura.services.fusion import FusionEngine
 
     fe = FusionEngine()
     se = SafetyEngine()
@@ -127,8 +128,8 @@ def test_f9_aci_qhat_tags_and_widens_conformal():
 
 def test_f9_pipeline_reads_persisted_aci(tmp_path):
     """Pipeline with a store loads the persisted ACI q̂ and applies it."""
-    from gateway.pipeline import Pipeline
-    from gateway.storage import Store
+    from aura.gateway.pipeline import Pipeline
+    from aura.gateway.storage import Store
 
     store = Store(tmp_path / "aci.db")
     probs = [0.55, 0.15, 0.12, 0.08, 0.06, 0.04]
@@ -152,7 +153,7 @@ def _mk_safety(top: Diagnosis, prob: float) -> SafetyAssessment:
 
 
 def test_f10_reasoning_adjusted_posterior_sets_impression():
-    from services.report import ReportEngine
+    from aura.services.report import ReportEngine
 
     # Imaging says HEART_FAILURE, reasoning revises to PNEUMONIA.
     safety = _mk_safety(Diagnosis.HEART_FAILURE, 0.6)
@@ -160,7 +161,7 @@ def test_f10_reasoning_adjusted_posterior_sets_impression():
     adj[Diagnosis.PNEUMONIA] = 0.75
     reasoning = ReasoningTrace(
         study_id="s", adjusted_posterior=adj,
-        steps=[__import__("schemas.contracts", fromlist=["ReasoningStep"]).ReasoningStep(
+        steps=[ReasoningStep(
             statement="labs", evidence=["labs.wbc"], effect={Diagnosis.PNEUMONIA: 1.0})],
         differential=[DifferentialItem(diagnosis=Diagnosis.PNEUMONIA, probability=0.75)],
     )
@@ -174,7 +175,7 @@ def test_f10_reasoning_adjusted_posterior_sets_impression():
 
 
 def test_f10_no_multimodal_leaves_impression_from_imaging():
-    from services.report import ReportEngine
+    from aura.services.report import ReportEngine
 
     safety = _mk_safety(Diagnosis.COPD, 0.7)
     reasoning = ReasoningTrace(study_id="s", adjusted_posterior={}, steps=[])  # inert
@@ -190,8 +191,8 @@ def test_f10_no_multimodal_leaves_impression_from_imaging():
 # Thread safety — RecommendEngine keeps no per-request state on self.
 # --------------------------------------------------------------------------- #
 def test_recommend_is_reentrant_no_instance_state():
-    from services.recommend import RecommendEngine
-    from services.fusion import FusionEngine
+    from aura.services.recommend import RecommendEngine
+    from aura.services.fusion import FusionEngine
 
     fe = FusionEngine()
     eng = RecommendEngine()
@@ -206,7 +207,7 @@ def test_recommend_is_reentrant_no_instance_state():
 # Security hardening.
 # --------------------------------------------------------------------------- #
 def test_upload_size_cap_rejects_oversized():
-    from gateway.security import read_capped
+    from aura.gateway.security import read_capped
     from fastapi import HTTPException
 
     class _FakeUpload:
@@ -224,7 +225,7 @@ def test_upload_size_cap_rejects_oversized():
 
 
 def test_upload_type_allowlist():
-    from gateway.security import validate_upload_name
+    from aura.gateway.security import validate_upload_name
     from fastapi import HTTPException
 
     validate_upload_name("chest.png", "image/png")     # ok
@@ -238,7 +239,7 @@ def test_upload_type_allowlist():
 
 
 def test_rate_limiter_blocks_over_budget():
-    from gateway.security import RateLimiter
+    from aura.gateway.security import RateLimiter
 
     rl = RateLimiter(rpm=3)
     assert all(rl.allow("user") for _ in range(3))
@@ -251,7 +252,7 @@ def test_rate_limiter_blocks_over_budget():
 # F5 — full-fidelity intake grid.
 # --------------------------------------------------------------------------- #
 def test_f5_default_grid_is_full_fidelity():
-    from services.vision.io import DEFAULT_GRID, _resize_grid
+    from aura.services.vision.io import DEFAULT_GRID, _resize_grid
 
     assert DEFAULT_GRID == 224
     big = np.random.default_rng(0).random((1000, 1200)).astype(np.float32)

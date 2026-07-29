@@ -12,7 +12,7 @@ Guarantees, by construction:
 Labels are extracted from reports (text only — no image decode), so building the
 manifest over all 64k train patients is fast. Manifests are lightweight
 (one row per patient); engineered image features are materialized per split
-on demand via :class:`mimic.features.FeatureEngineer`.
+on demand via :class:`aura.mimic.features.FeatureEngineer`.
 """
 from __future__ import annotations
 
@@ -25,10 +25,10 @@ from typing import Optional
 
 import pandas as pd
 
-from mimic.cleaning import DataCleaner
-from mimic.config import MimicPaths, get_mimic_paths
-from mimic.loaders import MimicCxrLoader
-from schemas.clinical import FINDINGS
+from .cleaning import DataCleaner
+from .config import MimicPaths, get_mimic_paths
+from .loaders import MimicCxrLoader
+from aura.schemas.clinical import FINDINGS
 
 log = logging.getLogger("mimic.splits")
 

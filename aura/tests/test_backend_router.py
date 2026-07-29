@@ -22,11 +22,11 @@ from pathlib import Path
 
 import pytest
 
-from backend.core.router.detector import SignatureModalityDetector
-from backend.core.router.router import ModalityRouter
-from backend.core.shared.types import EngineStatus, ImagingModality
-from backend.core.upload.intake import stage_bytes
-from backend.engines.base.contract import (
+from aura.backend.core.router.detector import SignatureModalityDetector
+from aura.backend.core.router.router import ModalityRouter
+from aura.backend.core.shared.types import EngineStatus, ImagingModality
+from aura.backend.core.upload.intake import stage_bytes
+from aura.backend.engines.base.contract import (
     AnalysisEngine,
     AnalysisResult,
     EngineDescriptor,
@@ -34,11 +34,11 @@ from backend.engines.base.contract import (
     PreparedStudy,
     ValidationOutcome,
 )
-from backend.engines.base.registry import EngineRegistry
-from backend.models.routing import ResultStatus
-from backend.services.dispatch import DispatchService
-from schemas.clinical import Diagnosis
-from services.vision.xray_gate import validate_cxr
+from aura.backend.engines.base.registry import EngineRegistry
+from aura.backend.models.routing import ResultStatus
+from aura.backend.services.dispatch import DispatchService
+from aura.schemas.clinical import Diagnosis
+from aura.services.vision.xray_gate import validate_cxr
 
 MIMIC_ROOT = Path(
     r"E:\AURA\datasets\simhadrisadaram\mimic-cxr-dataset\versions\2"
@@ -116,7 +116,7 @@ def registry() -> EngineRegistry:
         def generate_report(self, result):
             return EngineReport(summary="stub report")
 
-    from backend.engines.neuro.engine import NeuroMindEngine
+    from aura.backend.engines.neuro.engine import NeuroMindEngine
 
     reg.register(_StubThorax.descriptor, _StubThorax)
     reg.register(NeuroMindEngine.descriptor, NeuroMindEngine)
@@ -178,7 +178,7 @@ def test_registry_resolves_lazily_and_caches(registry: EngineRegistry):
 
 def test_registry_contains_a_failing_engine():
     """A broken engine is marked unavailable; other routes keep working."""
-    from backend.core.shared.errors import EngineNotAvailable
+    from aura.backend.core.shared.errors import EngineNotAvailable
 
     def _explode():
         raise RuntimeError("missing model weights")
@@ -331,7 +331,7 @@ def _client(registry: EngineRegistry):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    from backend.api.routes import build_router
+    from aura.backend.api.routes import build_router
 
     app = FastAPI()
     app.include_router(

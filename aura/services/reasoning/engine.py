@@ -24,9 +24,9 @@ from typing import Callable, Optional
 
 import numpy as np
 
-from common.mathx import softmax
-from schemas.clinical import DIAGNOSES, Diagnosis, Finding
-from schemas.contracts import (
+from aura.common.mathx import softmax
+from aura.schemas.clinical import DIAGNOSES, Diagnosis, Finding
+from aura.schemas.contracts import (
     DifferentialItem,
     MultimodalContext,
     ReasoningStep,
@@ -179,7 +179,7 @@ RULES: list[Rule] = [
     Rule("hypoxia", "labs", "Oxygenation", _r_hypoxia),
 ]
 
-from knowledge.guidelines.templates import GUIDELINE_TEMPLATES
+from aura.knowledge.guidelines.templates import GUIDELINE_TEMPLATES
 
 # Imaging findings that intrinsically support each diagnosis (for the differential).
 _FINDING_SUPPORT = {d: t.imaging for d, t in GUIDELINE_TEMPLATES.items()}
@@ -198,14 +198,14 @@ class ClinicalReasoner:
         p0 = np.array([max(1e-9, posterior.get(d, 0.0)) for d in DIAGNOSES])
         p0 = p0 / p0.sum()
 
-        from common.config import get_settings
+        from aura.common.config import get_settings
         settings = get_settings()
 
         steps: list[ReasoningStep] = []
         citations: list[str] = []
 
         if getattr(settings, "reasoner_backend", "classical") == "quantum":
-            from services.reasoning.qbn import QuantumBayesianNetwork
+            from .qbn import QuantumBayesianNetwork
             
             # Map labs and symptoms to binary indicators
             bnp_high = mm.labs.bnp is not None and mm.labs.bnp >= 400

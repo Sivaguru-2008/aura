@@ -4,11 +4,11 @@ import numpy as np
 import pytest
 from unittest.mock import MagicMock
 
-from schemas.clinical import Diagnosis, Finding
-from schemas.contracts import CaseBundle, CaseState
-from services.safety.controller import ClinicalSafetyController, ClinicalSafetyException
-from services.safety.readiness import ClinicalDecisionReadinessEngine
-from gateway.storage import compute_provenance_hash
+from aura.schemas.clinical import Diagnosis, Finding
+from aura.schemas.contracts import CaseBundle, CaseState
+from aura.services.safety.controller import ClinicalSafetyController, ClinicalSafetyException
+from aura.services.safety.readiness import ClinicalDecisionReadinessEngine
+from aura.gateway.storage import compute_provenance_hash
 
 def test_safety_controller_data_integrity():
     controller = ClinicalSafetyController()

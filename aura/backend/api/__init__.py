@@ -5,6 +5,6 @@ inherits the gateway's audit middleware, security enforcement, and CORS posture
 without duplicating any of it.
 """
 
-from backend.api.routes import build_router
+from .routes import build_router
 
 __all__ = ["build_router"]

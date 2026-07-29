@@ -4,6 +4,10 @@ __pycache__/
 *.egg-info/
 .venv/
 venv/
+.pytest_cache/
+# pytest scratch dir: it is currently unreadable (WinError 5) and, if committed,
+# breaks test collection with a PermissionError before a single test runs.
+aura/pytest-tmp/
 
 # runtime state (regenerated on first run) — keep trained .npz models so
 # judges can serve without training
@@ -39,6 +43,11 @@ aura/artifacts/brain/embeddings/epoch_*.npz
 
 # IBM Quantum token — never commit (holds a real secret once filled)
 ibm_quantum.env
+
+# Local deployment overrides. .env.example is the committed template.
+.env
+.env.local
+.env.*.local
 
 # Datasets and large local data — never push (kept local, see E:\AURA root)
 datasets/

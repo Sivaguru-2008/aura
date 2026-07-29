@@ -24,7 +24,7 @@ from typing import Any, Sequence
 
 import numpy as np
 
-from backend.vision.brain.types import (
+from .types import (
     BRAIN_VISION_VERSION,
     COMPOSITE_MEMBERS,
     CompositeRegion,
@@ -237,7 +237,7 @@ class BrainVisionOutput:
     def study_embedding(self) -> np.ndarray | None:
         """One L2-normalised vector for the whole study — the mean over slices.
 
-        Crude on purpose, and labelled as such in :mod:`backend.vision.brain.embeddings`:
+        Crude on purpose, and labelled as such in :mod:`aura.backend.vision.brain.embeddings`:
         a mean over slices weights an empty slice like the one through the tumour
         centre. It is a reasonable retrieval key and not a prognostic feature.
         """

@@ -43,9 +43,9 @@ from typing import Any, Iterable, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from backend.core.shared.logging import get_logger
-from backend.foundation.mri.metadata import MRIMetadata, sequence_evidence_text
-from backend.foundation.mri.types import SEQUENCE_LABELS, SequenceType
+from aura.backend.core.shared.logging import get_logger
+from .metadata import MRIMetadata, sequence_evidence_text
+from .types import SEQUENCE_LABELS, SequenceType
 
 log = get_logger("foundation.mri.sequence")
 
@@ -92,7 +92,7 @@ class SequenceAssignment(BaseModel):
     """The detector's verdict for one series.
 
     Deliberately the same shape as the modality router's
-    :class:`~backend.models.routing.RoutingMetadata`: a winner, a confidence, a
+    :class:`~aura.backend.models.routing.RoutingMetadata`: a winner, a confidence, a
     calibration flag, a reason, and every loser with its evidence. A reviewer who can
     read one can read the other, and both refuse rather than guess.
     """

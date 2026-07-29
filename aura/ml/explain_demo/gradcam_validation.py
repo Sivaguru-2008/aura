@@ -35,14 +35,14 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from common.config import ARTIFACTS
-from mimic.config import get_mimic_paths
-from ml.vision_cxr.dataset import load_mimic_samples
-from ml.vision_cxr.inference import VisionModel
-from schemas.clinical import Finding, FINDINGS
-from services.explain import methods as M
-from services.explain import overlays as OV
-from services.vision.engine import _FINDING_REGION
+from aura.common.config import ARTIFACTS
+from aura.mimic.config import get_mimic_paths
+from ..vision_cxr.dataset import load_mimic_samples
+from ..vision_cxr.inference import VisionModel
+from aura.schemas.clinical import Finding, FINDINGS
+from aura.services.explain import methods as M
+from aura.services.explain import overlays as OV
+from aura.services.vision.engine import _FINDING_REGION
 
 OUT = ARTIFACTS / "explain_demo"
 TARGETS = [Finding.EFFUSION, Finding.CARDIOMEGALY, Finding.PNEUMOTHORAX]

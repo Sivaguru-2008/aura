@@ -4,8 +4,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from mimic.config import get_mimic_paths
-from mimic.tasks import (
+from aura.mimic.config import get_mimic_paths
+from aura.mimic.tasks import (
     TASK_REGISTRY,
     TaskDatasetBuilder,
     available_tasks,

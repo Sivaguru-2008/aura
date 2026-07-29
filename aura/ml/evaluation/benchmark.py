@@ -10,18 +10,18 @@ import json
 
 import numpy as np
 
-from common.config import ARTIFACTS, get_settings
-from common.mathx import softmax
-from schemas.clinical import DIAGNOSES
-from services.fusion.classical import ClassicalFusion
-from services.fusion.quantum import QuantumFusion
-from services.safety.calibration import (
+from aura.common.config import ARTIFACTS, get_settings
+from aura.common.mathx import softmax
+from aura.schemas.clinical import DIAGNOSES
+from aura.services.fusion.classical import ClassicalFusion
+from aura.services.fusion.quantum import QuantumFusion
+from aura.services.safety.calibration import (
     Calibration,
     expected_calibration_error,
     fit_conformal,
     fit_temperature,
 )
-from ml.training.dataset import build_evidence_dataset, make_splits
+from ..training.dataset import build_evidence_dataset, make_splits
 
 
 def _brier(P, y):
@@ -72,7 +72,7 @@ def run(n_samples: int = 500) -> dict:
     eval_source = "synthetic"
     real = None
     if s.fusion_train_source == "mimic":
-        from ml.training.dataset import real_evidence_splits
+        from ..training.dataset import real_evidence_splits
         real = real_evidence_splits(n=min(600, s.fusion_train_n), split="validate",
                                     seed=s.seed + 101)
     if real is not None:
@@ -100,7 +100,7 @@ def run(n_samples: int = 500) -> dict:
     }
 
     # Full clinical evaluation suite (AUROC/AUPRC/sens/spec/PPV/NPV/F1/calibration).
-    from ml.evaluation.metrics import evaluate, print_report
+    from .metrics import evaluate, print_report
 
     Pq = np.array([softmax(r / T_q) for r in q_logits])
     Pc = np.array([softmax(r / T_c) for r in c_logits])
@@ -108,8 +108,8 @@ def run(n_samples: int = 500) -> dict:
 
     # Include the extra backends when they are trained — each with its own
     # temperature fit on the calibration split (fair comparison, audit F6).
-    from services.fusion.ensemble import DeepEnsemble
-    from services.fusion.learnable import LearnableFusion
+    from aura.services.fusion.ensemble import DeepEnsemble
+    from aura.services.fusion.learnable import LearnableFusion
     ens, lrn = DeepEnsemble.load(), LearnableFusion.load()
     if ens is not None:
         T_e = fit_temperature(np.array([ens.logits(x) for x in Xcal]), ycal)

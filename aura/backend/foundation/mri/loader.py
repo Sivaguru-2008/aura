@@ -28,20 +28,20 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
 
-from backend.core.shared.logging import get_logger
-from backend.foundation.mri.config import LoaderConfig
-from backend.foundation.mri.errors import (
+from aura.backend.core.shared.logging import get_logger
+from .config import LoaderConfig
+from .errors import (
     CorruptStudy,
     StudyNotFound,
     StudyValidationError,
     UnsupportedStudyFormat,
 )
-from backend.foundation.mri.io.base import RawSeries, StudyReader
-from backend.foundation.mri.io.dicom_reader import DicomSeriesReader
-from backend.foundation.mri.io.discovery import Discovery, discover
-from backend.foundation.mri.io.nifti_reader import NiftiReader
-from backend.foundation.mri.io.nrrd_reader import NrrdReader
-from backend.foundation.mri.types import FileFormat
+from .io.base import RawSeries, StudyReader
+from .io.dicom_reader import DicomSeriesReader
+from .io.discovery import Discovery, discover
+from .io.nifti_reader import NiftiReader
+from .io.nrrd_reader import NrrdReader
+from .types import FileFormat
 
 log = get_logger("foundation.mri.loader")
 

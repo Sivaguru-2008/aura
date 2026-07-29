@@ -5,12 +5,12 @@ import pytest
 
 pytest.importorskip("torch")
 
-from backend.engines.neuro.neuroinsight import (
+from aura.backend.engines.neuro.neuroinsight import (
     compute_neuroinsight,
     get_anatomical_localization,
     get_study_affine,
 )
-from backend.vision.brain.output import (
+from aura.backend.vision.brain.output import (
     BrainVisionOutput,
     FeatureMaps,
     ProcessingMetadata,

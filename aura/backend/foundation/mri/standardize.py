@@ -25,7 +25,7 @@ genuinely different. N4 is an iterative B-spline fit that belongs to ITK, and ev
 credible skull stripper is either a learned model or an external toolkit — both
 explicitly out of scope. Rather than a stub that pretends, each ships a real interface
 plus a concrete adapter that raises
-:class:`~backend.foundation.mri.errors.StageUnavailable` with a specific reason. The
+:class:`~aura.backend.foundation.mri.errors.StageUnavailable` with a specific reason. The
 pipeline records ``status=unavailable`` in the processing history, so a downstream
 consumer can see that the volume is *not* bias-corrected instead of assuming it is.
 Installing SimpleITK turns :class:`SimpleITKBiasFieldCorrector` on with no other
@@ -41,14 +41,14 @@ from typing import Any, Protocol, runtime_checkable
 
 import numpy as np
 
-from backend.core.shared.logging import get_logger
-from backend.foundation.mri.config import StandardizationConfig
-from backend.foundation.mri.errors import StageFailed, StageUnavailable
-from backend.foundation.mri.geometry import to_canonical
-from backend.foundation.mri.masking import BrainMaskSlot, estimate_foreground_mask
-from backend.foundation.mri.metadata import MRIMetadata
-from backend.foundation.mri.types import MaskProvenance, NormalizationMethod
-from backend.foundation.mri.volume import MRIVolume
+from aura.backend.core.shared.logging import get_logger
+from .config import StandardizationConfig
+from .errors import StageFailed, StageUnavailable
+from .geometry import to_canonical
+from .masking import BrainMaskSlot, estimate_foreground_mask
+from .metadata import MRIMetadata
+from .types import MaskProvenance, NormalizationMethod
+from .volume import MRIVolume
 
 log = get_logger("foundation.mri.standardize")
 
@@ -92,9 +92,9 @@ class VolumeTransform(Protocol):
               context: StandardizationContext) -> TransformResult:
         """Transform ``volume``.
 
-        Raise :class:`~backend.foundation.mri.errors.StageUnavailable` when the stage
+        Raise :class:`~aura.backend.foundation.mri.errors.StageUnavailable` when the stage
         has no backend in this deployment, and
-        :class:`~backend.foundation.mri.errors.StageFailed` when an available stage
+        :class:`~aura.backend.foundation.mri.errors.StageFailed` when an available stage
         breaks. Anything else is treated as an unexpected failure and is fatal for
         that series.
         """
@@ -408,7 +408,7 @@ class ForegroundMaskEstimator:
 
     Explicitly **not** a brain mask — it includes skull and scalp. Recorded with
     ``MaskProvenance.FOREGROUND_HEURISTIC`` so nothing downstream can mistake it for
-    one. See :mod:`backend.foundation.mri.masking`.
+    one. See :mod:`aura.backend.foundation.mri.masking`.
 
     Leaves the volume untouched; it produces a mask, not an image.
     """
@@ -458,7 +458,7 @@ class SimpleITKBiasFieldCorrector:
     is precisely the failure mode this layer exists to avoid.
 
     Without SimpleITK installed the constructor raises
-    :class:`~backend.foundation.mri.errors.StageUnavailable`; the pipeline records
+    :class:`~aura.backend.foundation.mri.errors.StageUnavailable`; the pipeline records
     ``unavailable`` and the study is marked *not* bias-corrected. Installing
     SimpleITK enables it with no other change.
     """
@@ -560,7 +560,7 @@ class SkullStripper(VolumeTransform, Protocol):
     """Interface for brain extraction.
 
     An implementation must fill ``context.mask`` with
-    :attr:`~backend.foundation.mri.types.MaskProvenance.SKULL_STRIPPED`, which is the
+    :attr:`~aura.backend.foundation.mri.types.MaskProvenance.SKULL_STRIPPED`, which is the
     only provenance that marks a mask as a genuine brain mask.
     """
 
@@ -585,8 +585,8 @@ class MorphologicalSkullStripper:
                 detail={"install": "pip install scipy"}
             ) from exc
 
-        from backend.foundation.mri.masking import otsu_threshold, BrainMaskSlot
-        from backend.foundation.mri.types import MaskProvenance
+        from .masking import otsu_threshold, BrainMaskSlot
+        from .types import MaskProvenance
 
         array = np.nan_to_num(volume.array, nan=0.0)
 

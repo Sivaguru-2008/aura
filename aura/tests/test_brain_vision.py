@@ -38,8 +38,8 @@ import pytest
 torch = pytest.importorskip("torch")
 h5py = pytest.importorskip("h5py")
 
-from backend.vision.brain.augment import SliceAugmenter, affine, flip, rot90  # noqa: E402
-from backend.vision.brain.config import (  # noqa: E402
+from aura.backend.vision.brain.augment import SliceAugmenter, affine, flip, rot90  # noqa: E402
+from aura.backend.vision.brain.config import (  # noqa: E402
     AugmentationConfig,
     BrainVisionConfig,
     CurriculumConfig,
@@ -53,61 +53,61 @@ from backend.vision.brain.config import (  # noqa: E402
     SplitConfig,
     ValidationConfig,
 )
-from backend.vision.brain.dataset import (  # noqa: E402
+from aura.backend.vision.brain.dataset import (  # noqa: E402
     MorphologyLabeller,
     build_datasets,
     fit_to_grid,
     normalize_slice,
 )
-from backend.vision.brain.degradations import DegradationSimulator  # noqa: E402
-from backend.vision.brain.embeddings import (  # noqa: E402
+from aura.backend.vision.brain.degradations import DegradationSimulator  # noqa: E402
+from aura.backend.vision.brain.embeddings import (  # noqa: E402
     EmbeddingBatch,
     EmbeddingStore,
     load_embeddings,
     nearest_neighbours,
 )
-from backend.vision.brain.errors import (  # noqa: E402
+from aura.backend.vision.brain.errors import (  # noqa: E402
     ArchitectureUnavailable,
     CheckpointError,
     ConfigurationError,
     CorpusIntegrityError,
 )
-from backend.vision.brain.ingest import (  # noqa: E402
+from aura.backend.vision.brain.ingest import (  # noqa: E402
     BrainCorpusIngestor,
     assign_splits,
     load_manifest,
     load_slice_index,
 )
-from backend.vision.brain.io.brats_h5 import (  # noqa: E402
+from aura.backend.vision.brain.io.brats_h5 import (  # noqa: E402
     BratsCorpusIndex,
     BratsH5Reader,
     brats_geometry,
 )
-from backend.vision.brain.losses import (  # noqa: E402
+from aura.backend.vision.brain.losses import (  # noqa: E402
     MultiTaskLoss,
     per_sample_foreground_dice,
     soft_dice,
     supervised_contrastive,
     variance_covariance,
 )
-from backend.vision.brain.metrics import (  # noqa: E402
+from aura.backend.vision.brain.metrics import (  # noqa: E402
     ClassificationMeter,
     EmbeddingMeter,
     RegressionMeter,
     SegmentationMeter,
 )
-from backend.vision.brain.model import (  # noqa: E402
+from aura.backend.vision.brain.model import (  # noqa: E402
     build_encoder,
     build_network,
     declared_architectures,
 )
-from backend.vision.brain.output import BrainVisionOutput, build_regions  # noqa: E402
-from backend.vision.brain.sampling import (  # noqa: E402
+from aura.backend.vision.brain.output import BrainVisionOutput, build_regions  # noqa: E402
+from aura.backend.vision.brain.sampling import (  # noqa: E402
     AdaptiveSliceSampler,
     DifficultyTracker,
     SliceTable,
 )
-from backend.vision.brain.types import (  # noqa: E402
+from aura.backend.vision.brain.types import (  # noqa: E402
     BRATS_LABEL_REMAP,
     COMPOSITE_MEMBERS,
     CompositeRegion,
@@ -127,7 +127,7 @@ def _make_subject(root: Path, volume_id: int, *, rng: np.random.Generator,
                   swap_channels: bool = False, overlap: bool = False) -> None:
     """Write one subject's slice files with the physics the channel check relies on.
 
-    Constructed so the derivation in :mod:`backend.vision.brain.io.brats_h5` holds:
+    Constructed so the derivation in :mod:`aura.backend.vision.brain.io.brats_h5` holds:
     channel 2 (T1ce) is the only one that is bright in the enhancing region relative to
     the necrotic core. The stored values are per-slice z-scores over the whole frame,
     exactly as the real corpus stores them, so the reader's background restoration is
@@ -859,7 +859,7 @@ def test_embedding_can_be_computed_without_running_the_decoder():
 
 
 def test_a_missing_modality_is_dropped_rather_than_read_as_dark_tissue():
-    from backend.vision.brain.types import DEFAULT_MODALITIES
+    from aura.backend.vision.brain.types import DEFAULT_MODALITIES
 
     encoder = build_encoder("residual_unet2d", modalities=DEFAULT_MODALITIES,
                             stage_channels=(8, 16), blocks_per_stage=(1, 1))
@@ -885,10 +885,10 @@ def test_declared_architecture_raises_rather_than_substituting():
 # 9. Output object
 # --------------------------------------------------------------------------- #
 def _output(shape=(3, 8, 8)) -> BrainVisionOutput:
-    from backend.vision.brain.output import (
+    from aura.backend.vision.brain.output import (
         FeatureMaps, ProcessingMetadata, QualityMetadata,
     )
-    from backend.vision.brain.types import EmbeddingSpec
+    from aura.backend.vision.brain.types import EmbeddingSpec
 
     segmentation = np.zeros(shape, dtype=np.uint8)
     segmentation[0, 2:5, 2:5] = 2
@@ -938,7 +938,7 @@ def test_output_reports_volume_only_when_spacing_is_known():
     oedema = result.region("edema")
     assert oedema.voxels == 9 and oedema.volume_mm3 == pytest.approx(9.0)
 
-    from backend.vision.brain.output import build_regions as build
+    from aura.backend.vision.brain.output import build_regions as build
 
     unknown = build(result.segmentation, result.confidence,
                     [0.9, 0.1, 0.85, 0.7], None, None)
@@ -952,9 +952,9 @@ def test_an_unvalidated_quality_head_is_marked_and_cannot_raise_alarms():
     ones. The flag is derived from the checkpoint's own recorded severity correlation,
     so a later checkpoint that earns trust gets it automatically.
     """
-    from backend.vision.brain.checkpoint import CheckpointMeta
-    from backend.vision.brain.inference import BrainVisionEngine
-    from backend.vision.brain.output import QUALITY_VALIDITY_THRESHOLD
+    from aura.backend.vision.brain.checkpoint import CheckpointMeta
+    from aura.backend.vision.brain.inference import BrainVisionEngine
+    from aura.backend.vision.brain.output import QUALITY_VALIDITY_THRESHOLD
 
     def notes_for(correlation):
         meta = CheckpointMeta(metrics={"quality": {"diagnostics": {
@@ -980,7 +980,7 @@ def test_an_unvalidated_quality_head_is_marked_and_cannot_raise_alarms():
 
 def test_a_head_that_did_not_run_reports_none_rather_than_zero():
     """A zero probability is a confident negative. An absent head made no claim at all."""
-    from backend.vision.brain.output import (
+    from aura.backend.vision.brain.output import (
         BrainVisionOutput, FeatureMaps, ProcessingMetadata, QualityMetadata,
     )
 
@@ -1027,7 +1027,7 @@ def test_study_embedding_is_normalised():
 # 10. Embedding store
 # --------------------------------------------------------------------------- #
 def test_embedding_store_round_trips_with_its_provenance(tmp_path):
-    from backend.vision.brain.types import EmbeddingSpec
+    from aura.backend.vision.brain.types import EmbeddingSpec
 
     store = EmbeddingStore(EmbeddingSpec(dimension=4), limit=10)
     store.add(EmbeddingBatch(
@@ -1046,7 +1046,7 @@ def test_embedding_store_round_trips_with_its_provenance(tmp_path):
 
 
 def test_embedding_store_respects_its_limit():
-    from backend.vision.brain.types import EmbeddingSpec
+    from aura.backend.vision.brain.types import EmbeddingSpec
 
     store = EmbeddingStore(EmbeddingSpec(dimension=2), limit=3)
     for _ in range(3):
@@ -1070,7 +1070,7 @@ def test_options_are_accepted_after_the_subcommand(tmp_path):
     *before* the subcommand or it is an "unrecognized arguments" error — which is how
     the first attempt at a real training run died.
     """
-    from backend.vision.brain.cli import build_parser, config_from_args
+    from aura.backend.vision.brain.cli import build_parser, config_from_args
 
     args = build_parser().parse_args(
         ["train", "--corpus", str(tmp_path), "--epochs", "3", "--batch-size", "8",
@@ -1084,7 +1084,7 @@ def test_options_are_accepted_after_the_subcommand(tmp_path):
 
 
 def test_info_reports_the_registry_and_the_missing_checkpoints(tmp_path):
-    from backend.vision.brain.cli import command_info
+    from aura.backend.vision.brain.cli import command_info
 
     config = BrainVisionConfig(paths=PathsConfig(artifacts_root=tmp_path))
     info = command_info(config)
@@ -1099,8 +1099,8 @@ def test_info_reports_the_registry_and_the_missing_checkpoints(tmp_path):
 # --------------------------------------------------------------------------- #
 @pytest.mark.slow
 def test_train_validate_checkpoint_and_infer(cached):
-    from backend.vision.brain.inference import BrainVisionEngine
-    from backend.vision.brain.train import BrainVisionTrainer
+    from aura.backend.vision.brain.inference import BrainVisionEngine
+    from aura.backend.vision.brain.train import BrainVisionTrainer
 
     trainer = BrainVisionTrainer(cached)
     history = trainer.fit()
@@ -1146,9 +1146,9 @@ def test_analyze_study_consumes_a_foundation_study_and_reports_missing_sequences
     missing rather than zero-filled, because a zero channel is not an absent channel to
     a convolution — it is uniformly dark tissue.
     """
-    from backend.vision.brain.inference import BrainVisionEngine
-    from backend.vision.brain.ingest import BrainCorpusIngestor
-    from backend.vision.brain.train import BrainVisionTrainer
+    from aura.backend.vision.brain.inference import BrainVisionEngine
+    from aura.backend.vision.brain.ingest import BrainCorpusIngestor
+    from aura.backend.vision.brain.train import BrainVisionTrainer
 
     if not cached.paths.best_model_path.exists():
         BrainVisionTrainer(cached).fit()
@@ -1186,7 +1186,7 @@ def test_resume_continues_rather_than_restarting(cached, tmp_path_factory):
     """Automatic resume must not silently retrain from epoch zero."""
     from dataclasses import replace
 
-    from backend.vision.brain.train import BrainVisionTrainer
+    from aura.backend.vision.brain.train import BrainVisionTrainer
 
     artifacts = tmp_path_factory.mktemp("resume")
     config = _small_config(cached.paths.corpus_root, artifacts)
@@ -1207,7 +1207,7 @@ def test_resume_continues_rather_than_restarting(cached, tmp_path_factory):
 
 
 def test_checkpoint_refuses_a_mismatched_architecture(cached, tmp_path):
-    from backend.vision.brain.checkpoint import (
+    from aura.backend.vision.brain.checkpoint import (
         CheckpointMeta, CheckpointWriter, load_encoder, load_network_checkpoint,
     )
 

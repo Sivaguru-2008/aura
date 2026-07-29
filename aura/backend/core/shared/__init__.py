@@ -1,6 +1,6 @@
 """Cross-cutting primitives: error taxonomy, structured logging, shared types."""
 
-from backend.core.shared.errors import (
+from .errors import (
     AuraBackendError,
     EngineExecutionError,
     EngineNotAvailable,
@@ -10,13 +10,13 @@ from backend.core.shared.errors import (
     UnsupportedModality,
     UploadRejected,
 )
-from backend.core.shared.logging import (
+from .logging import (
     correlation_id,
     get_logger,
     new_correlation_id,
     use_correlation_id,
 )
-from backend.core.shared.types import (
+from .types import (
     MODALITY_LABELS,
     EngineStatus,
     ImageAsset,

@@ -7,10 +7,10 @@ import numpy as np
 import pytest
 pytest.importorskip("torch")
 
-from ml.data import IMG, make_multimodal, make_sample
-from schemas.clinical import Diagnosis
-from schemas.contracts import StudyInput
-from services.report.clinical_report import (
+from aura.ml.data import IMG, make_multimodal, make_sample
+from aura.schemas.clinical import Diagnosis
+from aura.schemas.contracts import StudyInput
+from aura.services.report.clinical_report import (
     build_clinical_report,
     render_html,
     render_markdown,
@@ -28,7 +28,7 @@ REQUIRED_SECTIONS = [
 
 @pytest.fixture(scope="module")
 def bundle():
-    from gateway.pipeline import Pipeline
+    from aura.gateway.pipeline import Pipeline
 
     pipe = Pipeline()
     rng = np.random.default_rng(1)

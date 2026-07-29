@@ -29,7 +29,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from backend.core.shared.logging import get_logger
+from aura.backend.core.shared.logging import get_logger
 
 log = get_logger("engine.neuromind.calibration")
 
@@ -67,7 +67,7 @@ class PresenceCalibrator:
 def load_calibrator(artifacts_root: Path | str | None = None) -> PresenceCalibrator:
     """Load the fitted calibrator, or raise :class:`CalibrationUnavailable`."""
     if artifacts_root is None:
-        from common.config import ARTIFACTS
+        from aura.common.config import ARTIFACTS
 
         artifacts_root = ARTIFACTS
     path = Path(artifacts_root) / "brain" / CALIBRATION_FILENAME

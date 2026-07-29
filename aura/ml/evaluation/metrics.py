@@ -15,8 +15,8 @@ from __future__ import annotations
 
 import numpy as np
 
-from schemas.clinical import DIAGNOSES
-from services.safety.uncertainty import brier_score, reliability_curve
+from aura.schemas.clinical import DIAGNOSES
+from aura.services.safety.uncertainty import brier_score, reliability_curve
 
 
 def _binary_rates(tp, fp, tn, fn) -> dict[str, float]:

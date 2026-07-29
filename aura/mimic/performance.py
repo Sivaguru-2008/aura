@@ -26,9 +26,9 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from mimic.config import MimicPaths, get_mimic_paths
-from mimic.features import FeatureRow, feature_names, patient_feature_row
-from mimic.patient import Patient, iter_patients
+from .config import MimicPaths, get_mimic_paths
+from .features import FeatureRow, feature_names, patient_feature_row
+from .patient import Patient, iter_patients
 
 log = logging.getLogger("mimic.performance")
 

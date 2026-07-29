@@ -3,7 +3,7 @@
 Two hard rules shape this module:
 
 1. **No target leakage.** The report-derived findings/diagnosis are *labels*
-   (see :mod:`mimic.labeling`), so they are NEVER used as features. Features come
+   (see :mod:`aura.mimic.labeling`), so they are NEVER used as features. Features come
    only from the image and non-label metadata. Labels live in ``label_*`` columns.
 
 2. **Honesty about missing modalities.** The plan asks for Charlson, SOFA, qSOFA,
@@ -30,10 +30,10 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
-from mimic.config import MimicPaths, get_mimic_paths
-from mimic.patient import Patient, iter_patients
-from schemas.clinical import DIAGNOSES, FINDINGS, Diagnosis, Finding
-from services.vision.features import FEATURE_NAMES as IMG_FEATURE_NAMES, extract_features
+from .config import MimicPaths, get_mimic_paths
+from .patient import Patient, iter_patients
+from aura.schemas.clinical import DIAGNOSES, FINDINGS, Diagnosis, Finding
+from aura.services.vision.features import FEATURE_NAMES as IMG_FEATURE_NAMES, extract_features
 
 log = logging.getLogger("mimic.features")
 

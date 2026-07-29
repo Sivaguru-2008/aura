@@ -10,7 +10,7 @@ the other.
 
 Conventions
 -----------
-* **World frame is RAS+** (see :mod:`backend.foundation.mri.types`). +x → right,
+* **World frame is RAS+** (see :mod:`aura.backend.foundation.mri.types`). +x → right,
   +y → anterior, +z → superior, in millimetres.
 * **Voxel indices are ``[i, j, k]``** with ``array.shape == (ni, nj, nk)``. The affine
   maps ``[i, j, k, 1]`` to world millimetres. This is the NIfTI convention, not
@@ -31,7 +31,7 @@ from typing import Any, Iterable, Sequence
 
 import numpy as np
 
-from backend.foundation.mri.types import AnatomicalPlane
+from .types import AnatomicalPlane
 
 #: RAS+ axis labels, indexed by world axis then by direction sign (negative, positive).
 _AXIS_LABELS: tuple[tuple[str, str], ...] = (("L", "R"), ("P", "A"), ("I", "S"))

@@ -19,7 +19,7 @@ from typing import Optional, Any
 
 from pydantic import BaseModel, Field
 
-from schemas.clinical import Diagnosis, Finding, Modality
+from .clinical import Diagnosis, Finding, Modality
 
 
 def _now() -> datetime:

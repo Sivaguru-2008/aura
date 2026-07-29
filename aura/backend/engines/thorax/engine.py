@@ -25,9 +25,9 @@ from __future__ import annotations
 import time
 from typing import Callable
 
-from backend.core.shared.errors import EngineExecutionError, UnreadableImage
-from backend.core.shared.types import EngineStatus, ImageAsset, ImagingModality
-from backend.engines.base.contract import (
+from aura.backend.core.shared.errors import EngineExecutionError, UnreadableImage
+from aura.backend.core.shared.types import EngineStatus, ImageAsset, ImagingModality
+from ..base.contract import (
     AnalysisEngine,
     AnalysisResult,
     EngineDescriptor,
@@ -35,7 +35,7 @@ from backend.engines.base.contract import (
     PreparedStudy,
     ValidationOutcome,
 )
-from backend.engines.base.registry import EngineRegistry, default_registry
+from ..base.registry import EngineRegistry, default_registry
 
 #: Resolution the film reaches the CNN at. 224 is the DenseNet-121 input size, and
 #: matching the legacy endpoint here is not cosmetic: a smaller grid erases thin
@@ -97,8 +97,8 @@ class ThoraxEngine(AnalysisEngine):
         Keeping the engine's own refusal intact means swapping the detector — for a
         learned classifier, say — can never expose the chest model to a knee film.
         """
-        from backend.core.router.router import ModalityRouter
-        from backend.core.shared.types import ImagingModality
+        from aura.backend.core.router.router import ModalityRouter
+        from aura.backend.core.shared.types import ImagingModality
         
         router = ModalityRouter()
         metadata = router.route(asset)
@@ -130,7 +130,7 @@ class ThoraxEngine(AnalysisEngine):
                 }
             )
 
-        from services.vision.xray_gate import validate_cxr
+        from aura.services.vision.xray_gate import validate_cxr
 
         gate = validate_cxr(asset.path)
         return ValidationOutcome(
@@ -144,7 +144,7 @@ class ThoraxEngine(AnalysisEngine):
     # ------------------------------------------------------------------ #
     def preprocess(self, asset: ImageAsset) -> PreparedStudy:
         """Decode the film to a 224x224 ``StudyInput`` — identical to the legacy path."""
-        from services.vision.io import study_from_cxr
+        from aura.services.vision.io import study_from_cxr
 
         try:
             study = study_from_cxr(asset.path, grid=_GRID)
@@ -222,7 +222,7 @@ class ThoraxEngine(AnalysisEngine):
     def _log_inference(self, bundle, prepared: PreparedStudy, seconds: float) -> None:
         """Full-provenance inference record — same writer the legacy endpoint uses."""
         try:
-            from services.inference.audit_log import log_inference
+            from aura.services.inference.audit_log import log_inference
 
             log_inference(
                 bundle,

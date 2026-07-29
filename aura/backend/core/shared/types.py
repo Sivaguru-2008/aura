@@ -68,7 +68,7 @@ def to_clinical_modality(modality: ImagingModality):
     (the ``UNKNOWN*`` members). Imported lazily so ``core.shared`` stays importable
     without the clinical schema package loaded.
     """
-    from schemas.clinical import Modality
+    from aura.schemas.clinical import Modality
 
     return {
         ImagingModality.CHEST_XRAY: Modality.CXR,

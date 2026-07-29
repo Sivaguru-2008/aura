@@ -25,11 +25,11 @@ from typing import Any, Sequence
 
 import numpy as np
 
-from backend.core.shared.logging import get_logger
-from backend.foundation.mri.errors import CorruptStudy, UnsupportedStudyFormat
-from backend.foundation.mri.geometry import LPS_TO_RAS, VoxelGeometry
-from backend.foundation.mri.io.base import RawSeries, SeriesIntegrity
-from backend.foundation.mri.types import FileFormat
+from aura.backend.core.shared.logging import get_logger
+from ..errors import CorruptStudy, UnsupportedStudyFormat
+from ..geometry import LPS_TO_RAS, VoxelGeometry
+from .base import RawSeries, SeriesIntegrity
+from ..types import FileFormat
 
 log = get_logger("foundation.mri.io.nrrd")
 

@@ -22,7 +22,7 @@ The contract, in full:
 Declared-but-unimplemented architectures
 ----------------------------------------
 ``unet3d``, ``swin_unetr``, and ``nnunet`` are registered as *declarations*. Asking for
-one raises :class:`~backend.vision.brain.errors.ArchitectureUnavailable` naming what
+one raises :class:`~aura.backend.vision.brain.errors.ArchitectureUnavailable` naming what
 would be needed. This is the same posture the MRI Foundation Layer takes with N4 bias
 correction and skull stripping, and for the same reason: a roadmap entry that raises is
 honest, while an alias that quietly returns the 2D network would produce a model card
@@ -32,8 +32,8 @@ from __future__ import annotations
 
 from typing import Any, Callable, Protocol, Sequence, runtime_checkable
 
-from backend.core.shared.logging import get_logger
-from backend.vision.brain.errors import ArchitectureUnavailable
+from aura.backend.core.shared.logging import get_logger
+from ..errors import ArchitectureUnavailable
 
 log = get_logger("vision.brain.registry")
 

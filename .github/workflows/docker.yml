@@ -1,0 +1,143 @@
+name: Docker
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      push_image:
+        description: "Push the image to GHCR"
+        type: boolean
+        default: false
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The torch CPU wheels plus the base image fill the default runner disk.
+      - name: Reclaim runner disk
+        run: |
+          echo "before: $(df -h / | awk 'NR==2{print $4}') free"
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /usr/local/share/boost "$AGENT_TOOLSDIRECTORY" || true
+          echo "after:  $(df -h / | awk 'NR==2{print $4}') free"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        # Skipped on PRs from forks, which have no package-write token.
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=short
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          # Load into the local daemon so the smoke test below runs against the
+          # exact image that will be pushed, not a rebuild.
+          load: true
+          push: false
+          tags: aura:ci
+          build-args: |
+            AURA_SKIP_BRAIN=${{ vars.AURA_MODELS_URL == '' && '1' || '0' }}
+            AURA_MODELS_URL=${{ vars.AURA_MODELS_URL }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # The Dockerfile already runs preflight at build time, so reaching this
+      # step means the image can load its models. What follows checks that it
+      # actually serves them over the network as a non-root user.
+      - name: Start container
+        run: |
+          docker run -d --name aura-ci \
+            -p 8000:8000 \
+            -e AURA_ALLOW_FALLBACK_VISION=0 \
+            -e AURA_SKIP_BRAIN=${{ vars.AURA_MODELS_URL == '' && '1' || '0' }} \
+            aura:ci
+          sleep 5
+          docker ps --filter name=aura-ci --format '{{.Status}}'
+
+      - name: Smoke test the running container
+        run: python -m deploy.smoke_test --url http://localhost:8000 --wait 240
+
+      - name: Assert the container runs as non-root
+        run: |
+          uid=$(docker exec aura-ci id -u)
+          echo "container uid: $uid"
+          test "$uid" != "0" || { echo "container is running as root"; exit 1; }
+
+      - name: Assert Docker healthcheck reports healthy
+        run: |
+          for i in $(seq 1 30); do
+            status=$(docker inspect --format '{{.State.Health.Status}}' aura-ci)
+            echo "healthcheck: $status"
+            [ "$status" = "healthy" ] && exit 0
+            [ "$status" = "unhealthy" ] && break
+            sleep 10
+          done
+          echo "container never reported healthy"
+          docker inspect --format '{{json .State.Health}}' aura-ci
+          exit 1
+
+      - name: Container logs
+        if: always()
+        run: docker logs aura-ci || true
+
+      - name: Stop container
+        if: always()
+        run: docker rm -f aura-ci || true
+
+      - name: Push image
+        # Only from the canonical repo on a branch/tag push, never from a PR.
+        if: >-
+          github.event_name != 'pull_request' &&
+          (github.ref == 'refs/heads/main' ||
+           github.ref == 'refs/heads/master' ||
+           startsWith(github.ref, 'refs/tags/v') ||
+           inputs.push_image)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            AURA_SKIP_BRAIN=${{ vars.AURA_MODELS_URL == '' && '1' || '0' }}
+            AURA_MODELS_URL=${{ vars.AURA_MODELS_URL }}
+          # Everything is a cache hit from the build step above.
+          cache-from: type=gha

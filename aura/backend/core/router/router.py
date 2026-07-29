@@ -13,16 +13,16 @@ service decides whether that error reaches the client.
 """
 from __future__ import annotations
 
-from backend.core.router.detector import (
+from .detector import (
     DetectionResult,
     ModalityDetector,
     SignatureModalityDetector,
 )
-from backend.core.shared.errors import ModalityUndetermined
-from backend.core.shared.logging import correlation_id, get_logger
-from backend.core.shared.types import MODALITY_LABELS, ImageAsset, ImagingModality
-from backend.engines.base.registry import EngineRegistry, default_registry
-from backend.models.routing import ModalityCandidate, RoutingMetadata
+from ..shared.errors import ModalityUndetermined
+from ..shared.logging import correlation_id, get_logger
+from ..shared.types import MODALITY_LABELS, ImageAsset, ImagingModality
+from aura.backend.engines.base.registry import EngineRegistry, default_registry
+from aura.backend.models.routing import ModalityCandidate, RoutingMetadata
 
 log = get_logger("router")
 
@@ -57,8 +57,8 @@ class ModalityRouter:
         rejected upload still gets the detector's full reasoning back.
         """
         metadata = self.route(asset)
-        from backend.core.shared.errors import UnsupportedModality
-        from backend.core.shared.types import ImagingModality
+        from ..shared.errors import UnsupportedModality
+        from ..shared.types import ImagingModality
 
         if metadata.modality not in (ImagingModality.CHEST_XRAY.value, ImagingModality.BRAIN_MRI.value):
             raise UnsupportedModality(

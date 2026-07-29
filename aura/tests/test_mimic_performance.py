@@ -4,8 +4,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from mimic.config import get_mimic_paths
-from mimic.performance import MemmapCache, ParallelFeatureEngineer, gpu_standardize
+from aura.mimic.config import get_mimic_paths
+from aura.mimic.performance import MemmapCache, ParallelFeatureEngineer, gpu_standardize
 
 PATHS = get_mimic_paths()
 HAS_DATA = PATHS.validate_csv.is_file()
@@ -45,7 +45,7 @@ def test_parallel_matches_serial_rows():
 @needs_data
 def test_parallel_build_produces_valid_features():
     df, timing = ParallelFeatureEngineer().build_frame("validate", limit=40, workers=4)
-    from mimic.features import feature_names
+    from aura.mimic.features import feature_names
     for c in feature_names():
         assert c in df.columns
     assert timing.rows_per_sec > 0
