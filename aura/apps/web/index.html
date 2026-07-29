@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AURA — the copilot that knows what it doesn't know</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='6' fill='%234be1c3'/%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%234be1c3' stroke-opacity='.35' stroke-width='2'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="/static/css/main.css?v=5">
+<link rel="stylesheet" href="/static/css/main.css?v=6">
 <style>
 .safety-overlay {
   position: absolute;
@@ -201,8 +201,10 @@
           </div>
         </div>
         <button id="btn-history" class="btn-ghost" style="border-radius: 8px; font-family: var(--mono); font-size: 12.5px; padding: 8px 18px;">📂 View History & Reports</button>
+        <button id="btn-agent" class="btn-ghost" style="border-radius: 8px; font-family: var(--mono); font-size: 12.5px; padding: 8px 18px; border-color: rgba(253, 209, 102, 0.4); color: #ffd166;" title="Run the sequential Active Diagnosis Agent on a chest X-ray">⚡ Active Diagnosis Agent</button>
       </div>
       <input type="file" id="input-file-xray" accept=".png,.jpg,.jpeg,.dcm,.dicom" style="display: none;">
+      <input type="file" id="input-file-agent" accept=".png,.jpg,.jpeg,.dcm,.dicom" style="display: none;">
       <input type="file" id="input-file-mri" accept=".png,.jpg,.jpeg,.dcm,.dicom,.nii,.nii.gz,.nrrd,.zip" multiple style="display: none;">
       <input type="file" id="input-folder-mri" webkitdirectory directory multiple style="display: none;">
       <ol id="worklist"></ol>
@@ -218,6 +220,38 @@
         <div id="edp-panel" style="margin-top: 10px; display: none;">
           <div style="font-weight: bold; font-size: 10px; color: var(--faint); margin-bottom: 6px; text-transform: uppercase;">Evidence Dependency</div>
           <div id="edp-list" style="display: flex; flex-direction: column; gap: 4px;"></div>
+        </div>
+      </div>
+      <!-- Interactive Clinical Reasoning Sidebar (Task 2) -->
+      <div id="priors-sidebar-panel" class="mono" style="display: none; padding: 12px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 11.5px;">
+        <div style="font-weight: bold; margin-bottom: 8px; color: #8b7cf7; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
+          <i class="dot" style="display:inline-block; width:6px; height:6px; background:#8b7cf7; border-radius:50%"></i>Clinical Priors
+        </div>
+        <div class="priors-checkboxes" style="display: flex; flex-direction: column; gap: 6px;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--dim);">
+            <input type="checkbox" id="prior-fever" style="accent-color: #8b7cf7;"> Fever
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--dim);">
+            <input type="checkbox" id="prior-cough" style="accent-color: #8b7cf7;"> Cough
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--dim);">
+            <input type="checkbox" id="prior-bnp" style="accent-color: #8b7cf7;"> High BNP
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--dim);">
+            <input type="checkbox" id="prior-cardiopathy" style="accent-color: #8b7cf7;"> Prior Cardiopathy
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--dim);">
+            <input type="checkbox" id="prior-diabetes" style="accent-color: #8b7cf7;"> Diabetes
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--dim);">
+            <input type="checkbox" id="prior-hypertension" style="accent-color: #8b7cf7;"> Hypertension
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--dim);">
+            <input type="checkbox" id="prior-smoking" style="accent-color: #8b7cf7;"> Smoking
+          </label>
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--dim);">
+            <input type="checkbox" id="prior-crp" style="accent-color: #8b7cf7;"> Elevated CRP
+          </label>
         </div>
       </div>
       <!-- System Telemetry / Dashboard Monitoring (Task 11) -->
@@ -237,11 +271,11 @@
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
           <span style="color: var(--faint);">Calibration ECE:</span>
-          <span id="tel-calib-status" style="color: #4be1c3; font-weight: bold;">0.2087</span>
+          <span id="tel-calib-status" style="color: var(--faint); font-weight: bold;">—</span>
         </div>
         <div style="display: flex; justify-content: space-between;">
           <span style="color: var(--faint);">Audit Log Status:</span>
-          <span id="tel-audit-health" style="color: #4be1c3; font-weight: bold;">Healthy</span>
+          <span id="tel-audit-health" style="color: var(--faint); font-weight: bold;">—</span>
         </div>
       </div>
     </aside>
@@ -251,6 +285,8 @@
       <div id="case-forming" hidden>
         <canvas id="forming-canvas"></canvas>
         <img id="forming-preview" alt="" hidden>
+        <div id="inference-timeline" class="mono" style="margin: 40px auto 20px auto; display: flex; gap: 12px; justify-content: center; align-items: center; font-size: 11px; z-index: 10; max-width: 90%; background: rgba(0,0,0,0.5); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); overflow-x: auto;">
+        </div>
         <pre class="forming-text mono" id="forming-text"></pre>
       </div>
 
@@ -263,6 +299,15 @@
               <button id="tg-reg" class="tg on">findings</button>
             </div>
           </header>
+          <!-- Explainability Dashboard Tabs (Task 5) -->
+          <div class="explain-tabs mono" style="display: flex; gap: 8px; margin: 4px 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; font-size: 11px;">
+            <span style="color: var(--faint); align-self: center; margin-right: auto;">EXPLAIN:</span>
+            <button class="tg active-tab" id="tab-heatmap" style="padding: 2px 6px; font-size: 10px;">Heatmap</button>
+            <button class="tg" id="tab-importance" style="padding: 2px 6px; font-size: 10px;">Importance</button>
+            <button class="tg" id="tab-counterfactual" style="padding: 2px 6px; font-size: 10px;">Counterfactual</button>
+            <button class="tg" id="tab-occlusion" style="padding: 2px 6px; font-size: 10px;">Occlusion</button>
+            <button class="tg" id="tab-integrated" style="padding: 2px 6px; font-size: 10px;">Integrated Gradients</button>
+          </div>
           <div class="xray-stage">
             <canvas id="xray"></canvas>
             <canvas id="xray-sal"></canvas>
@@ -449,10 +494,120 @@
               <button class="tg" data-verdict="edit">edit</button>
               <button class="tg" data-verdict="reject">reject</button>
               <button id="btn-export" class="tg" title="download report as text">&#8681; export</button>
+              <button id="btn-export-fhir" class="tg" title="export FHIR DiagnosticReport" style="background: rgba(75, 225, 195, 0.1); border-color: rgba(75, 225, 195, 0.3); color: #4be1c3;">FHIR</button>
+              <button id="btn-export-hl7" class="tg" title="export HL7 ORU^R01" style="background: rgba(139, 124, 247, 0.1); border-color: rgba(139, 124, 247, 0.3); color: #8b7cf7;">HL7</button>
               <button id="btn-sign" class="btn-core slim"><span>sign</span></button>
             </div>
           </header>
           <div id="report-body"></div>
+        </section>
+
+        <!-- Confidence Evolution Flow (Task 3) -->
+        <section class="panel p-evolution" data-tilt id="panel-evolution" style="grid-column: span 12;">
+          <header>
+            <h4>Confidence Evolution Flow</h4>
+            <span class="p-hint mono">pipeline transitions: hover nodes for details</span>
+          </header>
+          <div class="evo-stage-wrap" style="padding: 12px 20px;">
+            <div class="evo-flow" id="evo-flow" style="display: flex; justify-content: space-between; align-items: center; position: relative;">
+              <div class="evo-node" id="node-vision" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <div class="evo-circle" style="width: 48px; height: 48px; border-radius: 50%; background: rgba(75, 225, 195, 0.1); border: 2px solid #4be1c3; display: flex; align-items: center; justify-content: center; color: #4be1c3; font-weight: bold; font-family: var(--mono); box-shadow: 0 0 12px rgba(75, 225, 195, 0.2);">VIS</div>
+                <span class="mono" style="font-size: 11px; color: #fff;">Vision</span>
+                <span class="mono" id="val-vision" style="font-size: 10px; color: var(--faint);">—</span>
+              </div>
+              <div class="evo-line" style="flex: 1; height: 2px; background: linear-gradient(to right, #4be1c3, #8b7cf7); margin: 0 10px; opacity: 0.5; position: relative; top: -14px;"></div>
+              
+              <div class="evo-node" id="node-fusion" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <div class="evo-circle" style="width: 48px; height: 48px; border-radius: 50%; background: rgba(139, 124, 247, 0.1); border: 2px solid #8b7cf7; display: flex; align-items: center; justify-content: center; color: #8b7cf7; font-weight: bold; font-family: var(--mono); box-shadow: 0 0 12px rgba(139, 124, 247, 0.2);">FUS</div>
+                <span class="mono" style="font-size: 11px; color: #fff;">Fusion</span>
+                <span class="mono" id="val-fusion" style="font-size: 10px; color: var(--faint);">—</span>
+              </div>
+              <div class="evo-line" style="flex: 1; height: 2px; background: linear-gradient(to right, #8b7cf7, #f77ca3); margin: 0 10px; opacity: 0.5; position: relative; top: -14px;"></div>
+              
+              <div class="evo-node" id="node-reasoning" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <div class="evo-circle" style="width: 48px; height: 48px; border-radius: 50%; background: rgba(247, 124, 163, 0.1); border: 2px solid #f77ca3; display: flex; align-items: center; justify-content: center; color: #f77ca3; font-weight: bold; font-family: var(--mono); box-shadow: 0 0 12px rgba(247, 124, 163, 0.2);">REA</div>
+                <span class="mono" style="font-size: 11px; color: #fff;">Reasoning</span>
+                <span class="mono" id="val-reasoning" style="font-size: 10px; color: var(--faint);">—</span>
+              </div>
+              <div class="evo-line" style="flex: 1; height: 2px; background: linear-gradient(to right, #f77ca3, #ffd166); margin: 0 10px; opacity: 0.5; position: relative; top: -14px;"></div>
+              
+              <div class="evo-node" id="node-calibration" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <div class="evo-circle" style="width: 48px; height: 48px; border-radius: 50%; background: rgba(253, 209, 102, 0.1); border: 2px solid #ffd166; display: flex; align-items: center; justify-content: center; color: #ffd166; font-weight: bold; font-family: var(--mono); box-shadow: 0 0 12px rgba(253, 209, 102, 0.2);">CAL</div>
+                <span class="mono" style="font-size: 11px; color: #fff;">Calibration</span>
+                <span class="mono" id="val-calibration" style="font-size: 10px; color: var(--faint);">—</span>
+              </div>
+              <div class="evo-line" style="flex: 1; height: 2px; background: linear-gradient(to right, #ffd166, #4be1c3); margin: 0 10px; opacity: 0.5; position: relative; top: -14px;"></div>
+              
+              <div class="evo-node" id="node-final" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <div class="evo-circle" style="width: 48px; height: 48px; border-radius: 50%; background: rgba(75, 225, 195, 0.15); border: 2px solid #4be1c3; display: flex; align-items: center; justify-content: center; color: #4be1c3; font-weight: bold; font-family: var(--mono); box-shadow: 0 0 16px rgba(75, 225, 195, 0.3);">DX</div>
+                <span class="mono" style="font-size: 11px; color: #fff;">Final</span>
+                <span class="mono" id="val-final" style="font-size: 10px; color: var(--faint);">—</span>
+              </div>
+            </div>
+            <div id="evo-tooltip-area" class="mono" style="margin-top: 16px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; font-size: 11.5px; line-height: 1.4; color: var(--dim); display: none;">
+            </div>
+          </div>
+        </section>
+
+        <!-- Longitudinal Patient Analysis (Task 1) -->
+        <section class="panel p-longitudinal" data-tilt id="panel-longitudinal" style="grid-column: span 12; display: none;">
+          <header>
+            <h4>Longitudinal Patient Analysis</h4>
+            <span class="p-hint mono">Compare historical studies & track volumetric trends</span>
+          </header>
+          <div style="display: grid; grid-template-columns: 220px 1fr 280px; gap: 16px; padding: 12px;">
+            <div class="long-sidebar mono" style="border-right: 1px solid rgba(255,255,255,0.08); padding-right: 12px; display: flex; flex-direction: column;">
+              <h5 style="color: var(--dim); margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase;">Patient History</h5>
+              <div id="long-studies-list" style="max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
+              </div>
+              <button id="btn-compare-studies" class="btn-core slim" style="margin-top: auto; width: 100%; display: none;">
+                <span>Compare Study</span>
+              </button>
+            </div>
+            <div class="long-main" style="display: flex; flex-direction: column; gap: 12px;">
+              <div style="height: 180px; position: relative;">
+                <canvas id="long-trend-canvas" style="width: 100%; height: 100%;"></canvas>
+              </div>
+              <div id="long-timeline-flow" class="mono" style="display: flex; gap: 12px; font-size: 11px; overflow-x: auto; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,0.05);">
+              </div>
+            </div>
+            <div class="long-details mono" style="border-left: 1px solid rgba(255,255,255,0.08); padding-left: 12px;">
+              <h5 style="color: #8b7cf7; margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase;">Growth vs Regression</h5>
+              <div id="long-comparison-metrics" style="display: flex; flex-direction: column; gap: 8px;">
+              </div>
+              <div id="long-changed-regions" style="margin-top: 12px; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); font-size: 11px;">
+                No comparison run yet. Select a prior scan and click "Compare Study".
+              </div>
+            </div>
+          </div>
+          <div id="long-comparison-report" class="markdown-body" style="margin: 14px 12px 12px 12px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; line-height: 1.5; color: #e2e8f0; display: none;">
+          </div>
+        </section>
+
+        <!-- Multi-Agent Clinical Discussion (Task 7) -->
+        <section class="panel p-discussion" data-tilt id="panel-discussion" style="grid-column: span 12;">
+          <header>
+            <h4>Multi-Agent Clinical Discussion</h4>
+            <span class="p-hint mono">Radiologist · Pulmonologist/Neurologist · Cardiologist · Oncologist consensus</span>
+          </header>
+          <div style="display: flex; flex-direction: column; gap: 12px; padding: 12px;">
+            <div id="discussion-chat" style="display: flex; flex-direction: column; gap: 12px; max-height: 300px; overflow-y: auto; padding-right: 8px;">
+            </div>
+            <div id="discussion-consensus" class="mono" style="margin-top: 8px; background: rgba(139, 124, 247, 0.05); border: 1px solid rgba(139, 124, 247, 0.2); border-radius: 8px; padding: 12px;">
+            </div>
+          </div>
+        </section>
+
+        <!-- Active Diagnosis Agent (sequential EIG-driven testing) -->
+        <section class="panel p-agent" data-tilt id="panel-agent" style="grid-column: span 12; display: none;">
+          <header>
+            <h4>⚡ Active Diagnosis Agent</h4>
+            <span class="p-hint mono">sequential decisions · orders the test that resolves the most bits · commits or abstains</span>
+          </header>
+          <div style="padding: 12px;">
+            <div id="agent-summary" class="mono" style="margin-bottom: 14px;"></div>
+            <div id="agent-steps" style="display: flex; flex-direction: column; gap: 12px;"></div>
+          </div>
         </section>
 
       </div>
@@ -486,6 +641,14 @@
               <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 6px;">
                 <span style="color: var(--faint);">Sequence Type:</span>
                 <span id="preview-seq-type" style="color: #fff;">—</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 6px;">
+                <span style="color: var(--faint);">Detected Sequences:</span>
+                <span id="preview-modalities" style="color: #4be1c3; font-weight: bold;">—</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 6px;">
+                <span style="color: var(--faint);">Channel Order Source:</span>
+                <span id="preview-order-source" style="color: #fff; font-size: 11.5px;">—</span>
               </div>
               <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 6px;">
                 <span style="color: var(--faint);">Dimensions:</span>
@@ -544,12 +707,40 @@
         </div>
       </div>
 
+  <!-- Admin Audit Log Viewer Modal (Task 6) -->
+  <div id="audit-modal" style="display: none; position: fixed; inset: 0; background: rgba(10, 10, 15, 0.85); z-index: 1000; backdrop-filter: blur(12px); align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: rgba(22, 22, 33, 0.95); border: 1px solid rgba(75, 225, 195, 0.3); border-radius: 16px; width: 100%; max-width: 800px; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.6); display: flex; flex-direction: column; padding: 24px; color: #e2e8f0; font-family: var(--sans);">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px; margin-bottom: 20px;">
+        <h3 style="margin: 0; font-family: var(--mono); color: #4be1c3; font-size: 18px; display: flex; align-items: center; gap: 8px;">
+          🛡️ AURA System Audit Log Viewer
+        </h3>
+        <button id="btn-close-audit" class="tg" style="font-family: var(--mono); font-size: 12px; padding: 4px 10px; cursor: pointer;">Close</button>
+      </div>
+      <div style="flex: 1; overflow-y: auto; max-height: 50vh;">
+        <table style="width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 11.5px; text-align: left;">
+          <thead>
+            <tr style="border-bottom: 2px solid rgba(255,255,255,0.08); color: var(--faint);">
+              <th style="padding: 8px 4px;">TIMESTAMP</th>
+              <th style="padding: 8px 4px;">ACTOR</th>
+              <th style="padding: 8px 4px;">ACTION</th>
+              <th style="padding: 8px 4px;">ENTITY</th>
+              <th style="padding: 8px 4px;">DETAIL</th>
+            </tr>
+          </thead>
+          <tbody id="audit-log-rows">
+            <!-- populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 <div id="toast" class="mono" hidden></div>
 
 <script src="/static/js/fx.js?v=5"></script>
 <script src="/static/js/landing.js?v=5"></script>
 <script src="/static/js/neuroview.js?v=1"></script>
-<script src="/static/js/console.js?v=6"></script>
+<script src="/static/js/console.js?v=7"></script>
 <script src="/static/js/main.js?v=5"></script>
 </body>
 </html>

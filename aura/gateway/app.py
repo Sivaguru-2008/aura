@@ -24,6 +24,11 @@ from gateway.pipeline import Pipeline
 from gateway.seed import seed
 from gateway.storage import Store
 
+from services.enterprise.fhir import export_fhir_diagnostic_report, export_fhir_observations
+from services.enterprise.hl7 import export_hl7_oru_r01
+from services.agent.discussion import SpecialistDiscussionEngine
+
+
 WEB_DIR = Path(__file__).resolve().parent.parent / "apps" / "web"
 
 state: dict = {}
@@ -52,6 +57,16 @@ async def lifespan(app: FastAPI):
         state["dispatch"] = install_router(
             app, pipeline, store, on_case_created=session_case_ids.append
         )
+        
+        # Start mock PACS DICOM listener on port 11112
+        try:
+            from services.enterprise.dicom_listener import DicomListener
+            listener = DicomListener(state["dispatch"], store, port=11112)
+            listener.start()
+            state["dicom_listener"] = listener
+        except Exception as dle:
+            print(f"[gateway] WARNING: mock DICOM listener failed to start: {dle!r}")
+            
     except Exception as e:                        # pragma: no cover - startup resilience
         print(f"[gateway] WARNING: modality router failed to install: {e!r}")
 
@@ -63,6 +78,13 @@ async def lifespan(app: FastAPI):
     source = os.environ.get("AURA_DATA_SOURCE", "mimic").lower()
     print(f"[gateway] ready — 0 cases in active session (worklist empty on startup, fusion backend: {pipeline.fusion.backend}).")
     yield
+    
+    # Lifespan shutdown: stop the DICOM listener
+    if "dicom_listener" in state and state["dicom_listener"]:
+        try:
+            state["dicom_listener"].stop()
+        except Exception as dle:
+            print(f"[gateway] WARNING: mock DICOM listener failed to stop: {dle!r}")
 
 
 app = FastAPI(title="AURA Clinical Intelligence Copilot", version="0.1.0",
@@ -278,6 +300,181 @@ def sign_report(case_id: str, payload: dict = Body(default={})):
                   actor=payload.get("signed_by", "clinician"),
                   detail={"provenance_hash": p_hash})
     return {"ok": True, "state": b.state.value}
+
+
+@app.post("/v1/cases/{case_id}/recompute")
+async def recompute_case(case_id: str, payload: dict = Body(...)):
+    b = store().get_case(case_id)
+    if b is None:
+        raise HTTPException(404, "case not found")
+        
+    priors_payload = payload.get("priors", {})
+    context_payload = payload.get("clinical_context", {})
+    
+    # 1. Update priors (StructuredPriors)
+    for k, v in priors_payload.items():
+        if hasattr(b.priors, k):
+            setattr(b.priors, k, v)
+            
+    # 2. Update clinical context
+    if b.clinical_context:
+        for k, v in context_payload.items():
+            if hasattr(b.clinical_context, k):
+                setattr(b.clinical_context, k, v)
+    else:
+        from schemas.contracts import ClinicalContext
+        b.clinical_context = ClinicalContext(**context_payload)
+        
+    # Update multimodal symptoms/history/labs from the priors/context payload if chest case
+    if b.multimodal:
+        m = b.multimodal
+        m.symptoms.fever = b.priors.fever
+        if b.priors.smoker:
+            m.history.smoking_pack_years = max(m.history.smoking_pack_years or 0.0, 20.0)
+        else:
+            m.history.smoking_pack_years = 0.0
+        m.history.prior_cancer = b.priors.prior_cancer
+        m.history.immunosuppression = b.priors.immunocompromised
+        
+        # Check custom sidebar fields in priors_payload
+        if "cough" in priors_payload:
+            m.symptoms.productive_cough = priors_payload["cough"]
+        if "high_bnp" in priors_payload:
+            m.labs.bnp = 450.0 if priors_payload["high_bnp"] else None
+        if "crp" in priors_payload or "elevated_crp" in priors_payload:
+            val = priors_payload.get("crp", priors_payload.get("elevated_crp", False))
+            m.labs.crp = 75.0 if val else None
+        if "prior_cardiopathy" in priors_payload:
+            m.history.heart_failure = priors_payload["prior_cardiopathy"]
+        if "diabetes" in priors_payload:
+            m.history.diabetes = priors_payload["diabetes"]
+        if "hypertension" in priors_payload:
+            m.history.hypertension = priors_payload["hypertension"]
+            
+    is_brain_case = (
+        str(b.study_id).startswith("STU-MR")
+        or ((b.fusion.backend if b.fusion else "") == "brain-vision-presence-head")
+    )
+    
+    if is_brain_case:
+        # Brain MRI has no clinical reasoning, but we update prior risk score and regenerate report
+        # Let's regenerate the report with the new priors
+        from backend.engines.neuro.bundle import _findings_text, _impression_text, _recommendation_text, _confidence_text, _recommendations, _priority
+        # Determine top/probs
+        presence_probability = b.safety.top_probability if (b.safety.top == Diagnosis.BRAIN_TUMOR) else (1.0 - b.safety.top_probability)
+        caveats = []
+        if b.priors.age_band == "65+":
+            caveats.append("degraded sequence details due to microvascular ischemic burden (age 65+)")
+            
+        b.report.findings_text = _findings_text(None, b.vision.findings, b.volumes, presence_probability, b.safety.abstained)
+        b.report.impression_text = _impression_text(b.safety.top, presence_probability, caveats, b.vision.findings, abstained=b.safety.abstained)
+        b.report.recommendation_text = _recommendation_text(b.safety.top, b.safety.abstention_reason.value if b.safety.abstained else None)
+        b.report.confidence_text = _confidence_text(presence_probability, caveats)
+        
+        # update recommendations
+        b.recommendations = _recommendations(b.safety.top, None, caveats)
+        b.priority_score = _priority(b.safety.top, presence_probability, b.safety.abstention_reason if b.safety.abstained else None)
+        
+    else:
+        # Chest case: full re-run of pipeline downstream steps!
+        from services.fusion.evidence import encode, to_evidence_items
+        img = np.array(b.image, dtype=float).reshape(b.image_shape)
+        
+        x = encode(b.vision, b.priors)
+        b.evidence = to_evidence_items(x, b.priors)
+        b.fusion = pipeline().fusion.fuse_vector(x, study_id=b.study_id)
+        
+        resolved_logits = pipeline().fusion.resolved_logits(x, b.fusion)
+        
+        # Clinical reasoning
+        imaging_probs = pipeline().safety.calibrated_posterior(resolved_logits)
+        imaging_prior = {d: float(imaging_probs[i]) for i, d in enumerate(DIAGNOSES)}
+        findings_map = {fs.finding: fs.probability for fs in b.vision.findings}
+        b.reasoning = pipeline().reasoner.reason(
+            b.study_id, findings_map, imaging_prior, b.priors, b.multimodal
+        )
+        
+        final_posterior = None
+        if b.reasoning.steps:
+            final_posterior = np.array(
+                [b.reasoning.adjusted_posterior.get(d, 0.0) for d in DIAGNOSES], dtype=float
+            )
+            
+        # Safety
+        b.safety = pipeline().safety.assess(
+            b.study_id, x, pipeline().fusion.model,
+            resolved_logits=resolved_logits, aci_qhat=pipeline()._aci_qhat(),
+            final_posterior=final_posterior,
+        )
+        
+        # Explainability (wires SHAP/Shapley)
+        b.explanation = pipeline().explain.explain(
+            b.study_id, pipeline().vision, img, pipeline().fusion.model, x, b.safety.top
+        )
+        
+        # Recommendations
+        b.recommendations = pipeline().recommend.recommend(pipeline().fusion.model, x)
+        
+        # CDRE
+        from schemas.contracts import StudyInput
+        study_in = StudyInput(
+            study_id=b.study_id,
+            image=b.image,
+            image_shape=b.image_shape,
+            priors=b.priors,
+            multimodal=b.multimodal,
+            ground_truth=b.ground_truth
+        )
+        b.drp = pipeline().cdre.assess(
+            study=study_in,
+            img=img,
+            x=x,
+            fusion_engine=pipeline().fusion,
+            reasoning=b.reasoning,
+            findings_map=findings_map,
+            safety_assessment=b.safety,
+            vision_engine=pipeline().vision
+        )
+        
+        # Report
+        b.report = pipeline().report.compose(b.vision, b.safety, b.recommendations, b.reasoning, b.fusion)
+        b.priority_score = pipeline()._priority(b.safety.top, b.safety)
+        
+    store().save_case(b)
+    store().audit("case.recomputed", "case", case_id, detail={"priors": priors_payload})
+    return b
+
+
+@app.get("/v1/cases/{case_id}/discussion")
+def get_case_discussion(case_id: str):
+    b = store().get_case(case_id)
+    if b is None:
+        raise HTTPException(404, "case not found")
+    disc = SpecialistDiscussionEngine.discuss(b)
+    store().audit("case.discussion_generated", "case", case_id)
+    return disc
+
+
+@app.get("/v1/cases/{case_id}/export/fhir")
+def get_fhir_export(case_id: str):
+    b = store().get_case(case_id)
+    if b is None:
+        raise HTTPException(404, "case not found")
+    report = export_fhir_diagnostic_report(b)
+    observations = export_fhir_observations(b)
+    store().audit("case.exported_fhir", "case", case_id)
+    return {"diagnostic_report": report, "observations": observations}
+
+
+@app.get("/v1/cases/{case_id}/export/hl7")
+def get_hl7_export(case_id: str):
+    b = store().get_case(case_id)
+    if b is None:
+        raise HTTPException(404, "case not found")
+    hl7_msg = export_hl7_oru_r01(b)
+    store().audit("case.exported_hl7", "case", case_id)
+    from fastapi.responses import PlainTextResponse
+    return PlainTextResponse(hl7_msg, media_type="text/plain")
 
 
 @app.post("/v1/studies/simulate")

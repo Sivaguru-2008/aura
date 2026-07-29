@@ -92,10 +92,37 @@ class ExplainEngine:
         sal = self.occlusion_saliency(vision_engine, img)
         return sal, {"occlusion": sal}, top_finding, "occlusion"
 
+    def shap_attribution(self, fusion_model, x: np.ndarray, top: Diagnosis) -> dict[str, float]:
+        """Compute Shapley values for the evidence channels of the fusion model."""
+        try:
+            import shap
+            
+            def predict_fn(X_in):
+                probs = []
+                for row in X_in:
+                    logits = fusion_model.logits(row)
+                    probs.append(softmax(logits))
+                return np.array(probs)
+            
+            background = np.zeros((1, len(EVIDENCE_CHANNELS)))
+            explainer = shap.Explainer(predict_fn, background)
+            shap_values = explainer(x[None, :]).values[0] # shape (len(EVIDENCE_CHANNELS), n_diagnoses)
+            
+            top_i = DIAGNOSES.index(top)
+            result = {}
+            for j, name in enumerate(EVIDENCE_CHANNELS):
+                result[name] = round(float(shap_values[j, top_i]), 4)
+            return result
+        except Exception:
+            # Fallback to leave-one-out
+            attr, _ = self.evidence_attribution(fusion_model, x, top)
+            return attr
+
     def explain(self, study_id: str, vision_engine, img: np.ndarray,
                 fusion_model, x: np.ndarray, top: Diagnosis) -> Explanation:
         primary, maps, target, label = self.visual_explanations(vision_engine, img)
         attribution, counterfactual = self.evidence_attribution(fusion_model, x, top)
+        shap_attr = self.shap_attribution(fusion_model, x, top)
         return Explanation(
             study_id=study_id,
             saliency=[round(float(v), 4) for v in np.asarray(primary).flatten()],
@@ -105,7 +132,7 @@ class ExplainEngine:
                 for k, m in maps.items()
             },
             saliency_target=target.value,
-            evidence_attribution=attribution,
+            evidence_attribution=shap_attr,
             counterfactuals=counterfactual,
-            method=f"{label}+leave-one-out",
+            method=f"{label}+shapley",
         )

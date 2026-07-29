@@ -409,11 +409,16 @@ h1, h2, h3 { font-weight: 560; letter-spacing: -0.02em; }
   grid-template-columns: repeat(12, 1fr);
   grid-template-areas:
     "x x x x e e e e e s s s"
-    "p p p p r r r r t t t t";
+    "p p p p r r r r t t t t"
+    "v v v v v v v v v v v v"
+    "d d d d d d d d d d d d";
 }
 .p-xray { grid-area: x; } .p-evidence { grid-area: e; } .p-safety { grid-area: s; }
 .p-neuroview { grid-area: n; }
 .p-posterior { grid-area: p; } .p-recs { grid-area: r; } .p-report { grid-area: t; }
+.p-evolution { grid-area: v; } .p-longitudinal { grid-area: l; } .p-discussion { grid-area: d; }
+/* Auto-placed (like .p-neuroview / .p-longitudinal): shown only once the agent runs. */
+.p-agent { grid-area: g; }
 
 .panel {
   border: 1px solid var(--hair); border-radius: 16px;
@@ -497,7 +502,10 @@ h1, h2, h3 { font-weight: 560; letter-spacing: -0.02em; }
   grid-template-areas:
     "x x x x e e e e e s s s"
     "n n n n n n n n n n n n"
-    "p p p p r r r r t t t t";
+    "l l l l l l l l l l l l"
+    "p p p p r r r r t t t t"
+    "v v v v v v v v v v v v"
+    "d d d d d d d d d d d d";
 }
 .nv-layout {
   display: grid;
@@ -736,4 +744,11 @@ h1, h2, h3 { font-weight: 560; letter-spacing: -0.02em; }
     animation-delay: 0s !important; transition-delay: 0s !important;
   }
   html { scroll-behavior: auto; }
+}
+
+.explain-tabs button.active-tab {
+  background: rgba(139, 124, 247, 0.2) !important;
+  border-color: rgba(139, 124, 247, 0.6) !important;
+  color: #8b7cf7 !important;
+  box-shadow: 0 0 10px rgba(139, 124, 247, 0.25) !important;
 }
