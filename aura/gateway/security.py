@@ -10,11 +10,18 @@ inert and the P0 offline demo behaves exactly as before. Setting the correspondi
 without touching any endpoint signature.
 
   * Authentication  — a shared bearer token compared in constant time. When
-                      ``auth_token`` is set, mutating endpoints (POST/PUT/DELETE)
-                      require the ``auth_header`` to carry it.
+                      ``auth_token`` is set, every request to a non-public path
+                      requires the ``auth_header`` to carry it, **reads included**.
+                      This gate used to be keyed on the HTTP method, which left
+                      ``GET /v1/cases/{id}``, ``/export/fhir``, ``/export/hl7`` and
+                      ``/v1/admin/safety`` reachable with no token at all — the read
+                      surface is where the patient data actually leaves the box, so
+                      the method is the wrong axis to gate on. Paths that must stay
+                      open (health, the dashboard shell, static assets) are named in
+                      ``PUBLIC_PATHS`` / ``PUBLIC_PREFIXES`` below.
   * Authorization   — the ``x-aura-user`` principal is recorded per request and
                       required (non-anonymous) once auth is enabled, so every
-                      mutation is attributable in the audit log.
+                      call is attributable in the audit log.
   * Rate limiting   — a per-principal in-process token bucket (no Redis needed),
                       enabled by ``rate_limit_rpm > 0``.
   * Upload guards   — a hard byte cap enforced while streaming the body (so a large
@@ -35,7 +42,7 @@ from aura.common.config import get_settings
 
 # Accepted upload types — layered in front of the content-based xray_gate. DICOM
 # often has no extension, so the empty suffix is permitted and content-sniffed.
-_ALLOWED_SUFFIXES = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".dcm", ".dicom", ".zip", ".nii", ".gz", ""}
+_ALLOWED_SUFFIXES = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".dcm", ".dicom", ".zip", ".nii", ".gz", ".nrrd", ".nhdr", ""}
 _ALLOWED_CONTENT_TYPES = {
     "image/png", "image/jpeg", "image/tiff", "application/dicom",
     "application/zip", "application/x-zip-compressed",
@@ -43,6 +50,28 @@ _ALLOWED_CONTENT_TYPES = {
     "application/x-gzip", "application/gzip",
     "application/x-nifti", "application/nifti", "application/nii",
 }
+
+
+# Paths reachable without a token even when auth is enabled. Deliberately a short
+# allowlist rather than a denylist: a new endpoint is protected by default, and
+# forgetting to register it fails closed (401) instead of silently exposing a case.
+#   /v1/health  — liveness/readiness probes run before any credential is injected
+#                 (docker-compose healthcheck, k8s probes). Returns no case data.
+#   /, /app,
+#   /history    — the dashboard HTML shell. It carries no patient data itself; every
+#                 panel it renders is filled by a /v1/* fetch that IS gated.
+PUBLIC_PATHS = frozenset({"/v1/health", "/", "/app", "/history",
+                          "/docs", "/redoc", "/openapi.json", "/favicon.ico"})
+PUBLIC_PREFIXES = ("/static", "/assets", "/css", "/js")
+
+
+def is_public_path(path: str) -> bool:
+    """True when *path* may be served without authentication.
+
+    Kept as a function (not an inline check) so tests can enumerate the public
+    surface and assert nothing under /v1/cases, /v1/studies or /v1/admin is in it.
+    """
+    return path in PUBLIC_PATHS or path.startswith(PUBLIC_PREFIXES)
 
 
 class RateLimiter:
@@ -84,11 +113,15 @@ def enforce(request: Request) -> str:
     """Authenticate + authorize + rate-limit one request. Returns the principal.
 
     Inert unless configured. Raises 401/403/429 as appropriate. Called from the
-    gateway middleware for mutating methods so every endpoint is covered without
-    per-handler wiring.
+    gateway middleware for **every** request whose path is not public, so every
+    endpoint is covered without per-handler wiring — reads as well as mutations.
     """
     s = get_settings()
     principal = _principal(request)
+
+    # Public paths skip the gate entirely (see PUBLIC_PATHS for why each is listed).
+    if is_public_path(request.url.path):
+        return principal
 
     # --- authentication (shared bearer token, constant-time compare) ---
     if s.auth_token:

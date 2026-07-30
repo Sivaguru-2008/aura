@@ -14,11 +14,12 @@ import numpy as np
 from fastapi import Body, FastAPI, HTTPException, Request, UploadFile, File
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.exc import IntegrityError
 
 from aura.common.config import DB_PATH, ensure_dirs, get_settings
 from aura.ml.data import IMG, make_multimodal, make_sample
 from aura.schemas.clinical import DIAGNOSES, Diagnosis
-from aura.schemas.contracts import StudyInput, StructuredPriors
+from aura.schemas.contracts import ClinicalChatRequest, ClinicalChatResponse, StudyInput, StructuredPriors
 from aura.services.models import ModelRegistry
 from .pipeline import Pipeline
 from .seed import seed
@@ -93,19 +94,26 @@ app = FastAPI(title="AURA Clinical Intelligence Copilot", version="0.1.0",
 
 @app.middleware("http")
 async def audit_mw(request: Request, call_next):
-    # Security gate runs *before* the handler for mutating methods: opt-in auth,
+    # Security gate runs *before* the handler on EVERY non-public path: opt-in auth,
     # authorization, and rate limiting (all inert unless configured). A rejection
     # here is itself audited, then returned, so blocked calls are attributable.
-    if request.method in ("POST", "PUT", "DELETE"):
-        from .security import enforce
-        try:
-            enforce(request)
-        except HTTPException as exc:
-            _safe_audit(action=f"blocked {request.method} {request.url.path}",
-                        actor=request.headers.get("x-aura-user", "anonymous"),
-                        entity_type="http", detail={"status": exc.status_code})
-            return JSONResponse(exc.detail if isinstance(exc.detail, dict)
-                                else {"error": exc.detail}, status_code=exc.status_code)
+    #
+    # This used to be gated on `request.method in ("POST","PUT","DELETE")`, which is
+    # the wrong axis. Reads are where patient data leaves the box: GET /v1/cases/{id}
+    # returns the full bundle, /export/fhir and /export/hl7 emit standards-conformant
+    # clinical records built for downstream ingestion, and /v1/admin/safety exposes
+    # policy state — all of which were reachable with no token and no rate limit even
+    # when auth was fully configured. Case ids were enumerable from GET /v1/cases.
+    # enforce() decides what is public via security.is_public_path.
+    from .security import enforce
+    try:
+        enforce(request)
+    except HTTPException as exc:
+        _safe_audit(action=f"blocked {request.method} {request.url.path}",
+                    actor=request.headers.get("x-aura-user", "anonymous"),
+                    entity_type="http", detail={"status": exc.status_code})
+        return JSONResponse(exc.detail if isinstance(exc.detail, dict)
+                            else {"error": exc.detail}, status_code=exc.status_code)
 
     resp = await call_next(request)
     # Dashboard assets must revalidate on every load — stale cached JS leaves
@@ -227,6 +235,89 @@ def get_case(case_id: str):
     return d
 
 
+@app.get("/v1/cases/{case_id}/geometry")
+def get_case_geometry(
+    case_id: str,
+    method: str | None = None,
+    threshold: float = 0.5,
+    otsu: bool = False,
+    levels: str = "0.5,0.7,0.9",
+    max_regions: int = 5,
+    overlay: bool = True,
+    overlay_size: int | None = None,
+):
+    """Drawable geometry for a stored case's saliency map.
+
+    Recomputed on request so the frontend can re-threshold, switch attribution
+    method, or ask for a larger overlay without re-running inference. `method`
+    selects one of `explanation.saliency_methods` (grad_cam++, grad_cam,
+    integrated_gradients, smoothgrad, occlusion); omitted, the primary map is
+    used.
+
+    Returns normalized region polygons, bounding boxes, intensity-weighted
+    centroids, iso-level contours, and an RGBA overlay PNG data URI.
+    """
+    import numpy as np
+
+    from aura.services.explain.geometry import heatmap_geometry
+
+    b = store().get_case(case_id)
+    if b is None:
+        raise HTTPException(404, "case not found")
+    ex = getattr(b, "explanation", None)
+    if ex is None or not ex.saliency:
+        raise HTTPException(404, {"error": "no_saliency",
+                                  "reason": "this case carries no saliency map"})
+
+    flat = ex.saliency
+    if method:
+        if method not in (ex.saliency_methods or {}):
+            raise HTTPException(404, {
+                "error": "unknown_method",
+                "reason": f"method {method!r} not computed for this case",
+                "available": sorted((ex.saliency_methods or {}).keys()),
+            })
+        flat = ex.saliency_methods[method]
+
+    shape = tuple(ex.saliency_shape or (64, 64))
+    try:
+        heat = np.asarray(flat, dtype=float).reshape(shape)
+    except ValueError:
+        raise HTTPException(500, {"error": "malformed_saliency",
+                                  "reason": f"{len(flat)} values do not fit shape {shape}"})
+
+    try:
+        level_tuple = tuple(float(v) for v in levels.split(",") if v.strip())
+    except ValueError:
+        raise HTTPException(422, {"error": "bad_levels",
+                                  "reason": "levels must be comma-separated floats"})
+
+    # The probability that weights the overlay is the target finding's own
+    # calibrated probability, so intensity tracks evidence rather than the
+    # per-finding normalization of the raw map.
+    probability = None
+    for f in (getattr(b.vision, "findings", None) or []):
+        if getattr(f, "finding", None) == ex.saliency_target:
+            probability = float(f.probability)
+            break
+
+    payload = heatmap_geometry(
+        heat,
+        probability=probability,
+        finding=ex.saliency_target,
+        levels=level_tuple,
+        thresh_rel=threshold,
+        use_otsu=otsu,
+        include_overlay=overlay,
+        overlay_size=(overlay_size, overlay_size) if overlay_size else None,
+        max_regions=max_regions,
+    )
+    payload["case_id"] = case_id
+    payload["method"] = method or ex.method
+    payload["available_methods"] = sorted((ex.saliency_methods or {}).keys())
+    return payload
+
+
 @app.get("/v1/cases/{case_id}/neuroview")
 def get_neuroview(case_id: str):
     b = store().get_case(case_id)
@@ -256,13 +347,107 @@ def feedback(case_id: str, payload: dict = Body(...)):
     store().audit("feedback.recorded", "case", case_id,
                   detail={"verdict": verdict, "correction": correction})
 
-    # Module 8: fold the confirmed outcome into the online conformal threshold so
-    # coverage self-corrects under covariate shift. Runs on the local SQLite log.
+    return {"ok": True, "stats": store().feedback_stats()}
+
+
+VALID_OUTCOME_SOURCES = {"pcr", "expert_consensus", "biopsy", "pathology", "clinical_course"}
+
+
+@app.post("/v1/cases/{case_id}/outcome")
+def record_outcome(case_id: str, payload: dict = Body(...)):
+    b = store().get_case(case_id)
+    if b is None:
+        raise HTTPException(404, "case not found")
+
+    true_diagnosis = payload.get("true_diagnosis", "")
+    source = payload.get("source", "")
+
+    if source not in VALID_OUTCOME_SOURCES:
+        raise HTTPException(422, detail={"error": "invalid_source", "source": source})
+
+    try:
+        Diagnosis(true_diagnosis)
+    except ValueError:
+        raise HTTPException(422, detail={"error": "invalid_diagnosis",
+                                         "diagnosis": true_diagnosis})
+
+    if store().has_outcome(case_id):
+        raise HTTPException(409, detail={"error": "outcome_already_recorded",
+                                         "case_id": case_id})
+
     aci_info = None
     if get_settings().aci_enabled and b.safety is not None:
-        aci_info = _record_conformal_outcome(b, diagnosis)
+        # The has_outcome() check above is a courtesy, not the guarantee: it is a
+        # read followed by a write, so two concurrent submissions for the same case
+        # can both pass it. outcomes.case_id is UNIQUE, so the loser hits an
+        # IntegrityError — which used to escape as a 500. Translate it to the same
+        # 409 the pre-check returns, so the race and the ordinary duplicate look
+        # identical to a caller. Note the ACI step has already run for this request;
+        # it is idempotent in effect because the losing row is never committed.
+        try:
+            aci_info = _record_conformal_outcome(b, true_diagnosis)
+        except IntegrityError:
+            raise HTTPException(409, detail={"error": "outcome_already_recorded",
+                                             "case_id": case_id})
 
-    return {"ok": True, "stats": store().feedback_stats(), "conformal": aci_info}
+    store().audit("outcome.recorded", "case", case_id,
+                  detail={"true_diagnosis": true_diagnosis, "source": source})
+    return {"ok": True, "conformal": aci_info}
+
+
+@app.post("/v1/cases/{case_id}/chat")
+async def clinical_chat(case_id: str, payload: ClinicalChatRequest):
+    from aura.services.copilot.ollama_client import (
+        OllamaCopilotClient,
+        OllamaConnectionError,
+    )
+    from aura.services.copilot.prompt_builder import build_grounding_prompt
+
+    b = store().get_case(case_id)
+    if b is None:
+        raise HTTPException(404, "case not found")
+
+    system_prompt = build_grounding_prompt(b)
+
+    history_dicts = [{"role": m.role, "content": m.content} for m in payload.history]
+
+    client = OllamaCopilotClient()
+    try:
+        answer, correlation_id = await client.ask_copilot(
+            system_prompt=system_prompt,
+            user_message=payload.question,
+            history=history_dicts,
+        )
+    except OllamaConnectionError as e:
+        raise HTTPException(503, {"error": "ollama_unavailable", "reason": str(e)})
+
+    store().save_chat_message(case_id, "user", payload.question)
+    store().save_chat_message(case_id, "assistant", answer)
+    store().audit("copilot.chat", "case", case_id,
+                  detail={"question": payload.question, "correlation_id": correlation_id})
+
+    sources = _extract_sources(system_prompt)
+    return ClinicalChatResponse(answer=answer, sources=sources, correlation_id=correlation_id)
+
+
+def _extract_sources(prompt: str) -> list[str]:
+    sources: list[str] = []
+    for line in prompt.splitlines():
+        line = line.strip()
+        if line.startswith("[") and "]" in line:
+            idx = line.index("]")
+            candidate = line[1:idx].strip()
+            if candidate not in sources:
+                sources.append(candidate)
+    return sources
+
+
+@app.get("/v1/cases/{case_id}/chat")
+def get_chat_history(case_id: str):
+    b = store().get_case(case_id)
+    if b is None:
+        raise HTTPException(404, "case not found")
+    return {"case_id": case_id, "messages": store().get_chat_history(case_id)}
 
 
 def _record_conformal_outcome(bundle, confirmed_diagnosis: str) -> dict | None:

@@ -37,6 +37,17 @@ services:
       # dev and tests; with it enabled a container whose DenseNet weights failed
       # to load serves fabricated findings and still reports healthy.
       AURA_ALLOW_FALLBACK_VISION: "0"
+      # Access control. Empty token = OFF, which leaves every endpoint open —
+      # including GET /v1/cases (enumerates case ids), /v1/cases/{id} and the
+      # FHIR/HL7 exports that emit patient data for downstream ingestion. Fine for
+      # a single-box offline demo, wrong for anything another machine can reach.
+      # Generate one with: python -c "import secrets;print(secrets.token_urlsafe(32))"
+      # preflight warns on every boot while this is empty.
+      AURA_AUTH_TOKEN: "${AURA_AUTH_TOKEN:-}"
+      AURA_AUTH_HEADER: "${AURA_AUTH_HEADER:-x-aura-token}"
+      # Per-principal req/min; 0 = unlimited. In-process bucket, so N replicas
+      # means an effective ceiling of N x this value.
+      AURA_RATE_LIMIT_RPM: "${AURA_RATE_LIMIT_RPM:-0}"
       OMP_NUM_THREADS: "${AURA_THREADS:-4}"
       # Redirect the SQLite case store onto the mounted volume below. The
       # previous compose file set AURA_DATA_DIR, which nothing in the codebase

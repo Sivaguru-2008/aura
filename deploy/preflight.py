@@ -91,7 +91,7 @@ REQUIRED_IMPORTS = [
 
 
 def check_imports() -> None:
-    print("\n[1/5] Python dependencies")
+    print("\n[1/6] Python dependencies")
     for mod, why in REQUIRED_IMPORTS:
         try:
             __import__(mod)
@@ -135,7 +135,7 @@ BRAIN_ARTIFACTS = [
 
 
 def check_artifacts(skip_brain: bool) -> None:
-    print("\n[2/5] Served artifacts")
+    print("\n[2/6] Served artifacts")
     if not ARTIFACTS.is_dir():
         _fail(
             "artifacts/ directory",
@@ -177,7 +177,7 @@ def check_artifacts(skip_brain: bool) -> None:
 # 3. The real vision model actually loads
 # --------------------------------------------------------------------------- #
 def check_vision_engine() -> None:
-    print("\n[3/5] Vision engine (real weights, not fallback)")
+    print("\n[3/6] Vision engine (real weights, not fallback)")
     fallback = os.environ.get("AURA_ALLOW_FALLBACK_VISION", "0")
     if fallback == "1":
         _warn(
@@ -223,7 +223,7 @@ def check_vision_engine() -> None:
 # 4. Modality router installs (gateway swallows this failure)
 # --------------------------------------------------------------------------- #
 def check_router() -> None:
-    print("\n[4/5] Modality router")
+    print("\n[4/6] Modality router")
     try:
         from aura.backend.bootstrap import install_router  # noqa: F401
 
@@ -241,7 +241,7 @@ def check_router() -> None:
 # 5. The ASGI app imports and the fusion model is trained
 # --------------------------------------------------------------------------- #
 def check_app() -> None:
-    print("\n[5/5] Gateway application")
+    print("\n[5/6] Gateway application")
     try:
         from aura.gateway.app import app
 
@@ -257,6 +257,60 @@ def check_app() -> None:
             "the ASGI target 'aura.gateway.app:app' must import cleanly for uvicorn to start",
         )
         return
+
+
+def check_access_control() -> None:
+    """Warn when the box will serve patient data with no authentication.
+
+    Not a hard failure: the offline single-box demo is a real, supported mode and
+    it runs without a token by design. But an unauthenticated AURA exposes reads
+    that emit patient data to anything that can reach the port — GET /v1/cases
+    enumerates case ids, /v1/cases/{id} returns the full bundle, and the FHIR/HL7
+    exporters emit records built for another system to ingest. A preflight that
+    already refuses to boot on a missing artifact should at least say so out loud.
+    """
+    print("\n[6/6] Access control")
+    try:
+        from aura.common.config import get_settings
+
+        s = get_settings()
+    except Exception as exc:                      # pragma: no cover - import guarded above
+        _warn("settings", f"could not read settings: {type(exc).__name__}: {exc}")
+        return
+
+    if s.auth_token:
+        _ok(f"API token set {DIM}(header: {s.auth_header}){RESET}")
+    else:
+        _warn(
+            "authentication",
+            "no AURA_AUTH_TOKEN - every endpoint is open, including GET /v1/cases, "
+            "/v1/cases/{id} and the FHIR/HL7 exports. Correct for an offline demo; "
+            "set a token before anything else can reach this port. Generate one: "
+            'python -c "import secrets;print(secrets.token_urlsafe(32))"',
+        )
+
+    if s.rate_limit_rpm > 0:
+        _ok(f"rate limit {DIM}{s.rate_limit_rpm} req/min per principal{RESET}")
+    else:
+        _warn("rate limiting",
+              "AURA_RATE_LIMIT_RPM=0 - no per-principal request cap is enforced")
+
+    # The abstention envelope, printed rather than assumed. If the policy file has
+    # gone missing the loader has already warned; this makes the *effective* values
+    # visible in the boot log so a fallback is obvious in hindsight too.
+    from aura.common.config import _SAFETY_POLICY_PATH
+
+    if _SAFETY_POLICY_PATH.exists():
+        _ok(f"safety policy {DIM}{s.active_policy}: epistemic>{s.epistemic_threshold} "
+            f"ood_z>{s.ood_threshold} set>{s.abstention_conformal_size} "
+            f"p_top<{s.low_confidence_threshold}{RESET}")
+    else:
+        _fail(
+            "safety policy",
+            f"{_SAFETY_POLICY_PATH} is missing; abstention thresholds silently "
+            f"fell back to built-in defaults",
+            "restore aura/common/policy/safety_policy.yaml - it is git-tracked",
+        )
 
 
 def main() -> int:
@@ -280,6 +334,7 @@ def main() -> int:
     check_vision_engine()
     check_router()
     check_app()
+    check_access_control()
 
     print("\n" + "=" * 74)
     if _failures:
