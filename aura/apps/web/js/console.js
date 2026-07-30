@@ -78,7 +78,58 @@ window.CONSOLE = (() => {
     }, 1000);
   }
 
+  /* ================= workflow pager =================
+     Three views over ONE case. Deliberately a visibility switch and nothing more:
+     populate() keeps rendering every panel for every case, so a page change cannot
+     drop panel state, cannot re-fire a fetch, and cannot introduce an ordering bug.
+     Everything below only sets attributes and classes.                            */
+  const PAGES = ["read", "assess", "report"];
+  const PAGE_KEY = "aura.console.page";
+  let PAGE = "read";
+
+  function setPage(name, { remember = true } = {}) {
+    if (!PAGES.includes(name)) return;
+    PAGE = name;
+    const grid = $("c-grid");
+    if (grid) grid.dataset.page = name;
+    document.querySelectorAll("#c-pager .pg-tab").forEach((t) => {
+      const on = t.dataset.goto === name;
+      t.classList.toggle("on", on);
+      t.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    // A page change is a viewport change: start the new view at the top rather
+    // than at whatever scroll offset the previous (taller) page happened to have.
+    const main = $("c-main");
+    if (main) main.scrollTo({ top: 0, behavior: REDUCED ? "auto" : "smooth" });
+    if (remember) { try { localStorage.setItem(PAGE_KEY, name); } catch (e) {} }
+  }
+
+  function bindPager() {
+    document.querySelectorAll("#c-pager .pg-tab").forEach((t) => {
+      t.addEventListener("click", () => setPage(t.dataset.goto));
+    });
+    // 1/2/3 jump between views; ignored while typing so the report editor is safe.
+    document.addEventListener("keydown", (e) => {
+      if (document.body.dataset.view !== "console") return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const el = document.activeElement;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
+      const i = ["1", "2", "3"].indexOf(e.key);
+      if (i >= 0) { e.preventDefault(); setPage(PAGES[i]); }
+    });
+    let start = "read";
+    try { start = localStorage.getItem(PAGE_KEY) || "read"; } catch (e) {}
+    setPage(start, { remember: false });
+  }
+
+  /** Flag on the Assess tab when the answer for this case is "AURA abstained". */
+  function updatePagerState(b) {
+    const dot = $("pg-dot-assess");
+    if (dot) dot.hidden = !(b.safety && b.safety.abstained);
+  }
+
   function bindChrome() {
+    bindPager();
     $("btn-exit").addEventListener("click", () => window.ROUTER.surface());
     $("tg-sal").addEventListener("click", (e) => {
       e.target.classList.toggle("on");
@@ -372,6 +423,7 @@ window.CONSOLE = (() => {
       ["neuroview", (b) => { if (window.NEUROVIEW) window.NEUROVIEW.load(b.case_id, b); }],
       ["evidence", drawEvidence],
       ["posterior", drawPosterior],
+      ["measurement", drawMeasurement],
       ["safety", drawSafety],
       ["drp", drawDRP],
       ["recommendations", drawRecs],
@@ -380,6 +432,7 @@ window.CONSOLE = (() => {
       ["longitudinal", drawLongitudinal],
       ["discussion", drawDiscussion],
       ["priors_sidebar", updatePriorsSidebar],
+      ["pager", updatePagerState],
     ];
     for (const [name, fn] of steps) {
       try { fn(b); }
@@ -410,6 +463,67 @@ window.CONSOLE = (() => {
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
     g.drawImage(off, 0, 0, r.width, r.height);
+  }
+
+  /* Draw the measured Grad-CAM++ region outlines.
+     The polygons come from services/explain/geometry.py: simplified contours of
+     the actual activation, normalized to [0,1] in (x, y) order. Returns false
+     when the case carries no geometry, so the caller can fall back to the
+     static anatomical boxes. */
+  function drawSaliencyGeometry(b, wrap) {
+    const geo = b.explanation && b.explanation.geometry;
+    const regions = geo && geo.regions;
+    if (!regions || !regions.length) return false;
+
+    const NS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("class", "sal-geo");
+    svg.setAttribute("viewBox", "0 0 1 1");
+    svg.setAttribute("preserveAspectRatio", "none");
+
+    // Iso-level contours first, so region outlines sit on top of them.
+    (geo.contours || []).forEach((c) => {
+      if (!c.points || c.points.length < 3) return;
+      const path = document.createElementNS(NS, "polygon");
+      path.setAttribute("points", c.points.map((p) => `${p[0]},${p[1]}`).join(" "));
+      path.setAttribute("class", "sal-contour");
+      path.setAttribute("stroke-width", String(0.0016 + 0.0022 * c.level));
+      path.setAttribute("opacity", String(0.18 + 0.42 * c.level));
+      svg.appendChild(path);
+    });
+
+    regions.forEach((r, i) => {
+      if (r.polygon && r.polygon.length >= 3) {
+        const poly = document.createElementNS(NS, "polygon");
+        poly.setAttribute("points", r.polygon.map((p) => `${p[0]},${p[1]}`).join(" "));
+        poly.setAttribute("class", "sal-region");
+        poly.style.animationDelay = `${0.25 + i * 0.18}s`;
+        svg.appendChild(poly);
+      }
+      if (r.peak_point) {
+        const dot = document.createElementNS(NS, "circle");
+        dot.setAttribute("cx", r.peak_point[0]);
+        dot.setAttribute("cy", r.peak_point[1]);
+        dot.setAttribute("r", "0.008");
+        dot.setAttribute("class", "sal-peak");
+        svg.appendChild(dot);
+      }
+    });
+    wrap.appendChild(svg);
+
+    // Labels are HTML, not SVG text: the viewBox is unit-square and
+    // non-uniformly scaled, which would distort any glyphs drawn inside it.
+    const label = geo.finding ? (EV_LABEL[geo.finding] || geo.finding) : "saliency";
+    regions.forEach((r, i) => {
+      const [cx, cy] = r.centroid || r.peak_point || [0.5, 0.5];
+      const tag = document.createElement("div");
+      tag.className = "sal-tag";
+      tag.style.cssText = `left:${cx * 100}%;top:${cy * 100}%;animation-delay:${0.35 + i * 0.18}s`;
+      const pct = geo.probability != null ? ` · ${(geo.probability * 100).toFixed(0)}%` : "";
+      tag.textContent = `${label}${pct} · peak ${r.peak.toFixed(2)}`;
+      wrap.appendChild(tag);
+    });
+    return true;
   }
 
   function drawXray(b) {
@@ -452,14 +566,18 @@ window.CONSOLE = (() => {
       showFeatureImportanceOverlay(b);
     } else if (currentSaliencyTab === "counterfactual") {
       showCounterfactualOverlay(b);
+    } else if (drawSaliencyGeometry(b, wrap)) {
+      // Real Grad-CAM++ region outlines were drawn — nothing further to add.
     } else {
-      // finding regions materialize
+      // Fallback: static per-finding anatomical boxes. Used when the case
+      // carries no heatmap geometry (older cases, or geometry extraction
+      // skipped). These are anatomy priors, not measured localisation.
       const found = ((b.vision && b.vision.findings) || []).filter(
         (f) => (f.present !== undefined ? f.present : f.probability >= 0.5));
       found.forEach((f, i) => {
         const [r0, c0, r1, c1] = f.region;
         const d = document.createElement("div");
-        d.className = "region";
+        d.className = "region region-static";
         d.style.cssText = `top:${r0 * 100}%;left:${c0 * 100}%;height:${(r1 - r0) * 100}%;width:${(c1 - c0) * 100}%;animation-delay:${0.25 + i * 0.18}s`;
         d.innerHTML = `<span class="r-lbl">${(EV_LABEL[f.finding] || f.finding)} · ${f.probability.toFixed(2)}</span>`;
         wrap.appendChild(d);
@@ -714,6 +832,83 @@ window.CONSOLE = (() => {
     });
   }
 
+  /* ================= measurement budget (quantum only) =================
+     The one panel in this console showing something a classical model cannot
+     produce. Quantum precision is bought with shots — Var[<Z>] = (1-<Z>²)/n — so
+     an unresolved case splits into two states with opposite instructions:
+       measurement-limited : the answer exists, buy more shots (we say how many)
+       model-limited       : tied at infinite precision, escalate to a human
+     A classical softmax of 0.55 means "unsure" and cannot tell you which.        */
+  function drawMeasurement(b) {
+    const panel = $("panel-measure");
+    if (!panel) return;
+    const m = b.measurement;
+    // Classical backend (or a skipped budget) -> hide the panel entirely rather
+    // than render zeros that look like a measured result.
+    if (!m) { panel.hidden = true; return; }
+    panel.hidden = false;
+
+    const FIXED = 512;                       // the non-adaptive budget it replaces
+    const spent = m.shots_spent || 0;
+    const saving = spent > 0 ? FIXED / spent : 0;
+    const committed = !!m.committed;
+    const limited = m.limiting_factor || null;
+
+    const verdict = committed
+      ? { cls: "commit", tag: "committed",
+          note: `resolved at ${spent.toLocaleString()} shots` }
+      : limited === "measurement"
+        ? { cls: "measure", tag: "measurement-limited",
+            note: m.predicted_shots
+              ? `~${Number(m.predicted_shots).toLocaleString()} shots would resolve this`
+              : "more measurement would resolve this" }
+        : { cls: "model", tag: "model-limited",
+            note: m.floor_limited
+              ? "lead is below the clinical-significance floor — escalate"
+              : "tied at infinite precision — escalate" };
+
+    $("mb-hint").textContent = committed
+      ? `${saving >= 1 ? saving.toFixed(1) + "× under" : (1 / saving).toFixed(1) + "× over"} a fixed ${FIXED}-shot budget`
+      : "no achievable budget settles this case";
+
+    const top = DX_LABEL[m.top] || m.top;
+    const run = DX_LABEL[m.runner_up] || m.runner_up;
+
+    // Margin bar: the observed ±1σ shot-noise band against the analytic margin the
+    // serving path uses. Seeing the band straddle zero is the whole point.
+    const scale = Math.max(0.35, Math.abs(m.analytic_margin) * 1.6, Math.abs(m.margin) * 1.6);
+    const pct = (v) => clamp((v / scale) * 100, 0, 100);
+
+    $("mb-body").innerHTML = `
+      <div class="mb-verdict ${verdict.cls}">
+        <span class="mb-tag">${verdict.tag}</span>
+        <span class="mb-note">${verdict.note}</span>
+      </div>
+      <div class="mb-pair mono">
+        <span class="mb-top">${top}</span>
+        <span class="mb-vs">vs</span>
+        <span class="mb-run">${run}</span>
+      </div>
+      <div class="mb-track" title="decision margin ±1σ shot noise">
+        <div class="mb-band"></div>
+        <div class="mb-analytic" title="margin at infinite shots"></div>
+      </div>
+      <dl class="mb-stats mono">
+        <div><dt>shots spent</dt><dd>${spent.toLocaleString()}</dd></div>
+        <div><dt>margin</dt><dd>${m.margin.toFixed(3)} ± ${m.margin_std.toFixed(3)}</dd></div>
+        <div><dt>separation</dt><dd>${m.separation_z.toFixed(2)} σ</dd></div>
+        <div><dt>at ∞ shots</dt><dd>${m.analytic_margin.toFixed(3)}</dd></div>
+      </dl>
+      <p class="mb-reason">${m.reason || ""}</p>`;
+
+    const band = $("mb-body").querySelector(".mb-band");
+    const mark = $("mb-body").querySelector(".mb-analytic");
+    const lo = pct(Math.max(0, m.margin - m.margin_std));
+    const hi = pct(m.margin + m.margin_std);
+    mark.style.left = pct(Math.abs(m.analytic_margin)) + "%";
+    setTimeout(() => { band.style.left = lo + "%"; band.style.width = Math.max(1, hi - lo) + "%"; }, 120);
+  }
+
   /* ================= safety panel ================= */
   function dial(el, label, val, norm, color) {
     const v = clamp(norm, 0, 1);
@@ -798,7 +993,8 @@ window.CONSOLE = (() => {
       if (reportOverlay) reportOverlay.style.display = "none";
     }
 
-    const drp = b.drp;
+    // The bundle carries the profile under both names; prefer the canonical one.
+    const drp = b.decision_readiness || b.drp;
     if (!drp) {
       sidebar.style.display = "none";
       return;
@@ -807,25 +1003,41 @@ window.CONSOLE = (() => {
     sidebar.style.display = "block";
 
     // Update status chip
+    // DecisionReadinessProfile.state is a lowercase enum ("ready" / "not_ready" /
+    // "conditional"), not a `status` field — reading drp.status made this chip
+    // report NOT READY for every case, including ready ones.
     const statusChip = $("drp-status-chip");
-    if (drp.status === "READY") {
-      statusChip.innerHTML = `<span class="flag ok" style="padding: 2px 6px; font-size: 10px;">DECISION READINESS: READY</span>`;
-    } else {
-      statusChip.innerHTML = `<span class="flag abst" style="padding: 2px 6px; font-size: 10px; background: #ff5d5d;">DECISION READINESS: NOT READY</span>`;
-    }
+    const ready = String(drp.state || "").toLowerCase() === "ready";
+    statusChip.innerHTML = ready
+      ? `<span class="flag ok" style="padding: 2px 6px; font-size: 10px;">DECISION READINESS: READY</span>`
+      : `<span class="flag abst" style="padding: 2px 6px; font-size: 10px; background: #ff5d5d;">DECISION READINESS: NOT READY</span>`;
 
-    // Render dimensions
+    // Render dimensions. The contract names these s_* (see
+    // schemas/contracts.py::DecisionReadinessProfile); reading drp.coverage etc.
+    // yielded undefined, so every bar rendered "NaN%" with width:NaN% — and since
+    // NaN < 0.6 is false, all six kept the healthy cyan colour while showing NaN.
+    // There is no `stability` dimension in the profile, so it is not listed: an
+    // invented row would render 0% and read as a failing score that does not exist.
     const dims = [
-      ["Coverage", drp.coverage],
-      ["Quality", drp.quality],
-      ["Consistency", drp.consistency],
-      ["Robustness", drp.robustness],
-      ["Stability", drp.stability],
-      ["Consensus", drp.consensus]
+      ["Coverage", drp.s_coverage],
+      ["Quality", drp.s_quality],
+      ["Consistency", drp.s_consistency],
+      ["Robustness", drp.s_robustness],
+      ["Consensus", drp.s_consensus]
     ];
 
     let barsHtml = "";
-    dims.forEach(([name, val]) => {
+    dims.forEach(([name, raw]) => {
+      // A dimension the backend did not send is shown as unavailable, never as 0%.
+      if (raw === undefined || raw === null || !isFinite(raw)) {
+        barsHtml += `
+        <div style="display: flex; justify-content: space-between; font-size: 10.5px;">
+          <span style="color: var(--faint);">${name}</span>
+          <span style="color: var(--faint);">n/a</span>
+        </div>`;
+        return;
+      }
+      const val = clamp(Number(raw), 0, 1);
       const pct = (val * 100).toFixed(0);
       let color = "#4be1c3";
       if (val < 0.6) color = "#ff5d5d";

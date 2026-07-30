@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AURA — the copilot that knows what it doesn't know</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='6' fill='%234be1c3'/%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%234be1c3' stroke-opacity='.35' stroke-width='2'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="/static/css/main.css?v=6">
+<link rel="stylesheet" href="/static/css/main.css?v=10">
 <style>
 .safety-overlay {
   position: absolute;
@@ -290,9 +290,32 @@
         <pre class="forming-text mono" id="forming-text"></pre>
       </div>
 
-      <div class="c-grid" id="c-grid">
+      <!-- Workflow pager. Splits the console into the three questions a clinician
+           asks in order, instead of one wall of twelve panels. Purely a visibility
+           layer: every panel still renders on every case, so nothing here can change
+           what the system computes — only what is on screen. Keys 1/2/3 also switch. -->
+      <nav class="c-pager" id="c-pager" role="tablist" aria-label="Case views">
+        <button class="pg-tab on" role="tab" data-goto="read" aria-selected="true">
+          <span class="pg-n mono">1</span>
+          <span class="pg-lbl">Read</span>
+          <span class="pg-sub">image &amp; evidence</span>
+        </button>
+        <button class="pg-tab" role="tab" data-goto="assess" aria-selected="false">
+          <span class="pg-n mono">2</span>
+          <span class="pg-lbl">Assess</span>
+          <span class="pg-sub">differential &amp; certainty</span>
+          <i class="pg-dot" id="pg-dot-assess" hidden title="this case abstained"></i>
+        </button>
+        <button class="pg-tab" role="tab" data-goto="report" aria-selected="false">
+          <span class="pg-n mono">3</span>
+          <span class="pg-lbl">Report</span>
+          <span class="pg-sub">draft, history &amp; sign-off</span>
+        </button>
+      </nav>
 
-        <section class="panel p-xray" data-tilt id="panel-xray">
+      <div class="c-grid" id="c-grid" data-page="read">
+
+        <section class="panel p-xray" data-tilt id="panel-xray" data-page="read">
           <header><h4>Study</h4>
             <div class="p-tools">
               <button id="tg-sal" class="tg">saliency</button>
@@ -317,7 +340,7 @@
           <div class="similar mono" id="similar-row"></div>
         </section>
 
-        <section class="panel p-evidence" data-tilt id="panel-evidence">
+        <section class="panel p-evidence" data-tilt id="panel-evidence" data-page="read">
           <header><h4>Evidence &rarr; reasoning</h4><span class="p-hint mono">hover a node · counterfactuals live</span></header>
           <div class="ev-stage">
             <svg id="ev-svg" viewBox="0 0 560 420" preserveAspectRatio="xMidYMid meet"></svg>
@@ -344,7 +367,7 @@
           </div>
         </section>
 
-        <section class="panel p-safety" data-tilt id="panel-safety">
+        <section class="panel p-safety" data-tilt id="panel-safety" data-page="assess">
           <header><h4>Safety</h4><span id="safety-flag" class="flag mono"></span></header>
           <div id="abstain-banner" class="abstain-banner" hidden></div>
           <div class="dials" id="dials"></div>
@@ -354,7 +377,7 @@
           </div>
         </section>
 
-        <section class="panel p-neuroview" data-tilt id="panel-neuroview" hidden>
+        <section class="panel p-neuroview" data-tilt id="panel-neuroview" data-page="read" hidden>
           <header><h4>AURA NeuroView</h4>
             <div class="p-tools">
               <span class="p-hint mono" id="nv-status">Not Available</span>
@@ -468,17 +491,29 @@
           <footer class="p-foot mono" id="nv-meta"></footer>
         </section>
 
-        <section class="panel p-posterior" data-tilt id="panel-posterior">
+        <section class="panel p-posterior" data-tilt id="panel-posterior" data-page="assess">
           <header><h4>Calibrated differential</h4><span class="p-hint mono" id="post-backend"></span></header>
           <div id="post-bars"></div>
         </section>
 
-        <section class="panel p-recs" data-tilt id="panel-recs">
+        <!-- Measurement economics. Hidden on classical backends, which have no shot
+             budget to spend: a product-of-experts returns the same answer however
+             long you run it, so there is nothing here to report and we show nothing
+             rather than a fabricated figure. -->
+        <section class="panel p-measure" data-tilt id="panel-measure" data-page="assess" hidden>
+          <header>
+            <h4>Measurement budget</h4>
+            <span class="p-hint mono" id="mb-hint">quantum readout · shots bought precision</span>
+          </header>
+          <div id="mb-body"></div>
+        </section>
+
+        <section class="panel p-recs" data-tilt id="panel-recs" data-page="assess">
           <header><h4>Next best evidence</h4><span class="p-hint mono">ranked by information gain / cost·risk</span></header>
           <ol id="recs"></ol>
         </section>
 
-        <section class="panel p-report" data-tilt id="panel-report" style="position: relative;">
+        <section class="panel p-report" data-tilt id="panel-report" data-page="report" style="position: relative;">
           <!-- Safety overlay blocking report editing -->
           <div id="report-safety-overlay" class="safety-overlay" style="display: none;">
             <h3 style="color: #ff5d5d; margin: 0 0 10px 0; font-family: var(--mono); font-size: 16px; font-weight: bold; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;">
@@ -503,7 +538,7 @@
         </section>
 
         <!-- Confidence Evolution Flow (Task 3) -->
-        <section class="panel p-evolution" data-tilt id="panel-evolution" style="grid-column: span 12;">
+        <section class="panel p-evolution" data-tilt id="panel-evolution" data-page="report" style="grid-column: span 12;">
           <header>
             <h4>Confidence Evolution Flow</h4>
             <span class="p-hint mono">pipeline transitions: hover nodes for details</span>
@@ -550,7 +585,7 @@
         </section>
 
         <!-- Longitudinal Patient Analysis (Task 1) -->
-        <section class="panel p-longitudinal" data-tilt id="panel-longitudinal" style="grid-column: span 12; display: none;">
+        <section class="panel p-longitudinal" data-tilt id="panel-longitudinal" data-page="report" style="grid-column: span 12; display: none;">
           <header>
             <h4>Longitudinal Patient Analysis</h4>
             <span class="p-hint mono">Compare historical studies & track volumetric trends</span>
@@ -585,7 +620,7 @@
         </section>
 
         <!-- Multi-Agent Clinical Discussion (Task 7) -->
-        <section class="panel p-discussion" data-tilt id="panel-discussion" style="grid-column: span 12;">
+        <section class="panel p-discussion" data-tilt id="panel-discussion" data-page="report" style="grid-column: span 12;">
           <header>
             <h4>Multi-Agent Clinical Discussion</h4>
             <span class="p-hint mono">Radiologist · Pulmonologist/Neurologist · Cardiologist · Oncologist consensus</span>
@@ -599,7 +634,7 @@
         </section>
 
         <!-- Active Diagnosis Agent (sequential EIG-driven testing) -->
-        <section class="panel p-agent" data-tilt id="panel-agent" style="grid-column: span 12; display: none;">
+        <section class="panel p-agent" data-tilt id="panel-agent" data-page="report" style="grid-column: span 12; display: none;">
           <header>
             <h4>⚡ Active Diagnosis Agent</h4>
             <span class="p-hint mono">sequential decisions · orders the test that resolves the most bits · commits or abstains</span>
@@ -740,7 +775,7 @@
 <script src="/static/js/fx.js?v=5"></script>
 <script src="/static/js/landing.js?v=5"></script>
 <script src="/static/js/neuroview.js?v=1"></script>
-<script src="/static/js/console.js?v=7"></script>
+<script src="/static/js/console.js?v=10"></script>
 <script src="/static/js/main.js?v=5"></script>
 </body>
 </html>
