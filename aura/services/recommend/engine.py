@@ -24,11 +24,11 @@ import numpy as np
 
 from aura.common.mathx import entropy, softmax
 from aura.schemas.clinical import DIAGNOSES, Diagnosis
-from aura.schemas.contracts import Recommendation
-from ..fusion.evidence import EVIDENCE_CHANNELS
-from .causal import CausalDependencyGraph, JointEIGSelector
+from aura.schemas.contracts import PatientContext, Recommendation
+from aura.services.fusion.evidence import EVIDENCE_CHANNELS
+from aura.services.recommend.causal import CausalDependencyGraph, JointEIGSelector
 
-_COST_W = {"low": 1.0, "medium": 2.0, "high": 4.0}
+_COST_W = {"none": 0.0, "low": 1.0, "medium": 2.0, "high": 4.0}
 _RISK_W = {"none": 1.0, "low": 1.5, "medium": 2.5}
 
 # Severity weight per diagnosis: the cost of *not* acting on it correctly.
@@ -44,20 +44,26 @@ _SEVERITY: dict[Diagnosis, float] = {
 _SEV = np.array([_SEVERITY[d] for d in DIAGNOSES], dtype=float)
 
 CATALOG = [
+    dict(action="observe", display="Observe / Monitor",
+         channels=[], cost="none", risk="none", contrast=False,
+         why="No further testing indicated; monitor for clinical changes."),
     dict(action="acquire_lateral_view", display="Acquire lateral chest view",
-         channels=["effusion", "opacity"], cost="low", risk="none",
+         channels=["effusion", "opacity"], cost="low", risk="none", contrast=False,
          why="A lateral projection disambiguates airspace opacity from pleural fluid."),
     dict(action="order_ct_chest", display="Order CT chest (low-dose)",
-         channels=["nodule", "consolidation", "opacity"], cost="high", risk="low",
+         channels=["nodule", "consolidation", "opacity"], cost="high", risk="low", contrast=False,
          why="CT characterizes nodules and consolidation the frontal film leaves ambiguous."),
+    dict(action="order_ct_angio", display="Order CT Pulmonary Angiography (CTPA)",
+         channels=["nodule", "consolidation", "opacity"], cost="high", risk="medium", contrast=True,
+         why="CTPA evaluates for pulmonary embolism and characterises vascular pathology."),
     dict(action="retrieve_prior_films", display="Retrieve & compare prior films",
-         channels=["nodule", "opacity"], cost="low", risk="none",
+         channels=["nodule", "opacity"], cost="low", risk="none", contrast=False,
          why="Temporal stability changes malignancy likelihood markedly."),
     dict(action="order_bnp_echo", display="Order BNP + bedside echo",
-         channels=["cardiomegaly"], cost="medium", risk="none",
+         channels=["cardiomegaly"], cost="medium", risk="none", contrast=False,
          why="Confirms or excludes cardiac cause of an enlarged silhouette."),
     dict(action="sputum_culture", display="Send sputum culture + inflammatory markers",
-         channels=["consolidation"], cost="low", risk="none",
+         channels=["consolidation"], cost="low", risk="none", contrast=False,
          why="Microbiology raises or lowers the pneumonia posterior."),
 ]
 
@@ -183,18 +189,44 @@ class RecommendEngine:
             remaining.remove(best)
         return chosen, sorted(used_channels), spent, panel_evoi
 
-    def recommend(self, fusion_model, x: np.ndarray) -> list[Recommendation]:
+    @staticmethod
+    def _is_suitable(item: dict, patient_ctx: PatientContext | None) -> bool:
+        if patient_ctx is None:
+            return True
+        if item.get("contrast", False):
+            if patient_ctx.renal_impairment:
+                return False
+            if "contrast_dye" in patient_ctx.allergies:
+                return False
+        return True
+
+    def _contextual_cost_risk(self, item: dict,
+                              patient_ctx: PatientContext | None) -> tuple[float, float]:
+        cost = _COST_W.get(item.get("cost", "low"), 1.0)
+        risk = _RISK_W.get(item.get("risk", "none"), 1.0)
+        if patient_ctx is None:
+            return cost, risk
+        if item.get("contrast", False) and patient_ctx.renal_impairment:
+            risk *= 2.0
+        if item.get("action") == "observe" and patient_ctx.icu_queue_full:
+            cost = max(cost, 1.5)
+        return cost, risk
+
+    def recommend(self, fusion_model, x: np.ndarray,
+                   patient_ctx: PatientContext | None = None) -> list[Recommendation]:
         x = np.asarray(x, dtype=float)
         h0 = max(1e-6, self._entropy(fusion_model, x))
         recs: list[Recommendation] = []
         singles = []
         for item in CATALOG:
+            if not self._is_suitable(item, patient_ctx):
+                continue
             evoi, eig = self._evoi_and_eig(fusion_model, x, item["channels"])
             if evoi < self.min_gain and eig < 0.02:
                 continue
             singles.append(item)
-            cost_w, risk_w = _COST_W[item["cost"]], _RISK_W[item["risk"]]
-            utility = evoi / (cost_w * risk_w)
+            cost_w, risk_w = self._contextual_cost_risk(item, patient_ctx)
+            utility = evoi / max(cost_w * risk_w, 1e-9)
             pct = int(round(100 * eig / h0))
             recs.append(
                 Recommendation(

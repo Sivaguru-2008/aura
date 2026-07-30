@@ -4,9 +4,11 @@ The routing layer that turns AURA from a chest-X-ray product into a modular Medi
 Operating System. An upload arrives, the router works out what kind of study it is, and
 dispatches it to the engine that serves that modality.
 
-Today: **Chest X-ray → AURA Thorax** (live) and **Brain MRI → AURA NeuroMind**
-(placeholder — routing works, analysis is not built). Adding CT, mammography, retina, or
-ultrasound is an additive change: one engine class and one registry entry.
+Today: **Chest X-ray → AURA Thorax** (live) and **Brain MRI → AURA NeuroMind** (live —
+BraTS2020 segmentation network, epoch 24, composite Dice 0.875, with a Platt-calibrated
+presence head). NeuroMind requires a *volumetric* MR study with all four sequences and
+does not classify tumour subtype; see §8. Adding CT, mammography, retina, or ultrasound
+is an additive change: one engine class and one registry entry.
 
 ---
 
@@ -26,7 +28,7 @@ aura/
 │   ├── engines/
 │   │   ├── base/             abstract contract + plug-in registry
 │   │   ├── thorax/           adapter over the existing pipeline (nothing rewritten)
-│   │   └── neuro/            NeuroMind placeholder
+│   │   └── neuro/            NeuroMind — trained brain MRI engine
 │   ├── services/             orchestration (intake → route → dispatch → envelope)
 │   ├── api/                  FastAPI routes mounted onto the existing gateway
 │   ├── models/               wire contracts (pydantic)
@@ -321,7 +323,7 @@ Verified end-to-end against the real gateway with real model weights:
 | `POST /v1/studies/analyze` (new) | ✅ routed to Thorax — `CASE-UPLOAD-26`, real diagnosis + 5-section grounded report |
 | Routed case via `GET /v1/cases/{id}` | ✅ identical shape to a legacy case |
 | Console worklist `GET /v1/studies` | ✅ holds both cases |
-| Brain MRI DICOM | ✅ → NeuroMind, `not_implemented`, `routing_verified: true` |
+| Brain MRI DICOM | ✅ → NeuroMind (routing verified at the time of this table, when the engine was a placeholder; re-verify against the trained engine) |
 | Undecodable upload | ✅ 422 `modality_undetermined` with all candidates |
 | Full existing test suite | ✅ 151 passed, 1 skipped, 0 failed |
 
@@ -362,15 +364,26 @@ manager is the only supported entry point precisely so this cannot be forgotten.
 
 ## 8. Known limitations
 
-1. **Pixel-only brain MRI detection is uncalibrated.** No brain-MRI corpus was available to
-   validate it. Capped at 0.70, flagged `calibrated: false`, `requires_review: true`. Close
-   it with a learned classifier behind the `ModalityDetector` protocol.
+1. **Pixel-only brain MRI detection is uncalibrated.** No brain-MRI corpus was available
+   *when the detector was built*; BraTS2020 is now present, so this is closable by fitting
+   a learned classifier behind the `ModalityDetector` protocol — it has not been done.
+   Capped at 0.70, flagged `calibrated: false`, `requires_review: true`. Note the practical
+   consequence has shrunk: a pixel-only PNG/JPEG that routes here is then **refused by
+   NeuroMind itself**, which requires a volumetric four-sequence study, so an uncalibrated
+   pixel score can no longer produce a clinical result — only a slower refusal.
 2. **Pixel-only head CT vs brain MRI cannot be separated.** Physics, not implementation.
    Head CT is caught on the header channel; a *headerless* head-CT PNG would score as
    brain MRI at capped confidence with the ambiguity named in its `reason`.
 3. **`confidence` is ordinal, not a calibrated posterior.** See §4.
 4. **One engine per modality.** Collisions are resolved first-registered-wins and logged.
    Multi-engine fan-out (e.g. two opinions on one chest film) is not supported yet.
+5. **NeuroMind is trained on gliomas only.** BraTS2020 contains no meningioma, metastasis,
+   abscess or demyelinating lesion, so subtype is not classified and the subtype surface
+   abstains. The QKL head is trained on glioma *grade* (HGG/LGG) — test AUROC 0.706 — which
+   is the only tumour label axis in AURA's corpus.
+6. **Brain MRI is the only MR route.** An MR study of a named non-head region (knee, spine,
+   abdomen) is scored `REJECT` by `BrainMRISignature` and answered as unsupported. That is
+   correct behaviour, not a gap to patch by loosening the signature.
 
 ---
 

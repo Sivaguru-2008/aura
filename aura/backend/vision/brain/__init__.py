@@ -7,7 +7,7 @@ after it — digital twin, progression prediction, longitudinal comparison, trea
 surgical planning, the neuro-oncology copilot — need a description of a brain, not a
 mask.
 
-    from backend.vision.brain import BrainVisionEngine
+    from aura.backend.vision.brain import BrainVisionEngine
 
     engine = BrainVisionEngine.load()
     result = engine.analyze_study(foundation_study)   # -> BrainVisionOutput
@@ -91,7 +91,7 @@ if TYPE_CHECKING:                                        # pragma: no cover
     from .train import BrainVisionTrainer
 
 #: Names that pull in torch. Resolved on first attribute access rather than at import,
-#: so ``import backend.vision.brain`` stays cheap and works in a deployment that has the
+#: so ``import aura.backend.vision.brain`` stays cheap and works in a deployment that has the
 #: foundation layer but no deep-learning stack — the registry imports engine metadata at
 #: startup and must not pay for CUDA initialisation to do it.
 #: Values are relative to this package, so they survive the package being moved or

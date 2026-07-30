@@ -31,8 +31,8 @@ import numpy as np
 
 from aura.common.mathx import entropy, softmax
 from aura.schemas.clinical import DIAGNOSES
-from ..fusion.evidence import EVIDENCE_CHANNELS
-from ..recommend.engine import CATALOG, RecommendEngine
+from aura.services.fusion.evidence import EVIDENCE_CHANNELS
+from aura.services.recommend.engine import CATALOG, RecommendEngine
 
 # action -> the evidence channels it resolves (from the recommend catalog).
 _ACTION_CHANNELS: dict[str, list[str]] = {c["action"]: c["channels"] for c in CATALOG}

@@ -25,10 +25,15 @@ from typing import Callable, Optional
 import numpy as np
 
 from aura.common.mathx import softmax
-from aura.schemas.clinical import DIAGNOSES, Diagnosis, Finding
+from aura.schemas.clinical import CHEST_DIAGNOSES, DIAGNOSES, Diagnosis, Finding
 from aura.schemas.contracts import (
     DifferentialItem,
+    EvidenceEdge,
+    EvidenceGraph,
+    EvidenceKind,
+    EvidenceNode,
     MultimodalContext,
+    RelationType,
     ReasoningStep,
     ReasoningTrace,
     StructuredPriors,
@@ -179,10 +184,15 @@ RULES: list[Rule] = [
     Rule("hypoxia", "labs", "Oxygenation", _r_hypoxia),
 ]
 
-from aura.knowledge.guidelines.templates import GUIDELINE_TEMPLATES
-
 # Imaging findings that intrinsically support each diagnosis (for the differential).
-_FINDING_SUPPORT = {d: t.imaging for d, t in GUIDELINE_TEMPLATES.items()}
+_FINDING_SUPPORT = {
+    D.PNEUMONIA: [Finding.CONSOLIDATION, Finding.OPACITY],
+    D.HEART_FAILURE: [Finding.CARDIOMEGALY, Finding.EFFUSION],
+    D.COPD: [Finding.HYPERINFLATION],
+    D.MALIGNANCY: [Finding.NODULE],
+    D.PNEUMOTHORAX: [Finding.PNEUMOTHORAX],
+    D.NORMAL: [],
+}
 
 
 class ClinicalReasoner:
@@ -191,69 +201,34 @@ class ClinicalReasoner:
 
     def reason(self, study_id: str, findings: dict[Finding, float],
                posterior: dict[Diagnosis, float], priors: StructuredPriors,
-               multimodal: MultimodalContext | None) -> ReasoningTrace:
+               multimodal: MultimodalContext | None) -> tuple[ReasoningTrace, EvidenceGraph]:
         mm = multimodal or MultimodalContext()
         ctx = Ctx(findings=findings, priors=priors, mm=mm)
 
         p0 = np.array([max(1e-9, posterior.get(d, 0.0)) for d in DIAGNOSES])
         p0 = p0 / p0.sum()
-
-        from aura.common.config import get_settings
-        settings = get_settings()
+        logit = np.log(p0)
 
         steps: list[ReasoningStep] = []
         citations: list[str] = []
+        for rule in RULES:
+            step = rule.fire(ctx)
+            if step is None:
+                continue
+            for i, d in enumerate(DIAGNOSES):
+                logit[i] += step.effect.get(d, 0.0)
+            steps.append(step)
+            if step.guideline and step.guideline not in citations:
+                citations.append(step.guideline)
 
-        if getattr(settings, "reasoner_backend", "classical") == "quantum":
-            from .qbn import QuantumBayesianNetwork
-            
-            # Map labs and symptoms to binary indicators
-            bnp_high = mm.labs.bnp is not None and mm.labs.bnp >= 400
-            orthopnea = mm.symptoms.orthopnea or False
-            cardiac = float(bnp_high or orthopnea)
-
-            wbc_high = mm.labs.wbc is not None and mm.labs.wbc > 11
-            pct_high = mm.labs.procalcitonin is not None and mm.labs.procalcitonin >= 0.5
-            crp_high = mm.labs.crp is not None and mm.labs.crp > 50
-            fever = mm.symptoms.fever or priors.fever or False
-            infectious = float(wbc_high or pct_high or crp_high or fever)
-
-            smoking = (mm.history.smoking_pack_years or 0.0) >= 20 or priors.smoker
-            prior_cancer = mm.history.prior_cancer or priors.prior_cancer or False
-            hemoptysis = mm.symptoms.hemoptysis or False
-            copd = mm.history.copd or False
-            malignancy_obstructive = float(smoking or prior_cancer or hemoptysis or copd)
-
-            # Evaluate Quantum Bayesian Network
-            qbn = QuantumBayesianNetwork.load()
-            adjusted = qbn.reason(posterior, [cardiac, infectious, malignancy_obstructive])
-
-            # Trace clinical rules that fired for clinical report narrative
-            for rule in RULES:
-                step = rule.fire(ctx)
-                if step is not None:
-                    steps.append(step)
-                    if step.guideline and step.guideline not in citations:
-                        citations.append(step.guideline)
-        else:
-            # Classical Likelihood update
-            logit = np.log(p0)
-            for rule in RULES:
-                step = rule.fire(ctx)
-                if step is None:
-                    continue
-                for i, d in enumerate(DIAGNOSES):
-                    logit[i] += step.effect.get(d, 0.0)
-                steps.append(step)
-                if step.guideline and step.guideline not in citations:
-                    citations.append(step.guideline)
-            adjusted = softmax(logit)
-
+        adjusted = softmax(logit)
         prior_d = {d: float(p0[i]) for i, d in enumerate(DIAGNOSES)}
         adj_d = {d: float(adjusted[i]) for i, d in enumerate(DIAGNOSES)}
 
         differential = self._differential(ctx, adj_d, steps)
-        return ReasoningTrace(
+        graph = self._build_graph(ctx, steps, adj_d)
+
+        trace = ReasoningTrace(
             study_id=study_id,
             prior_posterior={d: round(v, 4) for d, v in prior_d.items()},
             adjusted_posterior={d: round(v, 4) for d, v in adj_d.items()},
@@ -262,6 +237,113 @@ class ClinicalReasoner:
             guideline_citations=citations,
             model_version=self.model_version,
         )
+        return trace, graph
+
+    # ---- evidence graph construction ------------------------------------ #
+    def _build_graph(self, ctx: Ctx, steps: list[ReasoningStep],
+                     adj: dict[Diagnosis, float]) -> EvidenceGraph:
+        graph = EvidenceGraph()
+
+        # Imaging finding nodes
+        for f, prob in ctx.findings.items():
+            nid = f"ev.{f.value}"
+            kind = EvidenceKind.IMAGING_FINDING if prob >= 0.5 else EvidenceKind.ABSENT_EVIDENCE
+            graph.add_node(EvidenceNode(
+                id=nid, kind=kind, label=f.value, value=prob, modality="imaging",
+                confidence=prob,
+            ))
+
+        # Lab nodes (raw values)
+        labs = ctx.mm.labs
+        for name in ("bnp", "wbc", "procalcitonin", "crp", "spo2", "troponin", "d_dimer"):
+            val = getattr(labs, name, None)
+            if val is not None:
+                graph.add_node(EvidenceNode(
+                    id=f"hx.{name}", kind=EvidenceKind.STRUCTURED_PRIOR,
+                    label=name, value=float(val), modality="labs",
+                ))
+
+        # Symptom nodes
+        for name in ("fever", "orthopnea", "pleuritic_chest_pain", "dyspnea",
+                      "productive_cough", "hemoptysis", "acute_onset"):
+            val = getattr(ctx.mm.symptoms, name, None)
+            if val is not None:
+                graph.add_node(EvidenceNode(
+                    id=f"sym.{name}", kind=EvidenceKind.STRUCTURED_PRIOR,
+                    label=name, value=1.0 if val else 0.0, modality="symptoms",
+                ))
+
+        # Hypothesis nodes for each chest diagnosis
+        for dx in CHEST_DIAGNOSES:
+            graph.add_node(EvidenceNode(
+                id=f"dx.{dx.value}", kind=EvidenceKind.STRUCTURED_PRIOR,
+                label=dx.value, value=adj.get(dx, 0.0), modality="hypothesis",
+            ))
+
+        # Edges from reasoning steps
+        for step in steps:
+            for dx, lr in step.effect.items():
+                if abs(lr) < 0.01:
+                    continue
+                # Map evidence names to node IDs
+                for ev_name in step.evidence:
+                    src_id = self._ev_to_node_id(ev_name)
+                    if src_id is None or src_id not in graph.nodes:
+                        continue
+                    tgt_id = f"dx.{dx.value}"
+                    if lr > 0:
+                        rel = RelationType.SUPPORTS
+                    else:
+                        rel = RelationType.REFUTES
+                    graph.add_edge(EvidenceEdge(
+                        source_id=src_id, target_id=tgt_id,
+                        relation=rel, weight=abs(lr),
+                        rationale=step.statement,
+                    ))
+
+        # Detect contradictions: high lab vs low imaging for same hypothesis
+        self._detect_contradictions(graph, ctx)
+
+        return graph
+
+    def _ev_to_node_id(self, ev_name: str) -> str | None:
+        if ev_name.startswith("imaging."):
+            return f"ev.{ev_name[len('imaging.'):]}"
+        if ev_name.startswith("labs."):
+            return f"hx.{ev_name[len('labs.'):]}"
+        if ev_name.startswith("symptoms."):
+            return f"sym.{ev_name[len('symptoms.'):]}"
+        if ev_name.startswith("history."):
+            return None
+        if ev_name.startswith("priors."):
+            return None
+        return None
+
+    def _detect_contradictions(self, graph: EvidenceGraph, ctx: Ctx) -> None:
+        bnp = ctx.mm.labs.bnp
+        cardiac_findings = [
+            ctx.findings.get(Finding.CARDIOMEGALY, 0.0),
+            ctx.findings.get(Finding.EFFUSION, 0.0),
+        ]
+        max_cardiac = max(cardiac_findings) if cardiac_findings else 0.0
+        if bnp is not None and bnp >= 400 and max_cardiac < 0.3:
+            if "hx.bnp" in graph.nodes and "dx.heart_failure" in graph.nodes:
+                graph.add_edge(EvidenceEdge(
+                    source_id="hx.bnp", target_id="dx.heart_failure",
+                    relation=RelationType.CONTRADICTS, weight=0.8,
+                    rationale="Elevated BNP without corroborating cardiac imaging findings",
+                ))
+
+        # Consolidation + high WBC without fever
+        consol = ctx.findings.get(Finding.CONSOLIDATION, 0.0)
+        wbc = ctx.mm.labs.wbc
+        if consol >= 0.5 and wbc is not None and wbc > 11 and not ctx.mm.symptoms.fever:
+            if "ev.consolidation" in graph.nodes and "hx.wbc" in graph.nodes:
+                graph.add_edge(EvidenceEdge(
+                    source_id="ev.consolidation", target_id="hx.wbc",
+                    relation=RelationType.CONTRADICTS, weight=0.5,
+                    rationale="Consolidation with elevated WBC but no fever",
+                ))
 
     def _differential(self, ctx: Ctx, adj: dict[Diagnosis, float],
                       steps: list[ReasoningStep]) -> list[DifferentialItem]:

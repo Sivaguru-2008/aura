@@ -4,8 +4,9 @@
     {
       "name": "aura-gateway",
       "runtimeExecutable": "E:\\AURA\\venv\\Scripts\\python.exe",
-      "runtimeArgs": ["-m", "uvicorn", "gateway.app:app", "--host", "127.0.0.1", "--port", "8000", "--app-dir", "E:\\AURA\\aura-main\\aura"],
-      "port": 8000
+      "runtimeArgs": ["-m", "uvicorn", "aura.gateway.app:app", "--host", "127.0.0.1", "--port", "8000", "--app-dir", "E:\\AURA\\aura-main"],
+      "port": 8000,
+      "autoPort": false
     }
   ]
 }

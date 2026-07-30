@@ -146,6 +146,70 @@ def _volume_text(output: BrainVisionOutput) -> dict[str, Any]:
     return out
 
 
+#: The differential AURA's brain model is actually entitled to make.
+_NO_SUBTYPE_TEXT = (
+    "Two-class differential: intracranial tumour tissue present vs absent. "
+    "AURA's brain model is a BraTS segmentation network and has no tumour "
+    "subtype head — glioma, meningioma, metastasis and abscess are not "
+    "distinguished, and no subtype is being asserted."
+)
+
+
+def _differential_text(qkl: dict[str, Any] | None) -> str:
+    """Render the QKL differential, or say plainly that there isn't one.
+
+    The QKL head is trained on BraTS glioma grade (HGG/LGG) — the only tumour
+    label axis in AURA's corpus. It therefore never speaks to meningioma or
+    metastasis, and when it is untrained or abstaining the report falls back to
+    the honest two-class statement rather than printing a uniform prior as if it
+    were a prediction.
+    """
+    if not qkl:
+        return _NO_SUBTYPE_TEXT
+
+    # Legacy three-class dict (pre-training callers) — uniform prior, not a result.
+    if "labels" not in qkl:
+        return _NO_SUBTYPE_TEXT
+
+    if qkl.get("abstained") or not qkl.get("trained"):
+        reason = qkl.get("abstain_reason") or "the quantum-kernel head is not trained"
+        return f"{_NO_SUBTYPE_TEXT}\n\nQuantum Kernel Learning (QKL): abstained — {reason}"
+
+    prov = qkl.get("provenance", {}) or {}
+    rows = "\n".join(
+        f"  - {label}: {prob * 100:.1f}%"
+        for label, prob in sorted(qkl["labels"].items(), key=lambda kv: -kv[1])
+    )
+    sim = qkl.get("kernel_similarity", {}) or {}
+    lines = [
+        f"Quantum Kernel Learning (QKL) differential — task: {qkl.get('task', 'unknown')}",
+        rows,
+        f"  top call: {qkl.get('top_label')} "
+        f"(confidence {float(qkl.get('confidence', 0.0)) * 100:.1f}%, "
+        f"margin {float(qkl.get('margin', 0.0)) * 100:.1f} pts)",
+        f"  kernel similarity to {sim.get('support_vectors', 0)} support vectors: "
+        f"mean {sim.get('mean')}, max {sim.get('max')}",
+        "",
+        "Produced by projecting ResU-Net bottleneck features into a 6-qubit Hilbert "
+        "space (IQP feature map) and classifying with a fidelity-kernel SVM.",
+    ]
+    auroc, ci = prov.get("test_auroc"), prov.get("test_auroc_ci95")
+    if auroc is not None:
+        ci_txt = f" (95% CI {ci[0]:.3f}–{ci[1]:.3f})" if ci and ci[0] is not None else ""
+        lines.append(
+            f"Held-out subject-level AUROC {auroc:.3f}{ci_txt} on "
+            f"{prov.get('test_subjects', '?')} test subjects. This is a research "
+            "signal, not a validated diagnostic claim."
+        )
+    untrained = prov.get("untrained_classes")
+    if untrained:
+        lines.append(
+            f"Not trained and never asserted: {', '.join(untrained)} — AURA holds no "
+            "imaging for these classes."
+        )
+    return "\n".join(lines)
+
+
 def build_case_bundle(
     output: BrainVisionOutput,
     *,
@@ -158,7 +222,7 @@ def build_case_bundle(
     abstain_reason: AbstentionReason | None,
     abstain_detail: str | None = None,
     clinical_context: dict | None = None,
-    tumor_subtypes: dict[str, float] | None = None,
+    tumor_subtypes: dict[str, Any] | None = None,
 ) -> CaseBundle:
     """Assemble the console bundle from one brain-vision result.
 
@@ -333,22 +397,7 @@ def build_case_bundle(
     if tumor_subtypes:
         volumes["tumor_subtypes"] = tumor_subtypes
 
-    if tumor_subtypes:
-        diff_text = (
-            "Multi-class differential from Quantum Kernel Learning (QKL) classifier:\n"
-            f"  - Glioma: {tumor_subtypes.get('glioma', 0.0)*100:.1f}%\n"
-            f"  - Meningioma: {tumor_subtypes.get('meningioma', 0.0)*100:.1f}%\n"
-            f"  - Metastasis: {tumor_subtypes.get('metastasis', 0.0)*100:.1f}%\n"
-            "This differential is produced by projecting ResU-Net latent features "
-            "into a 6-qubit Hilbert space and evaluating decision boundaries using QKL."
-        )
-    else:
-        diff_text = (
-            "Two-class differential: intracranial tumour tissue present vs absent. "
-            "AURA's brain model is a BraTS segmentation network and has no tumour "
-            "subtype head — glioma, meningioma, metastasis and abscess are not "
-            "distinguished, and no subtype is being asserted."
-        )
+    diff_text = _differential_text(tumor_subtypes)
 
     report = ReportDraft(
         study_id=study_id,

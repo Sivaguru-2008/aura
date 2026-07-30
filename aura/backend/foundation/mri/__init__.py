@@ -4,7 +4,7 @@ Raw brain MRI in, standardised model-ready study out. No models, no segmentation
 interpretation: this layer's entire job is to make sure that whatever runs next is
 looking at a volume it can trust, and knows exactly what was done to it.
 
-    from backend.foundation.mri import MRIFoundationPipeline
+    from aura.backend.foundation.mri import MRIFoundationPipeline
 
     study = MRIFoundationPipeline().run("/data/studies/patient-004")
     t1 = study.first(SequenceType.T1)

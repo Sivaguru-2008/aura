@@ -16,7 +16,7 @@ Layout (mirrors the requested Medical-AI-OS structure)::
       engines/
         base/      abstract contract + plug-in registry
         thorax/    adapter over the existing (unmodified) chest-X-ray pipeline
-        neuro/     AURA NeuroMind placeholder — routing works, analysis pending
+        neuro/     AURA NeuroMind — trained brain MRI engine (BraTS2020, gliomas)
       services/    orchestration (intake -> route -> dispatch -> envelope)
       api/         FastAPI routes mounted onto the existing gateway app
       models/      wire contracts (pydantic) for routing + analysis responses

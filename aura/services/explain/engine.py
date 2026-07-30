@@ -118,11 +118,42 @@ class ExplainEngine:
             attr, _ = self.evidence_attribution(fusion_model, x, top)
             return attr
 
+    def geometry_for(self, vision_engine, img: np.ndarray, primary: np.ndarray,
+                     target: Diagnosis, include_overlay: bool = True) -> dict:
+        """Drawable region geometry for the primary saliency map.
+
+        Weighted by the target finding's calibrated probability so a barely-
+        positive finding cannot render as vividly as a confident one. Never
+        raises: geometry is a display aid, and losing it must not cost the
+        caller its diagnosis.
+        """
+        from .geometry import heatmap_geometry
+
+        try:
+            probability = float(vision_engine.score_findings(img).get(target, 0.0))
+        except Exception:
+            probability = None
+        try:
+            return heatmap_geometry(
+                np.asarray(primary, dtype=float),
+                probability=probability,
+                finding=getattr(target, "value", str(target)),
+                include_overlay=include_overlay,
+            )
+        except Exception as exc:
+            print(f"[explain.engine] geometry extraction failed: {exc}")
+            return {}
+
     def explain(self, study_id: str, vision_engine, img: np.ndarray,
-                fusion_model, x: np.ndarray, top: Diagnosis) -> Explanation:
+                fusion_model, x: np.ndarray, top: Diagnosis,
+                include_geometry: bool = True) -> Explanation:
         primary, maps, target, label = self.visual_explanations(vision_engine, img)
         attribution, counterfactual = self.evidence_attribution(fusion_model, x, top)
         shap_attr = self.shap_attribution(fusion_model, x, top)
+        geometry = (
+            self.geometry_for(vision_engine, img, primary, target)
+            if include_geometry else {}
+        )
         return Explanation(
             study_id=study_id,
             saliency=[round(float(v), 4) for v in np.asarray(primary).flatten()],
@@ -135,4 +166,5 @@ class ExplainEngine:
             evidence_attribution=shap_attr,
             counterfactuals=counterfactual,
             method=f"{label}+shapley",
+            geometry=geometry,
         )

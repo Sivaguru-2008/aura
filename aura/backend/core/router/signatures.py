@@ -279,7 +279,7 @@ def _test_head_geometry(fingerprint: ImageFingerprint) -> _HeadGeometry:
 
 
 class BrainMRISignature:
-    """Detects brain MRI — the modality AURA NeuroMind will serve.
+    """Detects brain MRI — the modality AURA NeuroMind serves.
 
     Two channels with very different standing:
 

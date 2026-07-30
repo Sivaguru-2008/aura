@@ -8,7 +8,7 @@ from aura.schemas.clinical import FINDINGS, Finding
 class VisionModel:
     """Wrapper for the trained production DenseNet121 chest X-ray model.
     
-    Conforms to the CXRBackbone contract from services/vision/cnn.py.
+    Conforms to the CXRBackbone contract from aura.services/vision/cnn.py.
     """
     def __init__(self, model_path: str, device: str = None):
         import os

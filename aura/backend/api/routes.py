@@ -271,4 +271,106 @@ def build_router(dispatch: DispatchService) -> APIRouter:
         """
         return dispatch.describe()
 
+    # ------------------------------------------------------------------ #
+    @api.get("/v1/quantum/providers",
+             summary="Quantum execution providers, availability, and fallback chain")
+    def quantum_providers():
+        """Which execution surfaces this deployment can reach.
+
+        Cheap and non-blocking — reports SDK/credential presence without
+        enumerating remote devices. Use `/v1/quantum/backends` for discovery.
+        """
+        from aura.services.quantum import describe
+
+        return describe()
+
+    # ------------------------------------------------------------------ #
+    @api.get("/v1/quantum/backends",
+             summary="Discover quantum devices (queue depth, qubits, error rates)")
+    def quantum_backends(provider: str | None = None, min_qubits: int = 1):
+        """Live device discovery. Read-only and free — consumes no QPU quota.
+
+        Unavailable providers are returned as entries carrying a `reason`
+        rather than being omitted, so a caller can tell "no devices" from
+        "not configured".
+        """
+        from aura.services.quantum import list_backends
+
+        return {"backends": list_backends(provider=provider, min_qubits=min_qubits)}
+
+    # ------------------------------------------------------------------ #
+    @api.get("/v1/quantum/verify",
+             summary="Verify SDK circuit translations against the PennyLane reference")
+    def quantum_verify():
+        """Prove the Qiskit/Braket rebuilds are the circuit the model was trained on.
+
+        Runs on statevector simulators only. A mismatch means hardware would
+        execute a different unitary and produce confidently wrong values, so
+        this gates any hardware run.
+        """
+        import numpy as np
+
+        from aura.services.quantum.base import CircuitSpec
+        from aura.services.quantum.benchmark import served_vqc_spec, verify_translation
+
+        out: dict[str, Any] = {}
+        try:
+            spec, _ = served_vqc_spec()
+            out["served_fusion_vqc"] = verify_translation(spec)
+        except Exception as exc:
+            out["served_fusion_vqc"] = {"error": str(exc)}
+        rng = np.random.default_rng(0)
+        out["qkl_fidelity_kernel"] = verify_translation(
+            CircuitSpec(kind="iqp_kernel", n_qubits=6, x=rng.random(6), x2=rng.random(6))
+        )
+        checked = [v.get("n_checked", 0) for v in out.values() if isinstance(v, dict)]
+        out["any_sdk_available"] = sum(checked) > 0
+        return out
+
+    # ------------------------------------------------------------------ #
+    @api.get("/v1/quantum/qkl",
+             summary="Quantum-kernel brain classifier: weights, task, and held-out metrics")
+    def qkl_status():
+        """Serving status of the QKL head.
+
+        Exposes what the classifier is *actually* trained on so a client can
+        never present its output as a claim it is not entitled to make. Returns
+        ``trained: false`` (rather than erroring) when weights are absent.
+        """
+        import json
+
+        from aura.backend.engines.neuro.qkl import DEFAULT_WEIGHTS, QKLClassifier
+        from aura.common.config import get_settings
+        from aura.ml.training.train_qkl import REPORT_PATH
+
+        clf = QKLClassifier.load()
+        payload: dict[str, Any] = {
+            "enabled": bool(get_settings().neuro_qkl_enabled),
+            "trained": clf.is_trained,
+            "weights_path": str(DEFAULT_WEIGHTS),
+            "weights_present": DEFAULT_WEIGHTS.exists(),
+            "task": clf.task,
+            "classes": list(clf.classes),
+            "n_qubits": clf.n_qubits,
+            "hilbert_dim": 2 ** clf.n_qubits,
+            "feature_map": "IQP (Hadamard + RZ + ring ZZ)",
+            "kernel": "fidelity |<phi(x)|phi(x')>|^2",
+            "support_vectors": int(len(clf.support_vectors)),
+            "provenance": clf.provenance,
+        }
+        if REPORT_PATH.exists():
+            try:
+                report = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
+                payload["evaluation"] = {
+                    "split": report.get("split"),
+                    "test_quantum": report.get("test_quantum"),
+                    "test_classical_rbf": report.get("test_classical_rbf"),
+                    "bootstrap_ci_quantum": report.get("bootstrap_ci_quantum"),
+                    "quantum_minus_classical_auroc": report.get("quantum_minus_classical_auroc"),
+                    "label_axis_note": report.get("label_axis_note"),
+                }
+            except Exception:
+                payload["evaluation"] = None
+        return payload
+
     return api

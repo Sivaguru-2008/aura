@@ -1,48 +1,319 @@
+"""Clinical Decision Readiness Engine (CDRE) — Layer 2.
+
+Computes a multi-dimensional Decision Readiness Profile (DRP) after reasoning
+and recommendation. Each dimension quantifies one aspect of clinical readiness;
+the limiting dimension determines the overall state.
+
+Dimensions:
+  * S_coverage  — evidence coverage against guideline templates
+  * S_quality   — evidence freshness and image quality
+  * S_consistency — supporting vs. refuting edges in the evidence graph
+  * Expected Decision Value — remaining value of information from recommendations
+  * S_robustness — leave-one-out stability of the reasoning posterior
+  * Consensus Agreement Index — JS-divergence between classical and quantum heads
+  * S_consensus — multi-agent panel consensus entropy (1.0 - normalized entropy)
+"""
 from __future__ import annotations
 
-import time
 import numpy as np
-import cv2
-from pydantic import BaseModel
-from typing import Dict, List, Optional
 
-from aura.common.config import get_settings
-from aura.common.mathx import softmax
-from aura.schemas.clinical import DIAGNOSES, Diagnosis, Finding
-from aura.knowledge.guidelines.templates import GUIDELINE_TEMPLATES
-from ..recommend.engine import RecommendEngine, CATALOG, _COST_W, _RISK_W
+from aura.common.config import get_safety_policy
+from aura.common.mathx import entropy, softmax
+from aura.knowledge.guidelines.templates import coverage_ratio
+from aura.schemas.contracts import (
+    DecisionReadinessProfile,
+    EvidenceGraph,
+    ReadinessDimension,
+    ReadinessState,
+    ReasoningTrace,
+    RelationType,
+)
+from aura.services.agent.consensus import ConsensusResult
 
-class DecisionReadinessProfile(BaseModel):
-    status: str  # "READY" or "NOT_READY"
-    coverage: float
-    quality: float
-    consistency: float
-    robustness: float
-    stability: float
-    consensus: float
-    limiting_factor: str
-    limiting_dimension: str
-    edv: float
-    evidence_dependency_profile: Dict[str, Dict[str, float]]
 
-def jensen_shannon_divergence(p: np.ndarray, q: np.ndarray) -> float:
-    p = np.clip(p, 1e-9, 1.0)
+def _js_divergence(p: np.ndarray, q: np.ndarray, eps: float = 1e-12) -> float:
+    """Jensen-Shannon divergence between two probability distributions."""
+    p = np.clip(np.asarray(p, dtype=float), eps, 1.0)
+    q = np.clip(np.asarray(q, dtype=float), eps, 1.0)
     p = p / p.sum()
-    q = np.clip(q, 1e-9, 1.0)
     q = q / q.sum()
     m = 0.5 * (p + q)
-    kl_pm = np.sum(p * np.log2(p / m))
-    kl_qm = np.sum(q * np.log2(q / m))
-    return float(0.5 * kl_pm + 0.5 * kl_qm)
+    kl_pm = float(np.sum(p * np.log(p / m)))
+    kl_qm = float(np.sum(q * np.log(q / m)))
+    return 0.5 * (kl_pm + kl_qm)
+
 
 class ClinicalDecisionReadinessEngine:
-    def __init__(self, settings=None):
-        self.settings = settings or get_settings()
-        self.min_coverage = self.settings.min_coverage
-        self.recommend_engine = RecommendEngine()
+    """Computes the Decision Readiness Profile for a completed case."""
 
-    def evaluate_coverage(self, primary_dx: Diagnosis, findings_map: dict, study) -> float:
-        template = GUIDELINE_TEMPLATES.get(primary_dx)
+    def __init__(self):
+        self.policy = get_safety_policy()
+        self.model_version = "cdre-v1"
+
+    def evaluate(
+        self,
+        reasoning: ReasoningTrace,
+        evidence_graph: EvidenceGraph | None,
+        recommendations: list,
+        vision_quality: float | None = None,
+        fusion_model=None,
+        evidence_vector: np.ndarray | None = None,
+        classical_logits: np.ndarray | None = None,
+        quantum_logits: np.ndarray | None = None,
+        consensus_result: ConsensusResult | None = None,
+    ) -> DecisionReadinessProfile:
+        """Evaluate all readiness dimensions and produce the DRP."""
+        dims: list[ReadinessDimension] = []
+
+        # 1. Evidence Coverage
+        s_cov = self._coverage(reasoning, evidence_graph)
+        dims.append(ReadinessDimension(
+            name="coverage", score=round(s_cov, 4),
+            detail=f"Guideline template coverage: {s_cov:.1%}",
+        ))
+
+        # 2. Evidence Quality (image quality as proxy for freshness)
+        s_qual = self._quality(vision_quality, evidence_graph)
+        dims.append(ReadinessDimension(
+            name="quality", score=round(s_qual, 4),
+            detail=f"Evidence quality score: {s_qual:.3f}",
+        ))
+
+        # 3. Evidence Consistency
+        s_cons = self._consistency(evidence_graph)
+        dims.append(ReadinessDimension(
+            name="consistency", score=round(s_cons, 4),
+            detail=f"Graph consistency ratio: {s_cons:.3f}",
+        ))
+
+        # 4. Expected Decision Value
+        edv = self._expected_decision_value(recommendations)
+        dims.append(ReadinessDimension(
+            name="expected_decision_value", score=round(min(edv * 10, 1.0), 4),
+            detail=f"EDV from remaining recommendations: {edv:.4f}",
+        ))
+
+        # 5. Clinical Reasoning Robustness
+        s_rob = self._robustness(reasoning, evidence_vector, fusion_model)
+        dims.append(ReadinessDimension(
+            name="robustness", score=round(s_rob, 4),
+            detail=f"LOO robustness score: {s_rob:.3f}",
+        ))
+
+        # 6. Consensus Agreement Index
+        cai = self._consensus_agreement(classical_logits, quantum_logits)
+        dims.append(ReadinessDimension(
+            name="consensus_agreement", score=round(cai, 4),
+            detail=f"Classical-quantum agreement (1 - JS): {cai:.3f}",
+        ))
+
+        # 7. Multi-Agent Panel Consensus (S_consensus)
+        s_consensus = self._panel_consensus(consensus_result)
+        dims.append(ReadinessDimension(
+            name="panel_consensus", score=round(s_consensus, 4),
+            detail=f"Multi-agent panel consensus: {s_consensus:.3f}",
+        ))
+
+        # Identify limiting dimension
+        if dims:
+            limiting = min(dims, key=lambda d: d.score)
+            limiting_name = limiting.name
+            limiting_score = limiting.score
+        else:
+            limiting_name = ""
+            limiting_score = 1.0
+
+        # Determine state
+        min_score = limiting_score
+        if min_score >= self.policy.min_coverage:
+            state = ReadinessState.READY
+        elif min_score >= self.policy.min_coverage * 0.7:
+            state = ReadinessState.CONDITIONALLY_READY
+        else:
+            state = ReadinessState.NOT_READY
+
+        # Recommendation summary
+        summary = self._recommendation_summary(state, limiting_name, limiting_score)
+
+        return DecisionReadinessProfile(
+            state=state,
+            dimensions=dims,
+            limiting_factor=limiting_name,
+            limiting_score=round(limiting_score, 4),
+            s_coverage=round(s_cov, 4),
+            s_quality=round(s_qual, 4),
+            s_consistency=round(s_cons, 4),
+            s_robustness=round(s_rob, 4),
+            expected_decision_value=round(edv, 4),
+            consensus_agreement_index=round(cai, 4),
+            recommendation_summary=summary,
+            model_version=self.model_version,
+        )
+
+    # ---- Dimension evaluators ---- #
+
+    def _coverage(self, reasoning: ReasoningTrace,
+                  evidence_graph: EvidenceGraph | None) -> float:
+        """Evidence coverage against guideline templates (S_coverage)."""
+        if not reasoning.adjusted_posterior:
+            return 0.0
+
+        top_dx = max(reasoning.adjusted_posterior, key=reasoning.adjusted_posterior.get)
+
+        # Collect available evidence from the graph
+        available_imaging: list[str] = []
+        available_labs: list[str] = []
+        available_symptoms: list[str] = []
+
+        if evidence_graph is not None:
+            for nid, node in evidence_graph.nodes.items():
+                if node.modality == "imaging" and node.value >= 0.4:
+                    available_imaging.append(node.label)
+                elif node.modality == "labs":
+                    available_labs.append(node.label)
+                elif node.modality == "symptoms" and node.value > 0:
+                    available_symptoms.append(node.label)
+
+        # Also include evidence from reasoning steps
+        for step in reasoning.steps:
+            for ev_name in step.evidence:
+                parts = ev_name.split(".", 1)
+                if len(parts) == 2:
+                    mod, name = parts
+                    if mod == "imaging" and name not in available_imaging:
+                        available_imaging.append(name)
+                    elif mod == "labs" and name not in available_labs:
+                        available_labs.append(name)
+                    elif mod == "symptoms" and name not in available_symptoms:
+                        available_symptoms.append(name)
+
+        return coverage_ratio(
+            top_dx,
+            available_imaging=available_imaging,
+            available_labs=available_labs,
+            available_symptoms=available_symptoms,
+        )
+
+    def _quality(self, vision_quality: float | None,
+                 evidence_graph: EvidenceGraph | None) -> float:
+        """Evidence quality combining image quality and freshness (S_quality)."""
+        iq = vision_quality if vision_quality is not None else 0.8
+
+        # Freshness penalty for evidence graph nodes (all are current pipeline output)
+        freshness = 1.0
+        if evidence_graph is not None and evidence_graph.nodes:
+            node_values = [n.confidence for n in evidence_graph.nodes.values() if n.confidence > 0]
+            if node_values:
+                freshness = float(np.mean(node_values))
+
+        return 0.6 * iq + 0.4 * freshness
+
+    def _consistency(self, evidence_graph: EvidenceGraph | None) -> float:
+        """Ratio of supporting vs. refuting edges in the evidence graph (S_consistency)."""
+        if evidence_graph is None or not evidence_graph.edges:
+            return 0.5  # no data = neutral
+
+        supporting = sum(1 for e in evidence_graph.edges if e.relation == RelationType.SUPPORTS)
+        refuting = sum(1 for e in evidence_graph.edges if e.relation in (
+            RelationType.REFUTES, RelationType.CONTRADICTS))
+        total = supporting + refuting
+        if total == 0:
+            return 0.5
+        return supporting / total
+
+    def _expected_decision_value(self, recommendations: list) -> float:
+        """Remaining expected decision value from outstanding recommendations."""
+        if not recommendations:
+            return 0.0
+        utilities = [getattr(r, "utility", 0) or 0 for r in recommendations]
+        return float(max(utilities)) if utilities else 0.0
+
+    def _robustness(self, reasoning: ReasoningTrace,
+                    evidence_vector: np.ndarray | None,
+                    fusion_model=None) -> float:
+        """Leave-one-out robustness of the reasoning posterior (S_robustness).
+
+        Uses the reasoning step effects as a proxy for LOO influence:
+        if the adjusted posterior is dominated by one step, robustness is low.
+        """
+        if not reasoning.steps or not reasoning.adjusted_posterior:
+            return 0.5
+
+        top_dx = max(reasoning.adjusted_posterior, key=reasoning.adjusted_posterior.get)
+
+        # Compute clinical weights from guideline step effects
+        clinical_effects: dict[str, float] = {}
+        for step in reasoning.steps:
+            for dx, lr in step.effect.items():
+                if dx.value == top_dx:
+                    for ev in step.evidence:
+                        clinical_effects[ev] = clinical_effects.get(ev, 0.0) + abs(lr)
+
+        if not clinical_effects:
+            return 0.5
+
+        total_weight = sum(clinical_effects.values())
+        if total_weight < 1e-9:
+            return 0.5
+
+        # Normalized clinical weights
+        clinical_w = np.array([v / total_weight for v in clinical_effects.values()])
+
+        # Simulate LOO: if one evidence is removed, how much does the posterior shift?
+        # Approximate: the influence is the max single-evidence weight
+        max_influence = float(np.max(clinical_w))
+
+        # Robustness = 1 - max_influence (lower single-step dependency = more robust)
+        return max(0.0, min(1.0, 1.0 - max_influence))
+
+    def _panel_consensus(self, consensus_result: ConsensusResult | None) -> float:
+        """Multi-agent panel consensus (S_consensus). 1.0 - normalized consensus entropy."""
+        if consensus_result is None:
+            return 1.0
+        entropy = consensus_result.consensus_entropy
+        s = 1.0 - min(1.0, entropy * 2.0)
+        return max(0.0, min(1.0, s))
+
+    def _consensus_agreement(self, classical_logits: np.ndarray | None,
+                             quantum_logits: np.ndarray | None) -> float:
+        """Consensus Agreement Index — 1 - JS(classical, quantum)."""
+        if classical_logits is None or quantum_logits is None:
+            return 1.0  # no quantum head = perfect agreement by default
+
+        c_probs = softmax(np.asarray(classical_logits, dtype=float))
+        q_probs = softmax(np.asarray(quantum_logits, dtype=float))
+        js = _js_divergence(c_probs, q_probs)
+        return max(0.0, min(1.0, 1.0 - js))
+
+    def _recommendation_summary(self, state: ReadinessState,
+                                limiting: str, score: float) -> str:
+        """Human-readable summary of the readiness state."""
+        labels = {
+            "coverage": "Evidence Coverage",
+            "quality": "Evidence Quality",
+            "consistency": "Evidence Consistency",
+            "expected_decision_value": "Expected Decision Value",
+            "robustness": "Reasoning Robustness",
+            "consensus_agreement": "Model Consensus",
+            "panel_consensus": "Multi-Agent Panel Consensus",
+        }
+        label = labels.get(limiting, limiting)
+        if state == ReadinessState.READY:
+            return "All readiness dimensions above threshold. Decision is supported."
+        elif state == ReadinessState.CONDITIONALLY_READY:
+            return (
+                f"Conditionally ready — {label} is the limiting factor "
+                f"(score {score:.2f}). Proceed with caution."
+            )
+        else:
+            return (
+                f"NOT READY — {label} critically low (score {score:.2f}). "
+                f"Additional evidence or review required before committing."
+            )
+
+    def evaluate_coverage(self, primary_dx, findings_map: dict, study) -> float:
+        from aura.knowledge.guidelines.templates import GUIDELINE_TEMPLATES
+        template = GUIDELINE_TEMPLATES.get(primary_dx.value if hasattr(primary_dx, "value") else str(primary_dx))
         if not template:
             return 1.0
         
@@ -51,294 +322,16 @@ class ClinicalDecisionReadinessEngine:
             return 1.0
 
         known = 0
-        # 1. Imaging: vision findings are always known
         for f in template.imaging:
-            if f in findings_map:
+            f_str = f.value if hasattr(f, "value") else str(f)
+            if f_str in findings_map or f in findings_map:
                 known += 1
                 
-        # 2. Multimodal context
         if study.multimodal is not None:
-            # Symptoms are always boolean in study.multimodal.symptoms
             for s in template.symptoms:
                 known += 1
-            # Labs are known if value is not None
             for l in template.labs:
                 if getattr(study.multimodal.labs, l, None) is not None:
                     known += 1
 
         return float(known / total)
-
-    def evaluate_quality(self, primary_dx: Diagnosis, study, img: np.ndarray) -> float:
-        current_time = time.time()
-        freshness_scores = []
-        
-        # 1. Calculate decay (freshness) of labs
-        template = GUIDELINE_TEMPLATES.get(primary_dx)
-        if template and study.multimodal is not None and study.multimodal.labs is not None:
-            timestamps = getattr(study.multimodal.labs, "timestamps", {}) or {}
-            for l in template.labs:
-                val = getattr(study.multimodal.labs, l, None)
-                if val is not None:
-                    t_lab = timestamps.get(l)
-                    if t_lab is not None:
-                        dt = max(0.0, current_time - t_lab)
-                        freshness = float(np.exp(-np.log(2.0) * dt / 86400.0))  # 24 hours half-life
-                        freshness_scores.append(freshness)
-                    else:
-                        freshness_scores.append(1.0)
-                        
-        freshness_factor = np.mean(freshness_scores) if freshness_scores else 1.0
-
-        # 2. Check image quality
-        modality = getattr(study, "modality", None)
-        is_cxr = True
-        if modality is not None:
-            is_cxr = (modality.value == "CXR" if hasattr(modality, "value") else str(modality) == "CXR")
-            
-        if is_cxr:
-            from ..vision.xray_gate import _structural_score
-            score, _ = _structural_score(img)
-            img_quality = float(score / 3.0)
-        else:
-            # MR quality from payload
-            payload = getattr(study, "payload", None) or study
-            img_quality = 1.0
-            if hasattr(payload, "series") and payload.series:
-                scores = []
-                for s in payload.series:
-                    if hasattr(s, "quality") and hasattr(s.quality, "quality_score"):
-                        scores.append(s.quality.quality_score)
-                if scores:
-                    img_quality = float(np.mean(scores))
-
-        return float(min(freshness_factor, img_quality))
-
-    def evaluate_consistency(self, primary_dx: Diagnosis, reasoning) -> float:
-        if not reasoning or not reasoning.steps:
-            return 1.0
-            
-        supporting_sum = 0.0
-        refuting_sum = 0.0
-        
-        for step in reasoning.steps:
-            weight = step.effect.get(primary_dx, 0.0)
-            if weight > 0.05:
-                supporting_sum += weight
-            elif weight < -0.05:
-                refuting_sum += abs(weight)
-                
-        if supporting_sum + refuting_sum > 0:
-            return float(supporting_sum / (supporting_sum + refuting_sum))
-        return 1.0
-
-    def evaluate_edv(self, fusion_model, x: np.ndarray) -> float:
-        # Evaluate remaining tests from recommend catalog
-        best_dv = 0.0
-        for item in CATALOG:
-            if self.recommend_engine._resolvable(x, item["channels"]):
-                evoi, _ = self.recommend_engine._evoi_and_eig(fusion_model, x, item["channels"])
-                cost_penalty = _COST_W[item["cost"]] * _RISK_W[item["risk"]]
-                dv = evoi - cost_penalty
-                if dv > best_dv:
-                    best_dv = dv
-        return float(best_dv)
-
-    def evaluate_robustness(self, primary_dx: Diagnosis, reasoning) -> float:
-        if not reasoning or not reasoning.steps:
-            return 1.0
-            
-        w_clinical = np.array([step.effect.get(primary_dx, 0.0) for step in reasoning.steps], dtype=float)
-        
-        # Calculate observed influence using LOO loop on reasoning posterior
-        p0 = np.array([max(1e-9, reasoning.prior_posterior.get(d, 0.0)) for d in DIAGNOSES], dtype=float)
-        p0 = p0 / p0.sum()
-        base_logit = np.log(p0)
-        
-        full_logit = base_logit.copy()
-        for step in reasoning.steps:
-            for i, d in enumerate(DIAGNOSES):
-                full_logit[i] += step.effect.get(d, 0.0)
-                
-        full_prob = softmax(full_logit)
-        p_full = full_prob[DIAGNOSES.index(primary_dx)]
-        
-        w_observed = []
-        for step in reasoning.steps:
-            loo_logit = full_logit.copy()
-            for i, d in enumerate(DIAGNOSES):
-                loo_logit[i] -= step.effect.get(d, 0.0)
-            loo_prob = softmax(loo_logit)
-            p_loo = loo_prob[DIAGNOSES.index(primary_dx)]
-            w_observed.append(p_full - p_loo)
-            
-        w_observed = np.array(w_observed, dtype=float)
-        
-        # Normalize weights
-        sum_abs_clinical = np.sum(np.abs(w_clinical))
-        sum_abs_observed = np.sum(np.abs(w_observed))
-        
-        w_clinical_norm = w_clinical / sum_abs_clinical if sum_abs_clinical > 0 else w_clinical
-        w_observed_norm = w_observed / sum_abs_observed if sum_abs_observed > 0 else w_observed
-        
-        return float(1.0 - 0.5 * np.sum(np.abs(w_clinical_norm - w_observed_norm)))
-
-    def evaluate_stability(self, primary_dx: Diagnosis, findings_map: dict, reasoning, study, img: np.ndarray, fusion_engine, x: np.ndarray, vision_engine) -> float:
-        # 1. Clinical value perturbations
-        clinical_same = 0
-        rng = np.random.default_rng(self.settings.seed)
-        for _ in range(5):
-            xp = np.clip(x + rng.normal(0.0, 0.05, size=x.shape), 0.0, 1.0)
-            p_perturbed, _ = fusion_engine.model.fuse(xp)
-            top_perturbed = max(p_perturbed, key=p_perturbed.get)
-            if top_perturbed == safety_top_dx(p_perturbed): # Helper to align
-                pass
-            # Just verify if top diagnosis is same as primary_dx
-            p_array = np.array([p_perturbed.get(d, 0.0) for d in DIAGNOSES])
-            if DIAGNOSES[np.argmax(p_array)] == primary_dx:
-                clinical_same += 1
-        clinical_stability = clinical_same / 5.0
-
-        # 2. Image perturbations (noise, rotation)
-        image_stability = 1.0
-        if vision_engine is not None and img.ndim == 2:
-            try:
-                # Rotate image slightly
-                h, w = img.shape[:2]
-                M = cv2.getRotationMatrix2D((w/2, h/2), 3.0, 1.0)
-                rotated = cv2.warpAffine(img, M, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
-                # Add Gaussian noise
-                noise = np.random.normal(0, 0.02, img.shape)
-                perturbed_img = np.clip(rotated + noise, 0.0, 1.0)
-                
-                # Run vision and fusion
-                vision_perturbed = vision_engine.analyze(study.study_id, perturbed_img)
-                from ..fusion.evidence import encode
-                xp = encode(vision_perturbed, study.priors)
-                p_perturbed, _ = fusion_engine.model.fuse(xp)
-                p_array = np.array([p_perturbed.get(d, 0.0) for d in DIAGNOSES])
-                if DIAGNOSES[np.argmax(p_array)] != primary_dx:
-                    image_stability = 0.0
-            except Exception:
-                image_stability = 1.0
-
-        # 3. Rule deletion stability
-        node_stability = 1.0
-        if reasoning and reasoning.steps:
-            node_same = 0
-            # Full base logit
-            p0 = np.array([max(1e-9, reasoning.prior_posterior.get(d, 0.0)) for d in DIAGNOSES], dtype=float)
-            p0 = p0 / p0.sum()
-            base_logit = np.log(p0)
-            
-            for step_to_delete in reasoning.steps:
-                logit = base_logit.copy()
-                for step in reasoning.steps:
-                    if step is step_to_delete:
-                        continue
-                    for i, d in enumerate(DIAGNOSES):
-                        logit[i] += step.effect.get(d, 0.0)
-                prob = softmax(logit)
-                if DIAGNOSES[np.argmax(prob)] == primary_dx:
-                    node_same += 1
-            node_stability = node_same / len(reasoning.steps)
-
-        return float((clinical_stability + image_stability + node_stability) / 3.0)
-
-    def evaluate_consensus(self, fusion_engine, x: np.ndarray) -> float:
-        if fusion_engine.quantum is not None and fusion_engine.classical is not None:
-            try:
-                p_poe = softmax(fusion_engine.classical.logits(x))
-                p_vqc = softmax(fusion_engine.quantum.logits(x))
-                cai_js = jensen_shannon_divergence(p_poe, p_vqc)
-                return float(1.0 - cai_js)
-            except Exception:
-                return 1.0
-        return 1.0
-
-    def assess(self, study, img: np.ndarray, x: np.ndarray, fusion_engine, reasoning, findings_map: dict, safety_assessment, vision_engine=None) -> DecisionReadinessProfile:
-        primary_dx = safety_assessment.top
-        
-        S_coverage = self.evaluate_coverage(primary_dx, findings_map, study)
-        S_quality = self.evaluate_quality(primary_dx, study, img)
-        S_consistency = self.evaluate_consistency(primary_dx, reasoning)
-        S_robustness = self.evaluate_robustness(primary_dx, reasoning)
-        S_stability = self.evaluate_stability(primary_dx, findings_map, reasoning, study, img, fusion_engine, x, vision_engine)
-        S_consensus = self.evaluate_consensus(fusion_engine, x)
-        
-        # Calculate Expected Decision Value
-        edv_score = self.evaluate_edv(fusion_engine.model, x)
-
-        metrics = {
-            "coverage": S_coverage,
-            "quality": S_quality,
-            "consistency": S_consistency,
-            "robustness": S_robustness,
-            "stability": S_stability,
-            "consensus": S_consensus
-        }
-        
-        limiting_dimension = min(metrics, key=metrics.get)
-        lowest_score = metrics[limiting_dimension]
-        
-        # Determine readiness status (using configured min_coverage as threshold)
-        status = "READY" if lowest_score >= self.min_coverage else "NOT_READY"
-        
-        limiting_factor_map = {
-            "coverage": "Missing clinical evidence/indicators",
-            "quality": "Low evidence quality or stale lab data",
-            "consistency": "Conflicting clinical evidence",
-            "robustness": "Unstable clinical reasoning posterior",
-            "stability": "Sensitivity to input perturbations",
-            "consensus": "Disagreement between quantum and classical fusion heads"
-        }
-        limiting_factor = limiting_factor_map[limiting_dimension]
-        
-        # Compile Evidence Dependency Profile (EDP)
-        # Indicate relative observed influence vs clinical expectation for each template indicator that is present in reasoning steps
-        edp = {}
-        if reasoning and reasoning.steps:
-            # We map finding names to observed and clinical weights
-            for step in reasoning.steps:
-                for f in step.evidence:
-                    # check if finding represents an active finding
-                    clinical = step.effect.get(primary_dx, 0.0)
-                    # For observed influence, look at the LOO diff
-                    p0 = np.array([max(1e-9, reasoning.prior_posterior.get(d, 0.0)) for d in DIAGNOSES], dtype=float)
-                    p0 = p0 / p0.sum()
-                    base_logit = np.log(p0)
-                    
-                    full_logit = base_logit.copy()
-                    for s in reasoning.steps:
-                        for i, d in enumerate(DIAGNOSES):
-                            full_logit[i] += s.effect.get(d, 0.0)
-                    p_full = softmax(full_logit)[DIAGNOSES.index(primary_dx)]
-                    
-                    loo_logit = full_logit.copy()
-                    for i, d in enumerate(DIAGNOSES):
-                        loo_logit[i] -= step.effect.get(d, 0.0)
-                    p_loo = softmax(loo_logit)[DIAGNOSES.index(primary_dx)]
-                    observed = p_full - p_loo
-                    
-                    edp[f] = {
-                        "observed": float(observed),
-                        "clinical": float(clinical)
-                    }
-
-        return DecisionReadinessProfile(
-            status=status,
-            coverage=S_coverage,
-            quality=S_quality,
-            consistency=S_consistency,
-            robustness=S_robustness,
-            stability=S_stability,
-            consensus=S_consensus,
-            limiting_factor=limiting_factor,
-            limiting_dimension=limiting_dimension,
-            edv=edv_score,
-            evidence_dependency_profile=edp
-        )
-
-def safety_top_dx(p_perturbed: dict) -> Diagnosis:
-    # helper for type alignment
-    p_array = np.array([p_perturbed.get(d, 0.0) for d in DIAGNOSES])
-    return DIAGNOSES[np.argmax(p_array)]
