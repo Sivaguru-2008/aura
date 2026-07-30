@@ -12,6 +12,10 @@ aura/pytest-tmp/
 # runtime state (regenerated on first run) — keep trained .npz models so
 # judges can serve without training
 aura/artifacts/aura.db
+# Append-only audit log: every prediction adds a line, so tracking it made the
+# tree dirty on any demo or test run. Created on demand by audit_log.py (append
+# mode) and read behind an exists() guard, so a fresh clone is fine without it.
+aura/artifacts/inference_log.jsonl
 
 # editor/os noise
 .vscode/
