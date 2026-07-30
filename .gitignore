@@ -28,9 +28,41 @@ archive.zip
 mimic_cxr_data/
 manifest.jsonl
 
+# Per-study inference output — reports, Grad-CAM heatmaps, explanation HTML, one
+# directory per study id. Regenerated on every run and specific to one upload on one
+# machine. predictions/sample/ is the curated worked example and stays tracked;
+# everything else under predictions/ is run output.
+aura/artifacts/predictions/*
+!aura/artifacts/predictions/sample/
+
+# One-off debugging scripts from the import repair. search_struct.py greps a 48 MB
+# local structure.txt that is itself gitignored, and show_safety_diff.py diffs a
+# services/services/ path that no longer exists — neither runs on a fresh clone.
+/search_struct.py
+/show_safety_diff.py
+
 # deep learning checkpoints / tensorboard logs
 aura/artifacts/*.pt
 aura/artifacts/tb/
+
+# Training-resume state, never inference state. optimizer.pt is an optimiser's
+# moment buffers and last_checkpoint.pt is the mid-run snapshot; only `train.py
+# --resume` reads either. They were tracked at ~670 MB across five duplicated run
+# directories, so every clone paid for them forever. The served weights are
+# aura/artifacts/best_model.pt (and brain/checkpoints/best_brain_model.pt, fetched
+# by deploy/fetch_models.py), which stay tracked and are what preflight checks.
+**/optimizer.pt
+**/last_checkpoint.pt
+
+# Scratch output from `cli smoke` — two 161 MB copies of a throwaway run. Nothing in
+# the codebase, the tests, the docs or the registries reads these paths.
+aura/artifacts/_smoke/
+aura/artifacts/_smoke2/
+
+# Superseded brain run kept only as a curiosity: 400 MB of checkpoints whose quality
+# head is known-broken (hence the directory name). Nothing references it. Retained on
+# disk locally if anyone wants the post-mortem; it does not belong in every clone.
+aura/artifacts/brain/v1_broken_quality_head/
 
 
 # Brain Vision Engine (NeuroMind) — derived artefacts, all regenerable:
@@ -57,3 +89,11 @@ ibm_quantum.env
 datasets/
 demo_data/
 /structure.txt
+
+# A refactor tool once wrote a doubled-up copy of the source tree here
+# (aura/change/common/common/, aura/change/gateway/gateway/, ...): 171 files and
+# 28 kLOC that nothing imported, including a second copy of the evaluation pipeline
+# that would silently miss any grep-and-fix. It has been moved to
+# E:\AURA\_archived_change_tree_20260730\ and this rule stops it coming back —
+# permanently untracked, it otherwise just buries the real entries in git status.
+aura/change/
