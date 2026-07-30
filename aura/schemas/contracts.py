@@ -15,11 +15,11 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Optional, Any
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
-from .clinical import Diagnosis, Finding, Modality
+from aura.schemas.clinical import Diagnosis, Finding, Modality
 
 
 def _now() -> datetime:
@@ -146,6 +146,141 @@ class EvidenceItem(BaseModel):
     validation_status: Optional[str] = None
 
 
+# --------------------------------------------------------------------------- #
+# Evidence graph (structured directed graph)
+# --------------------------------------------------------------------------- #
+class RelationType(str, Enum):
+    SUPPORTS = "supports"
+    REFUTES = "refutes"
+    MEDIATES = "mediates"
+    CONTRADICTS = "contradicts"
+
+
+class EvidenceNode(BaseModel):
+    id: str
+    kind: EvidenceKind = EvidenceKind.IMAGING_FINDING
+    label: str = ""
+    value: float = 0.0
+    modality: str = ""                         # "imaging"|"labs"|"symptoms"|"history"|"hypothesis"
+    confidence: float = 0.5
+    features: dict[str, float] = Field(default_factory=dict)
+
+
+class EvidenceEdge(BaseModel):
+    source_id: str
+    target_id: str
+    relation: RelationType = RelationType.SUPPORTS
+    weight: float = 1.0
+    rationale: str = ""
+
+
+class EvidenceGraph(BaseModel):
+    nodes: dict[str, EvidenceNode] = Field(default_factory=dict)
+    edges: list[EvidenceEdge] = Field(default_factory=list)
+
+    def add_node(self, node: EvidenceNode) -> None:
+        self.nodes[node.id] = node
+
+    def add_edge(self, edge: EvidenceEdge) -> None:
+        self.edges.append(edge)
+
+    def edges_from(self, node_id: str) -> list[EvidenceEdge]:
+        return [e for e in self.edges if e.source_id == node_id]
+
+    def edges_to(self, node_id: str) -> list[EvidenceEdge]:
+        return [e for e in self.edges if e.target_id == node_id]
+
+    def contradicts_edges(self) -> list[EvidenceEdge]:
+        return [e for e in self.edges if e.relation == RelationType.CONTRADICTS]
+
+    def supporting_edges(self, node_id: str) -> list[EvidenceEdge]:
+        return [e for e in self.edges
+                if e.target_id == node_id and e.relation == RelationType.SUPPORTS]
+
+
+# --------------------------------------------------------------------------- #
+# Mitigation actions (uncertainty → workflow)
+# --------------------------------------------------------------------------- #
+class MitigationAction(str, Enum):
+    SHOW_COMPETING_HYPOTHESES = "show_competing_hypotheses"
+    ORDER_CONFIRMATORY_EVIDENCE = "order_confirmatory_evidence"
+    ESC_HUMAN_EXPERT_REVIEW = "esc_human_expert_review"
+    RE_ACQUIRE_SHOTS = "re_acquire_shots"
+
+
+# --------------------------------------------------------------------------- #
+# Clinical Safety Controller (Layer 1)
+# --------------------------------------------------------------------------- #
+class SafetyControllerCheck(BaseModel):
+    """One veto check and its result."""
+    name: str                                 # e.g. "data_integrity", "ood_energy", "epistemic"
+    passed: bool
+    measured: float = 0.0
+    threshold: float = 0.0
+    severity: float = 0.0                     # sigmoid-scaled violation severity in [0, 1]
+    detail: str = ""
+
+
+class SafetyControllerOutput(BaseModel):
+    """Structured output of the ClinicalSafetyController (Layer 1).
+
+    Emitted after the initial veto checks and before reasoning/recommendation.
+    If ``state`` is ``FAILED``, the pipeline aborts immediately.
+    """
+    state: str = "PASSED"                     # "PASSED" | "FAILED" | "WARNING"
+    policy_name: str = "community_conservative"
+    checks: list[SafetyControllerCheck] = Field(default_factory=list)
+    safety_confidence: float = 1.0            # overall safety confidence in [0, 1]
+    recommendation: str = ""                  # direct clinical recommendation text
+    mitigations: list[MitigationAction] = Field(default_factory=list)
+    model_version: str = ""
+
+
+# --------------------------------------------------------------------------- #
+# Clinical Decision Readiness Engine (CDRE) — Layer 2
+# --------------------------------------------------------------------------- #
+class ReadinessDimension(BaseModel):
+    """One dimension of the Decision Readiness Profile."""
+    name: str                                 # e.g. "coverage", "quality", "consistency"
+    score: float = 0.0                        # [0, 1] where 1 = fully ready
+    detail: str = ""
+
+
+class ReadinessState(str, Enum):
+    READY = "ready"
+    CONDITIONALLY_READY = "conditionally_ready"
+    NOT_READY = "not_ready"
+
+
+class DecisionReadinessProfile(BaseModel):
+    """Layer 2 output — multi-dimensional decision readiness assessment.
+
+    Computed after reasoning and recommendation, this profile tells the
+    clinician *why* the system is or is not ready to commit to a diagnosis.
+    """
+    state: ReadinessState = ReadinessState.NOT_READY
+    dimensions: list[ReadinessDimension] = Field(default_factory=list)
+    limiting_factor: str = ""                 # the dimension with the lowest score
+    limiting_score: float = 1.0
+    s_coverage: float = 0.0
+    s_quality: float = 0.0
+    s_consistency: float = 0.0
+    s_robustness: float = 0.0
+    s_consensus: float = 0.0
+    expected_decision_value: float = 0.0
+    consensus_agreement_index: float = 0.0
+    recommendation_summary: str = ""
+    model_version: str = "cdre-v1"
+
+
+# --------------------------------------------------------------------------- #
+# Patient context (context-aware recommendations)
+# --------------------------------------------------------------------------- #
+class PatientContext(BaseModel):
+    allergies: list[str] = Field(default_factory=list)
+    renal_impairment: bool = False
+    icu_queue_full: bool = False
+
 
 # --------------------------------------------------------------------------- #
 # Fusion
@@ -166,10 +301,56 @@ class FusionResult(BaseModel):
     conflict_distance: float = 0.0             # EMD(VQC, PoE) on the severity axis
     conflict_threshold: float = 0.0            # dynamic τ used for the decision
     fallback_triggered: bool = False           # True when the PoE fallback fired
-    quantum_entanglement: Optional[dict] = None
-    qae_enabled: bool = False
-    qbn_enabled: bool = False
     created_at: datetime = Field(default_factory=_now)
+
+
+class MeasurementBudget(BaseModel):
+    """What this decision cost in measurements, and what limited it.
+
+    Quantum inference has a knob classical inference does not: precision is bought
+    with shots, ``Var[<Z>] = (1 - <Z>^2) / n_shots``. So "how many measurements is
+    this patient worth?" is a real question, and answering it sequentially splits
+    *unresolved* into two states that call for opposite actions:
+
+    * ``limiting_factor == "measurement"`` — the analytic margin is genuinely
+      non-zero; this run just had not bought enough precision. ``predicted_shots``
+      says how many more would settle it. **Action: run the circuit longer.**
+    * ``limiting_factor == "model"`` — the top two diagnoses are tied at *infinite*
+      measurement precision, or the lead is below the clinical-significance floor.
+      No budget resolves it. **Action: escalate to a human.**
+
+    A classical softmax of 0.55 means "unsure" and cannot say which kind. Populated
+    only when the served fusion backend is quantum; ``None`` otherwise, because a
+    product-of-experts has no measurement budget to vary and pretending it does
+    would be the same category of fiction the rest of this codebase avoids.
+    """
+    committed: bool
+    top: Diagnosis
+    runner_up: Diagnosis
+    shots_spent: int
+    #: Decision margin p(top) - p(runner_up) at the final budget, and its shot-noise
+    #: spread. ``separation_z = margin / margin_std``.
+    margin: float
+    margin_std: float
+    separation_z: float
+    #: The margin at infinite shots — the analytic value the serving path uses. This
+    #: is the reference that decides whether more measurement could ever have helped.
+    analytic_margin: float
+    predicted_shots: Optional[int] = None
+    limiting_factor: Optional[str] = None      # "measurement" | "model" | None
+    floor_limited: bool = False
+    reason: str = ""
+    #: Per-stage schedule (shots, margin, separation) for the console trace.
+    trajectory: list[dict] = Field(default_factory=list)
+    created_at: datetime = Field(default_factory=_now)
+
+    @property
+    def measurement_limited(self) -> bool:
+        return self.limiting_factor == "measurement"
+
+    @property
+    def model_limited(self) -> bool:
+        return self.limiting_factor == "model"
 
 
 # --------------------------------------------------------------------------- #
@@ -224,6 +405,7 @@ class SafetyAssessment(BaseModel):
     is_ood: bool | None = False
     abstained: bool = False
     abstention_reason: AbstentionReason = AbstentionReason.NONE
+    recommended_mitigations: list[MitigationAction] = Field(default_factory=list)
     model_version: str = ""
 
 
@@ -308,6 +490,7 @@ class ReportDraft(BaseModel):
     recommendation_text: str
     differential_text: str = ""                 # ranked alternatives with evidence
     confidence_text: str = ""                   # calibrated confidence + why
+    panel_discussion_text: str = ""             # multi-agent panel discussion
     # Every sentence maps to the evidence nodes that grounded it.
     grounding: dict[str, list[str]] = Field(default_factory=dict)
     generator: str = "structured+template"
@@ -342,7 +525,11 @@ class CaseBundle(BaseModel):
     image_shape: tuple[int, int] = (64, 64)
     vision: Optional[VisionResult] = None
     evidence: list[EvidenceItem] = Field(default_factory=list)
+    evidence_graph: Optional[EvidenceGraph] = None
     fusion: Optional[FusionResult] = None
+    #: Measurement economics of the fusion decision. Quantum backends only — see
+    #: MeasurementBudget for why a classical backend correctly leaves this None.
+    measurement: Optional[MeasurementBudget] = None
     safety: Optional[SafetyAssessment] = None
     explanation: Optional[Explanation] = None
     reasoning: Optional[ReasoningTrace] = None
@@ -352,8 +539,29 @@ class CaseBundle(BaseModel):
     clinical_context: Optional[ClinicalContext] = None
     multimodal: Optional[MultimodalContext] = None
     ground_truth: Optional[Diagnosis] = None
+    safety_controller: Optional[SafetyControllerOutput] = None
+    decision_readiness: Optional[DecisionReadinessProfile] = None
+    drp: Optional[DecisionReadinessProfile] = None
+    consensus_result: Optional[dict] = None               # multi-agent panel consensus
     created_at: datetime = Field(default_factory=_now)
     dx_labels: dict[str, str] = Field(default_factory=dict)
     ev_labels: dict[str, str] = Field(default_factory=dict)
-    drp: Optional[Any] = None
-    safety_controller: Optional[Any] = None
+
+
+# --------------------------------------------------------------------------- #
+# Clinical Q&A Copilot
+# --------------------------------------------------------------------------- #
+class ChatMessage(BaseModel):
+    role: str  # "user" | "assistant" | "system"
+    content: str
+
+
+class ClinicalChatRequest(BaseModel):
+    question: str
+    history: list[ChatMessage] = Field(default_factory=list)
+
+
+class ClinicalChatResponse(BaseModel):
+    answer: str
+    sources: list[str] = Field(default_factory=list)
+    correlation_id: str = ""

@@ -1,0 +1,113 @@
+{
+ "generated": "2026-07-30T18:23:39Z",
+ "backend_model": "FakeMarrakesh",
+ "circuit": {
+  "n_qubits": 8,
+  "n_layers": 3,
+  "entangler": "ring",
+  "transpiled_depth": 147,
+  "transpiled_two_qubit_gates": 60
+ },
+ "evidence_vector": [
+  0.2975,
+  0.0322,
+  0.2394,
+  0.1194,
+  0.0085,
+  0.7367,
+  0.4768,
+  0.0
+ ],
+ "analytic": {
+  "rung": "analytic",
+  "z": [
+   -0.810182,
+   -0.71782,
+   -0.821745,
+   -0.112037,
+   -0.134725,
+   0.671864,
+   -0.723688,
+   0.106218
+  ],
+  "posterior": {
+   "normal": 0.000412,
+   "pneumonia": 0.000438,
+   "heart_failure": 0.009417,
+   "copd": 0.006013,
+   "malignancy": 0.005973,
+   "pneumothorax_dx": 0.977747
+  },
+  "top": "pneumothorax_dx"
+ },
+ "rungs": [
+  {
+   "rung": "shot_noise_only",
+   "shots": 4096,
+   "z": [
+    -0.810059,
+    -0.702637,
+    -0.821777,
+    -0.115723,
+    -0.137695,
+    0.65332,
+    -0.713379,
+    0.098145
+   ],
+   "mean_abs_z_error_vs_analytic": 0.007365,
+   "max_abs_z_error_vs_analytic": 0.018544,
+   "posterior": {
+    "normal": 0.000453,
+    "pneumonia": 0.000495,
+    "heart_failure": 0.010128,
+    "copd": 0.006956,
+    "malignancy": 0.006673,
+    "pneumothorax_dx": 0.975296
+   },
+   "top": "pneumothorax_dx",
+   "top1_agrees_with_analytic": true,
+   "wall_seconds": 0.09
+  },
+  {
+   "rung": "noise_model",
+   "shots": 4096,
+   "z": [
+    -0.689453,
+    -0.62793,
+    -0.734375,
+    -0.130371,
+    -0.149902,
+    0.600586,
+    -0.638184,
+    0.111816
+   ],
+   "mean_abs_z_error_vs_analytic": 0.061735,
+   "max_abs_z_error_vs_analytic": 0.120729,
+   "posterior": {
+    "normal": 0.000736,
+    "pneumonia": 0.000994,
+    "heart_failure": 0.015201,
+    "copd": 0.009665,
+    "malignancy": 0.009063,
+    "pneumothorax_dx": 0.964339
+   },
+   "top": "pneumothorax_dx",
+   "top1_agrees_with_analytic": true,
+   "wall_seconds": 13.06
+  }
+ ],
+ "attribution": {
+  "sampling_only": 0.007365,
+  "sampling_plus_device_noise": 0.061735,
+  "device_noise_component": 0.05437,
+  "device_noise_share": 0.881,
+  "note": "Shot noise shrinks as 1/sqrt(shots); the device-noise component does not. If the device component dominates, buying more shots is the wrong lever and a shallower circuit is the right one."
+ },
+ "hardware_reference": {
+  "backend": "ibm_marrakesh",
+  "job_id": "d9js49rjf64c739haeg0",
+  "mean_abs_z_error_vs_analytic": 0.18581967015019857,
+  "top1_agrees_with_analytic": true,
+  "note": "Measured on the real QPU. The simulated rungs above bracket it; a real device also carries drift and crosstalk that a static noise model does not reproduce, so the hardware error is expected to sit at or above the noise-model rung."
+ }
+}
