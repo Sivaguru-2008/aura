@@ -17,6 +17,11 @@ SQLAlchemy>=2.0
 aiosqlite>=0.19
 httpx>=0.27
 pytest>=8.0
+pytest-asyncio>=0.23   # REQUIRED: without it every `async def` test is *collected and
+                       # reported as a failure*, not skipped — pytest cannot await it.
+                       # 13 tests (agent-board consensus, Ollama copilot error paths)
+                       # silently provided zero coverage while turning CI red. See
+                       # [tool.pytest.ini_options] asyncio_mode in aura/pyproject.toml.
 # psutil>=5.9          # optional: process-RSS in the performance benchmark
 
 # --- Optional: production CNN vision stack (GPU) ---------------------------- #
@@ -34,3 +39,17 @@ pytest>=8.0
 
 # --- MRI dependency ---
 nibabel>=5.2.0
+
+# --- Optional feature groups (see pyproject [project.optional-dependencies]) --- #
+# All lazily imported with a documented fallback; none is required to serve.
+#   [ibm]        qiskit>=1.0, qiskit-ibm-runtime>=0.20   real IBM QPU execution
+#                                                        (absent -> local simulator)
+#   [braket]     amazon-braket-sdk>=1.70, boto3>=1.30    IonQ / Rigetti / IQM
+#                                                        (absent -> local simulator)
+#   [vectordb]   qdrant-client>=1.7                      (absent -> SQLite vector store)
+#   [pacs]       pynetdicom>=2.0, pydicom>=2.4           DICOM C-STORE/FIND/MOVE/GET
+#                                                        (absent -> PACS disabled)
+#   [security]   PyJWT>=2.8, cryptography>=42.0          JWT/RBAC/encryption-at-rest
+#                                                        (absent -> shared-token auth only)
+#   [monitoring] psutil>=5.9, prometheus-client>=0.20    (absent -> metrics minus host gauges)
+# Install everything with:  pip install -e '.[all]'
