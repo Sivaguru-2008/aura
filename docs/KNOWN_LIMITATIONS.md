@@ -32,5 +32,14 @@ This document outlines the known clinical boundaries, algorithmic constraints, a
 ## 3. Clinical Safety Boundaries
 
 - **Not a Diagnostic Replacement:** AURA is a clinical intelligence copilot designed to assist radiologists and physicians. It is not approved for autonomous primary diagnostic interpretation.
-- **Safety Abstentions:** When epistemic uncertainty (mutual information between deep ensemble members) exceeds `0.45` or when the OOD energy score z-score exceeds `3.0`, the system abstains from a clinical claim, advising manual radiological review.
-- **Conformal Set Scannability:** Conformal prediction sets guarantee 90% coverage but may occasionally include multiple competing diagnoses (set size > 3) when clinical presentation is highly ambiguous. Users must review all items in the conformal prediction set.
+- **Safety Abstentions:** Under the default `community_conservative` policy, AURA abstains from a clinical claim and advises manual radiological review when **any** of the following holds:
+  - epistemic uncertainty (mutual information between deep-ensemble members) exceeds `0.15`;
+  - the OOD energy-score z-score exceeds `2.5`;
+  - the 90% conformal set contains more than `4` labels;
+  - the top calibrated probability falls below `0.3` (a weak call across six classes).
+
+  These are the values the server actually runs; `aura/tests/test_doc_numbers.py::test_published_safety_thresholds_match_the_served_policy` fails the build if this list drifts from `get_settings()`. Selecting the `academic_aggressive` profile (`AURA_SAFETY_POLICY=academic_aggressive`) loosens the first three to `0.25` / `3.5` / min-coverage `0.50`.
+
+  > **Historical note.** Versions of this document before 2026-07-30 published `0.45`, `3.0` and set size `> 3`. Those were tuned against an overconfident *synthetic* fusion model (temperature 0.77); once fusion was honestly calibrated (temperature 0.94) they abstained on roughly **91% of real films**, and were recalibrated to the values above. See the abstention-operating-point comment in `aura/common/config.py`.
+
+- **Conformal Set Scannability:** Conformal prediction sets guarantee 90% coverage but routinely include multiple competing diagnoses when the presentation is ambiguous — at 90% coverage a genuinely uncertain six-class model needs sets of 4–6, and the measured mean set size is ~3.3–3.5. AURA commits to a single answer on roughly a third of films and defers the rest. Users must review every item in the set, not only the top-ranked one.
