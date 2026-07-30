@@ -168,6 +168,45 @@ def cmd_benchmark(args: argparse.Namespace) -> None:
     perf_benchmark.run(iters=args.iters)
 
 
+def cmd_qkl(args: argparse.Namespace) -> None:
+    """Train, or report the status of, the quantum-kernel brain classifier."""
+    if args.train:
+        from aura.ml.training import train_qkl
+
+        train_qkl.main(
+            ["--qubits", str(args.qubits), "--bootstrap", str(args.bootstrap)]
+            + (["--dry-run"] if args.dry_run else [])
+        )
+        return
+
+    import json
+
+    from aura.backend.engines.neuro.qkl import DEFAULT_WEIGHTS, QKLClassifier
+    from aura.ml.training.train_qkl import REPORT_PATH
+
+    clf = QKLClassifier.load()
+    print(f"weights     : {DEFAULT_WEIGHTS} ({'present' if DEFAULT_WEIGHTS.exists() else 'ABSENT'})")
+    print(f"trained     : {clf.is_trained}")
+    print(f"task        : {clf.task}")
+    print(f"classes     : {', '.join(clf.classes)}")
+    print(f"qubits      : {clf.n_qubits}  (Hilbert dim {2 ** clf.n_qubits})")
+    print(f"support vec : {len(clf.support_vectors)}")
+    if not clf.is_trained:
+        print("\nUntrained — inference returns a uniform prior and abstains.")
+        print("Train with:  python -m aura.aura_cli qkl --train")
+        return
+    if REPORT_PATH.exists():
+        r = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
+        q, c = r.get("test_quantum", {}), r.get("test_classical_rbf", {})
+        ci = r.get("bootstrap_ci_quantum", {}).get("auroc", {})
+        print(f"\nheld-out (subject-level, {r['split']['test_subjects']} subjects)")
+        print(f"  quantum  AUROC {q.get('auroc', float('nan')):.4f} "
+              f"[{ci.get('lo', float('nan')):.4f}, {ci.get('hi', float('nan')):.4f}]  "
+              f"ECE {q.get('ece', float('nan')):.4f}")
+        print(f"  classical RBF  {c.get('auroc', float('nan')):.4f}")
+        print(f"\n{r.get('label_axis_note', '')}")
+
+
 def cmd_calibrate(args: argparse.Namespace) -> None:
     from aura.ml.evaluation import vision_calibration
 
@@ -325,6 +364,13 @@ def _build_parser() -> argparse.ArgumentParser:
     ag.add_argument("--confidence", type=float, default=0.85, help="confidence threshold for commit")
     ag.add_argument("--max-tests", type=int, default=3, help="max tests to acquire")
     ag.set_defaults(func=cmd_agent)
+
+    qk = sub.add_parser("qkl", help="quantum-kernel brain classifier: status or training")
+    qk.add_argument("--train", action="store_true", help="fit and save the classifier")
+    qk.add_argument("--qubits", type=int, default=6)
+    qk.add_argument("--bootstrap", type=int, default=1000)
+    qk.add_argument("--dry-run", action="store_true", help="train, report, write nothing")
+    qk.set_defaults(func=cmd_qkl)
     return p
 
 
@@ -341,7 +387,8 @@ def main() -> None:
         return
 
     parser = _build_parser()
-    if cmd in {"predict", "evaluate", "explain", "benchmark", "calibrate", "agent", "-h", "--help"}:
+    if cmd in {"predict", "evaluate", "explain", "benchmark", "calibrate", "agent", "qkl",
+               "-h", "--help"}:
         args = parser.parse_args(sys.argv[1:])
         if getattr(args, "func", None) is None:
             print(__doc__)

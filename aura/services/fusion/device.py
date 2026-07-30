@@ -22,9 +22,18 @@ def make_qnode(n_qubits: int, n_layers: int, device_name: str = "default.qubit",
              between evidence sources in a 2**n Hilbert space.
     Readout: <Z_i> per qubit -> a classical linear head maps to diagnosis logits.
 
-    ``entangler`` selects the two-qubit block:
+    ``entangler`` selects the two-qubit block. All four keep the *same* trainable
+    parameter count, so a difference between them is attributable to entangling
+    topology alone and never to capacity:
 
-    * ``"ring"`` — CNOT ring, the shipped ansatz.
+    * ``"ring"`` — CNOT ring (i -> i+1 mod n), the shipped ansatz. ``n`` two-qubit
+      gates per layer, depth O(n) as scheduled, and every qubit is coupled.
+    * ``"linear"`` — open chain (i -> i+1, no wrap). ``n-1`` gates per layer. On real
+      hardware this is the cheapest topology that still connects the whole register,
+      because it maps onto a heavy-hex coupling map without a SWAP to close the ring.
+    * ``"full"`` — all-to-all, ``n(n-1)/2`` gates per layer. Maximal expressivity per
+      layer and the worst transpiled depth on any device that is not fully connected;
+      included so the cost of expressivity is measured rather than assumed.
     * ``"none"`` — no two-qubit gates at all. The register stays a product state, so
       every qubit evolves independently and ``<Z_i Z_j> = <Z_i><Z_j>`` exactly. This
       is the **ablation control**: same qubit count, same layer count, same trainable
@@ -37,8 +46,7 @@ def make_qnode(n_qubits: int, n_layers: int, device_name: str = "default.qubit",
     (each qubit performs its own rotation chain and contributes ``<Z_i>``), so the
     control is a fair one rather than a straw man.
     """
-    if entangler not in ("ring", "none"):
-        raise ValueError(f"unknown entangler {entangler!r}; expected 'ring' or 'none'")
+    _check_entangler(entangler)
     dev = qml.device(device_name, wires=n_qubits, shots=shots)
 
     @qml.qnode(dev, interface=interface, diff_method="best")
@@ -51,12 +59,49 @@ def make_qnode(n_qubits: int, n_layers: int, device_name: str = "default.qubit",
             for i in range(n_qubits):
                 qml.RY(theta[layer][i][0], wires=i)
                 qml.RZ(theta[layer][i][1], wires=i)
-            if entangler == "ring":
-                for i in range(n_qubits):
-                    qml.CNOT(wires=[i, (i + 1) % n_qubits])
+            apply_entangler(entangler, n_qubits)
         return [qml.expval(qml.PauliZ(i)) for i in range(n_qubits)]
 
     return circuit
+
+
+#: Two-qubit blocks, keyed by name. Each returns the (control, target) pairs for one
+#: layer. Kept as data so the design-space sweep can enumerate topologies and report
+#: the gate count each one costs, instead of the choice being a constant in a file.
+ENTANGLERS = ("ring", "linear", "full", "none")
+
+
+def _check_entangler(entangler: str) -> None:
+    if entangler not in ENTANGLERS:
+        raise ValueError(f"unknown entangler {entangler!r}; expected one of {ENTANGLERS}")
+
+
+def entangler_pairs(entangler: str, n_qubits: int) -> list[tuple[int, int]]:
+    """(control, target) pairs for one layer of *entangler* on *n_qubits* wires."""
+    _check_entangler(entangler)
+    if entangler == "none":
+        return []
+    if entangler == "linear":
+        return [(i, i + 1) for i in range(n_qubits - 1)]
+    if entangler == "full":
+        return [(i, j) for i in range(n_qubits) for j in range(i + 1, n_qubits)]
+    return [(i, (i + 1) % n_qubits) for i in range(n_qubits)]      # ring
+
+
+def apply_entangler(entangler: str, n_qubits: int) -> None:
+    """Emit one layer's two-qubit block onto the active PennyLane tape."""
+    for control, target in entangler_pairs(entangler, n_qubits):
+        qml.CNOT(wires=[control, target])
+
+
+def two_qubit_gate_count(entangler: str, n_qubits: int, n_layers: int) -> int:
+    """Two-qubit gates in the whole circuit — the cost that matters on hardware.
+
+    Single-qubit rotations are cheap and high-fidelity; CNOTs dominate both the
+    error budget and the transpiled depth, so this is the number to compare
+    topologies on.
+    """
+    return len(entangler_pairs(entangler, n_qubits)) * n_layers
 
 
 def n_params(n_qubits: int, n_layers: int) -> int:
@@ -73,8 +118,7 @@ def make_probs_qnode(n_qubits: int, n_layers: int, device_name: str = "default.q
     evaluates a different unitary and returns a distribution that is well-formed and
     wrong.
     """
-    if entangler not in ("ring", "none"):
-        raise ValueError(f"unknown entangler {entangler!r}; expected 'ring' or 'none'")
+    _check_entangler(entangler)
     dev = qml.device(device_name, wires=n_qubits, shots=shots)
 
     @qml.qnode(dev, interface=interface, diff_method="best")
@@ -85,9 +129,7 @@ def make_probs_qnode(n_qubits: int, n_layers: int, device_name: str = "default.q
             for i in range(n_qubits):
                 qml.RY(theta[layer][i][0], wires=i)
                 qml.RZ(theta[layer][i][1], wires=i)
-            if entangler == "ring":
-                for i in range(n_qubits):
-                    qml.CNOT(wires=[i, (i + 1) % n_qubits])
+            apply_entangler(entangler, n_qubits)
         return qml.probs(wires=range(n_qubits))
 
     return circuit

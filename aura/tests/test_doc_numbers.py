@@ -39,6 +39,11 @@ DOCS = [
 # Only match probabilities, so "(8-qubit)" and "n=69" in a label are never read as data.
 NUMBER = re.compile(r"0\.\d{3,4}")
 
+# Confidence intervals are published as "[0.581, 0.795]" next to the point estimates.
+# They are derived from the accuracy column rather than stored in benchmark.json, so
+# they must not be read as extra metric columns — strip the bracketed span first.
+INTERVAL = re.compile(r"\[[^\]]*\]")
+
 
 def _metrics():
     if not BENCHMARK.exists():
@@ -57,7 +62,8 @@ def _published_rows(doc: Path):
         label = cells[0].lower()
         for text, key in BACKEND_LABELS.items():
             if label.startswith(text):
-                values = [float(v) for v in NUMBER.findall(" ".join(cells[1:]))]
+                row = INTERVAL.sub(" ", " ".join(cells[1:]))
+                values = [float(v) for v in NUMBER.findall(row)]
                 yield lineno, key, values
                 break
 
@@ -109,3 +115,96 @@ def test_conclusion_still_holds_classical_beats_quantum_on_accuracy():
         "('does not beat a fairly-calibrated classical head') is now wrong — "
         "update the prose in README.md, WHAT_IS_AURA.md and docs/BENCHMARKS.md."
     )
+
+
+# --------------------------------------------------------------------------- #
+# Attribution: a number nobody measured must say so
+# --------------------------------------------------------------------------- #
+BENCH_REPORT = REPO_ROOT / "docs" / "benchmark_report.md"
+
+# Models AURA compares itself against but has never run. Every mention has to sit
+# near an explicit disclaimer, or the table reads as a head-to-head that happened.
+UNMEASURED_BASELINES = ("nnU-Net", "nnUNet", "SwinUNETR", "MONAI")
+
+ATTRIBUTION_MARKERS = ("not measured", "not run", "published", "literature")
+
+
+def test_competitor_rows_are_marked_as_unmeasured():
+    """nnU-Net / SwinUNETR / MONAI numbers are literature values, not experiments.
+
+    They were once bare literals in the same table as AURA's interpolated rows,
+    under prose describing a comparison "against industry-standard baseline models".
+    Nothing in the repo runs them. If they are cited, they must be *labelled* cited.
+    """
+    if not BENCH_REPORT.exists():
+        pytest.skip(f"{BENCH_REPORT} not generated; run ml/evaluation/run_pipeline.py")
+    text = BENCH_REPORT.read_text(encoding="utf-8")
+
+    for line in text.splitlines():
+        if not any(b in line for b in UNMEASURED_BASELINES):
+            continue
+        if line.strip().startswith("|") and "---" not in line:
+            assert any(m in line.lower() for m in ATTRIBUTION_MARKERS), (
+                f"benchmark_report.md publishes a competitor row with no provenance:\n"
+                f"  {line.strip()}\n"
+                f"Every such row must name its source and say it was not measured here."
+            )
+
+
+def test_benchmark_report_discloses_the_2d_3d_non_equivalence():
+    """AURA's brain Dice is pooled 2-D; the cited baselines are per-case 3-D.
+
+    Pooled-2-D scoring is systematically more generous — empty slices are easy and
+    numerous — so presenting the two in one table without the caveat overstates AURA.
+    """
+    if not BENCH_REPORT.exists():
+        pytest.skip(f"{BENCH_REPORT} not generated; run ml/evaluation/run_pipeline.py")
+    text = BENCH_REPORT.read_text(encoding="utf-8").lower()
+    assert "2-d" in text or "2d" in text, "no dimensionality caveat in benchmark_report.md"
+    assert "per-case 3-d" in text or "per-case 3d" in text, (
+        "benchmark_report.md must state that the cited baselines are per-case 3-D "
+        "while AURA's figure is pooled per-slice 2-D."
+    )
+
+
+def test_fusion_gap_is_reported_with_its_uncertainty():
+    """The headline accuracy gap is four cases out of sixty-nine.
+
+    Publishing it bare implies a resolution the split does not have. The report has
+    to carry the interval and the significance context next to the point estimates.
+    """
+    if not BENCH_REPORT.exists():
+        pytest.skip(f"{BENCH_REPORT} not generated; run ml/evaluation/run_pipeline.py")
+    text = BENCH_REPORT.read_text(encoding="utf-8").lower()
+    assert "mcnemar" in text, "no significance test reported alongside the fusion gap"
+    assert "95%" in text, "no confidence interval reported alongside the fusion gap"
+
+
+def test_published_safety_thresholds_match_the_served_policy():
+    """docs/KNOWN_LIMITATIONS.md must describe the envelope the app actually uses.
+
+    It published epistemic 0.45 / OOD z 3.0 / conformal set > 3 long after those were
+    recalibrated to 0.15 / 2.5 / > 4 — values the code comment in common/config.py
+    explicitly calls superseded. The safety-boundary doc is the worst place to be
+    stale, so the thresholds are pinned the same way the benchmark tables are.
+    """
+    import sys
+
+    if str(PKG_ROOT) not in sys.path:
+        sys.path.insert(0, str(PKG_ROOT))
+    from aura.common.config import get_settings
+
+    doc = REPO_ROOT / "docs" / "KNOWN_LIMITATIONS.md"
+    assert doc.exists(), f"{doc} is missing"
+    text = doc.read_text(encoding="utf-8")
+    s = get_settings()
+
+    for label, value in (
+        ("epistemic_threshold", f"{s.epistemic_threshold:g}"),
+        ("ood_threshold", f"{s.ood_threshold:g}"),
+        ("abstention_conformal_size", f"{s.abstention_conformal_size:g}"),
+    ):
+        assert f"`{value}`" in text, (
+            f"KNOWN_LIMITATIONS.md does not publish the served {label} = {value}. "
+            f"Re-copy from get_settings(); do not loosen this test."
+        )

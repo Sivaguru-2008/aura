@@ -1,10 +1,5 @@
-"""Active Diagnostic Agent — sequential, information-gain-driven diagnosis.
+from aura.services.agent.base import AgentVerdict, ClinicalAgent
+from aura.services.agent.registry import AgentRegistry
+from aura.services.agent.consensus import ConsensusEngine
 
-Additive layer over the existing fusion + recommend (EVOI/EIG) + safety engines.
-Turns AURA from a one-shot classifier into an agent that quantifies what it does
-NOT know and closes that uncertainty by acquiring the single most informative next
-test — measured in bits — abstaining until confident.
-"""
-from .active_diagnosis import ActiveDiagnosisAgent, DiagnosisTrajectory
-
-__all__ = ["ActiveDiagnosisAgent", "DiagnosisTrajectory"]
+__all__ = ["AgentVerdict", "ClinicalAgent", "AgentRegistry", "ConsensusEngine"]

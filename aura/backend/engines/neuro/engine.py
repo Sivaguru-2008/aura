@@ -509,9 +509,10 @@ class NeuroMindEngine(AnalysisEngine):
         if get_settings().neuro_qkl_enabled and getattr(output, "features", None) is not None and getattr(output.features, "pooled", None) is not None:
             try:
                 classifier = self._qkl_classifier()
-                qkl_res = classifier.predict_subtype(output.features.pooled)
+                qkl_res = classifier.predict(output.features.pooled).to_dict()
             except Exception as e:
-                log.warning(f"QKL subtype classification failed: {e}")
+                # Never fail a study because the research head is unavailable.
+                log.warning(f"QKL classification failed; continuing without it: {e}")
 
         caveats, abstain_reason, abstain_detail = self._disclosures(output, calibrator)
         bundle = build_case_bundle(
@@ -558,11 +559,16 @@ class NeuroMindEngine(AnalysisEngine):
         }
         if qkl_res:
             meta_dict.update({
-                "tumor_subtype_glioma": round(qkl_res["glioma"], 4),
-                "tumor_subtype_meningioma": round(qkl_res["meningioma"], 4),
-                "tumor_subtype_metastasis": round(qkl_res["metastasis"], 4),
-                "tumor_subtype_qkl_enabled": True,
+                "qkl_enabled": True,
+                "qkl_task": qkl_res["task"],
+                "qkl_trained": qkl_res["trained"],
+                "qkl_top_label": qkl_res["top_label"],
+                "qkl_confidence": qkl_res["confidence"],
+                "qkl_abstained": qkl_res["abstained"],
+                "qkl_kernel_similarity_mean": qkl_res["kernel_similarity"].get("mean"),
             })
+            for label, prob in qkl_res["labels"].items():
+                meta_dict[f"qkl_p_{label.lower()}"] = prob
 
         return AnalysisResult(
             study_id=prepared.study_id,

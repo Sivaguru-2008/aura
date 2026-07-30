@@ -23,6 +23,7 @@ from aura.schemas.contracts import (
     SafetyAssessment,
     VisionResult,
 )
+from aura.services.agent.consensus import ConsensusResult
 
 _ABSTENTION_TEXT = {
     AbstentionReason.OUT_OF_DISTRIBUTION:
@@ -84,7 +85,7 @@ class ReportEngine:
     def compose(self, vision: VisionResult, safety: SafetyAssessment,
                 recommendations: list[Recommendation],
                 reasoning: ReasoningTrace | None = None,
-                fusion: FusionResult | None = None) -> ReportDraft:
+                consensus: ConsensusResult | None = None) -> ReportDraft:
         grounding: dict[str, list[str]] = {}
 
         # ---- Findings: only findings the vision engine actually asserted. ----
@@ -102,16 +103,6 @@ class ReportEngine:
                              "effusion, or pneumothorax; cardiomediastinal silhouette "
                              "within normal limits.")
             grounding.setdefault("findings", []).append("no_positive_findings")
-
-        # NOTE: fusion-internal quantum telemetry (measurement entropy, entangled
-        # evidence-channel pairs) is deliberately NOT appended to the clinical
-        # Findings narrative. The Findings section is a radiology observation field
-        # and must describe only radiographic findings; quantum register metrics are
-        # model diagnostics with no clinical meaning there. That data is already
-        # surfaced verbatim in the dedicated quantum-entanglement telemetry panel
-        # (apps/web/js/console.js, from bundle.fusion.quantum_entanglement), so it is
-        # not lost — only kept out of the clinician-facing findings text. The `fusion`
-        # argument is retained on the signature for API stability and future use.
 
         # ---- Impression: the final validated posterior. ----
         # When the clinical reasoner fired on real labs/symptoms/history it produces
@@ -183,6 +174,44 @@ class ReportEngine:
                                    "information-gain analysis; correlate clinically.")
             grounding["recommendation"] = ["none"]
 
+        # ---- Panel Discussion: multi-agent consensus tracing. ----
+        panel_text = ""
+        if consensus is not None and consensus.verdicts:
+            lines = ["### Multi-Disciplinary Panel Discussion\n"]
+            for v in consensus.verdicts:
+                agent_label = v.agent_name.replace("_", " ").title()
+                top_dx_agent = max(v.findings, key=v.findings.get) if v.findings else None
+                top_p_agent = v.findings.get(top_dx_agent, 0.0) if top_dx_agent else 0.0
+                lines.append(f"- **{agent_label}** (confidence {v.confidence:.0%}): "
+                             f"leading diagnosis {top_dx_agent.value if top_dx_agent else 'N/A'} "
+                             f"({top_p_agent:.0%})")
+                for arg in v.arguments:
+                    lines.append(f"  - {arg}")
+                for ref in v.guideline_references:
+                    lines.append(f"    - *Source: {agent_label}, {ref}*")
+                    grounding.setdefault("panel_discussion", []).append(
+                        f"{v.agent_name}: {ref}"
+                    )
+
+            if consensus.arbitration_history:
+                lines.append("\n**Arbitration:**")
+                for round_ in consensus.arbitration_history:
+                    for a_name, b_name, js_val in round_.conflicts:
+                        a_label = a_name.replace("_", " ").title()
+                        b_label = b_name.replace("_", " ").title()
+                        lines.append(
+                            f"- Resolved disagreement between {a_label} and {b_label} "
+                            f"(divergence {js_val:.2f})"
+                        )
+                    top_cons = max(round_.resolved_posterior, key=round_.resolved_posterior.get) if round_.resolved_posterior else None
+                    if top_cons:
+                        lines.append(f"- Panel consensus diagnosis: {top_cons.value} "
+                                     f"({round_.resolved_posterior[top_cons]:.0%})")
+                        grounding.setdefault("panel_consensus", []).append(top_cons.value)
+
+            panel_text = "\n".join(lines) + "\n"
+            grounding["panel_discussion"] = [v.agent_name for v in consensus.verdicts]
+
         return ReportDraft(
             study_id=vision.study_id,
             findings_text=findings_text,
@@ -190,6 +219,7 @@ class ReportEngine:
             recommendation_text=recommendation_text,
             differential_text=differential_text,
             confidence_text=confidence_text,
+            panel_discussion_text=panel_text,
             grounding=grounding,
             generator="structured+reasoning",
         )

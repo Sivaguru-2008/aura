@@ -22,7 +22,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from aura.schemas.clinical import CHEST_FINDINGS, Diagnosis, Finding
+from aura.schemas.clinical import CHEST_FINDINGS, Diagnosis, Finding, DIAGNOSES
 from aura.schemas.contracts import StructuredPriors
 
 # The grid + anatomy primitives now live in the dependency-free ``common`` layer so
@@ -139,7 +139,7 @@ def make_sample(dx: Diagnosis, rng: np.random.Generator) -> Sample:
 def make_dataset(n: int, seed: int = 7) -> list[Sample]:
     rng = np.random.default_rng(seed)
     # Realistic-ish prevalence: normal is common.
-    dxs = list(Diagnosis)
+    dxs = DIAGNOSES
     probs = np.array([0.34, 0.18, 0.15, 0.13, 0.12, 0.08])
     probs = probs / probs.sum()
     out = []

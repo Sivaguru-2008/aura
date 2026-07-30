@@ -1,0 +1,119 @@
+{
+  "task": "glioma_grade",
+  "classes": [
+    "HGG",
+    "LGG"
+  ],
+  "label_axis_note": "BraTS-2020 carries glioma grade (HGG/LGG) only. AURA holds no meningioma or metastasis imaging, so the three-class subtype problem is NOT trained and the legacy predict_subtype() surface abstains.",
+  "embedding_source": "E:\\AURA\\aura-main\\aura\\artifacts\\brain\\embeddings\\epoch_029.npz",
+  "n_slices_total": 7407,
+  "n_subjects_total": 55,
+  "split": {
+    "level": "subject (grouped, stratified by grade)",
+    "train_subjects": 33,
+    "cal_subjects": 11,
+    "test_subjects": 11,
+    "train_slices_used": 600,
+    "cal_slices_used": 673,
+    "test_slices_used": 669
+  },
+  "quantum": {
+    "feature_map": "IQP (Hadamard + RZ + ring ZZ)",
+    "kernel": "fidelity |<phi(x)|phi(x')>|^2",
+    "n_qubits": 6,
+    "hilbert_dim": 64,
+    "support_vectors": 402,
+    "encode_seconds_train": 2.942
+  },
+  "calibration": {
+    "platt_a": -0.9676980344557834,
+    "platt_b": 0.4102511585763645,
+    "cal_metrics": {
+      "auroc": 0.752591575091575,
+      "auprc": 0.635704972333174,
+      "accuracy": 0.6849925705794948,
+      "sensitivity": 0.5970695970695971,
+      "specificity": 0.745,
+      "precision": 0.6150943396226415,
+      "f1": 0.6059479553903345,
+      "ece": 0.06954629656065969,
+      "brier": 0.19968621453424523,
+      "n": 673,
+      "n_positive": 273
+    }
+  },
+  "test_quantum": {
+    "auroc": 0.7060966542750929,
+    "auprc": 0.574505871042781,
+    "accuracy": 0.6696562032884903,
+    "sensitivity": 0.550185873605948,
+    "specificity": 0.75,
+    "precision": 0.5967741935483871,
+    "f1": 0.5725338491295938,
+    "ece": 0.02763677963403176,
+    "brier": 0.21150031510974762,
+    "n": 669,
+    "n_positive": 269
+  },
+  "test_classical_rbf": {
+    "auroc": 0.7213661710037175,
+    "auprc": 0.5845321702120971,
+    "accuracy": 0.6771300448430493,
+    "sensitivity": 0.5687732342007435,
+    "specificity": 0.75,
+    "precision": 0.6047430830039525,
+    "f1": 0.5862068965517241,
+    "ece": 0.040780256019418204,
+    "brier": 0.20719383218121412,
+    "n": 669,
+    "n_positive": 269
+  },
+  "bootstrap_ci_quantum": {
+    "auroc": {
+      "lo": 0.5768231240992868,
+      "hi": 0.8261735885133445,
+      "median": 0.703499578874776,
+      "n_boot": 897
+    },
+    "accuracy": {
+      "lo": 0.5404377089942554,
+      "hi": 0.7793697288404026,
+      "median": 0.6666666666666666,
+      "n_boot": 897
+    },
+    "f1": {
+      "lo": 0.3175639894086496,
+      "hi": 0.7489062194697182,
+      "median": 0.5736434108527132,
+      "n_boot": 897
+    }
+  },
+  "bootstrap_ci_classical": {
+    "auroc": {
+      "lo": 0.5913370422954882,
+      "hi": 0.8404897856817145,
+      "median": 0.7184956307632888,
+      "n_boot": 897
+    }
+  },
+  "quantum_minus_classical_auroc": {
+    "mean": -0.015557745963377109,
+    "ci95_lo": -0.026950817754366918,
+    "ci95_hi": -0.00829846215724108,
+    "p_two_sided": 0.002229654403567447,
+    "significant_at_95": true,
+    "n_boot": 897
+  },
+  "quantum_minus_classical_ece": {
+    "mean": -0.0008564091379215842,
+    "ci95_lo": -0.02896831293957844,
+    "ci95_hi": 0.014969559355607516,
+    "p_two_sided": 0.882943143812709,
+    "significant_at_95": false,
+    "n_boot": 897,
+    "lower_is_better": true,
+    "negative_favours": "quantum"
+  },
+  "seed": 7,
+  "C": 1.0
+}

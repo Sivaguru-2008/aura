@@ -210,6 +210,18 @@ a second worker races on both and fails to bind. Scale with replicas behind a
 load balancer, not with in-process workers, and give each replica its own
 `AURA_DB_PATH`.
 
+Two things follow from replicas that are easy to miss:
+
+* **`AURA_RATE_LIMIT_RPM` is per-process.** The limiter is an in-memory token bucket
+  with no shared backend, so N replicas mean an effective ceiling of `N ×` the
+  configured value, and a restart resets every bucket. Enforce the real limit at the
+  ingress if it needs to hold.
+* **Per-replica `AURA_DB_PATH` means per-replica ACI state.** Adaptive conformal
+  thresholds live in the same SQLite file as the worklist, so each replica adapts its
+  q̂ against only the outcomes that happened to land on it. Fine for a demo; if you
+  care about the coverage guarantee across a fleet, put the case store on one shared
+  database rather than splitting it.
+
 ---
 
 ## 8. CI/CD

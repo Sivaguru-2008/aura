@@ -1,0 +1,55 @@
+{
+ "generated": "2026-07-30T18:14:30Z",
+ "backend": "FakeMarrakesh",
+ "backend_qubits": 156,
+ "circuit": {
+  "n_qubits": 8,
+  "n_layers": 3,
+  "entangler": "ring",
+  "encoding": "RY(pi*x_i)",
+  "readout": "<Z_i>"
+ },
+ "logical": {
+  "depth": 31,
+  "two_qubit_gates": 24,
+  "expected_two_qubit_gates": 24
+ },
+ "levels": [
+  {
+   "optimization_level": 0,
+   "depth": 236,
+   "two_qubit_gates": 102,
+   "total_gates": 586,
+   "transpile_seconds": 0.451
+  },
+  {
+   "optimization_level": 1,
+   "depth": 185,
+   "two_qubit_gates": 75,
+   "total_gates": 371,
+   "transpile_seconds": 0.029
+  },
+  {
+   "optimization_level": 2,
+   "depth": 146,
+   "two_qubit_gates": 60,
+   "total_gates": 284,
+   "transpile_seconds": 0.032
+  },
+  {
+   "optimization_level": 3,
+   "depth": 146,
+   "two_qubit_gates": 60,
+   "total_gates": 284,
+   "transpile_seconds": 0.036
+  }
+ ],
+ "served_level": 3,
+ "improvement_vs_level_1": {
+  "two_qubit_gates_saved": 15,
+  "two_qubit_gates_saved_pct": 20.0,
+  "depth_saved": 39,
+  "depth_saved_pct": 21.1
+ },
+ "note": "Transpiled against the published coupling map of the device the hardware run used; no QPU time is spent. The logical circuit has 24 two-qubit gates; every gate above that count is routing overhead the heavy-hex lattice forces on an 8-qubit ring. Two-qubit gates are the figure to compare: they dominate the error budget and the depth, while single-qubit rotations are cheap and high-fidelity."
+}

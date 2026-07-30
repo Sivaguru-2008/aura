@@ -78,5 +78,38 @@ AURA is configured via `common/config.py` (which parses `pyproject.toml` and env
 | `AURA_MIMIC_ROOT` | `../datasets` | Paths to dataset files. |
 | `AURA_DATA_SOURCE` | `mimic` | Seed source for cases (`mimic` \| `synthetic`). |
 | `AURA_OOD_ENERGY_THRESHOLD` | `1.5` | Threshold for energy-score OOD rejection. |
-| `AURA_LOW_CONFIDENCE_THRESHOLD` | `0.45` | Probability cutoff for low-confidence abstention. |
-| `AURA_SEC_AUTH_ENABLED` | `false` | Enables bearer token authentication gate. |
+| `AURA_LOW_CONFIDENCE_THRESHOLD` | `0.3` | Probability cutoff for low-confidence abstention. |
+| `AURA_AUTH_TOKEN` | *(empty)* | **Shared bearer token. Empty = every endpoint is open.** See below. |
+| `AURA_AUTH_HEADER` | `x-aura-token` | Header the token is read from (`Authorization: Bearer …` also accepted). |
+| `AURA_RATE_LIMIT_RPM` | `0` | Per-principal requests/minute; `0` disables the cap. |
+
+A present-but-empty `AURA_*` variable is treated as unset, so writing `KEY=` in a
+`.env` falls back to the default rather than being parsed as a value.
+
+### Access control
+
+Authentication is **opt-in and off by default**, which is correct for the offline
+single-box demo and wrong for anything else. With no `AURA_AUTH_TOKEN`, every
+endpoint is reachable by anyone who can route a packet to the port — including the
+reads that emit patient data: `GET /v1/cases` enumerates case ids,
+`GET /v1/cases/{id}` returns the full bundle, and `/export/fhir` and `/export/hl7`
+emit standards-conformant clinical records built for another system to ingest.
+
+Set a token before a second machine can reach AURA:
+
+```bash
+export AURA_AUTH_TOKEN=$(python -c "import secrets;print(secrets.token_urlsafe(32))")
+```
+
+Clients then send `x-aura-token: <value>` **and** `x-aura-user: <who>` — an
+authenticated call without a named principal is rejected 403, which is what keeps
+every call attributable in the audit log. `/v1/health` and the dashboard shell stay
+public so container probes and the UI still load; every `/v1` data route is gated.
+`deploy/preflight.py` prints a warning on each boot while the token is empty.
+
+> [!NOTE]
+> **Rate limiting is per-process.** The limiter is an in-memory token bucket with no
+> shared backend, so N replicas behind a load balancer give an effective ceiling of
+> `N × AURA_RATE_LIMIT_RPM`, and a restart clears every bucket. It is a courtesy
+> throttle against runaway clients, not a defence against a determined one — put a
+> real limiter in the ingress if you need that guarantee.

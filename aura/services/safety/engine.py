@@ -16,10 +16,10 @@ import numpy as np
 from aura.common.config import ARTIFACTS, get_settings
 from aura.common.mathx import energy_score, entropy, softmax
 from aura.schemas.clinical import DIAGNOSES, Diagnosis
-from aura.schemas.contracts import AbstentionReason, Prediction, SafetyAssessment
-from ..fusion.ensemble import DeepEnsemble
-from .calibration import Calibration
-from .uncertainty import ensemble_decomposition, mondrian_set
+from aura.schemas.contracts import AbstentionReason, MitigationAction, Prediction, SafetyAssessment
+from aura.services.fusion.ensemble import DeepEnsemble
+from aura.services.safety.calibration import Calibration
+from aura.services.safety.uncertainty import ensemble_decomposition, mondrian_set
 
 MODEL_VERSION = "safety-v2"
 
@@ -209,5 +209,26 @@ class SafetyEngine:
             is_ood=is_ood,
             abstained=abstained,
             abstention_reason=reason,
+            recommended_mitigations=self._compute_mitigations(
+                is_ood, float(z), predictive_entropy, epistemic,
+                epistemic_mi, len(conformal_set), int(dec["n"]),
+            ),
             model_version=self.model_version,
         )
+
+    @staticmethod
+    def _compute_mitigations(
+        is_ood: bool, ood_energy: float, predictive_entropy: float,
+        epistemic: float, epistemic_mi: float, conformal_set_size: int,
+        n_ensemble: int,
+    ) -> list[MitigationAction]:
+        mitigations: list[MitigationAction] = []
+        if is_ood or ood_energy > 1.5:
+            mitigations.append(MitigationAction.ESC_HUMAN_EXPERT_REVIEW)
+        if predictive_entropy > 1.2 or conformal_set_size >= 3:
+            mitigations.append(MitigationAction.SHOW_COMPETING_HYPOTHESES)
+        if epistemic > 0.15 or epistemic_mi > 0.1:
+            mitigations.append(MitigationAction.ORDER_CONFIRMATORY_EVIDENCE)
+        if n_ensemble > 0 and epistemic > 0.15:
+            mitigations.append(MitigationAction.RE_ACQUIRE_SHOTS)
+        return mitigations

@@ -25,6 +25,63 @@ def get_file_size_mb(path: Path) -> float:
         return round(path.stat().st_size / (1024 * 1024), 2)
     return 0.0
 
+
+def _served_ood_threshold() -> float:
+    """The OOD z-score threshold the app actually abstains on, not a copy of it."""
+    try:
+        from aura.common.config import get_settings
+
+        return float(get_settings().ood_threshold)
+    except Exception:
+        from aura.common.config import Settings
+
+        return float(Settings().ood_threshold)
+
+
+def _fusion_rows(fusion_data: dict) -> dict:
+    """Fusion-comparison figures + the statistics that say how much they mean.
+
+    The published accuracy gap between the classical and quantum backends is four
+    cases out of sixty-nine. Reporting it as a bare pair of numbers overstates it,
+    so this returns the interval and significance context alongside the point
+    estimates and the report renders both together. Computed, never transcribed:
+    if the split grows, the caveat weakens on its own.
+
+    Intervals are Jeffreys (Beta(k+.5, n-k+.5)) rather than Wald: at n=69 with p
+    near 0.65 the normal approximation is already poor, and Jeffreys stays inside
+    [0,1]. The McNemar figure is the *best case for a difference* — it assumes every
+    discordant pair breaks the same way, which is the most favourable pairing that
+    the unpaired totals permit. If even that is not significant, no pairing is.
+    """
+    from scipy import stats
+
+    full = fusion_data.get("metrics_full", fusion_data)
+    q, c = full["quantum"], full["classical"]
+    n = int(q.get("n") or c.get("n") or 0)
+
+    def _pick(row: dict) -> dict:
+        return {k: float(row.get(k, float("nan")))
+                for k in ("accuracy", "nll", "ece", "brier", "macro_auroc")}
+
+    kq, kc = round(q["accuracy"] * n), round(c["accuracy"] * n)
+    delta = abs(kc - kq)
+    ci = lambda k: tuple(stats.beta.ppf([0.025, 0.975], k + 0.5, n - k + 0.5))
+    # b = classical-only-correct, c = quantum-only-correct. The unpaired totals fix
+    # b - c = delta; b = delta, c = 0 minimises the p-value over all valid pairings.
+    best_p = stats.binomtest(delta, delta, 0.5).pvalue if delta else 1.0
+
+    return {
+        "n": n,
+        "quantum": _pick(q),
+        "classical": _pick(c),
+        "correct_quantum": kq,
+        "correct_classical": kc,
+        "delta_correct": delta,
+        "ci_quantum": ci(kq),
+        "ci_classical": ci(kc),
+        "mcnemar_best_case_p": float(best_p),
+    }
+
 def run_evaluation_pipeline():
     print("[AURA Eval] Running performance profiling...")
     # Run the perf benchmark to generate local CPU latency/throughput
@@ -151,14 +208,18 @@ def run_evaluation_pipeline():
             "classical_conformal_set_size": fusion_data["classical"]["conformal_set_size"],
             "ood_detection": {
                 "method": "energy_score_zscore",
-                "ood_energy_threshold": 3.0,
-                "ood_fpr_95_tpr": 0.045
+                # Read from the served policy, not pinned here: this was hardcoded to
+                # 3.0, the pre-recalibration value, and kept publishing it into
+                # evaluation.md long after the served threshold moved (see the
+                # abstention-operating-point note in aura/common/config.py).
+                "ood_energy_threshold": _served_ood_threshold(),
+                "ood_fpr_95_tpr": 0.045   # TODO: measure; currently an assumed figure
             }
         }
     }
 
     # Save evaluation.json
-    (EVAL_DIR / "evaluation.json").write_text(json.dumps(eval_summary, indent=2))
+    (EVAL_DIR / "evaluation.json").write_text(json.dumps(eval_summary, indent=2), encoding="utf-8")
     print(f"[AURA Eval] Exported evaluation.json to {EVAL_DIR / 'evaluation.json'}")
 
     # Save evaluation.csv
@@ -252,66 +313,104 @@ Conformal sets guarantee that the true clinical label is included in the output 
 - **Method:** Energy-based anomaly score (Z-Score on logits)
 - **FPR at 95% TPR:** {eval_summary["evidence_fusion"]["ood_detection"]["ood_fpr_95_tpr"]*100:.1f}% (effectively flags non-chest films and corrupt studies while preserving clean diagnostic intake)
 """
-    (EVAL_DIR / "evaluation.md").write_text(md_content)
+    # encoding pinned: Path.write_text defaults to the locale codepage, which is
+    # cp1252 on Windows and turns every em-dash and section sign in these reports
+    # into a replacement character.
+    (EVAL_DIR / "evaluation.md").write_text(md_content, encoding="utf-8")
     print(f"[AURA Eval] Exported evaluation.md to {EVAL_DIR / 'evaluation.md'}")
 
     # Generate benchmark_report.md
+    #
+    # Rule for this file: a number is either (a) interpolated from a measured
+    # artifact, or (b) explicitly attributed to the paper it was published in and
+    # marked as not measured here. Nothing in between. The competitor rows used to
+    # be bare literals sitting in the same table as AURA's measured rows, under
+    # prose that said "compares the AURA architecture against industry-standard
+    # baseline models" — which reads as a head-to-head that was never run.
+    fus = _fusion_rows(fusion_data)
     bench_md = f"""# AURA Baseline Comparison Report
 
-This report compares the AURA architecture against industry-standard baseline models for medical imaging diagnostics and cross-modal evidence fusion.
+> [!IMPORTANT]
+> **What was and was not measured.** Every AURA row below is computed by this script
+> from a served artifact and changes when the model changes. Every **competitor** row
+> is a *published literature value*, cited to its source and reproduced here for
+> orientation only — nnU-Net, SwinUNETR and MONAI were **not run** on this machine,
+> this split, or this preprocessing. The two kinds of number are not comparable as a
+> head-to-head, and §1 explains one specific reason they are not.
 
-## 1. Brain MRI Segmentation Baseline Comparison
+## 1. Brain MRI Segmentation — AURA measured vs. published baselines
 
-Compared against:
-- **nnUNet:** State-of-the-art self-configuring 3D U-Net baseline.
-- **SwinUNETR:** Transformer-based 3D segmentation network.
-- **MONAI Baseline:** Standard 3D ResU-Net implementation.
+> [!WARNING]
+> **These Dice figures are not like-for-like.** AURA's Dice is pooled over
+> **{eval_summary["brain_model"]["validation_slices"]:,} 2-D axial slices**; the BraTS
+> literature values below are **per-case 3-D** Dice, averaged over whole volumes.
+> Pooled-2-D scoring flatters a model, because slices with no tumour are easy and
+> numerous, and it never penalises through-plane inconsistency. Treat the AURA row as
+> an internal regression metric, not as a BraTS leaderboard position. A comparable
+> number requires per-case 3-D evaluation on the official validation set.
 
-| Architecture | Mean Composite Dice | Whole Tumor Dice | Tumor Core Dice | Enhancing Tumor Dice | Typical CPU Latency (Study) | GPU Latency | Notes |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **AURA Brain (ResU-Net)** | **{eval_summary["brain_model"]["metrics"]["dice_mean"]:.3f}** | **{eval_summary["brain_model"]["metrics"]["dice_whole_tumor"]:.3f}** | **{eval_summary["brain_model"]["metrics"]["dice_tumor_core"]:.3f}** | **{eval_summary["brain_model"]["metrics"]["dice_enhancing_tumor"]:.3f}** | **{eval_summary["brain_model"]["performance"]["cpu_study_latency_ms"]/1000.0:.2f} s** | **0.42 s** | Production-ready, light footprint, runs online calibration & OOD |
-| **nnUNet** | 0.871 | 0.920 | 0.852 | 0.841 | 185.0 s | 8.52 s | High accuracy, but extremely heavy, slow CPU run, no safety |
-| **SwinUNETR** | 0.858 | 0.910 | 0.838 | 0.825 | 240.0 s | 12.10 s | High parameter count, slow convergence, intensive compute |
-| **MONAI Baseline** | 0.835 | 0.895 | 0.812 | 0.798 | 12.5 s | 0.65 s | Fast, but significantly lower segmentation overlap |
+| Architecture | Mean Composite Dice | Whole Tumor | Tumor Core | Enhancing Tumor | CPU Latency (Study) | Source |
+| :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| **AURA Brain (ResU-Net)** | **{eval_summary["brain_model"]["metrics"]["dice_mean"]:.3f}** | **{eval_summary["brain_model"]["metrics"]["dice_whole_tumor"]:.3f}** | **{eval_summary["brain_model"]["metrics"]["dice_tumor_core"]:.3f}** | **{eval_summary["brain_model"]["metrics"]["dice_enhancing_tumor"]:.3f}** | **{eval_summary["brain_model"]["performance"]["cpu_study_latency_ms"]/1000.0:.2f} s** | measured here, pooled 2-D |
+| nnU-Net | 0.871 | 0.920 | 0.852 | 0.841 | not measured | Isensee et al., *Nat. Methods* 18:203 (2021), BraTS20 per-case 3-D |
+| SwinUNETR | 0.858 | 0.910 | 0.838 | 0.825 | not measured | Hatamizadeh et al., *MICCAI BrainLes* (2021), BraTS21 per-case 3-D |
+| MONAI 3D ResU-Net | 0.835 | 0.895 | 0.812 | 0.798 | not measured | MONAI BraTS reference tutorial, per-case 3-D |
+
+*AURA's GPU latency is omitted rather than estimated: this evaluation runs on CPU and
+no GPU timing was collected in this pass. See `docs/BENCHMARKS.md` §2 for the chest
+model's measured GPU numbers.*
 
 ---
 
-## 2. Chest Radiograph Classification Comparison
+## 2. Chest Radiograph Classification
 
-Compared against:
-- **Classical Chest Baseline:** A standard ResNet-50 backbone with a linear classification probe trained on MIMIC-CXR without evidence fusion or calibration.
-
-| Model / Framework | Macro AUROC | Macro F1 | ECE (Calibration Error) | Inference Latency | Out-of-Distribution Safety |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| **AURA Chest (DenseNet-121)** | **{eval_summary["chest_model"]["metrics"]["auroc"]:.4f}** | **{eval_summary["chest_model"]["metrics"]["f1"]:.4f}** | **{eval_summary["chest_model"]["metrics"]["ece"]:.4f}** | **{eval_summary["chest_model"]["performance"]["cpu_latency_ms"]:.1f} ms** | **Active** (flags non-radiographs, OOD z-score) |
-| **Classical Chest Baseline** | 0.7650 | 0.2850 | 0.2850 | 25.0 ms | **None** (hallucinates diagnoses on non-radiographs) |
+| Model / Framework | Macro AUROC | Macro F1 | ECE | Inference Latency | OOD Safety | Source |
+| :--- | :---: | :---: | :---: | :---: | :--- | :--- |
+| **AURA Chest (DenseNet-121)** | **{eval_summary["chest_model"]["metrics"]["auroc"]:.4f}** | **{eval_summary["chest_model"]["metrics"]["f1"]:.4f}** | **{eval_summary["chest_model"]["metrics"]["ece"]:.4f}** | **{eval_summary["chest_model"]["performance"]["cpu_latency_ms"]:.1f} ms** | **Active** (rejects non-radiographs, OOD z-score) | measured here |
+| ResNet-50 linear probe | 0.7650 | 0.2850 | 0.2850 | ~25 ms | None | indicative reference, **not measured here** — no uncalibrated ResNet-50 probe is trained in this repo |
 
 ---
 
-## 3. Cross-Modal Evidence Fusion Comparison
+## 3. Cross-Modal Evidence Fusion — measured, n = {fus["n"]}
 
-| Backend | Accuracy | NLL | ECE | Brier | Conformal Set Size | Target Coverage |
+All rows read from `artifacts/benchmark.json`; both backends are temperature-scaled on
+their own calibration split so ECE is not inflated for either.
+
+| Backend | Accuracy | NLL | ECE | Brier | Macro AUROC | Conformal Coverage (target 90%) |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **AURA Quantum Fusion** | 0.6377 | 1.2123 | 0.2381 | 0.5699 | 3.464 | 90.0% (Measured: {eval_summary["evidence_fusion"]["quantum_conformal_coverage"]*100:.1f}%) |
-| **AURA Classical Fusion** | 0.6957 | 1.0577 | 0.2194 | 0.4857 | 3.261 | 90.0% (Measured: {eval_summary["evidence_fusion"]["classical_conformal_coverage"]*100:.1f}%) |
+| **Classical PoE** | **{fus["classical"]["accuracy"]:.4f}** | {fus["classical"]["nll"]:.4f} | {fus["classical"]["ece"]:.4f} | {fus["classical"]["brier"]:.4f} | {fus["classical"]["macro_auroc"]:.4f} | {eval_summary["evidence_fusion"]["classical_conformal_coverage"]*100:.1f}% |
+| **Quantum VQC (8-qubit)** | {fus["quantum"]["accuracy"]:.4f} | {fus["quantum"]["nll"]:.4f} | {fus["quantum"]["ece"]:.4f} | {fus["quantum"]["brier"]:.4f} | {fus["quantum"]["macro_auroc"]:.4f} | {eval_summary["evidence_fusion"]["quantum_conformal_coverage"]*100:.1f}% |
 
 > [!NOTE]
-> Quantum fusion and Classical fusion are both temperature-scaled on their own calibration splits for a fair comparison (avoiding ECE inflation). Both achieve the desired coverage guarantee under conformal prediction.
+> **The gap between these two backends is not statistically resolvable at n = {fus["n"]}.**
+> {fus["correct_classical"]}/{fus["n"]} correct vs {fus["correct_quantum"]}/{fus["n"]} is a
+> difference of {fus["delta_correct"]} cases. The 95% intervals are
+> [{fus["ci_classical"][0]:.3f}, {fus["ci_classical"][1]:.3f}] and
+> [{fus["ci_quantum"][0]:.3f}, {fus["ci_quantum"][1]:.3f}] — overlapping across nearly
+> their whole range — and a paired McNemar test cannot reach significance under *any*
+> assignment of the discordant pairs (best case p = {fus["mcnemar_best_case_p"]:.3f}).
+> Classical PoE is served as the fair-accuracy reference on grounds of interpretability
+> and cost, **not** on a demonstrated accuracy advantage. Per-class support is thin
+> (several classes in single digits), so per-class figures are directional only.
 """
-    (DOCS_DIR / "benchmark_report.md").write_text(bench_md)
+    (DOCS_DIR / "benchmark_report.md").write_text(bench_md, encoding="utf-8")
     print(f"[AURA Eval] Exported benchmark_report.md to {DOCS_DIR / 'benchmark_report.md'}")
 
     # Generate comparison_table.csv
     comp_csv_path = EVAL_DIR / "comparison_table.csv"
     with open(comp_csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-        writer.writerow(["Component", "Model", "Mean Composite Dice", "Macro AUROC", "Macro F1", "ECE", "CPU Latency"])
-        writer.writerow(["Brain", "AURA ResU-Net", eval_summary["brain_model"]["metrics"]["dice_mean"], "N/A", "N/A", "N/A", f"{eval_summary['brain_model']['performance']['cpu_study_latency_ms']:.2f} ms"])
-        writer.writerow(["Brain", "nnUNet", "0.8710", "N/A", "N/A", "N/A", "185000 ms"])
-        writer.writerow(["Brain", "SwinUNETR", "0.8580", "N/A", "N/A", "N/A", "240000 ms"])
-        writer.writerow(["Brain", "MONAI Baseline", "0.8350", "N/A", "N/A", "N/A", "12500 ms"])
-        writer.writerow(["Chest", "AURA DenseNet-121", "N/A", eval_summary["chest_model"]["metrics"]["auroc"], eval_summary["chest_model"]["metrics"]["f1"], eval_summary["chest_model"]["metrics"]["ece"], f"{eval_summary['chest_model']['performance']['cpu_latency_ms']:.2f} ms"])
-        writer.writerow(["Chest", "Classical Baseline", "N/A", "0.7650", "0.2850", "0.2850", "25.0 ms"])
+        # A CSV strips the prose that qualifies a table, so provenance has to travel
+        # in a column. Without it these rows read as one measured experiment — which
+        # is exactly how the literature values got mistaken for a head-to-head run.
+        writer.writerow(["Component", "Model", "Mean Composite Dice", "Macro AUROC",
+                         "Macro F1", "ECE", "CPU Latency", "Provenance", "Scoring"])
+        writer.writerow(["Brain", "AURA ResU-Net", eval_summary["brain_model"]["metrics"]["dice_mean"], "N/A", "N/A", "N/A", f"{eval_summary['brain_model']['performance']['cpu_study_latency_ms']:.2f} ms", "measured here", "pooled 2-D per-slice"])
+        writer.writerow(["Brain", "nnU-Net", "0.8710", "N/A", "N/A", "N/A", "not measured", "published: Isensee 2021 Nat Methods 18:203", "per-case 3-D"])
+        writer.writerow(["Brain", "SwinUNETR", "0.8580", "N/A", "N/A", "N/A", "not measured", "published: Hatamizadeh 2021 MICCAI BrainLes", "per-case 3-D"])
+        writer.writerow(["Brain", "MONAI 3D ResU-Net", "0.8350", "N/A", "N/A", "N/A", "not measured", "published: MONAI BraTS tutorial", "per-case 3-D"])
+        writer.writerow(["Chest", "AURA DenseNet-121", "N/A", eval_summary["chest_model"]["metrics"]["auroc"], eval_summary["chest_model"]["metrics"]["f1"], eval_summary["chest_model"]["metrics"]["ece"], f"{eval_summary['chest_model']['performance']['cpu_latency_ms']:.2f} ms", "measured here", "MIMIC-CXR held-out"])
+        writer.writerow(["Chest", "ResNet-50 linear probe", "N/A", "0.7650", "0.2850", "0.2850", "~25 ms", "indicative reference, not measured here", "no such probe is trained in this repo"])
 
     print(f"[AURA Eval] Exported comparison_table.csv to {comp_csv_path}")
 

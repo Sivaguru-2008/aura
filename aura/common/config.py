@@ -94,6 +94,85 @@ def finding_present_threshold(finding_value: str, default: float = 0.5) -> float
     return float(_PRESENT_THR.get(finding_value, default))
 
 
+# Lives in common/policy/, NOT common/config/. A directory named `config` next to
+# this module is a namespace package competing with `config.py` for the name
+# `aura.common.config`: the module wins today only because a regular module outranks
+# a namespace package, and the day anyone drops an __init__.py in there the directory
+# becomes a regular package, wins the lookup, and every `from aura.common.config
+# import get_settings` in the codebase breaks at once — with a traceback pointing at
+# imports rather than at the new file. A second probe at ROOT/"config" used to exist
+# as a fallback; nothing ever created that path, so it only widened the window in
+# which a path regression looked like a successful load.
+_SAFETY_POLICY_PATH = ROOT / "common" / "policy" / "safety_policy.yaml"
+
+
+def _policy_warn(msg: str) -> None:
+    """Report a safety-policy load problem once, on stderr and via logging.
+
+    Deliberately not swallowed: these values gate clinical abstention, so falling
+    back to defaults has to be visible in the boot log rather than inferred later
+    from behaviour. deploy/preflight.py surfaces the resolved values too.
+    """
+    import logging
+    import sys
+
+    logging.getLogger("aura.config").warning("safety policy: %s", msg)
+    print(f"[aura.config] WARNING: safety policy: {msg}", file=sys.stderr)
+
+
+@dataclass(frozen=True)
+class SafetyPolicyThresholds:
+    """Threshold profile loaded from safety_policy.yaml."""
+    ood_threshold: float = 2.5
+    epistemic_threshold: float = 0.15
+    min_coverage: float = 0.70
+    entropy_ceiling: float = 1.2
+    conformal_max_set_size: int = 4
+    low_confidence_threshold: float = 0.30
+
+
+@lru_cache
+def get_safety_policy() -> SafetyPolicyThresholds:
+    """Load the active safety policy thresholds from the YAML config.
+
+    Falls back to the dataclass defaults if the file is missing or unreadable, but
+    says so first. Silent fallback is the wrong failure mode here: these thresholds
+    decide when AURA abstains from a clinical claim, so a path regression that
+    quietly swaps the operator's chosen envelope for a built-in one is exactly the
+    kind of change nobody notices until a case is missed. Warn, don't crash — the
+    defaults *are* the community_conservative profile, so the system stays safe.
+    """
+    import yaml
+
+    policy_name = os.environ.get("AURA_SAFETY_POLICY", "community_conservative")
+    if not _SAFETY_POLICY_PATH.exists():
+        _policy_warn(f"safety policy file not found at {_SAFETY_POLICY_PATH}; "
+                     f"using built-in defaults ({SafetyPolicyThresholds()})")
+        return SafetyPolicyThresholds()
+
+    try:
+        with _SAFETY_POLICY_PATH.open("r", encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+        policies = data.get("policies", {})
+        raw = policies.get(policy_name) or policies.get(data.get("default_policy", ""), {})
+        if not raw:
+            _policy_warn(f"policy {policy_name!r} not found in {_SAFETY_POLICY_PATH} "
+                         f"(available: {sorted(policies)}); using built-in defaults")
+            return SafetyPolicyThresholds()
+        return SafetyPolicyThresholds(
+            ood_threshold=float(raw.get("ood_threshold", 2.5)),
+            epistemic_threshold=float(raw.get("epistemic_threshold", 0.15)),
+            min_coverage=float(raw.get("min_coverage", 0.70)),
+            entropy_ceiling=float(raw.get("entropy_ceiling", 1.2)),
+            conformal_max_set_size=int(raw.get("conformal_max_set_size", 4)),
+            low_confidence_threshold=float(raw.get("low_confidence_threshold", 0.30)),
+        )
+    except Exception as exc:
+        _policy_warn(f"could not parse {_SAFETY_POLICY_PATH}: {type(exc).__name__}: {exc}; "
+                     f"using built-in defaults")
+        return SafetyPolicyThresholds()
+
+
 @dataclass(frozen=True)
 class Settings:
     # Served fusion backend. Default "classical" (product-of-experts): the fair,
@@ -177,14 +256,23 @@ def _from_pyproject() -> dict:
 
 
 def _load_safety_policy() -> dict:
+    """Raw policy document, used by get_settings() to seed threshold defaults.
+
+    Shares _SAFETY_POLICY_PATH with get_safety_policy() rather than re-deriving it:
+    the two loaders had independent copies of the path, so a move fixed in one place
+    silently left the other reading a directory that no longer existed.
+    """
     import yaml
-    yaml_path = ROOT / "common" / "config" / "safety_policy.yaml"
-    if not yaml_path.exists():
+
+    if not _SAFETY_POLICY_PATH.exists():
+        _policy_warn(f"safety policy file not found at {_SAFETY_POLICY_PATH}; "
+                     f"Settings thresholds fall back to built-in defaults")
         return {}
     try:
-        with open(yaml_path, "r", encoding="utf-8") as f:
+        with _SAFETY_POLICY_PATH.open("r", encoding="utf-8") as f:
             return yaml.safe_load(f) or {}
-    except Exception:
+    except Exception as exc:
+        _policy_warn(f"could not parse {_SAFETY_POLICY_PATH}: {type(exc).__name__}: {exc}")
         return {}
 
 
@@ -195,7 +283,14 @@ def get_settings() -> Settings:
     # env vars win last (AURA_FUSION_BACKEND, AURA_N_SHOTS, ...)
     def pick(name: str, cast, default):
         env = os.environ.get(f"AURA_{name.upper()}")
-        if env is not None:
+        # An env var that is *present but empty* means "not configured", not "the
+        # empty value". A .env or compose file that writes `AURA_RATE_LIMIT_RPM=`
+        # used to reach int("") and kill the process at startup, and
+        # `AURA_FUSION_BACKEND=` was read as a real backend name and broke fusion
+        # (which is why .env.example had to warn people never to list it). Treating
+        # blank as absent removes both footguns; every caller's fallback is the
+        # dataclass default, which is what an operator writing `KEY=` means.
+        if env is not None and env.strip() != "":
             return cast(env)
         if name in over:
             return cast(over[name])

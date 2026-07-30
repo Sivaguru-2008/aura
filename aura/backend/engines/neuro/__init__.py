@@ -1,8 +1,9 @@
 """AURA NeuroMind — brain MRI analysis.
 
-Currently a **placeholder**. It implements the full engine contract and participates
-in routing, but ``analyze`` deliberately refuses rather than returning a fabricated
-result. See ``engine.py`` for what is real today and what must be built.
+Serves the trained BraTS2020 network (``backend/vision/brain``) behind a Platt-calibrated
+presence head. Requires a volumetric MR study with all four sequences — a 2D PNG/JPEG
+export is refused with the measured single-sequence Dice attached — and it does not
+classify tumour subtype. See ``engine.py`` for the two load-bearing refusals.
 """
 
 from .engine import NeuroMindEngine

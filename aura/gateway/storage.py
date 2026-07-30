@@ -18,12 +18,45 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     create_engine,
     select,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 from aura.schemas.contracts import CaseBundle
+import hashlib
+
+_GENESIS_HASH = "0" * 64
+
+
+def _compute_audit_hash(previous_hash: str, action: str, entity_id: str,
+                        detail: dict, timestamp: datetime) -> str:
+    ts = timestamp.replace(tzinfo=None).isoformat()
+    payload = previous_hash + action + entity_id + json.dumps(detail, sort_keys=True, default=str) + ts
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def verify_audit_trail(store=None, *, db_path: Path | None = None) -> bool:
+    if store is None and db_path is not None:
+        store = Store(db_path)
+    if store is None:
+        return True
+    with Session(store.engine) as ses:
+        rows = ses.execute(
+            select(AuditRow).order_by(AuditRow.id.asc())
+        ).scalars().all()
+    prev_hash = _GENESIS_HASH
+    for row in rows:
+        if row.previous_hash != prev_hash:
+            return False
+        expected = _compute_audit_hash(
+            prev_hash, row.action, row.entity_id, row.detail, row.created_at
+        )
+        if row.record_hash != expected:
+            return False
+        prev_hash = row.record_hash
+    return True
 
 
 class Base(DeclarativeBase):
@@ -75,6 +108,7 @@ class OutcomeRow(Base):
     Append-only log of (case, emitted set, confirmed diagnosis, coverage hit/miss)
     so the adaptation is auditable and replayable."""
     __tablename__ = "outcomes"
+    __table_args__ = (UniqueConstraint("case_id", name="uq_outcome_case_id"),)
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     case_id: Mapped[str] = mapped_column(String, index=True)
     true_diagnosis: Mapped[str] = mapped_column(String, default="")
@@ -94,6 +128,8 @@ class AuditRow(Base):
     entity_type: Mapped[str] = mapped_column(String, default="")
     entity_id: Mapped[str] = mapped_column(String, default="")
     detail: Mapped[dict] = mapped_column(JSON, default=dict)
+    previous_hash: Mapped[str] = mapped_column(String, default=_GENESIS_HASH)
+    record_hash: Mapped[str] = mapped_column(String, default=_GENESIS_HASH)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
@@ -112,6 +148,30 @@ class MemoryRecordRow(Base):
     case_id: Mapped[str] = mapped_column(String, primary_key=True)
     diagnosis: Mapped[str] = mapped_column(String, default="")
     embedding_json: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class ChatMessageRow(Base):
+    __tablename__ = "chat_history"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    case_id: Mapped[str] = mapped_column(String, index=True)
+    role: Mapped[str] = mapped_column(String)
+    content: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class DecisionProvenanceRow(Base):
+    """Decision provenance graph — complete pipeline path for one case.
+
+    Records the chain:
+        Image Hash → Vision Result → Evidence Graph → Reasoning Steps →
+        Safety Verification → Safety Controller → DRP
+    """
+    __tablename__ = "decision_provenance"
+    case_id: Mapped[str] = mapped_column(String, primary_key=True)
+    provenance: Mapped[dict] = mapped_column(JSON, default=dict)
+    provenance_hash: Mapped[str] = mapped_column(String, default=_GENESIS_HASH)
+    previous_hash: Mapped[str] = mapped_column(String, default=_GENESIS_HASH)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
@@ -239,13 +299,27 @@ class Store:
 
     def record_outcome(self, case_id: str, probs, true_index: int,
                        true_diagnosis: str = "", stream: str = "global") -> dict:
-        """Fold one confirmed outcome into the online ACI threshold and persist it.
+        """Fold one **verified** outcome into the online ACI threshold and persist it.
 
-        This is the offline-tracking hook: called whenever a clinician confirms a
-        case's diagnosis (see the feedback endpoint). Loads q̂, runs the ACI step,
-        writes q̂ back plus an append-only OutcomeRow. Returns the transition
-        telemetry so the caller can surface the live coverage. Import of the ACI
-        engine is local to keep ``storage`` free of a service dependency at import.
+        Loads q̂, runs the ACI step, writes q̂ back plus an append-only OutcomeRow.
+        Returns the transition telemetry so the caller can surface live coverage.
+        Import of the ACI engine is local to keep ``storage`` free of a service
+        dependency at import time.
+
+        The **only** legitimate caller is ``POST /v1/cases/{id}/outcome``, which first
+        checks that ``source`` is one of ``VALID_OUTCOME_SOURCES`` (pcr, biopsy,
+        pathology, expert_consensus, clinical_course) and that the diagnosis parses.
+        This docstring used to say "called whenever a clinician confirms a case's
+        diagnosis (see the feedback endpoint)", and the feedback endpoint did call it —
+        with a diagnosis defaulting to *AURA's own top prediction*. Conformal coverage
+        was therefore scored against the model's own output, ``covered`` was true by
+        construction, and q̂ shrank monotonically until the 90% guarantee meant nothing.
+        Do not wire this to any signal that is not ground truth: an ACI update is a
+        statistical claim about reality, not a record that a clinician clicked accept.
+
+        ``outcomes.case_id`` is UNIQUE — one verified outcome per case. Callers must
+        handle IntegrityError (or pre-check :meth:`has_outcome`) rather than letting a
+        duplicate surface as a 500.
         """
         from aura.common.config import get_settings
         from aura.services.safety.aci import AdaptiveConformalInference, ACIState
@@ -276,9 +350,18 @@ class Store:
     # ---- audit ----
     def audit(self, action: str, entity_type: str = "", entity_id: str = "",
               actor: str = "system", detail: dict | None = None) -> None:
+        now = datetime.now(timezone.utc)
+        d = detail or {}
         with Session(self.engine) as ses:
+            last = ses.execute(
+                select(AuditRow).order_by(AuditRow.id.desc()).limit(1)
+            ).scalars().first()
+            prev_hash = last.record_hash if last else _GENESIS_HASH
+            rec_hash = _compute_audit_hash(prev_hash, action, entity_id, d, now)
             ses.add(AuditRow(actor=actor, action=action, entity_type=entity_type,
-                             entity_id=entity_id, detail=detail or {}))
+                             entity_id=entity_id, detail=d,
+                             previous_hash=prev_hash, record_hash=rec_hash,
+                             created_at=now))
             ses.commit()
 
     def recent_audit(self, limit: int = 50) -> list[dict]:
@@ -289,6 +372,7 @@ class Store:
             return [{
                 "actor": r.actor, "action": r.action, "entity_type": r.entity_type,
                 "entity_id": r.entity_id, "detail": r.detail,
+                "previous_hash": r.previous_hash, "record_hash": r.record_hash,
                 "created_at": r.created_at.isoformat(),
             } for r in rows]
 
@@ -316,6 +400,76 @@ class Store:
                 }
                 for r in rows
             ]
+
+    def has_outcome(self, case_id: str) -> bool:
+        with Session(self.engine) as ses:
+            row = ses.execute(
+                select(OutcomeRow).where(OutcomeRow.case_id == case_id)
+            ).scalars().first()
+            return row is not None
+
+    def save_chat_message(self, case_id: str, role: str, content: str) -> None:
+        with Session(self.engine) as ses:
+            row = ChatMessageRow(case_id=case_id, role=role, content=content)
+            ses.add(row)
+            ses.commit()
+
+    def get_chat_history(self, case_id: str) -> list[dict]:
+        with Session(self.engine) as ses:
+            stmt = (
+                select(ChatMessageRow)
+                .where(ChatMessageRow.case_id == case_id)
+                .order_by(ChatMessageRow.id.asc())
+            )
+            rows = ses.execute(stmt).scalars().all()
+            return [
+                {"role": r.role, "content": r.content, "created_at": r.created_at.isoformat()}
+                for r in rows
+            ]
+
+    def log_decision_provenance(self, case_id: str, provenance: dict) -> None:
+        """Record the complete decision provenance path for a case.
+
+        Serializes the pipeline execution chain and computes a SHA-256 hash
+        so the provenance can be verified later.
+        """
+        now = datetime.now(timezone.utc)
+        with Session(self.engine) as ses:
+            last = ses.execute(
+                select(DecisionProvenanceRow).order_by(DecisionProvenanceRow.case_id.desc())
+                .limit(1)
+            ).scalars().first()
+            prev_hash = last.provenance_hash if last else _GENESIS_HASH
+            prov_hash = _compute_audit_hash(prev_hash, "decision_provenance", case_id, provenance, now)
+            row = ses.get(DecisionProvenanceRow, case_id)
+            if row is None:
+                row = DecisionProvenanceRow(case_id=case_id)
+                ses.add(row)
+            row.provenance = provenance
+            row.provenance_hash = prov_hash
+            row.previous_hash = prev_hash
+            row.created_at = now
+            ses.commit()
+
+    def get_decision_provenance(self, case_id: str) -> dict | None:
+        with Session(self.engine) as ses:
+            row = ses.get(DecisionProvenanceRow, case_id)
+            return dict(row.provenance) if row and row.provenance else None
+
+    def verify_decision_provenance(self, case_id: str) -> bool:
+        """Verify the provenance hash chain for a specific case."""
+        with Session(self.engine) as ses:
+            row = ses.get(DecisionProvenanceRow, case_id)
+            if row is None:
+                return True
+            expected = _compute_audit_hash(
+                row.previous_hash, "decision_provenance", case_id,
+                row.provenance, row.created_at,
+            )
+            return row.provenance_hash == expected
+
+    def verify_audit_trail(self) -> bool:
+        return verify_audit_trail(self)
 
 def compute_provenance_hash(bundle: CaseBundle) -> str:
     import hashlib

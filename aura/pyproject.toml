@@ -27,6 +27,32 @@ dependencies = [
     "nibabel>=5.2.0",
 ]
 
+# Optional feature groups. Every one of these is genuinely optional: the code
+# imports them lazily and degrades to a documented fallback when absent, so the
+# offline demo installs and serves with none of them present.
+#   pip install -e '.[ibm]'          real IBM Quantum hardware execution
+#   pip install -e '.[braket]'       AWS Braket (IonQ / Rigetti / IQM)
+#   pip install -e '.[vectordb]'     Qdrant vector store (falls back to SQLite)
+#   pip install -e '.[pacs]'         DICOM networking (C-STORE/FIND/MOVE/GET)
+#   pip install -e '.[security]'     JWT auth, RBAC, encrypted upload-at-rest
+#   pip install -e '.[monitoring]'   host/process metrics + Prometheus export
+#   pip install -e '.[all]'          everything above
+[project.optional-dependencies]
+ibm = ["qiskit>=1.0", "qiskit-ibm-runtime>=0.20"]
+braket = ["amazon-braket-sdk>=1.70", "boto3>=1.30"]
+vectordb = ["qdrant-client>=1.7"]
+pacs = ["pynetdicom>=2.0", "pydicom>=2.4"]
+security = ["PyJWT>=2.8", "cryptography>=42.0"]
+monitoring = ["psutil>=5.9", "prometheus-client>=0.20"]
+all = [
+    "qiskit>=1.0", "qiskit-ibm-runtime>=0.20",
+    "amazon-braket-sdk>=1.70", "boto3>=1.30",
+    "qdrant-client>=1.7",
+    "pynetdicom>=2.0", "pydicom>=2.4",
+    "PyJWT>=2.8", "cryptography>=42.0",
+    "psutil>=5.9", "prometheus-client>=0.20",
+]
+
 [tool.setuptools]
 # Namespace-style: every top-level dir is importable in dev via the src path.
 py-modules = []
@@ -38,6 +64,17 @@ addopts = "-q"
 markers = [
     "slow: batch validation over the real image corpora (deselect with -m 'not slow')",
 ]
+# `strict` (not "auto"): only tests carrying @pytest.mark.asyncio are run in a loop,
+# so a plain `def` test never gets silently wrapped. The marker itself is registered
+# by pytest-asyncio; the plugin is a hard requirement in aura/requirements.txt because
+# without it pytest FAILS async tests rather than skipping them — 13 of them, on every
+# CI run, while providing no coverage at all.
+asyncio_mode = "strict"
+# Any warning pytest cannot attribute to a registered marker is a wiring bug, not
+# noise: an unknown mark means the test is not running the way its author intended.
+filterwarnings = [
+    "error::pytest.PytestUnknownMarkWarning",
+]
 
 [tool.aura]
 # Central config surface. Engines read defaults from here via aura_common.config.
@@ -47,3 +84,9 @@ abstention_conformal_size = 4     # abstain if the 90% conformal set has > N lab
                                   # (recalibrated to the real MIMIC distribution — audit F1/F8)
 ood_energy_threshold = 1.5
 low_confidence_threshold = 0.30   # abstain if top calibrated prob below (real-dist operating point)
+neuro_qkl_enabled = true          # serve the trained quantum-kernel head on brain studies.
+                                  # Trained on BraTS glioma grade (HGG/LGG) — the only tumour label
+                                  # axis in the corpus; meningioma/metastasis are untrained and the
+                                  # head abstains on them. Weights: artifacts/brain/qkl_classifier.npz
+                                  # (absent -> automatic uniform-prior fallback, no failure).
+                                  # Metrics: artifacts/brain/qkl_training_report.json

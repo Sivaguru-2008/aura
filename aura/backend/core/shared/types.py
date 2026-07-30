@@ -88,7 +88,8 @@ class EngineStatus(str, Enum):
 
     The registry and API surface this so a client can tell the difference between
     "AURA cannot route this" and "AURA routed it correctly to something still being
-    built" — the distinction the NeuroMind placeholder exists to demonstrate.
+    built". No built-in engine is a placeholder today — both Thorax and NeuroMind are
+    ``AVAILABLE``; ``PLACEHOLDER`` remains for engines under construction.
     """
 
     AVAILABLE = "available"                 # loaded and serving

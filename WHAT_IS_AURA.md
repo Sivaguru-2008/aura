@@ -194,16 +194,29 @@ py -m aura.aura_cli serve      # → http://localhost:8000
 ## 6. The honesty layer (why AURA is trustworthy about itself)
 
 AURA leads with **calibration discipline and a working conformal guarantee**, not an
-unverifiable quantum claim. The quantum fusion circuit is **real, correctly placed (fusion,
-not imaging), and competitive** — but a built‑in, reproducible benchmark on real MIMIC‑CXR
-evidence, with **each backend temperature‑scaled on its own calibration split** (a *fair*
-fight), shows it does **not** beat a fairly‑calibrated classical head:
+unverifiable quantum claim.
+
+**What the quantum layer is for.** Not a speed‑up — at 8 qubits this task is classically
+simulable and no advantage is claimed. What it provides is a different *resource model*:
+quantum precision is bought with measurements (`Var[⟨Z⟩] = (1 − ⟨Z⟩²)/n_shots`), which lets
+AURA separate two kinds of "unsure" that every classical model conflates — **measurement‑
+limited** (buy more shots; AURA says how many) versus **model‑limited** (tied at infinite
+precision; escalate to a human). Over 447 studies: 86.4% commit, median 128 shots against a
+fixed 512 budget, and of 61 abstentions **1 was measurement‑limited and 60 model‑limited**.
+That capability is on the serving path, and it is the answer to "what did quantum buy you?"
+
+**What it does not buy.** A built‑in, reproducible benchmark on real MIMIC‑CXR evidence, with
+**each backend temperature‑scaled on its own calibration split** (a *fair* fight), shows the
+VQC does **not** beat a fairly‑calibrated classical head:
 
 | backend (real held‑out, n=69) | accuracy | ECE | macro AUROC |
 |---|---|---|---|
 | quantum VQC | 0.6377 | 0.2381 | 0.7696 |
 | classical PoE | **0.6957** | 0.2194 | **0.7875** |
 | learnable head | 0.6232 | **0.1879** | 0.7306 |
+
+That is a four‑case difference at n=69 and is **not statistically resolvable** (McNemar
+p ≥ 0.125 under every pairing) — so the honest reading is "comparable", not "classical wins".
 
 ```bash
 py -m aura.aura_cli bench            # writes artifacts/benchmark.json
