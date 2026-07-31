@@ -64,7 +64,7 @@
       ["Quantum autoencoder (QAE)", s.qae_served,
        "imported by the fusion engine, but no trained weights ship — <code>load()</code> returns null, so the plain-encode branch is taken"],
       ["Quantum Bayesian network (QBN)", s.qbn_served,
-       "constructed nowhere in the serving path; the flag and console row that once advertised it were removed"],
+       "wired into the clinical reasoner, but <code>load_trained()</code> returns null because no fitted artifact ships — so the rule-adjusted posterior is returned unchanged. The constructor's default theta is six unfitted constants, and serving those as a quantum inference would dress up hardcoded numbers as a learned model"],
       ["Quantum multi-modal fusion (QMMF)", false,
        "no patient in the corpus has both a chest radiograph and a brain MRI, so a joint model has nothing to train on"],
       ["Data re-uploading ansatz", false,

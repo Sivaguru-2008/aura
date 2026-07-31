@@ -403,6 +403,29 @@ def build_router(dispatch: DispatchService) -> APIRouter:
             except Exception:
                 return None
 
+        def _qae_served() -> bool:
+            """True only if the autoencoder would actually compress an embedding."""
+            try:
+                from aura.services.fusion.qae import QuantumAutoencoder
+
+                return bool(get_settings().qae_enabled) and QuantumAutoencoder.load() is not None
+            except Exception:
+                return False
+
+        def _qbn_served() -> bool:
+            """True only if a *trained* QBN would refine the posterior.
+
+            load_trained() returns None when no fitted artifact is present; the
+            reasoner then returns the rule-adjusted posterior untouched rather than
+            serving the constructor's six unfitted constants as a quantum inference.
+            """
+            try:
+                from aura.services.reasoning.qbn import QuantumBayesianNetwork
+
+                return QuantumBayesianNetwork.load_trained() is not None
+            except Exception:
+                return False
+
         s = get_settings()
         sources = {
             "hardware": "ibm_hardware_run.json",
@@ -425,10 +448,12 @@ def build_router(dispatch: DispatchService) -> APIRouter:
                 "encoding": "RY(pi * x_i), one evidence channel per qubit",
                 "readout": "<Z_i> -> linear head -> softmax",
                 "neuro_qkl_enabled": bool(s.neuro_qkl_enabled),
-                # Reported so the page can state plainly that these are NOT running,
-                # rather than leaving a reader to assume every module in the repo is live.
-                "qae_served": False,
-                "qbn_served": False,
+                # Derived, never hardcoded. Both modules are wired into their engine
+                # but load a trained artifact that does not ship, so today both are
+                # False -- and if either is ever trained this flips on its own rather
+                # than leaving the page asserting a stale "not served".
+                "qae_served": _qae_served(),
+                "qbn_served": _qbn_served(),
             },
             "missing": missing,
         }
