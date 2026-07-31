@@ -301,6 +301,22 @@ class FusionResult(BaseModel):
     conflict_distance: float = 0.0             # EMD(VQC, PoE) on the severity axis
     conflict_threshold: float = 0.0            # dynamic τ used for the decision
     fallback_triggered: bool = False           # True when the PoE fallback fired
+    #: Entanglement telemetry from services/fusion/qmeasure.measure_entanglement:
+    #: measurement entropy, entropy shift vs the product-state baseline, total and
+    #: differential channel coupling, the top coupled pairs, and the correlation /
+    #: differential matrices. None on classical backends, which have no register to
+    #: measure. FusionEngine computed this on every quantum study and passed it here
+    #: while the field did not exist — pydantic's default extra='ignore' dropped it
+    #: silently, so 31 ms/study of real work was discarded and the console's
+    #: entanglement panel (gated on this key) could never render.
+    quantum_entanglement: Optional[dict] = None
+    #: Did the quantum autoencoder ACTUALLY compress the vision embedding for this
+    #: study? Not the `qae_enabled` setting. The compression path additionally needs
+    #: a vision embedding and loaded QAE weights, and `QuantumAutoencoder.load()`
+    #: returns None when the weights are absent — which is the shipped state. A flag
+    #: reporting configuration intent would tell the console a quantum autoencoder
+    #: ran when the engine had silently taken the plain-encoding branch.
+    qae_applied: bool = False
     created_at: datetime = Field(default_factory=_now)
 
 
@@ -422,6 +438,15 @@ class Explanation(BaseModel):
     # integrated_gradients, smoothgrad, occlusion) — each flattened to saliency_shape.
     saliency_methods: dict[str, list[float]] = Field(default_factory=dict)
     saliency_target: str = ""                  # finding the maps localize
+    #: Drawable geometry for the primary saliency map — simplified region polygons,
+    #: bounding boxes, intensity-weighted centroids, iso-level contours and an RGBA
+    #: overlay PNG data URI (services/explain/geometry.heatmap_geometry). This is the
+    #: default view; GET /v1/cases/{id}/geometry recomputes it when the frontend wants
+    #: a different threshold, method or overlay size. ExplainEngine computed it on
+    #: every study and passed it here while the field did not exist, so pydantic
+    #: dropped it — 74 ms/study discarded, and the console's polygon overlay
+    #: (console.js reads explanation.geometry) had nothing to draw.
+    geometry: dict = Field(default_factory=dict)
     # Shapley-style contribution of each evidence node to the top diagnosis.
     evidence_attribution: dict[str, float] = Field(default_factory=dict)
     # Counterfactual: "if this evidence were removed, top prob changes by ..."

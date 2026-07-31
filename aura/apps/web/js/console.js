@@ -763,7 +763,7 @@ window.CONSOLE = (() => {
     }
 
     const qTel = $("quantum-entanglement-telemetry");
-    if (b.fusion && (qEnt || b.fusion.qae_enabled || b.fusion.qbn_enabled)) {
+    if (b.fusion && (qEnt || b.fusion.qae_applied)) {
       qTel.style.display = "block";
       if (qEnt) {
         // Null-safe formatting: the entanglement field set varies by backend/version,
@@ -785,10 +785,13 @@ window.CONSOLE = (() => {
         $("q-coupling").textContent = "—";
         $("q-baseline-coupling").textContent = "—";
       }
+      // qae_applied, not the qae_enabled setting: the row must mean "a quantum
+      // autoencoder produced this evidence vector", which additionally requires a
+      // vision embedding and loaded QAE weights. The QBN row was removed with the
+      // flag behind it — QuantumBayesianNetwork is not on the serving path, so the
+      // row could only ever have announced a component that did not run.
       const qaeRow = $("qae-telemetry-row");
-      if (qaeRow) qaeRow.style.display = b.fusion.qae_enabled ? "flex" : "none";
-      const qbnRow = $("qbn-telemetry-row");
-      if (qbnRow) qbnRow.style.display = b.fusion.qbn_enabled ? "flex" : "none";
+      if (qaeRow) qaeRow.style.display = b.fusion.qae_applied ? "flex" : "none";
     } else {
       qTel.style.display = "none";
     }

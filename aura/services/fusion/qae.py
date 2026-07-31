@@ -1,5 +1,18 @@
 """Quantum Autoencoder (QAE) feature compressor.
 
+.. admonition:: STATUS — IMPORTED BY THE FUSION ENGINE, BUT UNTRAINED AND INERT
+
+   ``FusionEngine`` calls ``QuantumAutoencoder.load()`` at construction, which
+   returns ``None`` because no trained weights ship. ``qae_enabled`` also defaults
+   to ``False``. So the compression branch in ``FusionEngine.fuse`` is not taken and
+   evidence is built by the plain ``encode()`` path.
+
+   ``FusionResult.qae_applied`` reports whether the branch was **actually** taken —
+   deliberately not a copy of the ``qae_enabled`` setting, because the branch also
+   requires a vision embedding and loaded weights. Setting ``AURA_QAE_ENABLED=1``
+   without training weights first changes nothing except, previously, a console row
+   that claimed a quantum autoencoder had run.
+
 Compresses 1024-dimensional classical DenseNet feature maps down to an 8-qubit space
 while preserving non-linear covariance.
 """

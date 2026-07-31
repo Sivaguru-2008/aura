@@ -1,5 +1,14 @@
 """Quantum Multi-modal Fusion (QMMF).
 
+.. admonition:: STATUS — NOT WIRED INTO THE SERVING PATH
+
+   ``UnifiedFusionEngine`` is constructed nowhere in the serving path; the only
+   importer is ``tests/test_quantum_integration.py``. Chest and brain studies are
+   routed to separate engines by ``backend/core/router`` and their posteriors are
+   never jointly fused today. The blocker is corpus, not code: AURA holds no
+   patient with both a chest radiograph and a brain MRI, so a joint model has
+   nothing to train or validate on.
+
 Coherently fuses chest features (evidence vectors) and brain features (ResU-Net features)
 in a joint 8-qubit variational circuit to estimate patient systemic conditions.
 """

@@ -1,5 +1,19 @@
 """Quantum Bayesian Network (QBN) for clinical reasoning.
 
+.. admonition:: STATUS — NOT WIRED INTO THE SERVING PATH
+
+   Nothing in the serving path constructs this class; the only importer is
+   ``tests/test_quantum_integration.py``. The clinical reasoner that actually runs
+   is the classical one in ``services/reasoning/engine.py`` (``reasoner_backend``
+   defaults to ``"classical"``, and setting it to ``"quantum"`` does **not** route
+   here — it changes no behaviour today).
+
+   ``FusionResult`` previously carried a ``qbn_enabled`` flag derived from that
+   setting, and the console rendered a "QBN Clinical Reasoner: ACTIVE (6 QUBITS)"
+   row from it. Both were removed: a flag that reports configuration as a running
+   component is the same failure mode ``AURA_ALLOW_FALLBACK_VISION`` exists to
+   prevent. Reinstate them together with a QBN the pipeline genuinely calls.
+
 Models diagnostic joint probabilities and guideline conditions natively
 using complex probability amplitudes and quantum entanglement.
 """
