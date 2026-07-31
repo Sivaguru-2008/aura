@@ -61,6 +61,10 @@ def _auth() -> dict[str, str]:
     "/v1/admin/safety",
     "/v1/models",
     "/v1/model-card",
+    # Model-level evidence: no patient data, but it is still /v1 and is gated like
+    # the rest. The /quantum HTML shell that consumes it IS public (see below) —
+    # the shell carries no data, every figure arrives from this fetch.
+    "/v1/quantum/evidence",
 ])
 def test_reads_require_a_token(secured, path):
     """Every GET that can surface case or policy state answers 401 without a token."""
@@ -88,6 +92,16 @@ def test_token_without_principal_is_403(secured):
 def test_health_stays_public(secured):
     """Container/k8s probes run before any credential is injected."""
     assert secured.get("/v1/health").status_code == 200
+
+
+@pytest.mark.parametrize("path", ["/", "/app", "/history", "/quantum"])
+def test_html_shells_stay_public(secured, path):
+    """The view shells load without a token; their data fetches do not.
+
+    /quantum is included deliberately: it is a new top-level view, and a shell that
+    401s renders a blank page for an operator who has auth switched on.
+    """
+    assert secured.get(path).status_code == 200
 
 
 def test_mutations_still_gated(secured):

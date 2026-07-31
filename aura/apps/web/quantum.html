@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AURA — Quantum Evidence</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='6' fill='%238b7cf7'/%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%238b7cf7' stroke-opacity='.35' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/css/main.css?v=11">
+<link rel="stylesheet" href="/static/css/quantum.css?v=1">
+</head>
+<body data-view="quantum">
+
+<div id="halo" aria-hidden="true"></div>
+
+<header class="h-top no-print">
+  <div class="brand"><span class="brand-core"></span><span class="brand-word">AURA</span><em>quantum</em></div>
+  <nav class="h-nav">
+    <a href="/quantum" class="nav-link active">Quantum Evidence</a>
+    <a href="/app" class="nav-link">Console</a>
+    <a href="/history" class="nav-link">History</a>
+    <a href="/" class="nav-link">Landing</a>
+  </nav>
+  <div class="h-right">
+    <span class="q-src mono" id="q-src">reading artifacts…</span>
+  </div>
+</header>
+
+<main class="q-wrap">
+
+  <!-- ============ header ============ -->
+  <section class="q-hero">
+    <p class="eyebrow">EVERY NUMBER ON THIS PAGE IS READ FROM THE ARTIFACT THAT PRODUCED IT</p>
+    <h1>The quantum layer, measured.</h1>
+    <p class="q-lede">
+      What is served, what it costs on real hardware, and — stated first, not in a
+      footnote — what it does <em>not</em> buy. Nothing here is transcribed by hand;
+      the page fetches <code>/v1/quantum/evidence</code>, which reads each generating
+      script's own output. A missing artifact renders as “not measured”, never as a
+      plausible default.
+    </p>
+    <div class="q-missing" id="q-missing" hidden></div>
+  </section>
+
+  <!-- ============ 1. what is actually served ============ -->
+  <section class="q-sec">
+    <header class="q-sec-head">
+      <span class="q-num mono">01</span>
+      <h2>What is actually running</h2>
+      <p>The circuit on the serving path, and the modules that exist in the repo but
+        are <strong>not</strong> on it. Listed together so the second list cannot be
+        mistaken for the first.</p>
+    </header>
+    <div class="q-cards" id="q-served"></div>
+    <div class="q-unserved" id="q-unserved"></div>
+  </section>
+
+  <!-- ============ 2. measurement as an instrument ============ -->
+  <section class="q-sec">
+    <header class="q-sec-head">
+      <span class="q-num mono">02</span>
+      <h2>Measurement as a clinical instrument</h2>
+      <p>Quantum precision is bought, not given: <code>Var[⟨Z⟩] = (1 − ⟨Z⟩²) / n_shots</code>.
+        Sequencing that budget splits “unsure” into two states with <em>opposite</em>
+        clinical instructions — the one capability here with no classical counterpart.</p>
+    </header>
+    <div class="q-budget" id="q-budget"></div>
+  </section>
+
+  <!-- ============ 3. hardware + noise attribution ============ -->
+  <section class="q-sec">
+    <header class="q-sec-head">
+      <span class="q-num mono">03</span>
+      <h2>Real hardware, and where the error comes from</h2>
+      <p>An unattributed error figure is not evidence. Three rungs isolate sampling
+        noise from decoherence, which decides whether the lever is more shots or a
+        shorter circuit.</p>
+    </header>
+    <div class="q-hw" id="q-hw"></div>
+    <div class="q-ladder" id="q-ladder"></div>
+  </section>
+
+  <!-- ============ 4. circuit cost engineering ============ -->
+  <section class="q-sec">
+    <header class="q-sec-head">
+      <span class="q-num mono">04</span>
+      <h2>Circuit cost, engineered</h2>
+      <p>Two-qubit gates dominate the error budget and the depth on a device that is
+        not fully connected. Transpiled against the real coupling map — no QPU time spent.</p>
+    </header>
+    <div class="q-transpile" id="q-transpile"></div>
+  </section>
+
+  <!-- ============ 5. negative results ============ -->
+  <section class="q-sec q-sec-negative">
+    <header class="q-sec-head">
+      <span class="q-num mono">05</span>
+      <h2>What the quantum layer does <em>not</em> buy</h2>
+      <p>Reported here, at the same size as everything else, because a benchmark you
+        only publish when it flatters you is not a benchmark.</p>
+    </header>
+    <div class="q-negative" id="q-negative"></div>
+  </section>
+
+  <!-- ============ 6. design space ============ -->
+  <section class="q-sec">
+    <header class="q-sec-head">
+      <span class="q-num mono">06</span>
+      <h2>Design space</h2>
+      <p>Qubits × layers × entangler topology. Sorted by accuracy; the two-qubit gate
+        column is the cost that transfers to hardware unchanged.</p>
+    </header>
+    <div class="q-sweep-meta" id="q-sweep-meta"></div>
+    <div class="q-table-wrap"><table class="q-table" id="q-sweep"></table></div>
+  </section>
+
+  <!-- ============ 7. evidence coupling ============ -->
+  <section class="q-sec">
+    <header class="q-sec-head">
+      <span class="q-num mono">07</span>
+      <h2>Learned evidence coupling</h2>
+      <p>If the entangled register were doing nothing, pairwise coupling would be flat.
+        Darker cells couple more strongly.</p>
+    </header>
+    <div class="q-coupling" id="q-coupling"></div>
+  </section>
+
+  <footer class="q-foot mono">
+    <span id="q-foot-text">artifacts · aura/artifacts/</span>
+  </footer>
+</main>
+
+<script src="/static/js/quantum.js?v=2"></script>
+</body>
+</html>

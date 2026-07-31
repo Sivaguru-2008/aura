@@ -1074,3 +1074,21 @@ def history_route():
     if idx.exists():
         return FileResponse(str(idx))
     return JSONResponse({"message": "History page not found."}, status_code=404)
+
+
+@app.get("/quantum")
+def quantum_route():
+    """Quantum evidence view.
+
+    System-level, not per-case: it renders what the quantum layer is, what it costs
+    on real hardware, and what it does not buy. Deliberately a separate view rather
+    than a fourth console tab, because the console pager is three views over *one
+    case* and this data belongs to the model, not to a study.
+
+    The shell carries no patient data — every figure comes from a subsequent fetch of
+    /v1/quantum/evidence, which is gated like every other /v1 route.
+    """
+    idx = WEB_DIR / "quantum.html"
+    if idx.exists():
+        return FileResponse(str(idx))
+    return JSONResponse({"message": "Quantum evidence page not found."}, status_code=404)

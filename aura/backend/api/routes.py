@@ -373,4 +373,128 @@ def build_router(dispatch: DispatchService) -> APIRouter:
                 payload["evaluation"] = None
         return payload
 
+    # ------------------------------------------------------------------ #
+    @api.get("/v1/quantum/evidence",
+             summary="Every measured quantum claim, read from its artifact")
+    def quantum_evidence():
+        """Consolidated evidence for the quantum layer, for the /quantum view.
+
+        Each block is read straight from the artifact the generating script wrote,
+        so nothing here can drift from what was actually measured — the same rule
+        docs/BENCHMARKS.md follows. A missing artifact yields ``null`` for that
+        block and an entry in ``missing`` rather than a placeholder number, because
+        a plausible-looking default is exactly what this project refuses to serve.
+
+        Deliberately includes the results that do **not** favour the quantum layer
+        (the entanglement ablation, the design sweep, the QKL comparison). A client
+        rendering only the flattering half would be misrepresenting the system, and
+        the negative results are the ones a reviewer should see first.
+        """
+        import json
+
+        from aura.common.config import ARTIFACTS, get_settings
+
+        def _read(name: str):
+            path = ARTIFACTS / name
+            if not path.exists():
+                return None
+            try:
+                return json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                return None
+
+        s = get_settings()
+        sources = {
+            "hardware": "ibm_hardware_run.json",
+            "noise": "noise_rung.json",
+            "transpile": "transpile_study.json",
+            "design_sweep": "design_sweep.json",
+            "study": "quantum_study.json",
+            "benchmark": "benchmark.json",
+        }
+        blocks = {key: _read(name) for key, name in sources.items()}
+        missing = [sources[k] for k, v in blocks.items() if v is None]
+
+        payload: dict[str, Any] = {
+            "served": {
+                "fusion_backend": s.fusion_backend,
+                "n_qubits": s.n_qubits,
+                "n_layers": s.n_layers,
+                "n_shots": s.n_shots,
+                "entangler": "ring",
+                "encoding": "RY(pi * x_i), one evidence channel per qubit",
+                "readout": "<Z_i> -> linear head -> softmax",
+                "neuro_qkl_enabled": bool(s.neuro_qkl_enabled),
+                # Reported so the page can state plainly that these are NOT running,
+                # rather than leaving a reader to assume every module in the repo is live.
+                "qae_served": False,
+                "qbn_served": False,
+            },
+            "missing": missing,
+        }
+
+        hw = (blocks["hardware"] or {}).get("hardware") or {}
+        if hw:
+            payload["hardware"] = {
+                "backend": hw.get("backend"),
+                "backend_qubits": hw.get("backend_qubits"),
+                "job_id": hw.get("job_id"),
+                "mean_abs_z_error_vs_analytic": hw.get("mean_abs_z_error_vs_analytic"),
+                "top1_agrees_with_analytic": hw.get("top1_agrees_with_analytic"),
+                "generated": (blocks["hardware"] or {}).get("generated"),
+            }
+
+        if blocks["noise"]:
+            n = blocks["noise"]
+            payload["noise"] = {
+                "attribution": n.get("attribution"),
+                "rungs": [
+                    {"rung": r.get("rung"), "shots": r.get("shots"),
+                     "mean_abs_z_error_vs_analytic": r.get("mean_abs_z_error_vs_analytic"),
+                     "top1_agrees_with_analytic": r.get("top1_agrees_with_analytic")}
+                    for r in n.get("rungs", [])
+                ],
+                "hardware_reference": n.get("hardware_reference"),
+                "circuit": n.get("circuit"),
+            }
+
+        if blocks["transpile"]:
+            t = blocks["transpile"]
+            payload["transpile"] = {
+                "backend": t.get("backend"),
+                "logical": t.get("logical"),
+                "levels": t.get("levels"),
+                "served_level": t.get("served_level"),
+                "improvement_vs_level_1": t.get("improvement_vs_level_1"),
+            }
+
+        if blocks["design_sweep"]:
+            d = blocks["design_sweep"]
+            cells = d.get("cells", [])
+            payload["design_sweep"] = {
+                "generated": d.get("generated"),
+                "data": d.get("data"),
+                "protocol": d.get("protocol"),
+                "served": d.get("served"),
+                "cells": cells,
+                "n_cells": len(cells),
+            }
+
+        study = blocks["study"] or {}
+        if study.get("q1_q2_ablation"):
+            payload["entanglement_ablation"] = study["q1_q2_ablation"].get("entanglement_effect")
+        if study.get("q3_measurement_budget"):
+            payload["measurement_budget"] = study["q3_measurement_budget"]
+        if study.get("q4_evidence_coupling"):
+            c = study["q4_evidence_coupling"]
+            payload["evidence_coupling"] = {
+                "channels": c.get("channels"),
+                "matrix": c.get("mean_abs_differential_matrix"),
+            }
+
+        if blocks["benchmark"]:
+            payload["fusion_backends"] = (blocks["benchmark"] or {}).get("metrics_full")
+
+        return payload
+
     return api

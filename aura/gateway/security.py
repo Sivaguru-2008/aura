@@ -58,9 +58,11 @@ _ALLOWED_CONTENT_TYPES = {
 #   /v1/health  — liveness/readiness probes run before any credential is injected
 #                 (docker-compose healthcheck, k8s probes). Returns no case data.
 #   /, /app,
-#   /history    — the dashboard HTML shell. It carries no patient data itself; every
-#                 panel it renders is filled by a /v1/* fetch that IS gated.
-PUBLIC_PATHS = frozenset({"/v1/health", "/", "/app", "/history",
+#   /history,
+#   /quantum    — HTML shells. They carry no patient data themselves; every panel is
+#                 filled by a /v1/* fetch that IS gated. /quantum renders model-level
+#                 evidence only and reads /v1/quantum/evidence, which is gated.
+PUBLIC_PATHS = frozenset({"/v1/health", "/", "/app", "/history", "/quantum",
                           "/docs", "/redoc", "/openapi.json", "/favicon.ico"})
 PUBLIC_PREFIXES = ("/static", "/assets", "/css", "/js")
 
