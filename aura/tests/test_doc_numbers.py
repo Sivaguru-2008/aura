@@ -314,6 +314,40 @@ def test_abstract_agrees_with_the_results_sections():
         )
 
 
+def test_manuscript_table_8e_matches_the_decomposition_artifact():
+    """Table 8e is the evidence for withdrawing the calibration/refinement mechanism.
+    Its whole point is that the terms move with the group count, so the published
+    values have to track the artifact row by row or the argument evaporates."""
+    f = PKG_ROOT / "artifacts" / "murphy_decomposition.json"
+    if not f.exists():
+        pytest.skip("murphy_decomposition.json not present")
+    widths = json.loads(f.read_text(encoding="utf-8"))["by_width"]
+    text = _manuscript_text()
+    section = text.split("#### 8.3.2")[1].split("\n### ")[0]
+
+    # Table 8e is the 8-qubit width, Table 8f the 7-qubit one. Both are three rows
+    # keyed by group count, so split the section at 8f to keep the rows apart.
+    parts = section.split("Table 8f. Murphy decomposition")
+    assert len(parts) == 2, "Section 8.3.2 should contain both Table 8e and Table 8f"
+    for width, table, chunk in (("8q", "8e", parts[0]), ("7q", "8f", parts[1])):
+        block = widths.get(width, {})
+        if not (block.get("complete") and block.get("across_seeds")):
+            pytest.skip(f"{width} decomposition incomplete")
+        for k in ("5", "10", "20"):
+            a = block["across_seeds"][k]
+            row = _row(chunk, k)
+            for metric in ("delta_reliability", "delta_resolution", "delta_brier_actual"):
+                _any_fmt(row, a[metric]["mean"], f"Table {table} k={k} {metric}")
+                assert f"{a[metric]['wilcoxon_p']:.4f}" in row, (
+                    f"Table {table} k={k} {metric}: p={a[metric]['wilcoxon_p']:.4f} not in row"
+                )
+            for side in ("ring", "product"):
+                v = a[f"mean_abs_residual_{side}"]
+                assert f"{v:.4f}" in row, (
+                    f"Table {table} k={k}: {side} residual {v:.4f} not in row"
+                )
+
+
 def test_murphy_decomposition_reconstructs_the_brier_score():
     """A decomposition that does not reconstruct the score it decomposes cannot
     support a claim about which of its terms dominates. The predecessor of this
