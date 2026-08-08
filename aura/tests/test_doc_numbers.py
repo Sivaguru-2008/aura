@@ -208,3 +208,206 @@ def test_published_safety_thresholds_match_the_served_policy():
             f"KNOWN_LIMITATIONS.md does not publish the served {label} = {value}. "
             f"Re-copy from get_settings(); do not loosen this test."
         )
+
+
+def _manuscript_text():
+    """The v4 manuscript, normalised for numeric matching."""
+    manuscript = REPO_ROOT / "docs" / "RESEARCH_PAPER_v4.md"
+    if not manuscript.exists():
+        pytest.skip(f"{manuscript} not present")
+    text = manuscript.read_text(encoding="utf-8")
+    return text.replace("**", "").replace("_", "").replace("−", "-").replace("—", "-")
+
+
+def _row(text, name):
+    """The markdown table row whose first cell is exactly ``name``."""
+    hits = [ln for ln in text.splitlines()
+            if ln.strip().startswith("|") and len(ln.split("|")) > 1
+            and ln.split("|")[1].strip() == name]
+    assert hits, f"no table row named {name!r} in the manuscript"
+    return hits[0]
+
+
+def _any_fmt(row, value, label):
+    """Assert ``value`` appears in ``row`` at 2, 3 or 4 decimal places, signed or not."""
+    sign = "+" if value > 0 else ""
+    cands = [f"{sign}{value:.4f}", f"{sign}{value:.3f}", f"{sign}{value:.2f}",
+             f"{value:.4f}", f"{value:.3f}", f"{value:.2f}", f"{value:g}"]
+    assert any(c in row for c in cands), (
+        f"{label}: none of {cands} found in row -> {row.strip()}"
+    )
+
+
+def test_manuscript_table_8c_matches_the_7qubit_artifact():
+    """Table 8c is the controlled ablation. It carries the paper's one surviving
+    entanglement claim, so it must track its artifact exactly."""
+    f = PKG_ROOT / "artifacts" / "entanglement_multiseed_7q.json"
+    assert f.exists(), (
+        "entanglement_multiseed_7q.json is missing. Section 8.3.1 is the controlled "
+        "version of the headline ablation; without the artifact the claim is unbacked."
+    )
+    data = json.loads(f.read_text(encoding="utf-8"))
+    text = _manuscript_text()
+    section = text.split("#### 8.3.1")[1].split("###")[0]
+
+    for key, name in (("delta_nll", "Negative log-likelihood"),
+                      ("delta_accuracy", "Accuracy"),
+                      ("delta_ece", "Expected calibration error")):
+        m = data[key]
+        row = _row(section, name)
+        _any_fmt(row, m["mean"], f"Table 8c {name} mean")
+        _any_fmt(row, m["sd_across_seeds"], f"Table 8c {name} sd")
+        _any_fmt(row, m["wilcoxon_p"], f"Table 8c {name} Wilcoxon p")
+        _any_fmt(row, m["wilcoxon_p_holm"], f"Table 8c {name} Holm p")
+        seeds = m["n_seeds_favouring_entanglement"]
+        assert f"{seeds} of 10" in row, (
+            f"Table 8c {name}: artifact says {seeds} of 10 seeds favour entanglement"
+        )
+
+
+def test_manuscript_table_3_matches_the_kernel_split():
+    """Table 3 and Section 8.5 disagreed about the grading split across two
+    revisions because nothing checked Table 3. This checks Table 3."""
+    f = PKG_ROOT / "artifacts" / "brain" / "qkl_training_report.json"
+    if not f.exists():
+        pytest.skip("qkl_training_report.json not present")
+    split = json.loads(f.read_text(encoding="utf-8"))["split"]
+    row = _row(_manuscript_text(), "Quantum kernel grading (§8.5)")
+    for subj, sl in (("train_subjects", "train_slices_used"),
+                     ("cal_subjects", "cal_slices_used"),
+                     ("test_subjects", "test_slices_used")):
+        assert f"{split[subj]} subjects" in row, (
+            f"Table 3 does not publish {split[subj]} for {subj}: {row.strip()}"
+        )
+        assert f"{split[sl]:,}" in row, (
+            f"Table 3 does not publish {split[sl]:,} for {sl}: {row.strip()}"
+        )
+
+
+def test_abstract_agrees_with_the_results_sections():
+    """The abstract carried a superseded kernel result while Section 8.5 carried the
+    current one. Both are read from artifacts here so they cannot diverge again."""
+    text = _manuscript_text()
+    abstract = text.split("## Abstract")[1].split("## 1.")[0]
+
+    f7 = PKG_ROOT / "artifacts" / "entanglement_multiseed_7q.json"
+    if f7.exists():
+        nll = json.loads(f7.read_text(encoding="utf-8"))["delta_nll"]
+        assert f"+{nll['mean']:.3f}" in abstract or f"+{nll['mean']:.4f}" in abstract, (
+            "the abstract does not report the controlled 7-qubit NLL effect"
+        )
+        assert f"{nll['wilcoxon_p']:.3f}" in abstract, (
+            "the abstract does not report the controlled 7-qubit Wilcoxon p"
+        )
+
+    fq = PKG_ROOT / "artifacts" / "brain" / "qkl_training_report.json"
+    if fq.exists():
+        d = json.loads(fq.read_text(encoding="utf-8"))["quantum_minus_classical_auroc"]
+        sign = "+" if d["mean"] > 0 else "-"
+        assert f"{sign}{abs(d['mean']):.4f}" in abstract, (
+            f"the abstract does not report the current kernel delta "
+            f"{d['mean']:+.4f}; it may be quoting a superseded run"
+        )
+        p = d["p_two_sided"]
+        assert f"{p:.2f}" in abstract or f"{p:.3f}" in abstract, (
+            "the abstract does not report the current kernel p-value"
+        )
+
+
+def test_murphy_decomposition_reconstructs_the_brier_score():
+    """A decomposition that does not reconstruct the score it decomposes cannot
+    support a claim about which of its terms dominates. The predecessor of this
+    artifact reported terms that were off by more than twice the effect."""
+    f = PKG_ROOT / "artifacts" / "murphy_decomposition.json"
+    if not f.exists():
+        pytest.skip("murphy_decomposition.json not present")
+    data = json.loads(f.read_text(encoding="utf-8"))
+    for width, block in data["by_width"].items():
+        for entry in block["per_seed"]:
+            for k, cell in entry["by_group_count"].items():
+                for arm in ("ring", "product"):
+                    d = cell[arm]
+                    recon = d["reliability"] - d["resolution"] + d["uncertainty"]
+                    assert abs(recon - d["reconstructed_brier"]) < 1e-4, (
+                        f"{width} seed {entry['seed']} k={k} {arm}: REL-RES+UNC does not "
+                        f"equal the reported reconstruction"
+                    )
+                    assert abs(d["actual_brier"] - recon - d["residual"]) < 1e-4, (
+                        f"{width} seed {entry['seed']} k={k} {arm}: the residual does not "
+                        f"close the identity actual = REL-RES+UNC + residual"
+                    )
+
+
+def test_manuscript_v4_tables_match_artifacts():
+    """Verify that the primary tables in the manuscript (v4) match the stored artifacts."""
+    manuscript = REPO_ROOT / "docs" / "RESEARCH_PAPER_v4.md"
+    if not manuscript.exists():
+         pytest.skip(f"{manuscript} not present")
+
+    text = manuscript.read_text(encoding="utf-8")
+    # Clean text to normalize formats
+    clean_text = text.replace("**", "").replace("_", "").replace("−", "-").replace("—", "-")
+
+    # 1. Validate Table 6 (Primary comparison on n=447 split)
+    f_headline = PKG_ROOT / "artifacts" / "fusion_headline_n447.json"
+    if f_headline.exists():
+        headline_data = json.loads(f_headline.read_text(encoding="utf-8"))["backends"]
+        for key, row_name in [("classical", "Classical product-of-experts"),
+                              ("quantum", "Quantum variational circuit"),
+                              ("learnable", "Learnable gated head")]:
+            m = headline_data[key]
+            row = [line for line in clean_text.splitlines() if line.strip().startswith("|") and len(line.split("|")) > 6 and line.split("|")[1].strip() == row_name][0]
+            assert f"{m['temperature']:.3f}" in row or f"{m['temperature']:.2f}" in row or f"{m['temperature']:g}" in row, f"Temp mismatch for {row_name} in Table 6"
+            assert f"{m['accuracy']:.4f}" in row or f"{m['accuracy']:.3f}" in row, f"Accuracy mismatch for {row_name} in Table 6"
+            assert f"{m['nll']:.4f}" in row or f"{m['nll']:.3f}" in row, f"NLL mismatch for {row_name} in Table 6"
+            assert f"{m['ece']:.4f}" in row or f"{m['ece']:.3f}" in row, f"ECE mismatch for {row_name} in Table 6"
+            assert f"{m['macro_auroc']:.4f}" in row or f"{m['macro_auroc']:.3f}" in row, f"AUROC mismatch for {row_name} in Table 6"
+
+    # 2. Validate Table 8 (Entanglement ablation across 10 seeds)
+    f_multiseed = PKG_ROOT / "artifacts" / "entanglement_multiseed.json"
+    if f_multiseed.exists():
+        multiseed_data = json.loads(f_multiseed.read_text(encoding="utf-8"))
+        for metric_key, row_name in [("delta_nll", "Negative log-likelihood"),
+                                     ("delta_accuracy", "Accuracy"),
+                                     ("delta_ece", "Expected calibration error")]:
+            m = multiseed_data[metric_key]
+            row = [line for line in clean_text.splitlines() if line.strip().startswith("|") and len(line.split("|")) > 6 and line.split("|")[1].strip() == row_name][0]
+            sign = "+" if m["mean"] > 0 else ""
+            assert f"{sign}{m['mean']:.4f}" in row or f"{sign}{m['mean']:.3f}" in row or f"{sign}{m['mean']:g}" in row, f"Mean mismatch for {row_name} in Table 8"
+            assert f"{m['sd_across_seeds']:.4f}" in row or f"{m['sd_across_seeds']:.3f}" in row or f"{m['sd_across_seeds']:g}" in row, f"SD mismatch for {row_name} in Table 8"
+            assert f"{m['wilcoxon_p']:.4f}" in row or f"{m['wilcoxon_p']:.3f}" in row or f"{m['wilcoxon_p']:g}" in row, f"Wilcoxon p mismatch for {row_name} in Table 8"
+
+    # 3. Validate Table 9 (Entangler topology at 8 qubits, 3 layers)
+    f_sweep = PKG_ROOT / "artifacts" / "design_sweep.json"
+    if f_sweep.exists():
+        sweep_cells = json.loads(f_sweep.read_text(encoding="utf-8"))["cells"]
+        target_cells = {c["entangler"]: c for c in sweep_cells if c["n_qubits"] == 8 and c["n_layers"] == 3}
+        for ent, row_name in [("ring", "Ring (served)"), ("linear", "Linear"), ("full", "Full"), ("none", "None")]:
+            c = target_cells[ent]
+            row = [line for line in clean_text.splitlines() if line.strip().startswith("|") and len(line.split("|")) > 1 and line.split("|")[1].strip() == row_name][0]
+            assert f"{c['accuracy']:.4f}" in row or f"{c['accuracy']:.3f}" in row, f"Accuracy mismatch for {row_name} in Table 9"
+            assert f"{c['nll']:.4f}" in row or f"{c['nll']:.3f}" in row, f"NLL mismatch for {row_name} in Table 9"
+            assert f"{c['ece']:.4f}" in row or f"{c['ece']:.3f}" in row, f"ECE mismatch for {row_name} in Table 9"
+
+    # 4. Validate Table 11 & 12 (Quantum and classical kernel performance on BraTS)
+    f_qkl = PKG_ROOT / "artifacts" / "brain" / "qkl_training_report.json"
+    if f_qkl.exists():
+        qkl_data = json.loads(f_qkl.read_text(encoding="utf-8"))
+        section_85 = clean_text.split("### 8.5")[1].split("### 8.6")[0]
+        for key, row_name in [("test_quantum", "Quantum kernel (IQP, 10 qubits)"),
+                              ("test_classical_rbf", "Classical radial basis function")]:
+            m = qkl_data[key]
+            row = [line for line in section_85.splitlines() if line.strip().startswith("|") and len(line.split("|")) > 1 and line.split("|")[1].strip() == row_name][0]
+            assert f"{m['auroc']:.4f}" in row or f"{m['auroc']:.3f}" in row, f"AUROC mismatch for {row_name} in Table 11"
+            assert f"{m['accuracy']:.4f}" in row or f"{m['accuracy']:.3f}" in row, f"Accuracy mismatch for {row_name} in Table 11"
+            assert f"{m['ece']:.4f}" in row or f"{m['ece']:.3f}" in row, f"ECE mismatch for {row_name} in Table 11"
+            assert f"{m['brier']:.4f}" in row or f"{m['brier']:.3f}" in row, f"Brier mismatch for {row_name} in Table 11"
+
+        for key, row_name in [("quantum_minus_classical_auroc", "AUROC"),
+                              ("quantum_minus_classical_ece", "Expected calibration error")]:
+            m = qkl_data[key]
+            sign = "+" if m["mean"] > 0 else ""
+            row = [line for line in section_85.splitlines() if line.strip().startswith("|") and len(line.split("|")) > 1 and line.split("|")[1].strip() == row_name][0]
+            assert f"{sign}{m['mean']:.4f}" in row or f"{sign}{m['mean']:.3f}" in row or f"{sign}{m['mean']:g}" in row, f"Mean mismatch for {row_name} in Table 12"
+            p_val = m["p_two_sided"]
+            assert f"{p_val:.3f}" in row or f"{p_val:.2f}" in row or f"{p_val:g}" in row or (p_val < 0.001 and "< 0.001" in row), f"p-value mismatch for {row_name} in Table 12"

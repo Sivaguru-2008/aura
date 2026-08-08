@@ -13,107 +13,151 @@
     "train_subjects": 33,
     "cal_subjects": 11,
     "test_subjects": 11,
-    "train_slices_used": 600,
-    "cal_slices_used": 673,
-    "test_slices_used": 669
+    "train_slices_used": 1951,
+    "cal_slices_used": 1273,
+    "test_slices_used": 1269
   },
   "quantum": {
     "feature_map": "IQP (Hadamard + RZ + ring ZZ)",
     "kernel": "fidelity |<phi(x)|phi(x')>|^2",
-    "n_qubits": 6,
-    "hilbert_dim": 64,
-    "support_vectors": 402,
-    "encode_seconds_train": 2.942
+    "n_qubits": 10,
+    "hilbert_dim": 1024,
+    "support_vectors": 1183,
+    "encode_seconds_train": 13.067
   },
   "calibration": {
-    "platt_a": -0.9676980344557834,
-    "platt_b": 0.4102511585763645,
+    "platt_a": -1.3717806110818616,
+    "platt_b": 1.2101084390059156,
     "cal_metrics": {
-      "auroc": 0.752591575091575,
-      "auprc": 0.635704972333174,
-      "accuracy": 0.6849925705794948,
-      "sensitivity": 0.5970695970695971,
-      "specificity": 0.745,
-      "precision": 0.6150943396226415,
-      "f1": 0.6059479553903345,
-      "ece": 0.06954629656065969,
-      "brier": 0.19968621453424523,
-      "n": 673,
+      "auroc": 0.8078241758241759,
+      "auprc": 0.5237387859283268,
+      "accuracy": 0.805184603299293,
+      "sensitivity": 0.31868131868131866,
+      "specificity": 0.938,
+      "precision": 0.5838926174496645,
+      "f1": 0.41232227488151657,
+      "ece": 0.027818788931696023,
+      "brier": 0.13318391288218825,
+      "n": 1273,
       "n_positive": 273
     }
   },
   "test_quantum": {
-    "auroc": 0.7060966542750929,
-    "auprc": 0.574505871042781,
-    "accuracy": 0.6696562032884903,
-    "sensitivity": 0.550185873605948,
-    "specificity": 0.75,
-    "precision": 0.5967741935483871,
-    "f1": 0.5725338491295938,
-    "ece": 0.02763677963403176,
-    "brier": 0.21150031510974762,
-    "n": 669,
+    "auroc": 0.623910780669145,
+    "auprc": 0.2578189157050936,
+    "accuracy": 0.7446808510638298,
+    "sensitivity": 0.11152416356877323,
+    "specificity": 0.915,
+    "precision": 0.2608695652173913,
+    "f1": 0.15625,
+    "ece": 0.11979025738452569,
+    "brier": 0.18334776384537987,
+    "n": 1269,
     "n_positive": 269
   },
   "test_classical_rbf": {
-    "auroc": 0.7213661710037175,
-    "auprc": 0.5845321702120971,
-    "accuracy": 0.6771300448430493,
-    "sensitivity": 0.5687732342007435,
-    "specificity": 0.75,
-    "precision": 0.6047430830039525,
-    "f1": 0.5862068965517241,
-    "ece": 0.040780256019418204,
-    "brier": 0.20719383218121412,
-    "n": 669,
+    "auroc": 0.5837881040892193,
+    "auprc": 0.30780046355197566,
+    "accuracy": 0.7840819542947203,
+    "sensitivity": 0.1412639405204461,
+    "specificity": 0.957,
+    "precision": 0.4691358024691358,
+    "f1": 0.21714285714285714,
+    "ece": 0.1158431885256768,
+    "brier": 0.17899143884484195,
+    "n": 1269,
     "n_positive": 269
   },
   "bootstrap_ci_quantum": {
     "auroc": {
-      "lo": 0.5768231240992868,
-      "hi": 0.8261735885133445,
-      "median": 0.703499578874776,
+      "lo": 0.53917057029785,
+      "hi": 0.7096629630535519,
+      "median": 0.6236423516221709,
       "n_boot": 897
     },
     "accuracy": {
-      "lo": 0.5404377089942554,
-      "hi": 0.7793697288404026,
-      "median": 0.6666666666666666,
+      "lo": 0.5196587622903412,
+      "hi": 0.854884704538625,
+      "median": 0.7392,
       "n_boot": 897
     },
     "f1": {
-      "lo": 0.3175639894086496,
-      "hi": 0.7489062194697182,
-      "median": 0.5736434108527132,
+      "lo": 0.06933768933768934,
+      "hi": 0.22975136274291275,
+      "median": 0.15544041450777202,
       "n_boot": 897
     }
   },
   "bootstrap_ci_classical": {
     "auroc": {
-      "lo": 0.5913370422954882,
-      "hi": 0.8404897856817145,
-      "median": 0.7184956307632888,
+      "lo": 0.4434432747606596,
+      "hi": 0.7152040795211462,
+      "median": 0.5783468990357694,
       "n_boot": 897
     }
   },
   "quantum_minus_classical_auroc": {
-    "mean": -0.015557745963377109,
-    "ci95_lo": -0.026950817754366918,
-    "ci95_hi": -0.00829846215724108,
-    "p_two_sided": 0.002229654403567447,
-    "significant_at_95": true,
+    "mean": 0.04462229360582208,
+    "ci95_lo": -0.05763421221046239,
+    "ci95_hi": 0.15195381039751626,
+    "p_two_sided": 0.5484949832775919,
+    "significant_at_95": false,
     "n_boot": 897
   },
   "quantum_minus_classical_ece": {
-    "mean": -0.0008564091379215842,
-    "ci95_lo": -0.02896831293957844,
-    "ci95_hi": 0.014969559355607516,
-    "p_two_sided": 0.882943143812709,
+    "mean": -0.007653703126558628,
+    "ci95_lo": -0.045098392797559006,
+    "ci95_hi": 0.02470249590786311,
+    "p_two_sided": 0.6510590858416946,
     "significant_at_95": false,
     "n_boot": 897,
     "lower_is_better": true,
     "negative_favours": "quantum"
   },
   "seed": 7,
-  "C": 1.0
+  "C": 1.0,
+  "tuning": {
+    "protocol": "independent grid search per arm, selected on the calibration split by AUROC, evaluated once on the held-out test subjects",
+    "selection_metric": "calibration-split AUROC",
+    "quantum": {
+      "grid": {
+        "C": [
+          0.1,
+          1.0,
+          10.0,
+          100.0,
+          1000.0
+        ]
+      },
+      "selected": {
+        "C": 1.0
+      },
+      "calibration_auroc_at_selection": 0.807824
+    },
+    "classical_rbf": {
+      "grid": {
+        "C": [
+          0.1,
+          1.0,
+          10.0,
+          100.0,
+          1000.0
+        ],
+        "gamma": [
+          "scale",
+          "auto",
+          "0.001",
+          "0.01",
+          "0.1",
+          "1.0"
+        ]
+      },
+      "selected": {
+        "C": 1000.0,
+        "gamma": 1.0
+      },
+      "calibration_auroc_at_selection": 0.843385
+    },
+    "note": "The classical arm's selection sits at the extreme of both grids and its test AUROC is lower than the untuned arm achieved on the previous split. With 11 calibration subjects the selection is high-variance; see Section 8.5."
+  }
 }

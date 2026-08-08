@@ -226,9 +226,9 @@ def fit_platt(scores: np.ndarray, y: np.ndarray) -> tuple[float, float]:
 # Training
 # --------------------------------------------------------------------------- #
 def train(
-    n_qubits: int = 6,
-    train_slices: int = 600,
-    eval_slices: int = 800,
+    n_qubits: int = 10,
+    train_slices: int = 2000,
+    eval_slices: int = 2000,
     C: float = 1.0,
     seed: int = 7,
     n_boot: int = 1000,
@@ -281,10 +281,45 @@ def train(
     encode_seconds = time.perf_counter() - t0
 
     y_fit = y[fit_idx]
-    svm = SVC(kernel="precomputed", C=C, random_state=seed)
-    svm.fit(K_fit, y_fit)
+    S_cal = clf.feature_states(A_cal)
+    
+    best_C = C
+    best_val_score = -1.0
+    best_svm = None
+    best_sv_local = None
+    
+    C_candidates = [0.1, 1.0, 10.0, 100.0, 1000.0]
+    print("\nStarting Hyperparameter Grid Search for SVM C parameter:")
+    for c_val in C_candidates:
+        svm_cand = SVC(kernel="precomputed", C=c_val, random_state=seed)
+        svm_cand.fit(K_fit, y_fit)
+        
+        sv_local_cand = svm_cand.support_
+        alpha_cand = svm_cand.dual_coef_[0].astype(float)
+        b_svm_cand = float(svm_cand.intercept_[0])
+        sv_states_cand = S_fit[sv_local_cand]
+        
+        K_cal_fit = np.abs(S_cal @ sv_states_cand.conj().T) ** 2
+        f_cal_cand = K_cal_fit @ alpha_cand + b_svm_cand
+        
+        platt_a_cand, platt_b_cand = fit_platt(f_cal_cand, y[cal_use])
+        p_cal_cand = 1.0 / (1.0 + np.exp(platt_a_cand * f_cal_cand + platt_b_cand))
+        
+        metrics = binary_metrics(y[cal_use], p_cal_cand)
+        val_auroc = metrics.get("auroc", 0.0)
+        print(f"  C = {c_val:<6} | Calibration AUROC = {val_auroc:.4f}")
+        
+        if val_auroc > best_val_score:
+            best_val_score = val_auroc
+            best_C = c_val
+            best_svm = svm_cand
+            best_sv_local = sv_local_cand
+            
+    print(f"Selected best C = {best_C} with Calibration AUROC = {best_val_score:.4f}\n")
+    C = best_C
+    svm = best_svm
+    sv_local = best_sv_local
 
-    sv_local = svm.support_
     clf.support_vectors = A_fit[sv_local]
     clf.support_labels = y_fit[sv_local].astype(float)
     clf.alpha = svm.dual_coef_[0].astype(float)
@@ -311,7 +346,33 @@ def train(
     # --- classical control on the identical split/projection --------------- #
     # Platt-scaled on the same calibration fold as the quantum arm, so the two
     # differ only in the kernel — not in how their scores become probabilities.
-    rbf = SVC(kernel="rbf", C=C, gamma="scale", random_state=seed)
+    best_rbf_val_score = -1.0
+    best_rbf_C = 1.0
+    best_rbf_gamma = "scale"
+    
+    C_candidates = [0.1, 1.0, 10.0, 100.0, 1000.0]
+    gamma_candidates = ["scale", "auto", 0.001, 0.01, 0.1, 1.0]
+    print("\nStarting Hyperparameter Grid Search for RBF SVM baseline:")
+    for rbf_c in C_candidates:
+        for rbf_g in gamma_candidates:
+            rbf_cand = SVC(kernel="rbf", C=rbf_c, gamma=rbf_g, random_state=seed)
+            rbf_cand.fit(A_fit, y_fit)
+            rbf_a_cand, rbf_b_cand = fit_platt(rbf_cand.decision_function(A_cal), y[cal_use]) if len(A_cal) else (-1.0, 0.0)
+            p_cal_rbf_cand = (
+                1.0 / (1.0 + np.exp(rbf_a_cand * rbf_cand.decision_function(A_cal) + rbf_b_cand))
+                if len(A_cal)
+                else np.zeros(0)
+            )
+            rbf_val_metrics = binary_metrics(y[cal_use], p_cal_rbf_cand)
+            val_rbf_auroc = rbf_val_metrics.get("auroc", 0.0)
+            if val_rbf_auroc > best_rbf_val_score:
+                best_rbf_val_score = val_rbf_auroc
+                best_rbf_C = rbf_c
+                best_rbf_gamma = rbf_g
+                
+    print(f"Selected best RBF C = {best_rbf_C}, gamma = {best_rbf_gamma} with Calibration AUROC = {best_rbf_val_score:.4f}\n")
+    
+    rbf = SVC(kernel="rbf", C=best_rbf_C, gamma=best_rbf_gamma, random_state=seed)
     rbf.fit(A_fit, y_fit)
     rbf_a, rbf_b = fit_platt(rbf.decision_function(A_cal), y[cal_use]) if len(A_cal) else (-1.0, 0.0)
     p_te_rbf = (
@@ -394,6 +455,28 @@ def train(
                                         "negative_favours": "quantum"},
         "seed": seed,
         "C": C,
+        # P6: the manuscript states the grid and the selection, so the artifact has
+        # to carry them. Without this block the tuned comparison in Section 8.5 is
+        # prose-only and the drift test cannot check it.
+        "tuning": {
+            "protocol": "independent grid search per arm, selected on the calibration "
+                        "split by AUROC, evaluated once on the held-out test subjects",
+            "selection_metric": "calibration-split AUROC",
+            "quantum": {
+                "grid": {"C": list(C_candidates)},
+                "selected": {"C": best_C},
+                "calibration_auroc_at_selection": round(float(best_val_score), 6),
+            },
+            "classical_rbf": {
+                "grid": {"C": list(C_candidates), "gamma": [str(g) for g in gamma_candidates]},
+                "selected": {"C": best_rbf_C, "gamma": best_rbf_gamma},
+                "calibration_auroc_at_selection": round(float(best_rbf_val_score), 6),
+            },
+            "note": "The classical arm's selection sits at the extreme of both grids "
+                    "and its test AUROC is lower than the untuned arm achieved on the "
+                    "previous split. With 11 calibration subjects the selection is "
+                    "high-variance; see Section 8.5.",
+        },
     }
 
     clf.provenance = {
@@ -465,9 +548,9 @@ def paired_bootstrap_delta(
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Train the QKL brain classifier.")
-    ap.add_argument("--qubits", type=int, default=6)
-    ap.add_argument("--train-slices", type=int, default=600)
-    ap.add_argument("--eval-slices", type=int, default=800)
+    ap.add_argument("--qubits", type=int, default=10)
+    ap.add_argument("--train-slices", type=int, default=2000)
+    ap.add_argument("--eval-slices", type=int, default=2000)
     ap.add_argument("--C", type=float, default=1.0)
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--bootstrap", type=int, default=1000)

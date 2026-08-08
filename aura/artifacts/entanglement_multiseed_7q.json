@@ -1,0 +1,324 @@
+{
+  "purpose": "Across-seed replication of the 7-qubit entanglement ablation. dropping dead prior_risk channel.",
+  "protocol": {
+    "seeds": [
+      7,
+      11,
+      13,
+      17,
+      19,
+      23,
+      29,
+      31,
+      37,
+      41
+    ],
+    "epochs": 30,
+    "n_qubits": 7,
+    "n_layers": 3,
+    "data": "cached quantum_study_evidence.npz (first 7 channels)",
+    "n_train": 1338,
+    "n_cal": 446,
+    "n_test": 447
+  },
+  "per_seed": [
+    {
+      "seed": 7,
+      "entangled": {
+        "accuracy": 0.5347,
+        "nll": 1.2824,
+        "ece": 0.0488,
+        "temperature": 1.2471,
+        "mean_confidence": 0.5081,
+        "train_seconds": 37.93
+      },
+      "product": {
+        "accuracy": 0.5257,
+        "nll": 1.2785,
+        "ece": 0.042,
+        "temperature": 1.2072,
+        "mean_confidence": 0.5149,
+        "train_seconds": 29.54
+      },
+      "delta_nll": 0.0039,
+      "delta_accuracy": 0.009,
+      "delta_ece": 0.0068
+    },
+    {
+      "seed": 11,
+      "entangled": {
+        "accuracy": 0.5436,
+        "nll": 1.2522,
+        "ece": 0.0622,
+        "temperature": 0.9091,
+        "mean_confidence": 0.5025,
+        "train_seconds": 32.83
+      },
+      "product": {
+        "accuracy": 0.5615,
+        "nll": 1.2171,
+        "ece": 0.0917,
+        "temperature": 0.9242,
+        "mean_confidence": 0.5094,
+        "train_seconds": 29.51
+      },
+      "delta_nll": 0.0351,
+      "delta_accuracy": -0.0179,
+      "delta_ece": -0.0295
+    },
+    {
+      "seed": 13,
+      "entangled": {
+        "accuracy": 0.5615,
+        "nll": 1.2416,
+        "ece": 0.0831,
+        "temperature": 1.0244,
+        "mean_confidence": 0.5141,
+        "train_seconds": 35.06
+      },
+      "product": {
+        "accuracy": 0.566,
+        "nll": 1.2069,
+        "ece": 0.0741,
+        "temperature": 1.0993,
+        "mean_confidence": 0.5238,
+        "train_seconds": 35.75
+      },
+      "delta_nll": 0.0347,
+      "delta_accuracy": -0.0045,
+      "delta_ece": 0.009
+    },
+    {
+      "seed": 17,
+      "entangled": {
+        "accuracy": 0.5369,
+        "nll": 1.2719,
+        "ece": 0.0549,
+        "temperature": 1.0458,
+        "mean_confidence": 0.4898,
+        "train_seconds": 46.97
+      },
+      "product": {
+        "accuracy": 0.5503,
+        "nll": 1.2455,
+        "ece": 0.0591,
+        "temperature": 1.097,
+        "mean_confidence": 0.5002,
+        "train_seconds": 42.35
+      },
+      "delta_nll": 0.0264,
+      "delta_accuracy": -0.0134,
+      "delta_ece": -0.0042
+    },
+    {
+      "seed": 19,
+      "entangled": {
+        "accuracy": 0.5347,
+        "nll": 1.2883,
+        "ece": 0.0659,
+        "temperature": 1.0167,
+        "mean_confidence": 0.5006,
+        "train_seconds": 43.09
+      },
+      "product": {
+        "accuracy": 0.5503,
+        "nll": 1.2253,
+        "ece": 0.0543,
+        "temperature": 1.0811,
+        "mean_confidence": 0.5248,
+        "train_seconds": 27.17
+      },
+      "delta_nll": 0.063,
+      "delta_accuracy": -0.0156,
+      "delta_ece": 0.0116
+    },
+    {
+      "seed": 23,
+      "entangled": {
+        "accuracy": 0.5459,
+        "nll": 1.2653,
+        "ece": 0.0594,
+        "temperature": 0.9688,
+        "mean_confidence": 0.5024,
+        "train_seconds": 32.65
+      },
+      "product": {
+        "accuracy": 0.5503,
+        "nll": 1.2612,
+        "ece": 0.0834,
+        "temperature": 1.0301,
+        "mean_confidence": 0.5071,
+        "train_seconds": 41.43
+      },
+      "delta_nll": 0.0041,
+      "delta_accuracy": -0.0044,
+      "delta_ece": -0.024
+    },
+    {
+      "seed": 29,
+      "entangled": {
+        "accuracy": 0.5526,
+        "nll": 1.233,
+        "ece": 0.075,
+        "temperature": 1.0063,
+        "mean_confidence": 0.4989,
+        "train_seconds": 49.11
+      },
+      "product": {
+        "accuracy": 0.5615,
+        "nll": 1.2128,
+        "ece": 0.0646,
+        "temperature": 1.0304,
+        "mean_confidence": 0.5168,
+        "train_seconds": 40.51
+      },
+      "delta_nll": 0.0202,
+      "delta_accuracy": -0.0089,
+      "delta_ece": 0.0104
+    },
+    {
+      "seed": 31,
+      "entangled": {
+        "accuracy": 0.557,
+        "nll": 1.2349,
+        "ece": 0.0668,
+        "temperature": 1.0249,
+        "mean_confidence": 0.5132,
+        "train_seconds": 32.69
+      },
+      "product": {
+        "accuracy": 0.5414,
+        "nll": 1.2195,
+        "ece": 0.0831,
+        "temperature": 1.0627,
+        "mean_confidence": 0.5066,
+        "train_seconds": 30.71
+      },
+      "delta_nll": 0.0154,
+      "delta_accuracy": 0.0156,
+      "delta_ece": -0.0163
+    },
+    {
+      "seed": 37,
+      "entangled": {
+        "accuracy": 0.5459,
+        "nll": 1.2782,
+        "ece": 0.0698,
+        "temperature": 1.0222,
+        "mean_confidence": 0.4898,
+        "train_seconds": 38.64
+      },
+      "product": {
+        "accuracy": 0.5369,
+        "nll": 1.2562,
+        "ece": 0.0892,
+        "temperature": 1.1403,
+        "mean_confidence": 0.5127,
+        "train_seconds": 28.76
+      },
+      "delta_nll": 0.022,
+      "delta_accuracy": 0.009,
+      "delta_ece": -0.0194
+    },
+    {
+      "seed": 41,
+      "entangled": {
+        "accuracy": 0.5414,
+        "nll": 1.2702,
+        "ece": 0.0845,
+        "temperature": 0.9842,
+        "mean_confidence": 0.4935,
+        "train_seconds": 49.71
+      },
+      "product": {
+        "accuracy": 0.566,
+        "nll": 1.245,
+        "ece": 0.0839,
+        "temperature": 1.0227,
+        "mean_confidence": 0.5112,
+        "train_seconds": 45.81
+      },
+      "delta_nll": 0.0252,
+      "delta_accuracy": -0.0246,
+      "delta_ece": 0.0006
+    }
+  ],
+  "delta_nll": {
+    "per_seed": [
+      0.0039,
+      0.0351,
+      0.0347,
+      0.0264,
+      0.063,
+      0.0041,
+      0.0202,
+      0.0154,
+      0.022,
+      0.0252
+    ],
+    "mean": 0.025,
+    "sd_across_seeds": 0.0172,
+    "ci95_mean": [
+      0.0127,
+      0.0373
+    ],
+    "excludes_zero": true,
+    "t_p_two_sided": 0.0013,
+    "t_p_holm": 0.0038,
+    "wilcoxon_p": 0.002,
+    "wilcoxon_p_holm": 0.0059,
+    "n_seeds_favouring_entanglement": 0
+  },
+  "delta_accuracy": {
+    "per_seed": [
+      0.009,
+      -0.0179,
+      -0.0045,
+      -0.0134,
+      -0.0156,
+      -0.0044,
+      -0.0089,
+      0.0156,
+      0.009,
+      -0.0246
+    ],
+    "mean": -0.0056,
+    "sd_across_seeds": 0.0132,
+    "ci95_mean": [
+      -0.015,
+      0.0039
+    ],
+    "excludes_zero": false,
+    "t_p_two_sided": 0.2141,
+    "t_p_holm": 0.4282,
+    "wilcoxon_p": 0.291,
+    "wilcoxon_p_holm": 0.582,
+    "n_seeds_favouring_entanglement": 3
+  },
+  "delta_ece": {
+    "per_seed": [
+      0.0068,
+      -0.0295,
+      0.009,
+      -0.0042,
+      0.0116,
+      -0.024,
+      0.0104,
+      -0.0163,
+      -0.0194,
+      0.0006
+    ],
+    "mean": -0.0055,
+    "sd_across_seeds": 0.0155,
+    "ci95_mean": [
+      -0.0166,
+      0.0056
+    ],
+    "excludes_zero": false,
+    "t_p_two_sided": 0.2921,
+    "t_p_holm": 0.2921,
+    "wilcoxon_p": 0.4316,
+    "wilcoxon_p_holm": 0.4316,
+    "n_seeds_favouring_entanglement": 5
+  }
+}
