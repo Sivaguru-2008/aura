@@ -320,7 +320,12 @@ def test_manuscript_table_8e_matches_the_decomposition_artifact():
     values have to track the artifact row by row or the argument evaporates."""
     f = PKG_ROOT / "artifacts" / "murphy_decomposition.json"
     if not f.exists():
-        pytest.skip("murphy_decomposition.json not present")
+        raise AssertionError(
+            "murphy_decomposition.json is missing; run "
+            "`py -m aura.ml.evaluation.murphy_decomp`. This check skipped for one "
+            "revision while the manuscript reported the result as computed, which is "
+            "why it now fails instead."
+        )
     widths = json.loads(f.read_text(encoding="utf-8"))["by_width"]
     text = _manuscript_text()
     section = text.split("#### 8.3.2")[1].split("\n### ")[0]
@@ -354,7 +359,12 @@ def test_murphy_decomposition_reconstructs_the_brier_score():
     artifact reported terms that were off by more than twice the effect."""
     f = PKG_ROOT / "artifacts" / "murphy_decomposition.json"
     if not f.exists():
-        pytest.skip("murphy_decomposition.json not present")
+        raise AssertionError(
+            "murphy_decomposition.json is missing; run "
+            "`py -m aura.ml.evaluation.murphy_decomp`. This check skipped for one "
+            "revision while the manuscript reported the result as computed, which is "
+            "why it now fails instead."
+        )
     data = json.loads(f.read_text(encoding="utf-8"))
     for width, block in data["by_width"].items():
         for entry in block["per_seed"]:
@@ -370,6 +380,100 @@ def test_murphy_decomposition_reconstructs_the_brier_score():
                         f"{width} seed {entry['seed']} k={k} {arm}: the residual does not "
                         f"close the identity actual = REL-RES+UNC + residual"
                     )
+
+
+def test_table_12b_matches_the_external_validation_artifact():
+    """Section 8.6's external result is the paper's strongest claim and the one a
+    reader is least able to re-derive, so every published cell is pinned."""
+    f = PKG_ROOT / "artifacts" / "chexpert_external.json"
+    assert f.exists(), (
+        "chexpert_external.json is missing; run "
+        "`py -m aura.ml.evaluation.chexpert_external`. Do not weaken this to a skip - "
+        "a skipped artifact check is why v4.1 published a Murphy result that was "
+        "never computed."
+    )
+    data = json.loads(f.read_text(encoding="utf-8"))
+    prim = data["primary_uncertain_as_negative"]
+    text = _manuscript_text()
+
+    rows = {
+        "classical": "Classical product-of-experts",
+        "quantum": "Quantum variational circuit",
+        "learnable": "Learnable gated head",
+        "logistic": "Multinomial logistic regression",
+    }
+    # Table 12b and Table 6 both carry these row names; pick the row holding the
+    # external accuracy, which only Table 12b does.
+    for arm, name in rows.items():
+        b = prim["backends"][arm]
+        hits = [ln for ln in text.splitlines()
+                if ln.strip().startswith("|")
+                and ln.split("|")[1].strip() == name
+                and f"{b['accuracy']:.4f}" in ln]
+        assert hits, (
+            f"Table 12b has no row for {name} carrying the external accuracy "
+            f"{b['accuracy']:.4f}"
+        )
+        row = hits[0]
+        for label, value in (("NLL", b["nll"]), ("ECE", b["ece"]),
+                             ("macro AUROC", b["macro_auroc"])):
+            assert f"{value:.4f}" in row, (
+                f"Table 12b {name}: {label} {value:.4f} not in row -> {row.strip()}"
+            )
+        assert str(b["copd_predictions"]) in row, (
+            f"Table 12b {name}: COPD error count {b['copd_predictions']} not in row"
+        )
+        assert str(b["trainable_parameters"]) in row, (
+            f"Table 12b {name}: parameter count not in row"
+        )
+
+    floor = prim["majority_class_floor"]["accuracy"]
+    assert f"{floor:.4f}" in text, (
+        f"the manuscript does not publish the external majority-class floor {floor:.4f}"
+    )
+    n_test = data["data"]["test_studies"]
+    assert f"{n_test:,}" in text, (
+        f"the manuscript does not publish the external test size {n_test:,}"
+    )
+    assert data["data"]["copd_derivable"] is False
+    assert prim["majority_class_floor"]["support"]["copd"] == 0, (
+        "COPD support must be zero on CheXpert; the pre-registration says the map "
+        "cannot reach it without a hyperinflation label"
+    )
+
+
+def test_external_validation_was_preregistered_before_it_ran():
+    """The pre-registration is the only reason Section 8.6's H1/H2 language is
+    admissible. If the file goes missing the claim must not stand."""
+    prereg = REPO_ROOT / "docs" / "PREREGISTRATION_CHEXPERT.md"
+    assert prereg.exists(), "docs/PREREGISTRATION_CHEXPERT.md is missing"
+    text = prereg.read_text(encoding="utf-8")
+    for probe in ("H1", "H2", "H3", "H4", "frozen", "temperature"):
+        assert probe in text, f"the pre-registration does not state {probe}"
+
+    f = PKG_ROOT / "artifacts" / "chexpert_external.json"
+    if f.exists():
+        data = json.loads(f.read_text(encoding="utf-8"))
+        assert "PREREGISTRATION_CHEXPERT" in data.get("preregistration", ""), (
+            "the external artifact does not name the pre-registration it ran under"
+        )
+
+
+def test_the_constant_channel_is_constant_in_both_corpora():
+    """Section 8.6's H4. If prior_risk ever becomes informative on either corpus,
+    the confound analysis in 5.1.3 and 8.3.1 needs revisiting, not quiet reuse."""
+    import numpy as np
+
+    ext = PKG_ROOT / "artifacts" / "chexpert_evidence.npz"
+    mim = PKG_ROOT / "artifacts" / "quantum_study_evidence.npz"
+    if not (ext.exists() and mim.exists()):
+        pytest.skip("evidence tensors not present")
+
+    X = np.load(ext)["X"]
+    assert np.all(X[:, 7] == 0), "prior_risk is no longer constant on CheXpert"
+    d = np.load(mim)
+    for key in ("Xtr", "Xcal", "Xte"):
+        assert np.all(d[key][:, 7] == 0), f"prior_risk is no longer constant in {key}"
 
 
 def test_manuscript_v4_tables_match_artifacts():

@@ -5,8 +5,10 @@ Sivaguru R. M.
 AURA Project. Correspondence: sivagurumurugan1@gmail.com
 Code and artifacts: github.com/Sivaguru-2008/aura
 
-Preprint, version 4.2. 8 August 2026.
+Preprint, version 4.3. 19 August 2026.
 
+> **Revision note (v4.2 → v4.3).** This version reports the external validation the previous versions listed as their highest-value outstanding analysis, under a pre-registration deposited before the run (§8.6). It falsified one of its own two primary hypotheses: the backends are *not* indistinguishable on accuracy, and §8.2's null was a consequence of a 447-study split. The quantum circuit finishes last of four on every metric on the external cohort. Two reference errors are corrected and two figures added. See Appendix A.1.
+>
 > **Revision note (v4.1 → v4.2).** This version runs three analyses that v4 identified as necessary but had not performed, and reports what they cost. The substantive changes are: (i) a converged multinomial logistic regression — the correctly specified model class for this target under §5.1.2, at half the quantum arm's parameter count — is added to the primary comparison, and it beats the quantum circuit on the proper scoring rule with significance (§8.2); (ii) the Murphy decomposition of the entanglement effect is measured rather than argued (§8.3.2); (iii) §9.1's abstention claim is replaced by a risk–coverage analysis on the primary split, which withdraws it: the four-criterion policy is not distinguishable from thresholding the maximum calibrated probability (§9.1); (iv) Table 2's parameter counts are corrected — the gated head has 126 trainable parameters, not 54, so it is the *largest* arm in §8.2 and not a smaller one; (v) the served abstention thresholds are corrected, two of the four having been published from settings the serving path does not read (§9.1, §11.7); (vi) stale kernel figures in §4, §11.4 and §11.5 are corrected against the current artifact. A complete change log is in Appendix A.
 >
 > **Revision note (v3 → v4).** This version corrects errors identified in an internal review of v3 and adds disclosures that the review found missing. No experimental result has been changed. The substantive changes are: (i) the prediction target is now defined (§5.1.2) and its consequences for interpretation are drawn (§8.2, §8.3, §9.3); (ii) an evidence channel that is identically zero is disclosed and its confounding potential for §8.3 is stated (§5.1.3, §8.3, §12.6); (iii) two factual errors in v3's threats-to-validity section are corrected (class support and minimum detectable effect); (iv) trivial baselines and multiplicity-adjusted *p*-values are added; (v) provenance is stated for the abstention analysis (§9.1), the quantum-kernel embeddings (§8.5), and the noise attribution (§9.5), each of which v3 reported without the qualification it required; (vi) the claim that the protocol was fixed in advance is now scoped to what can be evidenced (§6). A complete change log is in Appendix A.
@@ -23,7 +25,9 @@ Preprint, version 4.2. 8 August 2026.
 
 **Results.** None of five quantum claims survived. A previously reported calibration advantage (expected calibration error 0.020 versus 0.276) was traced to temperature scaling applied only to the quantum arm; with per-arm calibration the gap fell from 0.256 to 0.007. On the 447-study split the three backends were indistinguishable on accuracy (all pairwise McNemar *p* ≥ 0.18) against a majority-class rate of 0.237, but the quantum circuit beat the product-of-experts on negative log-likelihood (Δ = 0.017, Wilcoxon *p* = 0.006). That advantage did not survive a second classical baseline: a learnable gated head was not distinguishable from the quantum circuit (Δ = 0.019, *p* = 0.052) while beating the product-of-experts decisively (*p* < 10⁻⁵). It reversed against a third. A multinomial logistic regression — the model class the target's structure makes correctly specified (§5.1.2), carrying 54 trainable parameters against the circuit's 102, fitted to optimality by L-BFGS rather than by the 400 fixed-rate gradient steps that train the product-of-experts — attained the best accuracy (0.5570), negative log-likelihood (1.2310), calibration (ECE 0.0862) and discrimination (macro AUROC 0.8227) of any arm, and beat the quantum circuit on negative log-likelihood with significance (Δ = 0.0543, Wilcoxon *p* = 0.012, Holm *p* = 0.036). It also beat the product-of-experts, which is the same model class at the same parameter count, by Δ = 0.0716 (*p* = 1.7 × 10⁻⁷): the baseline's published deficit is an artifact of its optimiser rather than a property of linear fusion. Whether a quantum advantage is reported therefore depends on which classical model is placed opposite it, and on how carefully that model was fitted. In a capacity-matched entanglement ablation across ten training seeds, the CNOT ring was worse on negative log-likelihood in ten of ten seeds (mean Δ = +0.049) and worse on accuracy in nine of ten, while being better calibrated in eight of ten. On discovering that one of the eight evidence channels is identically zero, so that the entangled arm couples data qubits to a constant register and the product arm does not, we repeated the ablation on the seven informative channels: **only the likelihood penalty survives** (mean Δ = +0.025, 95% CI +0.013 to +0.037 across seeds, ten of ten seeds, Wilcoxon *p* = 0.002, Holm *p* = 0.006), while the accuracy penalty (*p* = 0.29) and the calibration benefit (*p* = 0.43) both disappear. A 48-cell design sweep placed four of its five best configurations at zero entanglement. On converged embeddings with symmetric hyperparameter tuning, the quantum kernel did not differ from a radial basis function kernel (ΔAUROC = +0.0446, 95% CI −0.0576 to +0.1520, *p* = 0.55, 11 held-out subjects). Applying the source-audit rule to our own proposed mechanism showed that its shot-budget loop perturbs an analytically computed expectation rather than executing at finite shots, reducing the claimed capability to a threshold on the analytic margin; we retract it in §10.6.
 
-**Conclusions.** Under a symmetric protocol, no quantum component provided a benefit that survived a second classical baseline or a second metric. We show that the fusion target is a deterministic weighted function of the fusion inputs (§5.1.2), which makes the observed null a *predicted* rather than merely an observed outcome for this task. A risk–coverage analysis on the primary split further withdraws this project's only positive claim: the system's four-criterion abstention policy is not distinguishable from thresholding the maximum calibrated probability at matched coverage in any of the four backends (§9.1). These findings corroborate the field-level null of [1] from within a deployed system.
+**External validation.** Under a pre-registration deposited before any image was scored, all models were frozen and transferred to 4,800 patient-disjoint CheXpert studies from a second institution, refitting only one temperature per arm. The quantum circuit finished **last of four on accuracy, negative log-likelihood, calibration and macro AUROC**, losing to the logistic regression on likelihood by 0.197 — 3.6 times the internal gap. One pre-registered hypothesis was falsified, and by this paper's own result: five of six pairwise accuracy comparisons reached significance externally, so §8.2's finding that the backends are indistinguishable on accuracy was an artifact of a 447-study split, not a property of the architectures. Transfer degradation tracked capacity — the two 54-parameter linear arms lost 1.4 and 3.6 accuracy points, the 102- and 126-parameter arms 6.0 and 7.0.
+
+**Conclusions.** Under a symmetric protocol, no quantum component provided a benefit that survived a second classical baseline, a second metric, or a second institution. We show that the fusion target is a deterministic weighted function of the fusion inputs (§5.1.2), which makes the observed null a *predicted* rather than merely an observed outcome for this task. A risk–coverage analysis on the primary split further withdraws this project's only positive claim: the system's four-criterion abstention policy is not distinguishable from thresholding the maximum calibrated probability at matched coverage in any of the four backends (§9.1). These findings corroborate the field-level null of [1] from within a deployed system.
 
 **Keywords:** quantum machine learning; negative results; benchmarking methodology; variational quantum circuits; quantum kernels; entanglement ablation; clinical decision support; calibration; selective prediction; reproducibility
 
@@ -116,6 +120,7 @@ The middle column of Table 1 is not our characterisation of the field. It reprod
 | G3 | Simulation versus hardware | 81.7% used ideal simulation only | One case executed on `ibm_marrakesh` (156 qubits), job `d9js49rjf64c739haeg0`. A single-instance existence proof, not a hardware evaluation (§9.5, §11.8) |
 | G4 | Noise characterisation | 7 of 138 simulation-only studies modelled noise; 14 of 16 hardware studies compared to noiseless simulation | Three-rung attribution on one evidence vector: sampling 0.0074, device 0.0544, hardware 0.1858 mean absolute error in ⟨Z⟩. n = 1 (§9.5, §11.8) |
 | G5 | Clinical data realism | 2 of 16 used real EHR data; dimensionality typically order 10 | MIMIC-CXR and BraTS-2020, patient- and volume-disjoint splits, deployed pipeline. Target is rule-derived (§5.1.2) |
+| G5b | External validation | Not assessed as a dimension; no synthesised study transferred a frozen model to a second institution | 4,800 patient-disjoint CheXpert studies, all models frozen, pre-registered before the run (§8.6) |
 | G6 | Reproducibility | Most studies released neither code nor data | Artifact release with SHA-256 manifests, fixed seeds, environment capture, and a drift test covering five documents but not this manuscript (§6, P6) |
 | G7 | Calibration symmetry | Not assessed as a dimension | Per-arm calibration required by protocol; confound headroom measured at 1.89 |
 | G8 | Statistical inference | Not assessed as a dimension | McNemar, DeLong, Wilcoxon with normality screening, clustered bootstrap, Holm correction within families |
@@ -551,7 +556,53 @@ Equal procedure did not deliver equal treatment. This is the mirror image of the
 
 **What we conclude.** Across both versions of this experiment the quantum kernel is not distinguishable from a classical one, and the sign of the point estimate is not stable across runs. Neither run is decisive: the first was confounded by an early-training representation and untuned hyperparameters, the second by an eleven-subject split and an overfitted classical selection. A comparison on the full 185-subject corpus at a converged checkpoint, which requires regenerating the embedding dump at full coverage, would be the first properly powered test of this question in this system and has not been performed (§11.9).
 
-### 8.6 Summary
+### 8.6 External validation on a second institution
+
+Every result above is from one centre. §11.9 identified replication on a second cohort as the highest-value outstanding analysis, and §6 committed to depositing a timestamped pre-registration before running it. That document is `docs/PREREGISTRATION_CHEXPERT.md`, committed at `fa8c2b6` before any CheXpert image was scored; it fixes the hypotheses, the sampling rule, the freeze/refit boundary, the label map, the uncertainty policy and the test family. This section reports the outcome, which falsified one of its two primary hypotheses.
+
+**Design.** 8,000 patient-disjoint frontal studies were drawn from CheXpert [53] (Stanford) in file order, one study per patient. Every model was frozen — the DenseNet-121 and its per-finding calibration, the evidence encoder, and all four fusion backends including the logistic regression, which remains fitted on the MIMIC training split alone. **Only one temperature per backend was refitted**, on a 3,200-study CheXpert calibration split, as P1 requires. The test split is 4,800 studies, at which the minimum detectable accuracy difference is approximately 3.6 points against 9.3 internally.
+
+**One category is not derivable, and this is a limitation of the target, not of the models.** The diagnosis map of §5.1.2 reaches COPD only through hyperinflation, which CheXpert does not label. The external cohort therefore has five reachable categories, its majority-class floor is 0.3867 rather than 0.2371, and external accuracy is **not comparable with the internal figure**. The backends retain a six-way head, so COPD predictions on this cohort are necessarily errors; we report their count as a measure of transfer behaviour.
+
+**Table 12b.** External validation on CheXpert, n = 4,800 patient-disjoint test studies, all models frozen, temperature refit per arm. Majority-class floor 0.3867. MIMIC values from Table 6 are shown for reference only and must not be read as a paired comparison — the cohorts differ in prevalence and in the number of reachable categories.
+
+| Backend | Params | T | Accuracy | NLL | ECE | Macro AUROC | COPD errors | Δ accuracy vs MIMIC | Δ NLL vs MIMIC |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Classical product-of-experts | 54 | 0.431 | **0.5273** | 1.4193 | 0.1346 | **0.7366** | 393 | −0.0141 | +0.1167 |
+| Quantum variational circuit | 102 | 1.309 | 0.4721 | 1.5782 | 0.1586 | 0.7259 | 279 | −0.0603 | +0.2929 |
+| Learnable gated head | 126 | 1.200 | 0.4829 | 1.5116 | 0.1424 | 0.7367 | 216 | −0.0697 | +0.2453 |
+| Multinomial logistic regression | 54 | 1.109 | 0.5210 | **1.3815** | **0.1078** | 0.7298 | 209 | −0.0360 | +0.1505 |
+
+**Table 12c.** Pairwise tests on the external cohort, n = 4,800, Holm within each metric family of six. McNemar *p*-values below 10⁻¹⁰ are reported as such; the discordant split is given because it is the more informative quantity at this sample size.
+
+| Comparison | Δ accuracy | Discordant (a/b) | McNemar Holm | Δ NLL | Wilcoxon *p* | Holm |
+|---|---:|---|---:|---:|---:|---:|
+| Classical vs. quantum | +0.0552 | 426 / 161 | **< 10⁻¹⁰** | −0.1589 | 2.6 × 10⁻¹⁵³ | **< 10⁻¹⁰** |
+| Classical vs. learnable | +0.0444 | 414 / 201 | **< 10⁻¹⁰** | −0.0923 | 4.2 × 10⁻⁸⁰ | **< 10⁻¹⁰** |
+| Classical vs. logistic | +0.0063 | 304 / 274 | 0.228 | +0.0378 | 3.4 × 10⁻³⁵ | **< 10⁻¹⁰** |
+| Quantum vs. learnable | −0.0108 | 191 / 243 | **0.0285** | +0.0666 | 3.2 × 10⁻⁹⁵ | **< 10⁻¹⁰** |
+| Quantum vs. logistic | −0.0489 | 218 / 453 | **< 10⁻¹⁰** | +0.1967 | 2.0 × 10⁻¹⁹⁷ | **< 10⁻¹⁰** |
+| Learnable vs. logistic | −0.0381 | 124 / 307 | **< 10⁻¹⁰** | +0.1301 | 1.9 × 10⁻¹⁹⁶ | **< 10⁻¹⁰** |
+
+![Figure 5](figures/fig5_external_validation.png)
+
+**Figure 5.** Left: accuracy on each corpus, with each cohort's own majority-class floor marked; the floors differ because CheXpert's prevalence differs and COPD is unreachable there, so the two bars in each pair are not a paired comparison. Right: the increase in negative log-likelihood under transfer against trainable parameter count. The two 54-parameter linear arms transfer best and the two larger arms worst.
+
+Four conclusions follow, and the first is a correction to this paper.
+
+**H1 is falsified: the backends are not indistinguishable, and §8.2's null was a power statement.** Five of the six pairwise accuracy comparisons survive Holm on the external cohort; only classical against logistic does not. §8.2 was careful to say that its accuracy nulls were "statements about undetectability rather than about equality," and that hedge is now vindicated with data rather than argument: at n = 447 the minimum detectable difference was 9.3 points and the true differences are 4 to 6 points, which n = 4,800 resolves comfortably. **A reader of §8.2 alone would have concluded that fusion architecture does not matter. It does; the internal experiment was simply too small to show it.** We regard this as the most important thing external validation contributed, and it argues that the field-level practice of reporting architecture nulls from a few hundred studies is unsafe in the direction of false negatives as well as false positives.
+
+**H2 is confirmed, and more decisively than internally.** The quantum circuit does not beat the converged logistic regression on negative log-likelihood; it loses by 0.1967, which is 3.6 times the internal gap of 0.0543, at a *p*-value below any threshold worth quoting. On the external cohort the circuit is **last of four on accuracy, last on negative log-likelihood, last on calibration, and last on macro AUROC.** The internal null understated the result.
+
+**H3 is confirmed, and the pattern in how it fails is the finding.** Every arm degrades, but not equally. The two 54-parameter linear arms lose 1.4 and 3.6 accuracy points; the 102-parameter circuit loses 6.0 and the 126-parameter gated head 7.0. On negative log-likelihood the ordering of degradation is classical (+0.117), logistic (+0.151), gated head (+0.245), circuit (+0.293). The arms that carried more capacity transferred worse, and the gated head's internal advantage over the product-of-experts — the result §8.2 used to retire the quantum claim — **reverses under transfer**, with the product-of-experts ahead by 4.4 accuracy points externally. Selecting a fusion architecture on this internal split would have selected one of the two worst transferring arms.
+
+**H4 is confirmed.** `prior_risk` is identically zero across all 8,000 CheXpert studies, exactly as across all 2,231 MIMIC studies. The constant channel of §5.1.3 is a property of the evidence encoder, which populates it from structured priors that neither corpus supplies, and not an accident of MIMIC. Every result conditioned on that channel — §8.3's confound, §8.4's qubit axis — is therefore conditioned on a permanent property of the system as built.
+
+**Sensitivity.** Repeating the analysis with CheXpert's uncertain labels mapped to positive rather than negative changes the floor to 0.3227 and every accuracy by 1 to 2 points, and changes no conclusion: the circuit remains last on accuracy, negative log-likelihood and calibration, all five significant accuracy comparisons remain significant, and the classical-versus-logistic comparison remains the one that is not (Holm *p* = 0.967). Both analyses are in the artifact.
+
+**What this does not establish.** The cohort is a second research corpus, not a deployment. Both corpora are large academic centres in the United States, both label by rule from free text rather than by clinician adjudication, and the target remains the radiographic-pattern proxy of §5.1.2 with one fewer reachable category. This is external validity across sites, not across populations, label regimes, or care settings.
+
+### 8.7 Summary
 
 Five experiments, four methods, two corpora, and three splits produce a consistent picture, though not a uniform one. On the metrics that determine whether a prediction is correct — accuracy, discrimination, and the proper scoring rule that combines them — every resolvable effect favours a classical arm. Where the field's central resource is varied systematically, the optimum lies at zero entanglement.
 
@@ -581,6 +632,10 @@ Table 13 reports risk–coverage analysis on the 447-study primary split, each a
 | Quantum variational circuit | 0.3039 | 0.254–0.360 | 0.1714 | 0.8166 | 0.4027 | 0.4110 | −0.0082 | −0.0225 to +0.0078 |
 | Learnable gated head | 0.3339 | 0.278–0.396 | 0.2138 | 0.8277 | 0.4270 | 0.4162 | +0.0108 | −0.0056 to +0.0322 |
 | Multinomial logistic regression | 0.3423 | 0.283–0.403 | 0.2248 | 0.8881 | 0.4282 | 0.4232 | +0.0050 | −0.0077 to +0.0224 |
+
+![Figure 6](figures/fig6_risk_coverage.png)
+
+**Figure 6.** Left: risk–coverage curves for the four backends under per-arm calibration, with each backend's served operating point marked. Right: the served policy's risk minus the maximum-softmax rejector's risk at the same coverage, with 95% study-level bootstrap intervals. Every interval crosses zero and three of the four point estimates fall on the side favouring the trivial control.
 
 **The four-criterion policy is not distinguishable from a confidence threshold.** In all four backends the interval on Δ contains zero, and in three of the four the point estimate favours the trivial control. A policy composed of conformal set size, an out-of-distribution energy test, an epistemic-uncertainty test and a confidence floor does not, on this split, deliver anything that thresholding the maximum calibrated probability does not deliver at the same coverage. **We therefore withdraw contribution C6 as stated.** What survives is weaker and unsurprising: selective prediction reduces risk in every arm, as it must for any rejector correlated with correctness, and the *mechanism* is not attributable to the policy's structure.
 
@@ -824,7 +879,7 @@ The hardware execution (§9.5) and the noise attribution (§9.5) each rest on on
 
 **Analyses identified as necessary and not performed.** We list these explicitly rather than as an omission, in order of the strength they would add.
 
-1. **External validation.** CheXpert [53], comprising 223,415 studies from a different institution, and BraTS-2021 are both available locally and were not used. Replicating §8.2 to §8.4 on a second cohort at n ≥ 2,000 would reduce the minimum detectable accuracy difference from 9.3 to approximately 4.4 points and address [60] directly. We will deposit a timestamped pre-registration before running it, which is also the means by which the pre-specification claim in §6 can be made verifiable.
+1. **External validation of the brain results, and of the chest results beyond a second research corpus.** §8.6 transfers the fusion comparison to CheXpert under a deposited pre-registration, which retires this item for §8.2. It does not cover §8.3 to §8.5: the entanglement ablation and the design sweep have not been repeated on CheXpert-derived evidence, and BraTS-2021 remains unused for the kernel comparison. Both are now straightforward, since the CheXpert evidence tensor is released.
 2. **Full-coverage brain embeddings at a converged checkpoint**, so that §8.5 can be repeated on all 185 subjects rather than the 55 the epoch-29 dump covers. This is a re-export of the encoder's embeddings, not a retrain, and it is the single change that would make the kernel comparison properly powered. It should be paired with nested cross-validation over the training subjects in place of single-split hyperparameter selection.
 3. **Re-fitting every §8.2 arm under a common optimiser budget.** §8.2 shows that converging one arm moved it further than the quantum effect the paper opened with, so the remaining arms' optimiser settings are an uncontrolled factor in Table 6. Matching them is the analysis that would let an ordering in that table be attributed to model class.
 4. **Seven-qubit repetition of the 48-cell design sweep** (§8.4) and of the 20-epoch robustness check, both of which still carry the constant-channel confound.
@@ -881,6 +936,9 @@ The complete system, evaluation harness, and all artifacts underlying the tables
 | 8.2 | Converged logistic baseline, parameter counts, six-way pairwise tests, Table 6/7 | `aura/artifacts/fusion_baselines_n447.json` |
 | 4, 8.2 | Trainable parameter counts of every fusion arm | `aura/artifacts/fusion_{classical,quantum,learnable}.npz` |
 | 8.2 | Deployment benchmark, n = 69 (secondary) | `aura/artifacts/benchmark.json` |
+| 8.6 | External validation on CheXpert, Tables 12b and 12c | `aura/artifacts/chexpert_external.json` |
+| 8.6 | CheXpert evidence tensor, 8,000 studies | `aura/artifacts/chexpert_evidence.npz` |
+| 8.6 | Pre-registration, deposited before the run | `docs/PREREGISTRATION_CHEXPERT.md` (commit `fa8c2b6`) |
 | 8.3 | Entanglement ablation across 10 seeds, 8 qubits (confounded) | `aura/artifacts/entanglement_multiseed.json` |
 | 8.3.1 | Entanglement ablation across 10 seeds, 7 qubits (controlled) | `aura/artifacts/entanglement_multiseed_7q.json` |
 | 8.3.2 | Murphy decomposition of the Brier score, 10 seeds × 2 widths × 3 group counts | `aura/artifacts/murphy_decomposition.json` |
@@ -930,7 +988,27 @@ AURA is a research system. It is not a medical device, has not received regulato
 
 ## Appendix A. Change log
 
-### A.1 Version 4.1 to version 4.2: three further experiments, one contribution withdrawn, published figures corrected
+### A.1 Version 4.2 to version 4.3: external validation, and a null of our own falsified
+
+**New experiment.**
+- **§8.6, external validation on CheXpert** (`chexpert_external.json`, `chexpert_evidence.npz`). 8,000 patient-disjoint frontal studies from Stanford, all models frozen, one temperature per arm refit on a CheXpert calibration split. Governed by `docs/PREREGISTRATION_CHEXPERT.md`, deposited at commit `fa8c2b6` **before any CheXpert image was scored** — the first pre-registered analysis in this project, and the mechanism §6 named for making its pre-specification claim verifiable rather than asserted.
+
+**Finding withdrawn.**
+- **§8.2's accuracy null.** Pre-registered hypothesis H1 predicted that the backends would remain indistinguishable on accuracy externally. Five of six pairwise comparisons survive Holm at n = 4,800. The internal null was a consequence of a 447-study split with a 9.3-point minimum detectable effect, not a property of the architectures. §8.2's own hedge — that its nulls were statements about undetectability rather than equality — is now supported by data rather than by argument, and §8.6 says so.
+
+**Findings strengthened.**
+- Pre-registered H2 confirmed: the quantum circuit loses to the converged logistic regression on negative log-likelihood by 0.1967 externally, against 0.0543 internally, and finishes last of four on every reported metric.
+- Pre-registered H4 confirmed: `prior_risk` is identically zero across all 8,000 CheXpert studies as across all 2,231 MIMIC studies, so the constant channel of §5.1.3 is a property of the evidence encoder rather than of MIMIC.
+- New: transfer degradation tracks capacity. The two 54-parameter linear arms lose 1.4 and 3.6 accuracy points; the 102- and 126-parameter arms lose 6.0 and 7.0. The gated head's internal advantage over the product-of-experts reverses under transfer.
+
+**Corrections.**
+- Reference 24 (Schnabel & Roth) was cited as *Quantum Machine Intelligence* 2025;7:42; the article number is 58. DOI and arXiv identifier added.
+- Reference 29 (Shirin et al.) carried no locator; the ScienceDirect PII is added. All five 2025–2026 references were checked against the published record at this revision; all exist as cited.
+
+**Figures.**
+- Figure 5 (external validation) and Figure 6 (risk–coverage, which §9.1 needed and did not have) added, with `aura/ml/evaluation/make_figures.py` as their generator. Figures 1–4 still have no generator in the repository, which is recorded as a P6 gap.
+
+### A.2 Version 4.1 to version 4.2: three further experiments, one contribution withdrawn, published figures corrected
 
 **New experiments.**
 - **§8.2, converged linear baseline** (`fusion_baselines_n447.json`). Multinomial logistic regression fitted by L-BFGS, added to the primary comparison at 54 parameters. It leads every metric in Table 6 and beats the quantum circuit on negative log-likelihood at Holm *p* = 0.036. The same artifact regenerates the three published arms from the served models and asserts they reproduce Table 6 exactly, so the comparison is reproducible for the first time.
@@ -957,7 +1035,7 @@ AURA is a research system. It is not a medical device, has not received regulato
 - `aura/ml/evaluation/fusion_baselines.py` and `aura/ml/evaluation/risk_coverage.py` are new and write the two new artifacts.
 - `test_doc_numbers.py` fails rather than skips when a core artifact is missing, and now covers Table 6's parameter counts, Table 7's six comparisons, Table 13, the abstract's split figures, and §4's support-vector count.
 
-### A.2 Version 4 to version 4.1: three new experiments, two retracted findings
+### A.3 Version 4 to version 4.1: three new experiments, two retracted findings
 
 Version 4 identified analyses it had not performed. Three have since been run. Two of the three moved results against claims this project had made, and both retractions are recorded in the body rather than absorbed silently.
 
@@ -987,7 +1065,7 @@ Version 4 identified analyses it had not performed. Three have since been run. T
 - `aura/ml/evaluation/murphy_decomp.py` replaces `murphy_decomp_seed7.py`, which binned on maximum confidence rather than on the forecast vector and reported binned decomposition terms alongside an unbinned Brier delta, so its terms did not reconstruct the score they decomposed.
 - `docs/PROTOCOL.md` and this manuscript are under version control, which §6's provenance statement requires.
 
-### A.3 Version 3 to version 4
+### A.4 Version 3 to version 4
 
 No experimental result was recomputed. The following changes were made.
 
@@ -1055,12 +1133,12 @@ No experimental result was recomputed. The following changes were made.
 21. Cerezo M, Arrasmith A, Babbush R, et al. Variational quantum algorithms. *Nature Reviews Physics*. 2021;3:625–644.
 22. Preskill J. Quantum computing in the NISQ era and beyond. *Quantum*. 2018;2:79.
 23. Sahebi M, Barthe A, Suzuki Y, Holmes Z, Grossi M. On dequantization of supervised quantum machine learning via random Fourier features. arXiv:2505.15902. 2025.
-24. Schnabel J, Roth M. Quantum kernel methods under scrutiny: a benchmarking study. *Quantum Machine Intelligence*. 2025;7:42.
+24. Schnabel J, Roth M. Quantum kernel methods under scrutiny: a benchmarking study. *Quantum Machine Intelligence*. 2025;7(1):58. doi:10.1007/s42484-025-00273-5. Preprint: arXiv:2409.04406.
 25. Kakavand S, Strohmeyer C, Schlotter M. Benchmarking quantum kernel support vector machines against classical baselines on tabular data: a rigorous empirical study with hardware validation. arXiv:2604.18837. 2026. Preprint.
 26. Yu C, Liu J, Ge Z, Wu X, Zhu L, Zhao P, Zhao J. Quantum vs. classical machine learning: a unified empirical comparison. arXiv:2607.01197. 2026. Preprint.
 27. Radhi EA, Kamil MY, Mohammed MA. Quantum machine and deep learning for medical image classification: a systematic review of trends, methodologies, and future directions. *Iraqi Journal for Computer Science and Mathematics*. 2025;6(2):12–25.
 28. Marengo A, Santamato V. Quantum algorithms and complexity in healthcare applications: a systematic review with machine learning-optimized analysis. *Frontiers in Computer Science*. 2025;7:1584114.
-29. Shirin NS, et al. Quantum computing in medical diagnostics and treatment: a systematic review of trends, challenges and future directions. *Intelligence-Based Medicine*. 2026.
+29. Shirin NS, et al. Quantum computing in medical diagnostics and treatment: a systematic review of trends, challenges and future directions. *Intelligence-Based Medicine*. 2026. PII S2666521226000141.
 30. Tanner J, Kam C-F, Wang J. Non-variational supervised quantum kernel methods: a review. arXiv:2604.07896. 2026. Preprint.
 31. Kübler JM, Arrasmith A, Cincio L, Coles PJ. An adaptive optimizer for measurement-frugal variational algorithms. *Quantum*. 2020;4:263.
 32. Arrasmith A, Cincio L, Somma RD, Coles PJ. Operator sampling for shot-frugal optimization in variational algorithms. arXiv:2004.06252. 2020.
