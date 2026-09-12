@@ -23,7 +23,7 @@
 
 | Architecture | Mean Composite Dice | Whole Tumor | Tumor Core | Enhancing Tumor | CPU Latency (Study) | Source |
 | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
-| **AURA Brain (ResU-Net)** | **0.865** | **0.915** | **0.846** | **0.835** | **15.50 s** | measured here, pooled 2-D |
+| **AURA Brain (ResU-Net)** | **0.865** | **0.915** | **0.846** | **0.835** | **14.37 s** | measured here, pooled 2-D |
 | nnU-Net | 0.8535 | 0.8895 | 0.8506 | 0.8203 | not measured | published: Isensee et al., "nnU-Net for Brain Tumor Segmentation", BrainLes 2020 (arXiv:2011.00848), abstract — BraTS 2020 winning entry, per-case 3-D |
 | SwinUNETR | 0.8897 | 0.926 | 0.885 | 0.858 | not measured | published: Hatamizadeh et al., "Swin UNETR", BrainLes 2021 (arXiv:2201.01266), Table 3 — BraTS **2021** validation set (219 cases), per-case 3-D |
 
@@ -39,7 +39,7 @@ for the chest model's measured GPU numbers.*
 
 | Model / Framework | Macro AUROC | Macro F1 | ECE | Inference Latency | OOD Safety | Source |
 | :--- | :---: | :---: | :---: | :---: | :--- | :--- |
-| **AURA Chest (DenseNet-121)** | **0.8213** | **0.3853** | **0.1719** | **102.8 ms** | **Active** (rejects non-radiographs, OOD z-score) | measured here |
+| **AURA Chest (DenseNet-121)** | **0.8095** | **0.3330** | **0.2087** | **54.0 ms** | **Active** (rejects non-radiographs, OOD z-score) | measured here |
 
 No chest comparator is tabulated here. The only external model this repo has actually
 run is torchxrayvision's MIMIC DenseNet, as an independent label cross-check

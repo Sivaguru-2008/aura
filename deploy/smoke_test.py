@@ -55,7 +55,11 @@ class _Client:
             # this the smoke run appends cases to the developer's real worklist.
             if db_path:
                 os.environ["AURA_DB_PATH"] = db_path
-            sys.path.insert(0, str(AURA_ROOT))
+            if token:
+                os.environ["AURA_AUTH_TOKEN"] = token
+            for p in (str(REPO_ROOT), str(AURA_ROOT)):
+                if p not in sys.path:
+                    sys.path.insert(0, p)
             from fastapi.testclient import TestClient
             from aura.gateway.app import app
 

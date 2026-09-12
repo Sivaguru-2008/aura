@@ -132,9 +132,21 @@ def test_every_v1_route_is_gated_unless_explicitly_public():
     is genuinely meant to be public it has to be named in PUBLIC_PATHS, which is a
     deliberate act rather than an oversight.
     """
+    all_paths = set()
+    for r in app.routes:
+        p = getattr(r, "path", None)
+        if p:
+            all_paths.add(p)
+        orig = getattr(r, "original_router", None) or getattr(r, "router", None)
+        if orig and hasattr(orig, "routes"):
+            for sub_r in orig.routes:
+                sub_p = getattr(sub_r, "path", None)
+                if sub_p:
+                    all_paths.add(sub_p)
+
     ungated = {
-        r.path for r in app.routes
-        if getattr(r, "path", "").startswith("/v1") and security.is_public_path(r.path)
+        p for p in all_paths
+        if p.startswith("/v1") and security.is_public_path(p)
     }
     # health for probes; auth/status and auth/session are the sign-in handshake and
     # return no case data (see security.PUBLIC_PATHS).

@@ -32,12 +32,13 @@ import os
 import sys
 from pathlib import Path
 
-# The app is rooted at aura/ (pyproject sets pythonpath = ["."] relative to it).
-AURA_ROOT = Path(__file__).resolve().parent.parent / "aura"
+REPO_ROOT = Path(__file__).resolve().parent.parent
+AURA_ROOT = REPO_ROOT / "aura"
 ARTIFACTS = AURA_ROOT / "artifacts"
 
-if str(AURA_ROOT) not in sys.path:
-    sys.path.insert(0, str(AURA_ROOT))
+for p in (str(REPO_ROOT), str(AURA_ROOT)):
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 GREEN, RED, YELLOW, DIM, RESET = "\033[32m", "\033[31m", "\033[33m", "\033[2m", "\033[0m"
 if os.environ.get("NO_COLOR") or not sys.stdout.isatty():
@@ -418,6 +419,7 @@ def main() -> int:
     check_router()
     check_app()
     check_access_control()
+    check_database()
 
     print("\n" + "=" * 74)
     if _failures:
