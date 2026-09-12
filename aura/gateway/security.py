@@ -78,6 +78,7 @@ _ALLOWED_CONTENT_TYPES = {
 #                 filled by a /v1/* fetch that IS gated. /quantum renders model-level
 #                 evidence only and reads /v1/quantum/evidence, which is gated.
 PUBLIC_PATHS = frozenset({"/v1/health", "/v1/auth/status", "/v1/auth/session",
+                          "/v1/auth/login", "/v1/auth/logout",
                           "/", "/app", "/history", "/quantum",
                           "/docs", "/redoc", "/openapi.json", "/favicon.ico"})
 PUBLIC_PREFIXES = ("/static", "/assets", "/css", "/js")
@@ -223,6 +224,56 @@ def read_session(cookie: str | None, token: str, now: float | None = None) -> st
     return principal if _PRINCIPAL_RE.match(principal) else None
 
 
+ROLES = ("AURA_ADMIN", "HOSPITAL_ADMIN", "CLINICAL_USER", "AUDITOR", "READ_ONLY")
+
+ROLE_HIERARCHY: dict[str, set[str]] = {
+    "AURA_ADMIN": {"AURA_ADMIN", "HOSPITAL_ADMIN", "CLINICAL_USER", "AUDITOR", "READ_ONLY"},
+    "HOSPITAL_ADMIN": {"HOSPITAL_ADMIN", "CLINICAL_USER", "AUDITOR", "READ_ONLY"},
+    "CLINICAL_USER": {"CLINICAL_USER", "READ_ONLY"},
+    "AUDITOR": {"AUDITOR", "READ_ONLY"},
+    "READ_ONLY": {"READ_ONLY"},
+}
+
+
+def require_role(*allowed_roles: str):
+    """FastAPI dependency to require one of the specified roles or higher authority."""
+    def _role_checker(request: Request):
+        user_role = getattr(request.state, "role", "READ_ONLY")
+        user_allowed = ROLE_HIERARCHY.get(user_role, {user_role})
+        if not any(r in user_allowed for r in allowed_roles):
+            raise HTTPException(
+                403,
+                {
+                    "error": "forbidden",
+                    "reason": f"Role '{user_role}' lacks required permissions; requires one of {list(allowed_roles)}",
+                },
+            )
+        return user_role
+    return _role_checker
+
+
+def get_current_user(request: Request) -> dict:
+    user = getattr(request.state, "user", None)
+    if not user:
+        return {
+            "user_id": "usr-anonymous",
+            "username": getattr(request.state, "principal", "anonymous"),
+            "org_id": getattr(request.state, "tenant_id", "default"),
+            "role": getattr(request.state, "role", "READ_ONLY"),
+        }
+    return user
+
+
+def get_tenant_id(request: Request) -> str:
+    user = getattr(request.state, "user", None)
+    if user and user.get("org_id"):
+        # If AURA_ADMIN specifies x-aura-tenant header, allow tenant context override for cross-tenant operations
+        if user.get("role") == "AURA_ADMIN" and request.headers.get("x-aura-tenant"):
+            return request.headers.get("x-aura-tenant")
+        return user["org_id"]
+    return getattr(request.state, "tenant_id", "default")
+
+
 def enforce(request: Request) -> str:
     """Authenticate + authorize + rate-limit one request. Returns the principal.
 
@@ -230,41 +281,106 @@ def enforce(request: Request) -> str:
     public, so every endpoint is covered without per-handler wiring — reads as well
     as mutations. Raises 401/403/429 as appropriate.
 
-    With a token configured, a request passes on either credential: a valid session
-    cookie (browsers; the name bound at sign-in becomes the principal) or the token in
-    ``auth_header`` / ``Authorization: Bearer`` plus an ``x-aura-user`` name (scripts
-    and integrations). With no token configured, only direct connections from this
-    machine pass, unless ``allow_open_access`` is set.
+    Supports database-backed multi-tenant user sessions (``aura_tok_*`` tokens or
+    session cookies), legacy shared tokens (``AURA_AUTH_TOKEN``), and loopback demo access.
     """
     s = get_settings()
     principal = _principal(request)
 
-    # Public paths skip the gate entirely (see PUBLIC_PATHS for why each is listed).
+    # Initialize request state defaults
+    request.state.principal = principal
+    request.state.tenant_id = "default"
+    request.state.role = "READ_ONLY"
+    request.state.user = None
+
+    # Public paths skip the gate entirely
     if is_public_path(request.url.path):
         return principal
 
+    presented = _presented_token(request, s.auth_header)
+    cookie = request.cookies.get(SESSION_COOKIE)
+
+    # 1. Try resolving a database-backed user session from presented token or cookie
+    token_candidate = presented or cookie
+    if token_candidate:
+        st = None
+        try:
+            from aura.gateway.app import state as app_state
+            st = app_state.get("store")
+        except Exception:
+            pass
+        if st is not None:
+            sess = st.validate_session(token_candidate)
+            if sess is not None:
+                principal = sess["username"]
+                request.state.user = sess
+                request.state.principal = principal
+                request.state.tenant_id = sess["org_id"]
+                request.state.role = sess["role"]
+                if s.rate_limit_rpm > 0:
+                    if _LIMITER.rpm != s.rate_limit_rpm:
+                        _LIMITER.rpm = s.rate_limit_rpm
+                    if not _LIMITER.allow(principal):
+                        raise HTTPException(429, {"error": "rate_limited",
+                                                  "reason": f"exceeded {s.rate_limit_rpm} req/min"})
+                return principal
+        if token_candidate.startswith("aura_tok_"):
+            raise HTTPException(401, {"error": "unauthenticated",
+                                      "reason": "Session token invalid, expired, or revoked"})
+
+    # 2. Legacy / Shared Token Authentication
     if s.auth_token:
-        signed_in = read_session(request.cookies.get(SESSION_COOKIE), s.auth_token)
+        signed_in = read_session(cookie, s.auth_token)
         if signed_in is not None:
-            # The name bound at sign-in wins over a self-asserted header, so the audit
-            # log attributes browser actions to the person who signed in.
             principal = signed_in
+            request.state.user = {
+                "user_id": f"usr-{principal}",
+                "username": principal,
+                "org_id": "default",
+                "role": "CLINICAL_USER",
+            }
+            request.state.principal = principal
+            request.state.tenant_id = "default"
+            request.state.role = "CLINICAL_USER"
         else:
-            # --- authentication (shared token, constant-time compare) ---
-            if not _token_matches(_presented_token(request, s.auth_header), s.auth_token):
+            if not _token_matches(presented, s.auth_token):
                 raise HTTPException(401, {"error": "unauthenticated",
                                           "reason": "missing or invalid API token"})
-            # --- authorization: an authenticated call must name its actor ---
             if principal == "anonymous":
                 raise HTTPException(403, {"error": "forbidden",
                                           "reason": "x-aura-user principal required"})
+            role = request.headers.get("x-aura-role", "AURA_ADMIN")
+            tenant = request.headers.get("x-aura-tenant", "default")
+            request.state.user = {
+                "user_id": f"usr-{principal}",
+                "username": principal,
+                "org_id": tenant,
+                "role": role,
+            }
+            request.state.principal = principal
+            request.state.tenant_id = tenant
+            request.state.role = role
     elif not s.allow_open_access and not is_local_request(request):
         raise HTTPException(403, {"error": "auth_not_configured",
                                   "reason": NOT_CONFIGURED_REASON})
+    else:
+        # Local request or open access: default administrative access for offline demo
+        principal = request.headers.get("x-aura-user", "local")
+        tenant = request.headers.get("x-aura-tenant", "default")
+        role = request.headers.get("x-aura-role", "AURA_ADMIN")
+        request.state.user = {
+            "user_id": f"usr-{principal}",
+            "username": principal,
+            "org_id": tenant,
+            "role": role,
+        }
+        request.state.principal = principal
+        request.state.tenant_id = tenant
+        request.state.role = role
 
-    # --- rate limiting (per principal) ---
+    # 3. Rate limiting (per principal)
     if s.rate_limit_rpm > 0:
-        if _LIMITER.rpm != s.rate_limit_rpm:            # settings changed at runtime
+        if _LIMITER.rpm != s.rate_limit_rpm:
             _LIMITER.rpm = s.rate_limit_rpm
         if not _LIMITER.allow(principal):
             raise HTTPException(429, {"error": "rate_limited",
@@ -297,8 +413,8 @@ def auth_status(request: Request) -> dict:
                    and not is_local_request(request))
     return {
         "auth_required": bool(s.auth_token),
-        "authenticated": signed_in is not None,
-        "principal": signed_in,
+        "authenticated": signed_in is not None or getattr(request.state, "user", None) is not None,
+        "principal": signed_in or getattr(request.state, "principal", None),
         "open_access": bool(not s.auth_token and s.allow_open_access),
         "blocked": blocked,
         "reason": NOT_CONFIGURED_REASON if blocked else "",
@@ -336,6 +452,95 @@ def sign_in(request: Request, response: Response, body: dict = Body(...)) -> dic
 def sign_out(response: Response) -> dict:
     response.delete_cookie(SESSION_COOKIE, path="/", httponly=True, samesite="strict")
     return {"authenticated": False}
+
+
+@router.post("/v1/auth/login")
+def login(request: Request, response: Response, body: dict = Body(...)) -> dict:
+    """Authenticate with username + password and receive an active session token."""
+    username = str(body.get("username", "")).strip()
+    password = str(body.get("password", ""))
+    if not username or not password:
+        raise HTTPException(400, {"error": "bad_request", "reason": "username and password required"})
+
+    client = request.client.host if request.client else "unknown"
+    from aura.gateway.app import state as app_state
+    st = app_state.get("store")
+    if not st:
+        raise HTTPException(503, {"error": "service_unavailable", "reason": "Storage not initialized"})
+
+    user = st.get_user_by_username(username)
+    if not user or not user.get("is_active"):
+        if not _SIGNIN_LIMITER.allow(client):
+            raise HTTPException(429, {"error": "rate_limited", "reason": "Too many sign-in attempts; wait a minute"})
+        raise HTTPException(401, {"error": "unauthenticated", "reason": "Invalid credentials"})
+
+    if not st.verify_password(password, user["salt"], user["password_hash"]):
+        if not _SIGNIN_LIMITER.allow(client):
+            raise HTTPException(429, {"error": "rate_limited", "reason": "Too many sign-in attempts; wait a minute"})
+        raise HTTPException(401, {"error": "unauthenticated", "reason": "Invalid credentials"})
+
+    s = get_settings()
+    ttl_hours = int(max(0.25, float(s.session_ttl_hours)))
+    token, session_info = st.create_session(
+        user_id=user["user_id"],
+        org_id=user["org_id"],
+        role=user["role"],
+        duration_hours=ttl_hours,
+    )
+
+    ttl_s = ttl_hours * 3600
+    response.set_cookie(
+        SESSION_COOKIE,
+        token,
+        max_age=ttl_s,
+        httponly=True,
+        samesite="strict",
+        secure=_is_https(request),
+        path="/",
+    )
+
+    st.audit(
+        action="auth.login",
+        entity_type="user",
+        entity_id=user["user_id"],
+        actor=user["username"],
+        tenant_id=user["org_id"],
+        detail={"role": user["role"], "org_id": user["org_id"]},
+    )
+
+    return {
+        "authenticated": True,
+        "token": token,
+        "user": {
+            "user_id": user["user_id"],
+            "username": user["username"],
+            "email": user["email"],
+            "role": user["role"],
+            "org_id": user["org_id"],
+        },
+        "expires_in_s": ttl_s,
+    }
+
+
+@router.post("/v1/auth/logout")
+def logout(request: Request, response: Response) -> dict:
+    """Revoke session token and clear authentication cookie."""
+    from aura.gateway.app import state as app_state
+    st = app_state.get("store")
+    token = _presented_token(request, "x-aura-token") or request.cookies.get(SESSION_COOKIE)
+    if st and token:
+        st.revoke_session(token)
+    response.delete_cookie(SESSION_COOKIE, path="/", httponly=True, samesite="strict")
+    return {"authenticated": False, "message": "Logged out successfully"}
+
+
+@router.get("/v1/auth/me")
+def me(request: Request) -> dict:
+    """Return the authenticated user profile and active permissions."""
+    user = getattr(request.state, "user", None)
+    if not user:
+        raise HTTPException(401, {"error": "unauthenticated", "reason": "Not authenticated"})
+    return {"user": user}
 
 
 def validate_upload_name(filename: str | None, content_type: str | None) -> None:

@@ -148,9 +148,9 @@ def test_every_v1_route_is_gated_unless_explicitly_public():
         p for p in all_paths
         if p.startswith("/v1") and security.is_public_path(p)
     }
-    # health for probes; auth/status and auth/session are the sign-in handshake and
-    # return no case data (see security.PUBLIC_PATHS).
-    expected = {"/v1/health", "/v1/auth/status", "/v1/auth/session"}
+    # health for probes; auth/status, auth/session, auth/login and auth/logout
+    # are the sign-in handshake and return no case data (see security.PUBLIC_PATHS).
+    expected = {"/v1/health", "/v1/auth/status", "/v1/auth/session", "/v1/auth/login", "/v1/auth/logout"}
     assert ungated == expected, f"unexpectedly public /v1 routes: {sorted(ungated - expected)}"
 
 

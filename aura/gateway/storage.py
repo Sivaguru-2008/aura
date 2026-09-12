@@ -17,8 +17,11 @@ their local file at ``DB_PATH``. Neither is the record of what AURA decided.
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
+import secrets
 import threading
+import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
@@ -51,6 +54,18 @@ _CHAIN_MUTEX = threading.Lock()
 
 class SiteMismatchError(RuntimeError):
     """This server's AURA_SITE_ID does not match the site the database belongs to."""
+
+
+class CrossTenantAccessError(RuntimeError):
+    """Attempted cross-tenant access to an unauthorized organization's resource."""
+
+
+class AuthenticationError(RuntimeError):
+    """Authentication failed or credentials invalid."""
+
+
+class AuthorizationError(RuntimeError):
+    """Principal lacks required permissions/roles."""
 
 
 def engine_for(url: str) -> Engine:
@@ -129,6 +144,10 @@ class CaseRow(Base):
     __tablename__ = "cases"
     case_id: Mapped[str] = mapped_column(String, primary_key=True)
     study_id: Mapped[str] = mapped_column(String, index=True)
+    tenant_id: Mapped[str] = mapped_column(String, index=True, default="default")
+    model_version: Mapped[str] = mapped_column(String, default="vision-cxr-densenet121-production")
+    decision: Mapped[str] = mapped_column(String, default="ACCEPT")
+    decision_reason: Mapped[str] = mapped_column(Text, default="")
     state: Mapped[str] = mapped_column(String, index=True)
     priority_score: Mapped[float] = mapped_column(Float, index=True, default=0.0)
     top_diagnosis: Mapped[str] = mapped_column(String, default="")
@@ -192,6 +211,9 @@ class AuditRow(Base):
     detail: Mapped[dict] = mapped_column(JSON, default=dict)
     previous_hash: Mapped[str] = mapped_column(String, default=_GENESIS_HASH)
     record_hash: Mapped[str] = mapped_column(String, default=_GENESIS_HASH)
+    tenant_id: Mapped[str] = mapped_column(String, index=True, default="default")
+    model_version: Mapped[str] = mapped_column(String, default="")
+    aura_version: Mapped[str] = mapped_column(String, default="0.1.0")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
@@ -280,6 +302,126 @@ class SiteBindingRow(Base):
     )
 
 
+class OrganizationRow(Base):
+    __tablename__ = "organizations"
+    org_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    slug: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+
+
+class UserRow(Base):
+    __tablename__ = "users"
+    user_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    org_id: Mapped[str] = mapped_column(String(64), index=True, default="default")
+    username: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    email: Mapped[str] = mapped_column(String(255), default="")
+    password_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    salt: Mapped[str] = mapped_column(String(64), nullable=False)
+    role: Mapped[str] = mapped_column(String(32), default="CLINICAL_USER")
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    disabled_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class SessionRow(Base):
+    __tablename__ = "sessions"
+    session_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(String(64), index=True)
+    org_id: Mapped[str] = mapped_column(String(64), index=True)
+    role: Mapped[str] = mapped_column(String(32))
+    token_hash: Mapped[str] = mapped_column(String(128), index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
+    revoked: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class ProjectRow(Base):
+    __tablename__ = "projects"
+    project_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    org_id: Mapped[str] = mapped_column(String(64), index=True)
+    name: Mapped[str] = mapped_column(String(255))
+    description: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+
+
+class RegisteredModelRow(Base):
+    __tablename__ = "model_registry"
+    model_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    org_id: Mapped[str] = mapped_column(String(64), index=True, default="system")
+    name: Mapped[str] = mapped_column(String(128), index=True)
+    version: Mapped[str] = mapped_column(String(64))
+    modality: Mapped[str] = mapped_column(String(64))
+    intended_use: Mapped[str] = mapped_column(Text, default="")
+    source: Mapped[str] = mapped_column(String(255), default="")
+    training_data_provenance: Mapped[str] = mapped_column(Text, default="")
+    validation_dataset: Mapped[str] = mapped_column(String(255), default="")
+    validation_metrics: Mapped[dict] = mapped_column(JSON, default=dict)
+    checksum_sha256: Mapped[str] = mapped_column(String(64), default="")
+    approval_status: Mapped[str] = mapped_column(String(32), default="APPROVED")
+    deployment_status: Mapped[str] = mapped_column(String(32), default="ACTIVE")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    retired_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class ValidationRunRow(Base):
+    __tablename__ = "validation_runs"
+    run_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    org_id: Mapped[str] = mapped_column(String(64), index=True)
+    model_id: Mapped[str] = mapped_column(String(128), index=True)
+    dataset_name: Mapped[str] = mapped_column(String(128))
+    status: Mapped[str] = mapped_column(String(32), default="QUEUED")  # QUEUED, RUNNING, COMPLETED, FAILED
+    config: Mapped[dict] = mapped_column(JSON, default=dict)
+    metrics: Mapped[dict] = mapped_column(JSON, default=dict)
+    subgroup_analysis: Mapped[dict] = mapped_column(JSON, default=dict)
+    failure_analysis: Mapped[dict] = mapped_column(JSON, default=dict)
+    report_markdown: Mapped[str] = mapped_column(Text, default="")
+    error: Mapped[str] = mapped_column(Text, default="")
+    created_by: Mapped[str] = mapped_column(String(64), default="system")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class SystemMetricRow(Base):
+    __tablename__ = "system_metrics"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    org_id: Mapped[str] = mapped_column(String(64), index=True, default="default")
+    metric_name: Mapped[str] = mapped_column(String(128), index=True)
+    value: Mapped[float] = mapped_column(Float)
+    dimensions: Mapped[dict] = mapped_column(JSON, default=dict)
+    timestamp: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc), index=True
+    )
+
+
+class AlertRow(Base):
+    __tablename__ = "system_alerts"
+    alert_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    org_id: Mapped[str] = mapped_column(String(64), index=True, default="default")
+    model_id: Mapped[str] = mapped_column(String(128), default="")
+    severity: Mapped[str] = mapped_column(String(32), default="WARNING")  # INFO, WARNING, CRITICAL
+    category: Mapped[str] = mapped_column(String(64))  # OOD_SPIKE, DRIFT, UNCERTAINTY, SYSTEM
+    message: Mapped[str] = mapped_column(Text)
+    details: Mapped[dict] = mapped_column(JSON, default=dict)
+    acknowledged: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+
+
 class Store:
     def __init__(self, db_path: Path, url: str | None = None, site_id: str | None = None):
         """Open (creating if needed) the case store.
@@ -296,7 +438,111 @@ class Store:
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
             self.engine = create_engine(f"sqlite:///{self.db_path}", future=True)
         Base.metadata.create_all(self.engine)
+        try:
+            from aura.gateway.migrations import MigrationRunner
+            MigrationRunner(self.engine).apply_all()
+        except Exception:
+            pass
         self.site_id = self._bind_site((site_id or "").strip())
+        self._seed_defaults()
+
+    @staticmethod
+    def hash_password(password: str) -> tuple[str, str]:
+        salt = secrets.token_hex(16)
+        pw_hash = hashlib.sha256((password + salt).encode("utf-8")).hexdigest()
+        return pw_hash, salt
+
+    @staticmethod
+    def verify_password(password: str, salt: str, expected_hash: str) -> bool:
+        pw_hash = hashlib.sha256((password + salt).encode("utf-8")).hexdigest()
+        return hmac.compare_digest(pw_hash, expected_hash)
+
+    def _seed_defaults(self) -> None:
+        """Seed default organization, accounts for all roles, and initial model registry cards."""
+        with Session(self.engine) as ses:
+            # 1. Default Organization
+            if not ses.get(OrganizationRow, "default"):
+                ses.add(OrganizationRow(
+                    org_id="default", name="Default Hospital", slug="default", is_active=True
+                ))
+
+            # 2. Seed Baseline Users for all 5 roles if table empty
+            has_user = ses.execute(select(UserRow.user_id)).first()
+            if not has_user:
+                defaults = [
+                    ("admin", "AdminSecret123!", "AURA_ADMIN", "default", "admin@aura.health"),
+                    ("hospital_admin", "HospitalAdmin123!", "HOSPITAL_ADMIN", "default", "hosp_admin@aura.health"),
+                    ("clinician", "Clinician123!", "CLINICAL_USER", "default", "dr.smith@aura.health"),
+                    ("auditor", "Auditor123!", "AUDITOR", "default", "audit@aura.health"),
+                    ("observer", "Observer123!", "READ_ONLY", "default", "observer@aura.health"),
+                ]
+                for uname, pwd, role, org, email in defaults:
+                    h, salt = self.hash_password(pwd)
+                    ses.add(UserRow(
+                        user_id=f"usr-{uname}",
+                        org_id=org,
+                        username=uname,
+                        email=email,
+                        password_hash=h,
+                        salt=salt,
+                        role=role,
+                        is_active=True,
+                    ))
+
+            # 3. Seed Baseline Models in Model Registry
+            has_models = ses.execute(select(RegisteredModelRow.model_id)).first()
+            if not has_models:
+                models = [
+                    {
+                        "model_id": "vision-cxr-densenet121-production",
+                        "org_id": "system",
+                        "name": "DenseNet-121 MIMIC-CXR",
+                        "version": "1.0.0",
+                        "modality": "CXR",
+                        "intended_use": "Frontal chest radiograph multi-label diagnostic screening",
+                        "source": "torchvision / internal fine-tuning",
+                        "training_data_provenance": "MIMIC-CXR-JPG frontal radiographs with expert radiologist reports",
+                        "validation_dataset": "MIMIC-CXR test split (n=602)",
+                        "validation_metrics": {"auroc": 0.8095, "macro_f1": 0.3330, "ece": 0.2087},
+                        "checksum_sha256": "4b5d2b7e1933df71650bb063625fbe3d2427ee0ec5bb72d2be237a4e69b51dd3",
+                        "approval_status": "APPROVED",
+                        "deployment_status": "ACTIVE",
+                    },
+                    {
+                        "model_id": "fusion-poe-v1",
+                        "org_id": "system",
+                        "name": "Bayesian Product-of-Experts Evidence Fusion",
+                        "version": "1.0.0",
+                        "modality": "MULTIMODAL_CXR",
+                        "intended_use": "Evidence integration across image, priors, and clinical lab findings",
+                        "source": "AURA Bayesian PoE",
+                        "training_data_provenance": "MIMIC-CXR matched cohort",
+                        "validation_dataset": "CheXpert external validation (n=4800)",
+                        "validation_metrics": {"accuracy": 0.5273, "nll": 1.4193, "macro_auroc": 0.7366},
+                        "checksum_sha256": "81fa7935cf1fdb7020bc8b1ee3f31742918809e5ee93cb95c866d7ad99ec983f",
+                        "approval_status": "APPROVED",
+                        "deployment_status": "ACTIVE",
+                    },
+                    {
+                        "model_id": "brain-resunet-v1",
+                        "org_id": "system",
+                        "name": "BraTS Multi-Task ResU-Net",
+                        "version": "1.0.0",
+                        "modality": "BRAIN_MRI",
+                        "intended_use": "Glioma volumetric segmentation and tumor presence scoring",
+                        "source": "BraTS 2020 volumetric MRI dataset",
+                        "training_data_provenance": "BraTS 2020 multi-institutional glioma cohort",
+                        "validation_dataset": "BraTS 2020 validation (n=7531 slices)",
+                        "validation_metrics": {"composite_dice": 0.86515, "presence_auroc": 0.97743},
+                        "checksum_sha256": "25f4a7c062c3f8e56ec74db81d6365bb518770df887eecfebe925f2061611b8f",
+                        "approval_status": "APPROVED",
+                        "deployment_status": "ACTIVE",
+                    },
+                ]
+                for m in models:
+                    ses.add(RegisteredModelRow(**m))
+
+            ses.commit()
 
     def _bind_site(self, configured: str) -> str:
         """Stamp or check the site this database belongs to (see SiteBindingRow)."""
@@ -327,7 +573,9 @@ class Store:
         return bound
 
     # ---- cases ----
-    def save_case(self, bundle: CaseBundle) -> None:
+    def save_case(self, bundle: CaseBundle, tenant_id: str = "default",
+                  model_version: str = "vision-cxr-densenet121-production",
+                  decision: str = "ACCEPT", decision_reason: str = "") -> None:
         data = json.loads(bundle.model_dump_json())
         s = bundle.safety
         with Session(self.engine) as ses:
@@ -342,26 +590,40 @@ class Store:
             row.top_probability = s.top_probability if s else 0.0
             row.abstained = bool(s.abstained) if s else False
             row.ground_truth = bundle.ground_truth.value if bundle.ground_truth else ""
+            row.tenant_id = tenant_id or "default"
+            row.model_version = model_version or (bundle.vision.model_version if bundle.vision else "") or "vision-cxr-densenet121-production"
+            if s and s.abstained:
+                row.decision = "ABSTAIN"
+                row.decision_reason = getattr(s, "abstention_reason", "") or "High uncertainty / OOD detected"
+            else:
+                row.decision = decision or "ACCEPT"
+                row.decision_reason = decision_reason
             row.bundle = data
             ses.commit()
 
-    def get_case(self, case_id: str) -> CaseBundle | None:
+    def get_case(self, case_id: str, tenant_id: str | None = None) -> CaseBundle | None:
         with Session(self.engine) as ses:
             row = ses.get(CaseRow, case_id)
             if not row:
                 return None
+            if tenant_id and tenant_id not in ("default", "system", "*") and getattr(row, "tenant_id", "default") != tenant_id:
+                raise CrossTenantAccessError(
+                    f"Access denied: case {case_id} belongs to tenant '{getattr(row, 'tenant_id', 'default')}', not '{tenant_id}'"
+                )
             b = CaseBundle.model_validate(row.bundle)
             from aura.schemas.clinical import DIAGNOSIS_LABELS, FINDING_LABELS
             b.dx_labels = {d.value: l for d, l in DIAGNOSIS_LABELS.items()}
             b.ev_labels = {f.value: l for f, l in FINDING_LABELS.items()}
             return b
 
-    def list_cases(self, state: str | None = None, limit: int = 200) -> list[dict]:
+    def list_cases(self, state: str | None = None, limit: int = 200, tenant_id: str | None = None) -> list[dict]:
         """Lightweight worklist rows (not full bundles)."""
         with Session(self.engine) as ses:
             stmt = select(CaseRow)
             if state:
                 stmt = stmt.where(CaseRow.state == state)
+            if tenant_id and tenant_id not in ("system", "*"):
+                stmt = stmt.where(CaseRow.tenant_id == tenant_id)
             stmt = stmt.order_by(CaseRow.priority_score.desc()).limit(limit)
             rows = ses.execute(stmt).scalars().all()
             out = []
@@ -376,8 +638,7 @@ class Store:
                 out.append({
                     "case_id": r.case_id,
                     "study_id": r.study_id,
-                    # Empty when the study arrived without one — C-FIND returns a
-                    # zero-length PatientID in that case rather than inventing one.
+                    "tenant_id": getattr(r, "tenant_id", "default"),
                     "patient_id": b.get("patient_id", "") or "",
                     "state": r.state,
                     "priority_score": r.priority_score,
@@ -385,6 +646,9 @@ class Store:
                     "top_diagnosis_label": label,
                     "top_probability": r.top_probability,
                     "abstained": r.abstained,
+                    "decision": getattr(r, "decision", "ACCEPT"),
+                    "decision_reason": getattr(r, "decision_reason", ""),
+                    "model_version": getattr(r, "model_version", ""),
                     "backend": (b.get("fusion") or {}).get("backend", ""),
                     "conformal_set": (b.get("safety") or {}).get("conformal_set", []),
                     "priors": b.get("priors", {}),
@@ -562,7 +826,9 @@ class Store:
 
     # ---- audit ----
     def audit(self, action: str, entity_type: str = "", entity_id: str = "",
-              actor: str = "system", detail: dict | None = None) -> None:
+              actor: str = "system", detail: dict | None = None,
+              tenant_id: str = "default", model_version: str = "",
+              aura_version: str = "0.1.0") -> None:
         now = datetime.now(timezone.utc)
         d = detail or {}
         with _chain_append(self.engine) as ses:
@@ -574,20 +840,529 @@ class Store:
             ses.add(AuditRow(actor=actor, action=action, entity_type=entity_type,
                              entity_id=entity_id, detail=d,
                              previous_hash=prev_hash, record_hash=rec_hash,
+                             tenant_id=tenant_id or "default",
+                             model_version=model_version or "",
+                             aura_version=aura_version or "0.1.0",
                              created_at=now))
             ses.commit()
 
-    def recent_audit(self, limit: int = 50) -> list[dict]:
+    def recent_audit(self, limit: int = 50, tenant_id: str | None = None) -> list[dict]:
         with Session(self.engine) as ses:
+            stmt = select(AuditRow)
+            if tenant_id and tenant_id not in ("system", "*"):
+                stmt = stmt.where(AuditRow.tenant_id == tenant_id)
             rows = ses.execute(
-                select(AuditRow).order_by(AuditRow.id.desc()).limit(limit)
+                stmt.order_by(AuditRow.id.desc()).limit(limit)
             ).scalars().all()
             return [{
+                "id": r.id,
                 "actor": r.actor, "action": r.action, "entity_type": r.entity_type,
                 "entity_id": r.entity_id, "detail": r.detail,
+                "tenant_id": getattr(r, "tenant_id", "default"),
+                "model_version": getattr(r, "model_version", ""),
+                "aura_version": getattr(r, "aura_version", "0.1.0"),
                 "previous_hash": r.previous_hash, "record_hash": r.record_hash,
                 "created_at": r.created_at.isoformat(),
             } for r in rows]
+
+    # ---- organizations ----
+    def create_organization(self, org_id: str, name: str, slug: str) -> dict:
+        with Session(self.engine) as ses:
+            if ses.get(OrganizationRow, org_id):
+                raise ValueError(f"Organization '{org_id}' already exists")
+            org = OrganizationRow(org_id=org_id, name=name, slug=slug, is_active=True)
+            ses.add(org)
+            ses.commit()
+            return {
+                "org_id": org.org_id,
+                "name": org.name,
+                "slug": org.slug,
+                "is_active": org.is_active,
+                "created_at": org.created_at.isoformat(),
+            }
+
+    def get_organization(self, org_id: str) -> dict | None:
+        with Session(self.engine) as ses:
+            org = ses.get(OrganizationRow, org_id)
+            if not org:
+                return None
+            return {
+                "org_id": org.org_id,
+                "name": org.name,
+                "slug": org.slug,
+                "is_active": org.is_active,
+                "created_at": org.created_at.isoformat(),
+            }
+
+    def list_organizations(self) -> list[dict]:
+        with Session(self.engine) as ses:
+            rows = ses.execute(select(OrganizationRow).order_by(OrganizationRow.created_at.asc())).scalars().all()
+            return [
+                {
+                    "org_id": r.org_id,
+                    "name": r.name,
+                    "slug": r.slug,
+                    "is_active": r.is_active,
+                    "created_at": r.created_at.isoformat(),
+                }
+                for r in rows
+            ]
+
+    # ---- users ----
+    def create_user(self, username: str, password: str, role: str = "CLINICAL_USER",
+                    org_id: str = "default", email: str = "") -> dict:
+        pw_hash, salt = self.hash_password(password)
+        uid = f"usr-{uuid.uuid4().hex[:12]}"
+        with Session(self.engine) as ses:
+            existing = ses.execute(select(UserRow).where(UserRow.username == username)).scalars().first()
+            if existing:
+                raise ValueError(f"Username '{username}' already exists")
+            user = UserRow(
+                user_id=uid,
+                org_id=org_id,
+                username=username,
+                email=email,
+                password_hash=pw_hash,
+                salt=salt,
+                role=role,
+                is_active=True,
+            )
+            ses.add(user)
+            ses.commit()
+            return {
+                "user_id": user.user_id,
+                "org_id": user.org_id,
+                "username": user.username,
+                "email": user.email,
+                "role": user.role,
+                "is_active": user.is_active,
+                "created_at": user.created_at.isoformat(),
+            }
+
+    def get_user(self, user_id: str) -> dict | None:
+        with Session(self.engine) as ses:
+            u = ses.get(UserRow, user_id)
+            if not u:
+                return None
+            return {
+                "user_id": u.user_id,
+                "org_id": u.org_id,
+                "username": u.username,
+                "email": u.email,
+                "role": u.role,
+                "is_active": u.is_active,
+                "created_at": u.created_at.isoformat(),
+                "disabled_at": u.disabled_at.isoformat() if u.disabled_at else None,
+            }
+
+    def get_user_by_username(self, username: str) -> dict | None:
+        with Session(self.engine) as ses:
+            u = ses.execute(select(UserRow).where(UserRow.username == username)).scalars().first()
+            if not u:
+                return None
+            return {
+                "user_id": u.user_id,
+                "org_id": u.org_id,
+                "username": u.username,
+                "email": u.email,
+                "password_hash": u.password_hash,
+                "salt": u.salt,
+                "role": u.role,
+                "is_active": u.is_active,
+                "created_at": u.created_at.isoformat(),
+                "disabled_at": u.disabled_at.isoformat() if u.disabled_at else None,
+            }
+
+    def list_users(self, org_id: str | None = None) -> list[dict]:
+        with Session(self.engine) as ses:
+            stmt = select(UserRow)
+            if org_id and org_id not in ("system", "*"):
+                stmt = stmt.where(UserRow.org_id == org_id)
+            rows = ses.execute(stmt.order_by(UserRow.created_at.asc())).scalars().all()
+            return [{
+                "user_id": u.user_id,
+                "org_id": u.org_id,
+                "username": u.username,
+                "email": u.email,
+                "role": u.role,
+                "is_active": u.is_active,
+                "created_at": u.created_at.isoformat(),
+                "disabled_at": u.disabled_at.isoformat() if u.disabled_at else None,
+            } for u in rows]
+
+    def disable_user(self, user_id: str) -> bool:
+        with Session(self.engine) as ses:
+            u = ses.get(UserRow, user_id)
+            if not u:
+                return False
+            u.is_active = False
+            u.disabled_at = datetime.now(timezone.utc)
+            ses.execute(
+                text("UPDATE sessions SET revoked = 1 WHERE user_id = :uid"),
+                {"uid": user_id},
+            )
+            ses.commit()
+            return True
+
+    # ---- sessions / auth tokens ----
+    def create_session(self, user_id: str, org_id: str, role: str, duration_hours: int = 24) -> tuple[str, dict]:
+        raw_token = f"aura_tok_{secrets.token_urlsafe(32)}"
+        token_hash = hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+        sid = f"ses-{uuid.uuid4().hex[:12]}"
+        now = datetime.now(timezone.utc)
+        from datetime import timedelta
+        expires_at = now + timedelta(hours=duration_hours)
+        with Session(self.engine) as ses:
+            session_row = SessionRow(
+                session_id=sid,
+                user_id=user_id,
+                org_id=org_id,
+                role=role,
+                token_hash=token_hash,
+                created_at=now,
+                expires_at=expires_at,
+                revoked=False,
+            )
+            ses.add(session_row)
+            ses.commit()
+            return raw_token, {
+                "session_id": sid,
+                "user_id": user_id,
+                "org_id": org_id,
+                "role": role,
+                "expires_at": expires_at.isoformat(),
+            }
+
+    def validate_session(self, token: str) -> dict | None:
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        now = datetime.now(timezone.utc)
+        with Session(self.engine) as ses:
+            stmt = select(SessionRow).where(SessionRow.token_hash == token_hash, SessionRow.revoked == False)
+            row = ses.execute(stmt).scalars().first()
+            if not row:
+                return None
+            exp = row.expires_at
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            if now > exp:
+                return None
+            user = ses.get(UserRow, row.user_id)
+            if not user or not user.is_active:
+                return None
+            return {
+                "session_id": row.session_id,
+                "user_id": row.user_id,
+                "username": user.username,
+                "org_id": row.org_id,
+                "role": row.role,
+                "expires_at": row.expires_at.isoformat(),
+            }
+
+    def revoke_session(self, token: str) -> bool:
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        with Session(self.engine) as ses:
+            stmt = select(SessionRow).where(SessionRow.token_hash == token_hash)
+            row = ses.execute(stmt).scalars().first()
+            if not row:
+                return False
+            row.revoked = True
+            ses.commit()
+            return True
+
+    # ---- projects ----
+    def create_project(self, project_id: str, org_id: str, name: str, description: str = "") -> dict:
+        with Session(self.engine) as ses:
+            proj = ProjectRow(project_id=project_id, org_id=org_id, name=name, description=description)
+            ses.add(proj)
+            ses.commit()
+            return {
+                "project_id": proj.project_id,
+                "org_id": proj.org_id,
+                "name": proj.name,
+                "description": proj.description,
+                "created_at": proj.created_at.isoformat(),
+            }
+
+    def get_project(self, project_id: str, org_id: str | None = None) -> dict | None:
+        with Session(self.engine) as ses:
+            p = ses.get(ProjectRow, project_id)
+            if not p:
+                return None
+            if org_id and org_id not in ("system", "*") and p.org_id != org_id:
+                raise CrossTenantAccessError(f"Project '{project_id}' does not belong to organization '{org_id}'")
+            return {
+                "project_id": p.project_id,
+                "org_id": p.org_id,
+                "name": p.name,
+                "description": p.description,
+                "created_at": p.created_at.isoformat(),
+            }
+
+    def list_projects(self, org_id: str | None = None) -> list[dict]:
+        with Session(self.engine) as ses:
+            stmt = select(ProjectRow)
+            if org_id and org_id not in ("system", "*"):
+                stmt = stmt.where(ProjectRow.org_id == org_id)
+            rows = ses.execute(stmt.order_by(ProjectRow.created_at.asc())).scalars().all()
+            return [{
+                "project_id": p.project_id,
+                "org_id": p.org_id,
+                "name": p.name,
+                "description": p.description,
+                "created_at": p.created_at.isoformat(),
+            } for p in rows]
+
+    # ---- model registry ----
+    def register_model(self, model_id: str, name: str, version: str, modality: str,
+                       org_id: str = "system", intended_use: str = "", source: str = "",
+                       training_data_provenance: str = "", validation_dataset: str = "",
+                       validation_metrics: dict | None = None, checksum_sha256: str = "",
+                       approval_status: str = "APPROVED", deployment_status: str = "ACTIVE") -> dict:
+        with Session(self.engine) as ses:
+            row = ses.get(RegisteredModelRow, model_id)
+            if row is not None:
+                raise ValueError(f"Model '{model_id}' already registered")
+            row = RegisteredModelRow(
+                model_id=model_id,
+                org_id=org_id,
+                name=name,
+                version=version,
+                modality=modality,
+                intended_use=intended_use,
+                source=source,
+                training_data_provenance=training_data_provenance,
+                validation_dataset=validation_dataset,
+                validation_metrics=validation_metrics or {},
+                checksum_sha256=checksum_sha256,
+                approval_status=approval_status,
+                deployment_status=deployment_status,
+            )
+            ses.add(row)
+            ses.commit()
+            return self._model_row_to_dict(row)
+
+    def get_model(self, model_id: str) -> dict | None:
+        with Session(self.engine) as ses:
+            row = ses.get(RegisteredModelRow, model_id)
+            if not row:
+                return None
+            return self._model_row_to_dict(row)
+
+    def list_models(self, org_id: str | None = None, deployment_status: str | None = None) -> list[dict]:
+        with Session(self.engine) as ses:
+            stmt = select(RegisteredModelRow)
+            if org_id and org_id not in ("system", "*"):
+                stmt = stmt.where((RegisteredModelRow.org_id == org_id) | (RegisteredModelRow.org_id == "system"))
+            if deployment_status:
+                stmt = stmt.where(RegisteredModelRow.deployment_status == deployment_status)
+            rows = ses.execute(stmt.order_by(RegisteredModelRow.created_at.desc())).scalars().all()
+            return [self._model_row_to_dict(r) for r in rows]
+
+    def update_model_status(self, model_id: str, approval_status: str | None = None,
+                            deployment_status: str | None = None) -> dict | None:
+        with Session(self.engine) as ses:
+            row = ses.get(RegisteredModelRow, model_id)
+            if not row:
+                return None
+            if approval_status is not None:
+                row.approval_status = approval_status
+            if deployment_status is not None:
+                row.deployment_status = deployment_status
+                if deployment_status == "RETIRED":
+                    row.retired_at = datetime.now(timezone.utc)
+            ses.commit()
+            return self._model_row_to_dict(row)
+
+    @staticmethod
+    def _model_row_to_dict(row: RegisteredModelRow) -> dict:
+        return {
+            "model_id": row.model_id,
+            "org_id": row.org_id,
+            "name": row.name,
+            "version": row.version,
+            "modality": row.modality,
+            "intended_use": row.intended_use,
+            "source": row.source,
+            "training_data_provenance": row.training_data_provenance,
+            "validation_dataset": row.validation_dataset,
+            "validation_metrics": row.validation_metrics,
+            "checksum_sha256": row.checksum_sha256,
+            "approval_status": row.approval_status,
+            "deployment_status": row.deployment_status,
+            "created_at": row.created_at.isoformat(),
+            "retired_at": row.retired_at.isoformat() if row.retired_at else None,
+        }
+
+    # ---- validation runs ----
+    def create_validation_run(self, run_id: str, org_id: str, model_id: str,
+                              dataset_name: str, config: dict | None = None,
+                              created_by: str = "system") -> dict:
+        with Session(self.engine) as ses:
+            row = ValidationRunRow(
+                run_id=run_id,
+                org_id=org_id,
+                model_id=model_id,
+                dataset_name=dataset_name,
+                status="QUEUED",
+                config=config or {},
+                created_by=created_by,
+            )
+            ses.add(row)
+            ses.commit()
+            return self._validation_run_to_dict(row)
+
+    def update_validation_run(self, run_id: str, status: str, metrics: dict | None = None,
+                              subgroup_analysis: dict | None = None, failure_analysis: dict | None = None,
+                              report_markdown: str = "", error: str = "") -> dict | None:
+        with Session(self.engine) as ses:
+            row = ses.get(ValidationRunRow, run_id)
+            if not row:
+                return None
+            row.status = status
+            if metrics is not None:
+                row.metrics = metrics
+            if subgroup_analysis is not None:
+                row.subgroup_analysis = subgroup_analysis
+            if failure_analysis is not None:
+                row.failure_analysis = failure_analysis
+            if report_markdown:
+                row.report_markdown = report_markdown
+            if error:
+                row.error = error
+            if status in ("COMPLETED", "FAILED"):
+                row.completed_at = datetime.now(timezone.utc)
+            ses.commit()
+            return self._validation_run_to_dict(row)
+
+    def get_validation_run(self, run_id: str, org_id: str | None = None) -> dict | None:
+        with Session(self.engine) as ses:
+            row = ses.get(ValidationRunRow, run_id)
+            if not row:
+                return None
+            if org_id and org_id not in ("system", "*") and row.org_id != org_id:
+                raise CrossTenantAccessError(f"Validation run '{run_id}' does not belong to organization '{org_id}'")
+            return self._validation_run_to_dict(row)
+
+    def list_validation_runs(self, org_id: str | None = None, model_id: str | None = None, limit: int = 50) -> list[dict]:
+        with Session(self.engine) as ses:
+            stmt = select(ValidationRunRow)
+            if org_id and org_id not in ("system", "*"):
+                stmt = stmt.where(ValidationRunRow.org_id == org_id)
+            if model_id:
+                stmt = stmt.where(ValidationRunRow.model_id == model_id)
+            rows = ses.execute(stmt.order_by(ValidationRunRow.created_at.desc()).limit(limit)).scalars().all()
+            return [self._validation_run_to_dict(r) for r in rows]
+
+    @staticmethod
+    def _validation_run_to_dict(row: ValidationRunRow) -> dict:
+        return {
+            "run_id": row.run_id,
+            "org_id": row.org_id,
+            "model_id": row.model_id,
+            "dataset_name": row.dataset_name,
+            "status": row.status,
+            "config": row.config,
+            "metrics": row.metrics,
+            "subgroup_analysis": row.subgroup_analysis,
+            "failure_analysis": row.failure_analysis,
+            "report_markdown": row.report_markdown,
+            "error": row.error,
+            "created_by": row.created_by,
+            "created_at": row.created_at.isoformat(),
+            "completed_at": row.completed_at.isoformat() if row.completed_at else None,
+        }
+
+    # ---- monitoring & alerts ----
+    def log_metric(self, metric_name: str, value: float, org_id: str = "default",
+                   dimensions: dict | None = None) -> None:
+        with Session(self.engine) as ses:
+            row = SystemMetricRow(
+                org_id=org_id,
+                metric_name=metric_name,
+                value=float(value),
+                dimensions=dimensions or {},
+                timestamp=datetime.now(timezone.utc),
+            )
+            ses.add(row)
+            ses.commit()
+
+    def get_metrics(self, metric_name: str | None = None, org_id: str = "default",
+                    limit: int = 100) -> list[dict]:
+        with Session(self.engine) as ses:
+            stmt = select(SystemMetricRow)
+            if org_id and org_id not in ("system", "*"):
+                stmt = stmt.where(SystemMetricRow.org_id == org_id)
+            if metric_name:
+                stmt = stmt.where(SystemMetricRow.metric_name == metric_name)
+            rows = ses.execute(stmt.order_by(SystemMetricRow.timestamp.desc()).limit(limit)).scalars().all()
+            return [{
+                "id": r.id,
+                "org_id": r.org_id,
+                "metric_name": r.metric_name,
+                "value": r.value,
+                "dimensions": r.dimensions,
+                "timestamp": r.timestamp.isoformat(),
+            } for r in rows]
+
+    def create_alert(self, alert_id: str, category: str, message: str,
+                     severity: str = "WARNING", org_id: str = "default",
+                     model_id: str = "", details: dict | None = None) -> dict:
+        with Session(self.engine) as ses:
+            row = AlertRow(
+                alert_id=alert_id,
+                org_id=org_id,
+                model_id=model_id,
+                severity=severity,
+                category=category,
+                message=message,
+                details=details or {},
+                acknowledged=False,
+            )
+            ses.add(row)
+            ses.commit()
+            return {
+                "alert_id": row.alert_id,
+                "org_id": row.org_id,
+                "model_id": row.model_id,
+                "severity": row.severity,
+                "category": row.category,
+                "message": row.message,
+                "details": row.details,
+                "acknowledged": row.acknowledged,
+                "created_at": row.created_at.isoformat(),
+            }
+
+    def list_alerts(self, org_id: str = "default", acknowledged: bool | None = None,
+                    limit: int = 50) -> list[dict]:
+        with Session(self.engine) as ses:
+            stmt = select(AlertRow)
+            if org_id and org_id not in ("system", "*"):
+                stmt = stmt.where(AlertRow.org_id == org_id)
+            if acknowledged is not None:
+                stmt = stmt.where(AlertRow.acknowledged == acknowledged)
+            rows = ses.execute(stmt.order_by(AlertRow.created_at.desc()).limit(limit)).scalars().all()
+            return [{
+                "alert_id": r.alert_id,
+                "org_id": r.org_id,
+                "model_id": r.model_id,
+                "severity": r.severity,
+                "category": r.category,
+                "message": r.message,
+                "details": r.details,
+                "acknowledged": r.acknowledged,
+                "created_at": r.created_at.isoformat(),
+            } for r in rows]
+
+    def acknowledge_alert(self, alert_id: str, org_id: str | None = None) -> bool:
+        with Session(self.engine) as ses:
+            row = ses.get(AlertRow, alert_id)
+            if not row:
+                return False
+            if org_id and org_id not in ("system", "*") and row.org_id != org_id:
+                raise CrossTenantAccessError(f"Alert '{alert_id}' does not belong to organization '{org_id}'")
+            row.acknowledged = True
+            ses.commit()
+            return True
 
     # ---- memory indexing ----
     def add_memory_record(self, case_id: str, embedding: list[float] | np.ndarray, diagnosis: str) -> None:

@@ -148,8 +148,10 @@ app = FastAPI(title="AURA Clinical Intelligence Copilot", version="0.1.0",
 # than in lifespan, so they exist even when model loading fails and an operator has to
 # sign in to find out why.
 from .security import router as _auth_router  # noqa: E402
+from .enterprise import router as _enterprise_router  # noqa: E402
 
 app.include_router(_auth_router)
+app.include_router(_enterprise_router)
 
 
 @app.middleware("http")
@@ -181,10 +183,9 @@ async def audit_mw(request: Request, call_next):
     if request.url.path == "/" or request.url.path.startswith(("/app", "/static")):
         resp.headers["Cache-Control"] = "no-cache"
     if request.method in ("POST", "PUT", "DELETE") and "store" in state:
-        # `principal` is what enforce() resolved: the signed-in name for a browser
-        # session, the x-aura-user header for a token-authenticated script.
+        tenant_id = getattr(request.state, "tenant_id", "default")
         _safe_audit(action=f"{request.method} {request.url.path}",
-                    actor=principal, entity_type="http")
+                    actor=principal, entity_type="http", tenant_id=tenant_id)
     return resp
 
 
@@ -260,12 +261,14 @@ def list_studies():
 
 
 @app.get("/v1/cases")
-def list_cases(state_filter: str | None = None):
+def list_cases(request: Request, state_filter: str | None = None):
     from aura.schemas.clinical import DIAGNOSIS_LABELS, FINDING_LABELS
+    from .security import get_tenant_id
+    tenant_id = get_tenant_id(request)
     dx_lbls = {d.value: l for d, l in DIAGNOSIS_LABELS.items()}
     ev_lbls = {f.value: l for f, l in FINDING_LABELS.items()}
     return {
-        "cases": store().list_cases(state=state_filter),
+        "cases": store().list_cases(state=state_filter, tenant_id=tenant_id),
         "dx_labels": dx_lbls,
         "ev_labels": ev_lbls
     }
@@ -396,8 +399,14 @@ def discard_intake_case(case_id: str):
 
 
 @app.get("/v1/cases/{case_id}")
-def get_case(case_id: str):
-    b = store().get_case(case_id)
+def get_case(request: Request, case_id: str):
+    from .security import get_tenant_id
+    from .storage import CrossTenantAccessError
+    tenant_id = get_tenant_id(request)
+    try:
+        b = store().get_case(case_id, tenant_id=tenant_id)
+    except CrossTenantAccessError as exc:
+        raise HTTPException(403, {"error": "cross_tenant_access_denied", "reason": str(exc)})
     if b is None:
         raise HTTPException(404, "case not found")
     d = json.loads(b.model_dump_json())
@@ -895,7 +904,7 @@ async def simulate_study(payload: dict = Body(default={})):
 
 
 @app.post("/v1/studies/upload")
-async def upload_study(file: UploadFile = File(...)):
+async def upload_study(request: Request, file: UploadFile = File(...)):
     """Upload a chest radiograph (PNG/JPG/DICOM) and analyze it live.
 
     The X-ray intake gate runs first: anything that is not a chest radiograph is
@@ -905,7 +914,7 @@ async def upload_study(file: UploadFile = File(...)):
     """
     import tempfile
     import os
-    from .security import validate_upload_name, read_capped, validate_mri_content
+    from .security import validate_upload_name, read_capped, validate_mri_content, get_tenant_id
 
     # Type allowlist (extension + declared MIME) and a hard size cap enforced while
     # streaming, so a hostile upload can neither smuggle a non-image type nor
@@ -948,9 +957,12 @@ async def upload_study(file: UploadFile = File(...)):
                           detail={"reason": exc.reason})
             raise HTTPException(422, exc.to_payload())
         infer_s = _time.perf_counter() - _t0
-        store().save_case(bundle)
+        tenant_id = get_tenant_id(request)
+        store().save_case(bundle, tenant_id=tenant_id)
         session_case_ids.append(case_id)
         store().audit("case.uploaded", "case", case_id,
+                      actor=getattr(request.state, "principal", "system"),
+                      tenant_id=tenant_id,
                       detail={"top": bundle.safety.top.value,
                               "abstained": bundle.safety.abstained,
                               "gate_checks": gate.checks})
