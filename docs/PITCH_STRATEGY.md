@@ -7,30 +7,47 @@ quantum optimization 10 · quantum implementation 10 → **50 total, 30 of it qu
 immediately before writing; the check command is in §7. If you present after a retrain,
 re-run it — the QKL figures already moved once during this work.
 
+> **Superseded in part — read before using this document (2026-09-12).**
+> 1. The §1 thesis, answer A1 and the §8 closing line were built on QMBA's "typed
+>    abstention" being something classical inference structurally cannot do. That claim
+>    was **retracted** on source-level audit (`docs/RESEARCH_PAPER_v5.md` §2.8): the shot
+>    noise is added to an analytic expectation, so the typing reduces to a margin threshold
+>    any classical model can compute. Those passages have been corrected below; do not
+>    restore the original wording.
+> 2. The served fusion backend is now **classical** (`aura/pyproject.toml`), following the
+>    preregistered CheXpert external validation (n = 4,800; accuracy 0.5273 vs 0.4721,
+>    McNemar p < 0.001; `aura/artifacts/chexpert_external.json`). QMBA and the
+>    measurement-budget panel run only with `AURA_FUSION_BACKEND=quantum`, which is how to
+>    reproduce the demo described here.
+
 ---
 
 ## 1. The thesis
 
-> **Most quantum-health projects claim an advantage they cannot demonstrate. We built the
-> one thing a quantum model can do that a classical model structurally cannot — and we
-> publish every result that does not favour us.**
+> **Most quantum-health projects claim an advantage they cannot demonstrate. We tested
+> every quantum claim we made under a fair protocol, and we publish every result that
+> does not favour us — including the capability claim we retracted ourselves.**
 
-That sentence wins this rubric, because the rubric asks about *utilization, optimization
+That sentence fits this rubric, because the rubric asks about *utilization, optimization
 and implementation* — how well you used the quantum resource — **not** "did quantum win."
 A team claiming a fake speed-up scores 0 on credibility the moment a judge probes. A team
-that shows a real capability plus honest negatives is unattackable, because there is
-nothing left to expose.
+that shows its negatives, including its own retraction, is hard to attack, because there
+is nothing left to expose.
 
-**The capability, in one breath:** quantum precision is *bought* with measurements
-(`Var[⟨Z⟩] = (1 − ⟨Z⟩²)/n_shots`). Sequencing that budget splits "unsure" into two states
-with **opposite clinical instructions** — *run the circuit longer* vs *escalate to a
-human*. A classical softmax reading 0.55 cannot tell you which. Over 447 patient-disjoint
-studies: **1 measurement-limited, 60 model-limited.**
+**What survives, in one breath:** quantum precision is bought with measurements
+(`Var[⟨Z⟩] = (1 − ⟨Z⟩²)/n_shots`), so shot count is a well-founded *unit* for a
+decision-margin threshold. That is interpretability, not a new capability. The
+implementation adds closed-form shot noise to an analytic expectation, so its split of
+"unsure" into measurement-limited and model-limited (1 vs 60 over 447 studies) is a
+threshold on the analytic margin that a classical model can compute too. This document
+originally presented it as something classical inference cannot do; that claim is
+**retracted** (`docs/RESEARCH_PAPER_v5.md` §2.8).
 
 **Say this, verbatim, when asked what's quantum about it:**
-> "We don't claim quantum accuracy. We claim a resource model classical inference doesn't
-> have. Measurement is a dial, so 'I need more computation' and 'I need a doctor' become
-> two different answers instead of one number. That runs on every study we serve."
+> "We don't claim quantum accuracy, and we retracted the one capability claim we made once
+> we audited our own code. What the quantum work produced is a fair-comparison protocol and
+> the negative results it turned up, which we publish. The product serves whichever
+> backend generalises best on an external cohort, and today that is the classical one."
 
 ---
 
@@ -53,7 +70,9 @@ The three sentences that land it:
 
 ### Quantum utilization — 10 pts
 
-Lead with **QMBA on the serving path** (`gateway/pipeline.py`), not with the VQC.
+QMBA runs on the serving path only when the quantum backend is selected
+(`AURA_FUSION_BACKEND=quantum`; see the note at the top). Present it as a measured
+shot-efficiency result, not as a capability classical models lack.
 
 | Measured | Value |
 |---|---|
@@ -133,13 +152,15 @@ Ordered by likelihood × damage. The rebuttals are short on purpose — **answer
 stop.** Do not over-explain; that reads as defensiveness.
 
 ### A1 · "Your quantum model loses to classical. Why is this a quantum project?" ★★★★★
-> "It does, and we publish it: 0.6957 vs 0.6377. But accuracy was never the claim. The
-> claim is a resource model — measurement as a dial — which produces a clinical capability
-> classical inference structurally cannot have. That's §02 of our evidence page, and it's
-> on the serving path, not in a notebook."
+> "It does, and we publish it: 0.6957 vs 0.6377 internally, and 0.5273 vs 0.4721 on 4,800
+> external CheXpert studies, where the gap is significant. So the product serves the
+> classical backend. What the quantum work contributes is the fair-comparison protocol and
+> the negative results it produced, including a capability claim we retracted after
+> auditing our own code. That's §05 of our evidence page."
 
-**Never** get defensive here. Concede instantly, pivot to QMBA. This attack is *expected*
-and conceding it is what makes everything else believable.
+**Never** get defensive here. Concede instantly, then show the protocol and the
+retraction. This attack is *expected*, and conceding it is what makes everything else
+believable.
 
 ### A2 · "8 qubits is classically simulable. There is no advantage available." ★★★★★
 > "Correct, and we say so in our own docs — no speed-up is claimed and none is possible at
@@ -198,8 +219,9 @@ That last clause usually earns credit rather than losing it.
 ### A9 · "Is the quantum part even load-bearing, or is it decoration on a CNN?" ★★★
 > "Vision is a classical DenseNet-121 — we're explicit about that boundary. The quantum
 > layer is the *fusion* stage: it takes the 8-channel evidence vector to a posterior over
-> six diagnoses, and it's the served backend. If you switch it off you lose the measurement
-> budget and the entanglement telemetry entirely."
+> six diagnoses. It was the served backend through the hackathon; since the external
+> validation the product serves classical fusion and the VQC is selectable. Selecting it
+> turns the measurement budget and the entanglement telemetry back on."
 
 ### A10 · "Why should I believe any of these numbers?" ★★★
 > "Because none of them are typed by hand. Every figure on `/quantum` is fetched from
@@ -211,10 +233,14 @@ Then show `test_doc_numbers.py`. Its docstring says *"the fix is to re-copy the 
 of benchmark.json, never to loosen this test."*
 
 ### A11 · "Your QKL quantum kernel loses too." ★★
-> "It's now statistically indistinguishable: ΔAUROC −0.0051, p = 0.27. Earlier it was
-> significantly worse and we published that too. Note the ECE went the other way and we
-> tested that as well — Δ p = 0.998, also not significant. We report the null result on the
-> metric that would have flattered us."
+> "It doesn't differ, and we now have the power to say so. Nested cross-validation over
+> all 185 subjects with symmetric hyperparameter grids gives ΔAUROC −0.0026, 95% CI
+> [−0.044, +0.039], DeLong p = 0.90. The interval excludes anything beyond about 0.045 in
+> either direction, so this is an informative null and not an absence of evidence. Two
+> earlier figures are superseded — −0.016 at p = 0.002 on 669 slices, and +0.0446 at
+> p = 0.55 on 11 subjects — and we publish the history rather than the best of them. The
+> ECE difference is likewise not resolvable, which is the metric that would have flattered
+> us."
 
 ### A12 · "What's your actual clinical validation?" ★★
 Answer honestly: MIMIC-CXR labels from a **rule-based labeler**, validated against 66
@@ -247,9 +273,11 @@ credibility win.
 
 Highest value first:
 
-1. **Re-run `train_qkl` and the sweep if anything was retrained.** The QKL numbers already
-   moved once (ΔAUROC −0.0156 p=0.002 → −0.0051 p=0.27). Present stale numbers and A10
-   collapses.
+1. **Quote `qkl_full_coverage.json`, never `qkl_training_report.json`.** The QKL figure
+   moved twice before it settled (ΔAUROC −0.0156 p=0.002 on 669 slices → −0.0051 p=0.27 →
+   +0.0446 p=0.55 on 11 subjects), and only the full-coverage nested-CV run over 185
+   subjects is properly powered (−0.0026, p = 0.90). Present a superseded number and A10
+   collapses. Re-run the sweep if anything was retrained.
 2. **More hardware cases.** n=1 → n=20 turns A7 from a concession into a result. Queue time,
    not engineering.
 3. **Train the QBN, or delete it.** Inert-but-wired is defensible; trained is better.

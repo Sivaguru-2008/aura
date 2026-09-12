@@ -99,6 +99,8 @@ class StudyInput(BaseModel):
     multimodal: Optional[MultimodalContext] = None
     # Optional ground-truth diagnosis — present only for synthetic/seed data.
     ground_truth: Optional[Diagnosis] = None
+    # Optional patient ID to link to the EHR database
+    patient_id: Optional[str] = None
 
 
 # --------------------------------------------------------------------------- #
@@ -316,6 +318,10 @@ class FusionResult(BaseModel):
     #: returns None when the weights are absent — which is the shipped state. A flag
     #: reporting configuration intent would tell the console a quantum autoencoder
     #: ran when the engine had silently taken the plain-encoding branch.
+    # No qbn_enabled here. The QBN runs in ClinicalReasoner, not in fusion, so a
+    # flag on FusionResult could only ever be derived from `reasoner_backend` —
+    # i.e. it would report configuration intent, not a component that ran. The
+    # honest flag lives on ReasoningTrace and is set by the code that executes it.
     qae_applied: bool = False
     created_at: datetime = Field(default_factory=_now)
 
@@ -502,6 +508,10 @@ class ReasoningTrace(BaseModel):
     steps: list[ReasoningStep] = Field(default_factory=list)
     differential: list[DifferentialItem] = Field(default_factory=list)
     guideline_citations: list[str] = Field(default_factory=list)
+    #: True only when a *trained* QuantumBayesianNetwork actually refined the
+    #: posterior on this trace. Selecting `reasoner_backend="quantum"` without a
+    #: trained artifact leaves this False — the setting is not the component.
+    qbn_enabled: bool = False
     model_version: str = "reasoning-v1"
 
 
@@ -543,6 +553,10 @@ class CaseBundle(BaseModel):
     """Everything the dashboard renders for one case."""
     case_id: str
     study_id: str
+    #: Patient identifier as supplied by the caller. Empty when the study arrived
+    #: without one — never synthesised, because a derived identifier would let
+    #: C-FIND and the EHR lookup resolve to a different patient's record.
+    patient_id: str = ""
     state: CaseState
     priority_score: float = 0.0
     priors: StructuredPriors = Field(default_factory=StructuredPriors)

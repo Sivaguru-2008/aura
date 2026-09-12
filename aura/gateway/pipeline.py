@@ -82,10 +82,9 @@ class Pipeline:
         self.report = ReportEngine()
         self.consensus = ConsensusEngine()
         self.memory = memory or MemoryEngine(store=store)
-        # Optional persistence handle — lets serving read the online Adaptive
-        # Conformal Inference threshold (Module 8) the feedback endpoint updates.
-        # None for standalone/test construction, so those paths stay unchanged.
         self.store = store
+        from aura.services.enterprise.ehr import EHRClient
+        self.ehr = EHRClient(db_path=store.db_path if hasattr(store, "db_path") else None)
 
     def _aci_qhat(self) -> float | None:
         """Current online ACI threshold, or None when ACI is off / no store / unset."""
@@ -143,6 +142,20 @@ class Pipeline:
         return round(urgency * safety.top_probability, 4)
 
     async def run(self, study: StudyInput, case_id: str) -> CaseBundle:
+        # EHR integration. Only an explicitly supplied patient_id is ever used to
+        # look up clinical context. Deriving one from study_id/case_id would let a
+        # numerically adjacent identifier resolve to a *different* patient's labs
+        # and symptoms and attach them to this scan, so there is no fallback here:
+        # no patient_id means no EHR context, and the reasoner sees empty context.
+        patient_id = getattr(study, "patient_id", None) or None
+        if patient_id and study.multimodal is None:
+            try:
+                ehr_context = self.ehr.get_patient_context(patient_id)
+                if ehr_context is not None:
+                    study.multimodal = ehr_context
+            except Exception as e:
+                logging.warning("EHR lookup failed for patient %s: %s", patient_id, e)
+
         img = np.array(study.image, dtype=float).reshape(study.image_shape)
         await self.bus.publish(ev.STUDY_RECEIVED, study_id=study.study_id, case_id=case_id)
 
@@ -198,6 +211,7 @@ class Pipeline:
             bundle = CaseBundle(
                 case_id=case_id,
                 study_id=study.study_id,
+                patient_id=patient_id or "",
                 state=CaseState.ABSTAINED,
                 priority_score=1.0,
                 priors=study.priors,
@@ -290,12 +304,13 @@ class Pipeline:
         report = self.report.compose(vision, safety, recommendations, reasoning, consensus_result)
 
         # 9) Memory index (for similarity/priors)
-        self.memory.index(case_id, vision.embedding, safety.top.value)
+        self.memory.index(case_id, vision.embedding, safety.top.value, modality="cxr", study_id=study.study_id)
 
         state = CaseState.ABSTAINED if safety.abstained else CaseState.READY
         bundle = CaseBundle(
             case_id=case_id,
             study_id=study.study_id,
+            patient_id=patient_id or "",
             state=state,
             priority_score=self._priority(safety.top, safety),
             priors=study.priors,

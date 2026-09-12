@@ -36,9 +36,13 @@ def _label_vec(text: str) -> list[float]:
     rl = label_report(text)
     return [1.0 if rl.findings.get(f) == 1 else 0.0 for f in FINDINGS]
 
-def get_transforms(train: bool):
+def get_transforms(train: bool, img_size: int | None = None):
     """Albumentations pipeline: resizing + intensity/mild-spatial augmentation for
     training, resize only for validation.
+
+    ``img_size`` must match the resolution the checkpoint being trained or scored was
+    built at — pass ``VisionModel.img_size`` when evaluating a served model. Defaults
+    to the configured training size (224 unless AURA_CXR_IMG_SIZE overrides it).
 
     HorizontalFlip is deliberately **omitted**: a chest radiograph has a fixed situs
     (heart and aortic arch on the left, three-lobed right lung, gastric bubble on the
@@ -48,14 +52,17 @@ def get_transforms(train: bool):
     to ±8° — films are acquired in a standardised upright position, so large rotations
     are unrealistic.
     """
+    from .config import configured_img_size
+
+    s = int(img_size or configured_img_size())
     if train:
         return A.Compose([
-            A.Resize(224, 224),
+            A.Resize(s, s),
             A.Rotate(limit=8, border_mode=0, p=0.5),
             A.RandomBrightnessContrast(brightness_limit=0.15, contrast_limit=0.15, p=0.5),
             A.GaussNoise(p=0.2),
         ])
-    return A.Compose([A.Resize(224, 224)])
+    return A.Compose([A.Resize(s, s)])
 
 class ChestXrayDataset(Dataset):
     """Dataset class for MIMIC-CXR images and their corresponding pathology labels."""
@@ -167,8 +174,12 @@ def build_loaders(config, limit=None):
     
     print(f"[Dataset] Train samples: {len(train_paths)}, Val samples: {len(val_paths)}")
     
-    train_ds = ChestXrayDataset(train_paths, train_labels, transform=get_transforms(train=True))
-    val_ds = ChestXrayDataset(val_paths, val_labels, transform=get_transforms(train=False))
+    size = int(getattr(config, "img_size", 224))
+    print(f"[Dataset] input resolution: {size}x{size}")
+    train_ds = ChestXrayDataset(train_paths, train_labels,
+                                transform=get_transforms(train=True, img_size=size))
+    val_ds = ChestXrayDataset(val_paths, val_labels,
+                              transform=get_transforms(train=False, img_size=size))
     
     # Class imbalance is corrected in EXACTLY ONE place. By default that is
     # `pos_weight` in the BCE loss (see train.py). The WeightedRandomSampler below

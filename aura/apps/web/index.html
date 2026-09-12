@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AURA — the copilot that knows what it doesn't know</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='6' fill='%234be1c3'/%3E%3Ccircle cx='16' cy='16' r='12' fill='none' stroke='%234be1c3' stroke-opacity='.35' stroke-width='2'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="/static/css/main.css?v=11">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M 50,10 L 90,90 L 72,90 L 50,46 L 28,90 L 10,90 Z' fill='%2300b368'/%3E%3Cpath d='M 38,90 L 50,66 L 62,66 L 50,90 Z' fill='%2300b368'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/css/main.css?v=10">
 <style>
 .safety-overlay {
   position: absolute;
@@ -179,10 +179,23 @@
     <div class="brand"><span class="brand-core"></span><span class="brand-word">AURA</span><em>console</em></div>
     <div class="c-chips mono" id="c-chips"></div>
     <div class="c-right">
+      <div style="position: relative; display: inline-block; margin-right: 12px; vertical-align: middle;">
+        <button id="btn-user-profile" class="btn-ghost" style="border-radius: 8px; font-family: var(--mono); font-size: 11.5px; padding: 6px 12px; background: rgba(15, 23, 42, 0.02); border: 1px solid rgba(15, 23, 42, 0.1); cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <span style="display: inline-block; width: 6px; height: 6px; background: #4be1c3; border-radius: 50%;"></span>
+          <span id="user-display-name">—</span>
+          <span style="font-size: 9px; opacity: 0.6; margin-left: 2px;">▼</span>
+        </button>
+        <div id="user-dropdown" style="display: none; position: absolute; top: calc(100% + 6px); right: 0; background: var(--bg2); border: 1px solid var(--hair); border-radius: 8px; box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08); z-index: 1000; backdrop-filter: blur(10px); padding: 6px; min-width: 170px;">
+          <div id="user-role-display" style="padding: 6px 12px; font-family: var(--mono); font-size: 10px; color: var(--dim); border-bottom: 1px solid rgba(15, 23, 42, 0.08); margin-bottom: 4px; text-transform: uppercase;">role: doctor</div>
+          <button id="btn-switch-account" style="display: flex; align-items: center; width: 100%; padding: 8px 12px; background: transparent; border: none; color: var(--ink); font-family: var(--mono); font-size: 11.5px; text-align: left; cursor: pointer; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='rgba(15, 23, 42, 0.04)'" onmouseout="this.style.background='transparent'">
+            Switch User
+          </button>
+          <button id="btn-logout" style="display: flex; align-items: center; width: 100%; padding: 8px 12px; background: transparent; border: none; color: #ff6b6b; font-family: var(--mono); font-size: 11.5px; text-align: left; cursor: pointer; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255, 93, 93, 0.08)'" onmouseout="this.style.background='transparent'">
+            Log Out
+          </button>
+        </div>
+      </div>
       <span class="c-clock mono" id="c-clock">--:--:--</span>
-      <!-- Model-level evidence, not case-level: kept out of the three-page pager
-           (which is three views over ONE case) and reachable from the chrome. -->
-      <a class="btn-ghost" href="/quantum" id="btn-quantum" title="Circuit, hardware, noise attribution, and the results that do not favour the quantum layer">quantum evidence</a>
       <button class="btn-ghost" id="btn-exit">&larr; surface</button>
     </div>
   </header>
@@ -191,20 +204,40 @@
     <aside class="c-rail">
       <div class="rail-head mono"><span>WORKLIST</span><span id="rail-count"></span></div>
       <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
-        <button id="btn-upload-xray" class="btn-core slim"><span>+ upload chest X-ray</span></button>
-        <div style="position: relative; width: 100%;">
-          <button id="btn-upload-mri" class="btn-core slim" style="width: 100%; background: linear-gradient(135deg, #8b7cf7 0%, #5d4be1 100%); border-color: #8b7cf7;"><span>+ upload brain MRI</span></button>
-          <div id="mri-dropdown" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: rgba(22, 22, 30, 0.95); border: 1px solid rgba(139, 124, 247, 0.4); border-radius: 8px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); z-index: 1000; backdrop-filter: blur(10px); padding: 4px;">
-            <button id="btn-upload-mri-files" style="display: flex; width: 100%; padding: 8px 12px; background: transparent; border: none; color: #e2e8f0; font-family: var(--mono); font-size: 12px; text-align: left; cursor: pointer; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='rgba(139, 124, 247, 0.2)'" onmouseout="this.style.background='transparent'">
-              📄 Upload Files or ZIP
+        <button id="btn-create-case" class="btn-core slim" style="width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--brand-green); border-color: var(--brand-green);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>
+          <span>+ create new case</span>
+        </button>
+        <button id="btn-upload-xray" class="btn-core slim" style="display: none !important;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+          <span>+ upload chest X-ray</span>
+        </button>
+        <div style="display: none !important; position: relative; width: 100%;">
+          <button id="btn-upload-mri" class="btn-core slim" style="width: 100%; background: linear-gradient(135deg, #8b7cf7 0%, #5d4be1 100%); border-color: #8b7cf7; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="m12 3-10 9l10 9l10-9z"></path><path d="m2 17l10 4l10-4"></path><path d="m2 12l10 4l10-4"></path></svg>
+            <span>+ upload brain MRI</span>
+          </button>
+          <div id="mri-dropdown" style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--bg2); border: 1px solid var(--hair); border-radius: 8px; box-shadow: 0 8px 32px rgba(15, 23, 42, 0.08); z-index: 1000; backdrop-filter: blur(10px); padding: 4px;">
+            <button id="btn-upload-mri-files" style="display: flex; width: 100%; padding: 8px 12px; background: transparent; border: none; color: var(--ink); font-family: var(--mono); font-size: 12px; text-align: left; cursor: pointer; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='rgba(15, 23, 42, 0.04)'" onmouseout="this.style.background='transparent'">
+              Upload Files or ZIP
             </button>
-            <button id="btn-upload-mri-folder" style="display: flex; width: 100%; padding: 8px 12px; background: transparent; border: none; color: #e2e8f0; font-family: var(--mono); font-size: 12px; text-align: left; cursor: pointer; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='rgba(139, 124, 247, 0.2)'" onmouseout="this.style.background='transparent'">
-              📁 Upload Patient Folder
+            <button id="btn-upload-mri-folder" style="display: flex; width: 100%; padding: 8px 12px; background: transparent; border: none; color: var(--ink); font-family: var(--mono); font-size: 12px; text-align: left; cursor: pointer; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='rgba(15, 23, 42, 0.04)'" onmouseout="this.style.background='transparent'">
+              Upload Patient Folder
             </button>
           </div>
         </div>
-        <button id="btn-history" class="btn-ghost" style="border-radius: 8px; font-family: var(--mono); font-size: 12.5px; padding: 8px 18px;">📂 View History & Reports</button>
-        <button id="btn-agent" class="btn-ghost" style="border-radius: 8px; font-family: var(--mono); font-size: 12.5px; padding: 8px 18px; border-color: rgba(253, 209, 102, 0.4); color: #ffd166;" title="Run the sequential Active Diagnosis Agent on a chest X-ray">⚡ Active Diagnosis Agent</button>
+        <button id="btn-history" class="btn-ghost" style="border-radius: 8px; font-family: var(--sans); font-size: 12.5px; padding: 8px 18px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: rgba(15, 23, 42, 0.04); border: 1px solid rgba(15, 23, 42, 0.08); color: var(--ink); font-weight: 550; transition: background 0.2s;" onmouseover="this.style.background='rgba(15, 23, 42, 0.08)'" onmouseout="this.style.background='rgba(15, 23, 42, 0.04)'">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          <span>View History & Reports</span>
+        </button>
+      </div>
+      <div id="pending-case-panel" class="mono" style="display: none; margin-bottom: 12px; padding: 10px 12px; border: 1px solid rgba(52, 211, 153, 0.4); background: rgba(52, 211, 153, 0.07); border-radius: 8px; font-size: 11.5px; color: var(--dim);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px;">
+          <span id="pending-case-id" style="font-weight: bold; color: var(--ink);"></span>
+          <button id="btn-discard-pending" class="btn-ghost" style="padding: 2px 8px; font-size: 10.5px; border-radius: 5px; cursor: pointer;">discard</button>
+        </div>
+        <div id="pending-case-detail" style="line-height: 1.5;"></div>
+        <div style="margin-top: 6px; padding: 6px 8px; background: rgba(255,255,255,0.55); border-radius: 5px; color: var(--dim);">Upload a scan to attach it to <span id="pending-case-ref" style="color: var(--cyan);"></span></div>
       </div>
       <input type="file" id="input-file-xray" accept=".png,.jpg,.jpeg,.dcm,.dicom" style="display: none;">
       <input type="file" id="input-file-agent" accept=".png,.jpg,.jpeg,.dcm,.dicom" style="display: none;">
@@ -212,7 +245,7 @@
       <input type="file" id="input-folder-mri" webkitdirectory directory multiple style="display: none;">
       <ol id="worklist"></ol>
       <!-- Decision Readiness Profile (DRP) -->
-      <div id="drp-sidebar-panel" class="mono" style="display: none; padding: 12px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 11.5px;">
+      <div id="drp-sidebar-panel" class="mono" style="display: none; padding: 12px; border-top: 1px solid rgba(15, 23, 42, 0.08); font-size: 11.5px;">
         <div style="font-weight: bold; margin-bottom: 8px; color: #ffd166; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
           <i class="dot" style="display:inline-block; width:6px; height:6px; background:#ffd166; border-radius:50%"></i>Readiness Profile
         </div>
@@ -226,7 +259,7 @@
         </div>
       </div>
       <!-- Interactive Clinical Reasoning Sidebar (Task 2) -->
-      <div id="priors-sidebar-panel" class="mono" style="display: none; padding: 12px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 11.5px;">
+      <div id="priors-sidebar-panel" class="mono" style="display: none; padding: 12px; border-top: 1px solid rgba(15, 23, 42, 0.08); font-size: 11.5px;">
         <div style="font-weight: bold; margin-bottom: 8px; color: #8b7cf7; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;">
           <i class="dot" style="display:inline-block; width:6px; height:6px; background:#8b7cf7; border-radius:50%"></i>Clinical Priors
         </div>
@@ -258,11 +291,11 @@
         </div>
       </div>
       <!-- System Telemetry / Dashboard Monitoring (Task 11) -->
-      <div class="telemetry-panel mono" style="margin-top: auto; padding: 12px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 11.5px;">
+      <div class="telemetry-panel mono" style="margin-top: auto; padding: 12px; border-top: 1px solid rgba(15, 23, 42, 0.08); font-size: 11.5px;">
         <div style="font-weight: bold; margin-bottom: 8px; color: #4be1c3; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 6px;"><i class="dot" style="display:inline-block; width:6px; height:6px; background:#4be1c3; border-radius:50%"></i>Telemetry</div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
           <span style="color: var(--faint);">Total Studies:</span>
-          <span id="tel-total-studies" style="color: #fff; font-weight: bold;">—</span>
+          <span id="tel-total-studies" style="color: var(--ink); font-weight: bold;">—</span>
         </div>
         <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
           <span style="color: var(--faint);">Rejected Studies:</span>
@@ -288,9 +321,11 @@
       <div id="case-forming" hidden>
         <canvas id="forming-canvas"></canvas>
         <img id="forming-preview" alt="" hidden>
-        <div id="inference-timeline" class="mono" style="margin: 40px auto 20px auto; display: flex; gap: 12px; justify-content: center; align-items: center; font-size: 11px; z-index: 10; max-width: 90%; background: rgba(0,0,0,0.5); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); overflow-x: auto;">
+        <div style="display: flex; flex-direction: column; gap: 24px; z-index: 10; width: 100%; max-width: 680px; padding: 0 20px; box-sizing: border-box;">
+          <div id="inference-timeline" class="mono" style="display: flex; gap: 12px; justify-content: center; align-items: center; font-size: 11px; width: 100%; background: var(--bg2); box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08); padding: 12px; border-radius: 12px; border: 1px solid rgba(15, 23, 42, 0.05); overflow-x: auto; box-sizing: border-box;">
+          </div>
+          <pre class="forming-text mono" id="forming-text" style="margin: 0; min-height: 240px; width: 100%; box-sizing: border-box;"></pre>
         </div>
-        <pre class="forming-text mono" id="forming-text"></pre>
       </div>
 
       <!-- Workflow pager. Splits the console into the three questions a clinician
@@ -305,7 +340,7 @@
         </button>
         <button class="pg-tab" role="tab" data-goto="assess" aria-selected="false">
           <span class="pg-n mono">2</span>
-          <span class="pg-lbl">Assess</span>
+          <span class="pg-lbl">Assessment</span>
           <span class="pg-sub">differential &amp; certainty</span>
           <i class="pg-dot" id="pg-dot-assess" hidden title="this case abstained"></i>
         </button>
@@ -313,6 +348,11 @@
           <span class="pg-n mono">3</span>
           <span class="pg-lbl">Report</span>
           <span class="pg-sub">draft, history &amp; sign-off</span>
+        </button>
+        <button class="pg-tab" role="tab" data-goto="chatbot" aria-selected="false">
+          <span class="pg-n mono">4</span>
+          <span class="pg-lbl">Chatbot</span>
+          <span class="pg-sub">ask questions on evidence graph</span>
         </button>
       </nav>
 
@@ -326,8 +366,7 @@
             </div>
           </header>
           <!-- Explainability Dashboard Tabs (Task 5) -->
-          <div class="explain-tabs mono" style="display: flex; gap: 8px; margin: 4px 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; font-size: 11px;">
-            <span style="color: var(--faint); align-self: center; margin-right: auto;">EXPLAIN:</span>
+          <div class="explain-tabs mono" style="display: flex; gap: 8px; margin: 4px 12px 8px; border-bottom: 1px solid rgba(15, 23, 42, 0.05); padding-bottom: 6px; font-size: 11px; overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch;">
             <button class="tg active-tab" id="tab-heatmap" style="padding: 2px 6px; font-size: 10px;">Heatmap</button>
             <button class="tg" id="tab-importance" style="padding: 2px 6px; font-size: 10px;">Importance</button>
             <button class="tg" id="tab-counterfactual" style="padding: 2px 6px; font-size: 10px;">Counterfactual</button>
@@ -344,13 +383,14 @@
         </section>
 
         <section class="panel p-evidence" data-tilt id="panel-evidence" data-page="read">
-          <header><h4>Evidence &rarr; reasoning</h4><span class="p-hint mono">hover a node · counterfactuals live</span></header>
-          <div class="ev-stage">
-            <svg id="ev-svg" viewBox="0 0 560 420" preserveAspectRatio="xMidYMid meet"></svg>
+          <header><h4>Evidence Fusion Flow</h4><span class="p-hint mono">calibrated clinical reasoning trace</span></header>
+          <div class="ev-stage" style="height: auto; min-height: 380px; display: flex; align-items: center; justify-content: center; width: 100%;">
+            <svg id="ev-svg" style="display: none;"></svg>
             <div id="ev-tip" class="tip mono" hidden></div>
+            <div id="ev-flow-container" style="width: 100%; display: flex; flex-direction: column; gap: 16px;"></div>
           </div>
           <!-- Quantum Register Telemetry -->
-          <div id="quantum-entanglement-telemetry" class="mono" style="display: none; border-top: 1px solid rgba(255,255,255,0.08); padding: 8px 12px; font-size: 11px; color: var(--faint);">
+          <div id="quantum-entanglement-telemetry" class="mono" style="display: none; border-top: 1px solid rgba(15, 23, 42, 0.08); padding: 8px 12px; font-size: 11px; color: var(--faint);">
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
               <span>Quantum Register Entropy:</span>
               <span><b id="q-entropy" style="color: #8b7cf7;">—</b> bits (shift: <b id="q-entropy-shift">—</b>)</span>
@@ -359,14 +399,14 @@
               <span>Differential Entanglement:</span>
               <span><b id="q-coupling" style="color: #4be1c3;">—</b> / <b id="q-baseline-coupling">—</b> baseline</span>
             </div>
-            <div id="qae-telemetry-row" style="display: none; justify-content: space-between; margin-bottom: 4px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 4px;">
+            <div id="qae-telemetry-row" style="display: none; justify-content: space-between; margin-bottom: 4px; border-top: 1px dashed rgba(15, 23, 42, 0.05); padding-top: 4px;">
               <span>Quantum Autoencoder (QAE):</span>
               <span style="color: #4be1c3; font-weight: bold;">ACTIVE (1024D &rarr; 8D)</span>
             </div>
-            <!-- QBN row removed: QuantumBayesianNetwork is not constructed anywhere
-                 on the serving path, so a row reading "ACTIVE (6 QUBITS)" could only
-                 ever have announced a component that did not run. Restore it together
-                 with a QBN that is actually wired into the reasoner. -->
+            <div id="qbn-telemetry-row" style="display: none; justify-content: space-between;">
+              <span>QBN posterior refinement:</span>
+              <span style="color: #8b7cf7; font-weight: bold;">ACTIVE (6 QUBITS)</span>
+            </div>
           </div>
         </section>
 
@@ -419,7 +459,7 @@
           </div>
 
           <!-- NeuroInsight Sub-panel (Task 3) -->
-          <div class="nv-insight-container" id="nv-insight-container" style="display: flex; gap: 14px; border-top: 1px solid rgba(255,255,255,0.08); margin-top: 14px; padding-top: 14px;">
+          <div class="nv-insight-container" id="nv-insight-container" style="display: flex; gap: 14px; border-top: 1px solid rgba(15, 23, 42, 0.08); margin-top: 14px; padding-top: 14px;">
               <div class="nv-insight-list-pane" style="flex: 1; min-width: 220px; display: flex; flex-direction: column;">
                   <h5 class="mono" style="color: var(--dim); margin-bottom: 8px; font-size: 11.5px; font-weight: bold; letter-spacing: 0.05em; text-transform: uppercase;">AURA NeuroInsight</h5>
                   <div class="mono" id="nv-insight-summary" style="font-size: 11px; color: var(--faint); margin-bottom: 8px;">Counting lesions...</div>
@@ -427,47 +467,47 @@
                       <div style="color: var(--faint); font-size: 12px; font-style: italic;">No study loaded</div>
                   </div>
                   <!-- Quantum Subtype Analysis -->
-                  <div id="nv-quantum-subtype-panel" class="mono" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08);">
+                  <div id="nv-quantum-subtype-panel" class="mono" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(15, 23, 42, 0.08);">
                       <h5 style="color: #8b7cf7; margin-bottom: 8px; font-size: 11.5px; font-weight: bold; letter-spacing: 0.05em; text-transform: uppercase;">Quantum Subtype (QKL)</h5>
                       <div style="display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--dim);">
                           <div style="display: flex; justify-content: space-between;">
-                              <span>Glioma:</span> <span id="qkl-glioma" style="color: #fff; font-weight: bold;">—</span>
+                              <span>Glioma:</span> <span id="qkl-glioma" style="color: var(--ink); font-weight: bold;">—</span>
                           </div>
                           <div style="display: flex; justify-content: space-between;">
-                              <span>Meningioma:</span> <span id="qkl-meningioma" style="color: #fff; font-weight: bold;">—</span>
+                              <span>Meningioma:</span> <span id="qkl-meningioma" style="color: var(--ink); font-weight: bold;">—</span>
                           </div>
                           <div style="display: flex; justify-content: space-between;">
-                              <span>Metastasis:</span> <span id="qkl-metastasis" style="color: #fff; font-weight: bold;">—</span>
+                              <span>Metastasis:</span> <span id="qkl-metastasis" style="color: var(--ink); font-weight: bold;">—</span>
                           </div>
                       </div>
                   </div>
               </div>
-              <div class="nv-insight-detail-pane" id="nv-insight-detail-pane" style="flex: 2; border-left: 1px solid rgba(255,255,255,0.08); padding-left: 14px; font-family: var(--mono); font-size: 12px; display: none;">
+              <div class="nv-insight-detail-pane" id="nv-insight-detail-pane" style="flex: 2; border-left: 1px solid rgba(15, 23, 42, 0.08); padding-left: 14px; font-family: var(--mono); font-size: 12px; display: none;">
                   <h5 id="nv-insight-lesion-title" style="color: #8b7cf7; font-weight: bold; margin-bottom: 8px; font-size: 11.5px; text-transform: uppercase;">LESION DETAILS</h5>
                   <div class="nv-insight-metrics-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 14px; margin-bottom: 12px;">
                       <div>
-                          <span style="color: var(--faint);">Volume:</span> <span id="nv-insight-volume" style="color: #fff; font-weight: bold;">—</span>
+                          <span style="color: var(--faint);">Volume:</span> <span id="nv-insight-volume" style="color: var(--ink); font-weight: bold;">—</span>
                       </div>
                       <div>
-                          <span style="color: var(--faint);">Voxel Count:</span> <span id="nv-insight-voxels" style="color: #fff; font-weight: bold;">—</span>
+                          <span style="color: var(--faint);">Voxel Count:</span> <span id="nv-insight-voxels" style="color: var(--ink); font-weight: bold;">—</span>
                       </div>
                       <div>
-                          <span style="color: var(--faint);">Max Diameter:</span> <span id="nv-insight-diameter" style="color: #fff; font-weight: bold;">—</span>
+                          <span style="color: var(--faint);">Max Diameter:</span> <span id="nv-insight-diameter" style="color: var(--ink); font-weight: bold;">—</span>
                       </div>
                       <div>
-                          <span style="color: var(--faint);">Dimensions:</span> <span id="nv-insight-dimensions" style="color: #fff; font-weight: bold;">—</span>
+                          <span style="color: var(--faint);">Dimensions:</span> <span id="nv-insight-dimensions" style="color: var(--ink); font-weight: bold;">—</span>
                       </div>
                       <div>
-                          <span style="color: var(--faint);">Centroid Voxel:</span> <span id="nv-insight-coords-vox" style="color: #fff; font-weight: bold;">—</span>
+                          <span style="color: var(--faint);">Centroid Voxel:</span> <span id="nv-insight-coords-vox" style="color: var(--ink); font-weight: bold;">—</span>
                       </div>
                       <div>
-                          <span style="color: var(--faint);">Centroid MNI:</span> <span id="nv-insight-coords-mni" style="color: #fff; font-weight: bold;">—</span>
+                          <span style="color: var(--faint);">Centroid MNI:</span> <span id="nv-insight-coords-mni" style="color: var(--ink); font-weight: bold;">—</span>
                       </div>
                       <div>
                           <span style="color: var(--faint);">Classification Conf:</span> <span id="nv-insight-confidence" style="color: #4be1c3; font-weight: bold;">—</span>
                       </div>
                       <div>
-                          <span style="color: var(--faint);">Surface Area:</span> <span id="nv-insight-surface-area" style="color: #fff; font-weight: bold;">—</span>
+                          <span style="color: var(--faint);">Surface Area:</span> <span id="nv-insight-surface-area" style="color: var(--ink); font-weight: bold;">—</span>
                       </div>
                   </div>
                   <div class="nv-insight-anatomy" style="margin-bottom: 12px; background: rgba(139,124,247,0.06); padding: 8px; border-radius: 6px; border: 1px dashed rgba(139,124,247,0.2);">
@@ -476,17 +516,17 @@
                           <span style="font-size: 9px; opacity: 0.8; letter-spacing: 0.05em; background: rgba(139,124,247,0.15); padding: 2px 6px; border-radius: 4px;" id="nv-insight-disclaimer">Approximate Anatomical Localization</span>
                       </div>
                       <div style="display: flex; flex-direction: column; gap: 4px; font-size: 11.5px;">
-                          <div><span style="color: var(--faint);">Approximate Lobe:</span> <span id="nv-insight-lobe" style="color: #fff; font-weight: bold;">—</span></div>
-                          <div><span style="color: var(--faint);">Nearby Structures:</span> <span id="nv-insight-structure" style="color: #fff; font-weight: bold;">—</span></div>
-                          <div><span style="color: var(--faint);">Functional Areas:</span> <span id="nv-insight-functional" style="color: #fff; font-weight: bold;">—</span></div>
+                          <div><span style="color: var(--faint);">Approximate Lobe:</span> <span id="nv-insight-lobe" style="color: var(--ink); font-weight: bold;">—</span></div>
+                          <div><span style="color: var(--faint);">Nearby Structures:</span> <span id="nv-insight-structure" style="color: var(--ink); font-weight: bold;">—</span></div>
+                          <div><span style="color: var(--faint);">Functional Areas:</span> <span id="nv-insight-functional" style="color: var(--ink); font-weight: bold;">—</span></div>
                       </div>
                   </div>
-                  <div class="nv-insight-explain" style="background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); font-size: 11.5px; display: flex; justify-content: space-between; gap: 14px;">
+                  <div class="nv-insight-explain" style="background: rgba(15, 23, 42, 0.02); padding: 8px; border-radius: 6px; border: 1px solid rgba(15, 23, 42, 0.05); font-size: 11.5px; display: flex; justify-content: space-between; gap: 14px;">
                       <div><span style="color: var(--faint);">Spatial Saliency weight:</span> <span id="nv-insight-saliency" style="color: #4be1c3; font-weight: bold;">—</span></div>
                       <div><span style="color: var(--faint);">Softmax Uncertainty:</span> <span id="nv-insight-uncertainty" style="color: #ff6b6b; font-weight: bold;">—</span></div>
                   </div>
               </div>
-              <div class="nv-insight-no-selection mono" id="nv-insight-no-selection" style="flex: 2; display: flex; align-items: center; justify-content: center; border-left: 1px solid rgba(255,255,255,0.08); padding-left: 14px; font-size: 11.5px; color: var(--faint); min-height: 150px; text-align: center;">
+              <div class="nv-insight-no-selection mono" id="nv-insight-no-selection" style="flex: 2; display: flex; align-items: center; justify-content: center; border-left: 1px solid rgba(15, 23, 42, 0.08); padding-left: 14px; font-size: 11.5px; color: var(--faint); min-height: 150px; text-align: center;">
                   Select a lesion from the list or click directly on the segmented tumor in any slice canvas to explore exact mathematical measurements and registered anatomical localization.
               </div>
           </div>
@@ -522,8 +562,8 @@
             <h3 style="color: #ff5d5d; margin: 0 0 10px 0; font-family: var(--mono); font-size: 16px; font-weight: bold; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px;">
               ⚠️ CLINICAL SAFETY BREACH
             </h3>
-            <p id="safety-overlay-msg" style="color: #fff; margin: 0 0 15px 0; font-size: 12.5px; font-family: var(--sans); line-height: 1.4;"></p>
-            <div id="safety-mitigation-checklist" style="text-align: left; color: #e2e8f0; font-size: 12px; font-family: var(--mono); background: rgba(0,0,0,0.6); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,93,93,0.3); width: 90%;">
+            <p id="safety-overlay-msg" style="color: var(--ink); margin: 0 0 15px 0; font-size: 12.5px; font-family: var(--sans); line-height: 1.4;"></p>
+            <div id="safety-mitigation-checklist" style="text-align: left; color: var(--ink); font-size: 12px; font-family: var(--mono); background: rgba(0,0,0,0.6); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,93,93,0.3); width: 90%;">
             </div>
           </div>
           <header><h4>Grounded report</h4>
@@ -550,39 +590,39 @@
             <div class="evo-flow" id="evo-flow" style="display: flex; justify-content: space-between; align-items: center; position: relative;">
               <div class="evo-node" id="node-vision" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 <div class="evo-circle" style="width: 48px; height: 48px; border-radius: 50%; background: rgba(75, 225, 195, 0.1); border: 2px solid #4be1c3; display: flex; align-items: center; justify-content: center; color: #4be1c3; font-weight: bold; font-family: var(--mono); box-shadow: 0 0 12px rgba(75, 225, 195, 0.2);">VIS</div>
-                <span class="mono" style="font-size: 11px; color: #fff;">Vision</span>
+                <span class="mono" style="font-size: 11px; color: var(--ink);">Vision</span>
                 <span class="mono" id="val-vision" style="font-size: 10px; color: var(--faint);">—</span>
               </div>
               <div class="evo-line" style="flex: 1; height: 2px; background: linear-gradient(to right, #4be1c3, #8b7cf7); margin: 0 10px; opacity: 0.5; position: relative; top: -14px;"></div>
               
               <div class="evo-node" id="node-fusion" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 <div class="evo-circle" style="width: 48px; height: 48px; border-radius: 50%; background: rgba(139, 124, 247, 0.1); border: 2px solid #8b7cf7; display: flex; align-items: center; justify-content: center; color: #8b7cf7; font-weight: bold; font-family: var(--mono); box-shadow: 0 0 12px rgba(139, 124, 247, 0.2);">FUS</div>
-                <span class="mono" style="font-size: 11px; color: #fff;">Fusion</span>
+                <span class="mono" style="font-size: 11px; color: var(--ink);">Fusion</span>
                 <span class="mono" id="val-fusion" style="font-size: 10px; color: var(--faint);">—</span>
               </div>
               <div class="evo-line" style="flex: 1; height: 2px; background: linear-gradient(to right, #8b7cf7, #f77ca3); margin: 0 10px; opacity: 0.5; position: relative; top: -14px;"></div>
               
               <div class="evo-node" id="node-reasoning" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 <div class="evo-circle" style="width: 48px; height: 48px; border-radius: 50%; background: rgba(247, 124, 163, 0.1); border: 2px solid #f77ca3; display: flex; align-items: center; justify-content: center; color: #f77ca3; font-weight: bold; font-family: var(--mono); box-shadow: 0 0 12px rgba(247, 124, 163, 0.2);">REA</div>
-                <span class="mono" style="font-size: 11px; color: #fff;">Reasoning</span>
+                <span class="mono" style="font-size: 11px; color: var(--ink);">Reasoning</span>
                 <span class="mono" id="val-reasoning" style="font-size: 10px; color: var(--faint);">—</span>
               </div>
               <div class="evo-line" style="flex: 1; height: 2px; background: linear-gradient(to right, #f77ca3, #ffd166); margin: 0 10px; opacity: 0.5; position: relative; top: -14px;"></div>
               
               <div class="evo-node" id="node-calibration" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 <div class="evo-circle" style="width: 48px; height: 48px; border-radius: 50%; background: rgba(253, 209, 102, 0.1); border: 2px solid #ffd166; display: flex; align-items: center; justify-content: center; color: #ffd166; font-weight: bold; font-family: var(--mono); box-shadow: 0 0 12px rgba(253, 209, 102, 0.2);">CAL</div>
-                <span class="mono" style="font-size: 11px; color: #fff;">Calibration</span>
+                <span class="mono" style="font-size: 11px; color: var(--ink);">Calibration</span>
                 <span class="mono" id="val-calibration" style="font-size: 10px; color: var(--faint);">—</span>
               </div>
               <div class="evo-line" style="flex: 1; height: 2px; background: linear-gradient(to right, #ffd166, #4be1c3); margin: 0 10px; opacity: 0.5; position: relative; top: -14px;"></div>
               
               <div class="evo-node" id="node-final" style="display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                 <div class="evo-circle" style="width: 48px; height: 48px; border-radius: 50%; background: rgba(75, 225, 195, 0.15); border: 2px solid #4be1c3; display: flex; align-items: center; justify-content: center; color: #4be1c3; font-weight: bold; font-family: var(--mono); box-shadow: 0 0 16px rgba(75, 225, 195, 0.3);">DX</div>
-                <span class="mono" style="font-size: 11px; color: #fff;">Final</span>
+                <span class="mono" style="font-size: 11px; color: var(--ink);">Final</span>
                 <span class="mono" id="val-final" style="font-size: 10px; color: var(--faint);">—</span>
               </div>
             </div>
-            <div id="evo-tooltip-area" class="mono" style="margin-top: 16px; padding: 12px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; font-size: 11.5px; line-height: 1.4; color: var(--dim); display: none;">
+            <div id="evo-tooltip-area" class="mono" style="margin-top: 16px; padding: 12px; background: rgba(15, 23, 42, 0.02); border: 1px solid rgba(15, 23, 42, 0.05); border-radius: 8px; font-size: 11.5px; line-height: 1.4; color: var(--dim); display: none;">
             </div>
           </div>
         </section>
@@ -594,7 +634,7 @@
             <span class="p-hint mono">Compare historical studies & track volumetric trends</span>
           </header>
           <div style="display: grid; grid-template-columns: 220px 1fr 280px; gap: 16px; padding: 12px;">
-            <div class="long-sidebar mono" style="border-right: 1px solid rgba(255,255,255,0.08); padding-right: 12px; display: flex; flex-direction: column;">
+            <div class="long-sidebar mono" style="border-right: 1px solid rgba(15, 23, 42, 0.08); padding-right: 12px; display: flex; flex-direction: column;">
               <h5 style="color: var(--dim); margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase;">Patient History</h5>
               <div id="long-studies-list" style="max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
               </div>
@@ -606,19 +646,19 @@
               <div style="height: 180px; position: relative;">
                 <canvas id="long-trend-canvas" style="width: 100%; height: 100%;"></canvas>
               </div>
-              <div id="long-timeline-flow" class="mono" style="display: flex; gap: 12px; font-size: 11px; overflow-x: auto; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,0.05);">
+              <div id="long-timeline-flow" class="mono" style="display: flex; gap: 12px; font-size: 11px; overflow-x: auto; padding-top: 6px; border-top: 1px dashed rgba(15, 23, 42, 0.05);">
               </div>
             </div>
-            <div class="long-details mono" style="border-left: 1px solid rgba(255,255,255,0.08); padding-left: 12px;">
+            <div class="long-details mono" style="border-left: 1px solid rgba(15, 23, 42, 0.08); padding-left: 12px;">
               <h5 style="color: #8b7cf7; margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase;">Growth vs Regression</h5>
               <div id="long-comparison-metrics" style="display: flex; flex-direction: column; gap: 8px;">
               </div>
-              <div id="long-changed-regions" style="margin-top: 12px; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); font-size: 11px;">
+              <div id="long-changed-regions" style="margin-top: 12px; background: rgba(15, 23, 42, 0.02); padding: 8px; border-radius: 6px; border: 1px solid rgba(15, 23, 42, 0.05); font-size: 11px;">
                 No comparison run yet. Select a prior scan and click "Compare Study".
               </div>
             </div>
           </div>
-          <div id="long-comparison-report" class="markdown-body" style="margin: 14px 12px 12px 12px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; line-height: 1.5; color: #e2e8f0; display: none;">
+          <div id="long-comparison-report" class="markdown-body" style="margin: 14px 12px 12px 12px; padding-top: 14px; border-top: 1px solid rgba(15, 23, 42, 0.08); font-size: 12px; line-height: 1.5; color: var(--ink); display: none;">
           </div>
         </section>
 
@@ -639,12 +679,88 @@
         <!-- Active Diagnosis Agent (sequential EIG-driven testing) -->
         <section class="panel p-agent" data-tilt id="panel-agent" data-page="report" style="grid-column: span 12; display: none;">
           <header>
-            <h4>⚡ Active Diagnosis Agent</h4>
+            <h4>Active Diagnosis Agent</h4>
             <span class="p-hint mono">sequential decisions · orders the test that resolves the most bits · commits or abstains</span>
           </header>
           <div style="padding: 12px;">
             <div id="agent-summary" class="mono" style="margin-bottom: 14px;"></div>
             <div id="agent-steps" style="display: flex; flex-direction: column; gap: 12px;"></div>
+          </div>
+        </section>
+
+        <!-- Chatbot Page Section -->
+        <section class="panel p-chatbot" data-tilt id="panel-chatbot" data-page="chatbot" style="grid-column: span 12; display: flex; flex-direction: column; gap: 20px;">
+          <header style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(15, 23, 42, 0.08); padding-bottom: 12px;">
+            <div>
+              <h4 style="margin: 0;">AURA Clinical Chatbot</h4>
+              <span class="p-hint mono">Grounded in Conformal Evidence Graph · Llama 3.1 8B</span>
+            </div>
+            <span style="font-family: var(--mono); font-size: 11px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 6px; background: rgba(75, 225, 195, 0.08); border: 1px solid rgba(75, 225, 195, 0.25); color: var(--cyan);">
+              <span style="display: inline-block; width: 6px; height: 6px; background: #4be1c3; border-radius: 50%;"></span>
+              Connected
+            </span>
+          </header>
+
+          <div class="chatbot-layout" style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 24px; min-height: 480px; align-items: stretch;">
+            <!-- Left Panel: Context & Graph View -->
+            <div style="background: rgba(15, 23, 42, 0.02); border: 1px solid var(--hair2); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 16px;">
+              <h5 class="mono" style="margin: 0; font-size: 12px; letter-spacing: 0.05em; color: var(--cyan); text-transform: uppercase;">Active Case Context</h5>
+              <p style="font-size: 12px; color: var(--dim); margin: 0; line-height: 1.4;">The chatbot answers questions by grounding its responses directly in this patient's serialized evidence graph.</p>
+              
+              <div id="chatbot-context-view" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; max-height: 400px; padding-right: 6px;">
+                <!-- Structured nodes will populate here -->
+                <div class="context-group">
+                  <div class="mono" style="font-size: 10.5px; color: var(--faint); margin-bottom: 6px; text-transform: uppercase;">Imaging Findings</div>
+                  <div id="chat-context-imaging" style="display: flex; flex-direction: column; gap: 6px;">
+                    <div style="font-size: 11.5px; color: var(--dim); font-style: italic;">No imaging findings loaded.</div>
+                  </div>
+                </div>
+                
+                <div class="context-group">
+                  <div class="mono" style="font-size: 10.5px; color: var(--faint); margin-bottom: 6px; text-transform: uppercase;">Lab Profiles</div>
+                  <div id="chat-context-labs" style="display: flex; flex-direction: column; gap: 6px;">
+                    <div style="font-size: 11.5px; color: var(--dim); font-style: italic;">No lab profiles loaded.</div>
+                  </div>
+                </div>
+                
+                <div class="context-group">
+                  <div class="mono" style="font-size: 10.5px; color: var(--faint); margin-bottom: 6px; text-transform: uppercase;">Relational Links</div>
+                  <div id="chat-context-links" style="display: flex; flex-direction: column; gap: 6px;">
+                    <div style="font-size: 11.5px; color: var(--dim); font-style: italic;">No relational links loaded.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Panel: Conversation interface -->
+            <div style="border: 1px solid var(--hair2); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; background: var(--bg2); box-shadow: 0 4px 16px rgba(15, 23, 42, 0.02);">
+              <!-- Chat logs -->
+              <div id="chat-messages-log" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; max-height: 380px; padding-right: 6px;">
+                <div style="background: rgba(75, 225, 195, 0.04); border: 1px solid rgba(75, 225, 195, 0.15); border-radius: 8px; padding: 10px 14px; align-self: flex-start; max-width: 90%; font-size: 12.5px; color: var(--ink); line-height: 1.5;">
+                  <strong>AURA Llama:</strong> Hello! I am your clinical reasoning assistant. I am fully grounded in this case's Conformal Evidence Graph. Ask me about the patient's findings, laboratory values, or the relational links supporting or refuting different diagnoses.
+                </div>
+              </div>
+
+              <!-- Chat Input & Quick Suggestion Chips -->
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <!-- Quick Chips -->
+                <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                  <button class="tg chat-chip-btn" data-query="Why was Pneumonia ruled out?" style="padding: 4px 10px; font-size: 11px; border-radius: 6px;">Why was Pneumonia ruled out?</button>
+                  <button class="tg chat-chip-btn" data-query="What clinical evidence supports Heart Failure?" style="padding: 4px 10px; font-size: 11px; border-radius: 6px;">What supports Heart Failure?</button>
+                  <button class="tg chat-chip-btn" data-query="Are there contradicting lab values in this case?" style="padding: 4px 10px; font-size: 11px; border-radius: 6px;">Any contradicting labs?</button>
+                </div>
+                
+                <!-- Input field -->
+                <form id="chatbot-panel-form" style="display: flex; gap: 8px;">
+                  <input type="text" id="chatbot-panel-input" placeholder="Type your query (e.g. 'Why is troponin supporting infarction?')...." 
+                         style="flex: 1; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--hair2); font-size: 13px; font-family: var(--sans); background: var(--bg2); color: var(--ink); box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);">
+                  <button type="submit" class="btn-core slim" style="padding: 12px 20px; border-radius: 8px; background: var(--cyan); color: #000; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                    Send
+                  </button>
+                </form>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -655,8 +771,8 @@
 
       <!-- MRI Intake Preview Modal -->
       <div id="mri-preview-modal" style="display: none; position: fixed; inset: 0; background: rgba(10, 10, 15, 0.9); z-index: 1000; backdrop-filter: blur(16px); align-items: center; justify-content: center; padding: 20px;">
-        <div style="background: rgba(22, 22, 33, 0.95); border: 1px solid rgba(139, 124, 247, 0.3); border-radius: 16px; width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.6); display: flex; flex-direction: column; padding: 24px; color: #e2e8f0; font-family: var(--sans);">
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px; margin-bottom: 20px;">
+        <div style="background: rgba(22, 22, 33, 0.95); border: 1px solid rgba(139, 124, 247, 0.3); border-radius: 16px; width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.6); display: flex; flex-direction: column; padding: 24px; color: var(--ink); font-family: var(--sans);">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(15, 23, 42, 0.08); padding-bottom: 16px; margin-bottom: 20px;">
             <h3 style="margin: 0; font-family: var(--mono); color: #8b7cf7; font-size: 20px; display: flex; align-items: center; gap: 8px;">
               🧠 AURA MRI Study Intake Preview
             </h3>
@@ -668,49 +784,49 @@
             <div style="flex: 1 1 350px; display: flex; flex-direction: column; gap: 10px;" class="mono">
               <h4 style="margin: 0 0 10px 0; color: #4be1c3; font-size: 14px; text-transform: uppercase;">Study Metadata</h4>
               
-              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 6px;">
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(15, 23, 42, 0.04); padding-bottom: 6px;">
                 <span style="color: var(--faint);">Patient ID:</span>
-                <span id="preview-patient-id" style="color: #fff; font-weight: bold;">—</span>
+                <span id="preview-patient-id" style="color: var(--ink); font-weight: bold;">—</span>
               </div>
-              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 6px;">
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(15, 23, 42, 0.04); padding-bottom: 6px;">
                 <span style="color: var(--faint);">Study ID:</span>
-                <span id="preview-study-id" style="color: #fff; font-weight: bold;">—</span>
+                <span id="preview-study-id" style="color: var(--ink); font-weight: bold;">—</span>
               </div>
-              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 6px;">
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(15, 23, 42, 0.04); padding-bottom: 6px;">
                 <span style="color: var(--faint);">Sequence Type:</span>
-                <span id="preview-seq-type" style="color: #fff;">—</span>
+                <span id="preview-seq-type" style="color: var(--ink);">—</span>
               </div>
-              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 6px;">
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(15, 23, 42, 0.04); padding-bottom: 6px;">
                 <span style="color: var(--faint);">Detected Sequences:</span>
                 <span id="preview-modalities" style="color: #4be1c3; font-weight: bold;">—</span>
               </div>
-              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 6px;">
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(15, 23, 42, 0.04); padding-bottom: 6px;">
                 <span style="color: var(--faint);">Channel Order Source:</span>
-                <span id="preview-order-source" style="color: #fff; font-size: 11.5px;">—</span>
+                <span id="preview-order-source" style="color: var(--ink); font-size: 11.5px;">—</span>
               </div>
-              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 6px;">
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(15, 23, 42, 0.04); padding-bottom: 6px;">
                 <span style="color: var(--faint);">Dimensions:</span>
                 <span id="preview-dims" style="color: #4be1c3; font-weight: bold;">—</span>
               </div>
-              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 6px;">
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(15, 23, 42, 0.04); padding-bottom: 6px;">
                 <span style="color: var(--faint);">Voxel Spacing:</span>
-                <span id="preview-spacing" style="color: #fff;">—</span>
+                <span id="preview-spacing" style="color: var(--ink);">—</span>
               </div>
-              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 6px;">
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(15, 23, 42, 0.04); padding-bottom: 6px;">
                 <span style="color: var(--faint);">Orientation:</span>
-                <span id="preview-orientation" style="color: #fff;">—</span>
+                <span id="preview-orientation" style="color: var(--ink);">—</span>
               </div>
-              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 6px;">
+              <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(15, 23, 42, 0.04); padding-bottom: 6px;">
                 <span style="color: var(--faint);">Number of Slices:</span>
-                <span id="preview-slices" style="color: #fff;">—</span>
+                <span id="preview-slices" style="color: var(--ink);">—</span>
               </div>
-              <div style="display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 6px;">
+              <div style="display: flex; flex-direction: column; gap: 4px; border-bottom: 1px solid rgba(15, 23, 42, 0.04); padding-bottom: 6px;">
                 <span style="color: var(--faint);">Affine Matrix Summary:</span>
                 <span id="preview-affine" style="color: #a0aec0; font-size: 11px; word-break: break-all;">—</span>
               </div>
               <div style="display: flex; justify-content: space-between;">
                 <span style="color: var(--faint);">Scanner Metadata:</span>
-                <span id="preview-scanner" style="color: #fff; text-align: right; font-size: 11.5px;">—</span>
+                <span id="preview-scanner" style="color: var(--ink); text-align: right; font-size: 11.5px;">—</span>
               </div>
             </div>
             
@@ -718,19 +834,19 @@
             <div style="flex: 2 1 450px; display: flex; flex-direction: column; gap: 16px;">
               <h4 style="margin: 0; color: #4be1c3; font-size: 14px; text-transform: uppercase; font-family: var(--mono);">Sequence Previews</h4>
               <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
-                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                <div style="background: rgba(15, 23, 42, 0.02); border: 1px solid rgba(15, 23, 42, 0.05); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
                   <span style="font-family: var(--mono); font-size: 11px; color: #ffd166;">FLAIR</span>
                   <img id="thumb-flair" style="width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 4px; background: #000;" alt="FLAIR Preview">
                 </div>
-                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                <div style="background: rgba(15, 23, 42, 0.02); border: 1px solid rgba(15, 23, 42, 0.05); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
                   <span style="font-family: var(--mono); font-size: 11px; color: #ffd166;">T1</span>
                   <img id="thumb-t1" style="width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 4px; background: #000;" alt="T1 Preview">
                 </div>
-                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                <div style="background: rgba(15, 23, 42, 0.02); border: 1px solid rgba(15, 23, 42, 0.05); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
                   <span style="font-family: var(--mono); font-size: 11px; color: #ffd166;">T1CE</span>
                   <img id="thumb-t1ce" style="width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 4px; background: #000;" alt="T1ce Preview">
                 </div>
-                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                <div style="background: rgba(15, 23, 42, 0.02); border: 1px solid rgba(15, 23, 42, 0.05); border-radius: 8px; padding: 8px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
                   <span style="font-family: var(--mono); font-size: 11px; color: #ffd166;">T2</span>
                   <img id="thumb-t2" style="width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 4px; background: #000;" alt="T2 Preview">
                 </div>
@@ -738,17 +854,17 @@
             </div>
           </div>
           
-          <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px; margin-top: 20px;">
+          <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid rgba(15, 23, 42, 0.08); padding-top: 16px; margin-top: 20px;">
             <button id="btn-cancel-preview" class="tg" style="font-family: var(--mono); font-size: 13.5px; padding: 8px 16px;">Cancel</button>
-            <button id="btn-run-analysis" class="btn-core" style="background: linear-gradient(135deg, #8b7cf7 0%, #5d4be1 100%); border-color: #8b7cf7; font-family: var(--mono); font-size: 13.5px; padding: 8px 24px; border-radius: 8px; box-shadow: 0 4px 15px rgba(139, 124, 247, 0.4); cursor: pointer; color:#fff;">Analyze Study</button>
+            <button id="btn-run-analysis" class="btn-core" style="background: linear-gradient(135deg, #8b7cf7 0%, #5d4be1 100%); border-color: #8b7cf7; font-family: var(--mono); font-size: 13.5px; padding: 8px 24px; border-radius: 8px; box-shadow: 0 4px 15px rgba(139, 124, 247, 0.4); cursor: pointer; color: var(--ink);">Analyze Study</button>
           </div>
         </div>
       </div>
 
   <!-- Admin Audit Log Viewer Modal (Task 6) -->
   <div id="audit-modal" style="display: none; position: fixed; inset: 0; background: rgba(10, 10, 15, 0.85); z-index: 1000; backdrop-filter: blur(12px); align-items: center; justify-content: center; padding: 20px;">
-    <div style="background: rgba(22, 22, 33, 0.95); border: 1px solid rgba(75, 225, 195, 0.3); border-radius: 16px; width: 100%; max-width: 800px; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.6); display: flex; flex-direction: column; padding: 24px; color: #e2e8f0; font-family: var(--sans);">
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 16px; margin-bottom: 20px;">
+    <div style="background: rgba(22, 22, 33, 0.95); border: 1px solid rgba(75, 225, 195, 0.3); border-radius: 16px; width: 100%; max-width: 800px; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.6); display: flex; flex-direction: column; padding: 24px; color: var(--ink); font-family: var(--sans);">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(15, 23, 42, 0.08); padding-bottom: 16px; margin-bottom: 20px;">
         <h3 style="margin: 0; font-family: var(--mono); color: #4be1c3; font-size: 18px; display: flex; align-items: center; gap: 8px;">
           🛡️ AURA System Audit Log Viewer
         </h3>
@@ -757,7 +873,7 @@
       <div style="flex: 1; overflow-y: auto; max-height: 50vh;">
         <table style="width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 11.5px; text-align: left;">
           <thead>
-            <tr style="border-bottom: 2px solid rgba(255,255,255,0.08); color: var(--faint);">
+            <tr style="border-bottom: 2px solid rgba(15, 23, 42, 0.08); color: var(--faint);">
               <th style="padding: 8px 4px;">TIMESTAMP</th>
               <th style="padding: 8px 4px;">ACTOR</th>
               <th style="padding: 8px 4px;">ACTION</th>
@@ -775,10 +891,138 @@
 
 <div id="toast" class="mono" hidden></div>
 
+<!-- Clinical-First Patient Intake Modal -->
+<div id="intake-modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.35); z-index: 1100; backdrop-filter: blur(12px); align-items: center; justify-content: center; padding: 20px;">
+  <div style="background: var(--bg2); border: 1px solid var(--hair2); border-radius: 16px; width: 100%; max-width: 760px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08); display: flex; flex-direction: column; padding: 24px; color: var(--ink); font-family: var(--sans);">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(15, 23, 42, 0.08); padding-bottom: 16px; margin-bottom: 20px;">
+      <h3 style="margin: 0; font-family: var(--mono); color: var(--brand-green); font-size: 18px; display: flex; align-items: center; gap: 8px;">
+        Patient Intake — create baseline case
+      </h3>
+      <button id="btn-close-intake" type="button" class="tg" style="font-family: var(--mono); font-size: 12px; padding: 4px 10px; cursor: pointer;">Close</button>
+    </div>
+
+    <div id="intake-form-container">
+      <form id="intake-form">
+        <div style="display: flex; flex-direction: column; gap: 18px;">
+
+          <section>
+            <div style="font-family: var(--mono); font-size: 11px; color: var(--brand-green); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; font-weight: bold;">Demographics</div>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+              <label style="display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--dim);">Age band
+                <select id="in-age-band" style="background: var(--bg); border:1px solid var(--hair2); border-radius:6px; padding:8px; font-family:var(--mono); font-size:12px; color:var(--ink);">
+                  <option value="unknown">unknown</option>
+                  <option value="18-40">18-40</option>
+                  <option value="40-65">40-65</option>
+                  <option value="65+">65+</option>
+                </select>
+              </label>
+              <label style="display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--dim);">Sex
+                <select id="in-sex" style="background: var(--bg); border:1px solid var(--hair2); border-radius:6px; padding:8px; font-family:var(--mono); font-size:12px; color:var(--ink);">
+                  <option value="unknown">unknown</option>
+                  <option value="female">female</option>
+                  <option value="male">male</option>
+                  <option value="other">other</option>
+                </select>
+              </label>
+              <label style="display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--dim);">Age (years, optional)
+                <input id="in-age" type="number" min="0" max="120" placeholder="—" style="background: var(--bg); border:1px solid var(--hair2); border-radius:6px; padding:8px; font-family:var(--mono); font-size:12px; color:var(--ink);">
+              </label>
+            </div>
+          </section>
+
+          <section>
+            <div style="font-family: var(--mono); font-size: 11px; color: var(--brand-green); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; font-weight: bold;">Risk factors</div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 12.5px; color: var(--dim);">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="in-risk-smoker" style="accent-color:var(--brand-green);"> Smoker</label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="in-risk-fever" style="accent-color:var(--brand-green);"> Fever</label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="in-risk-cancer" style="accent-color:var(--brand-green);"> Prior cancer</label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="in-risk-immuno" style="accent-color:var(--brand-green);"> Immunocompromised</label>
+            </div>
+          </section>
+
+          <section>
+            <div style="font-family: var(--mono); font-size: 11px; color: var(--brand-green); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; font-weight: bold;">Symptoms</div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 12.5px; color: var(--dim);">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="in-symp-dyspnea" style="accent-color:var(--brand-green);"> Dyspnea</label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="in-symp-cough" style="accent-color:var(--brand-green);"> Productive cough</label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="in-symp-fever" style="accent-color:var(--brand-green);"> Fever</label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="in-symp-chest-pain" style="accent-color:var(--brand-green);"> Pleuritic chest pain</label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="in-symp-hemoptysis" style="accent-color:var(--brand-green);"> Hemoptysis</label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="in-symp-orthopnea" style="accent-color:var(--brand-green);"> Orthopnea</label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="in-symp-acute" style="accent-color:var(--brand-green);"> Acute onset</label>
+            </div>
+          </section>
+
+          <section>
+            <div style="font-family: var(--mono); font-size: 11px; color: var(--brand-green); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; font-weight: bold;">Labs (optional — leave blank if not resulted)</div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 11.5px; color: var(--dim);">
+              <label style="display:flex; flex-direction:column; gap:4px;">WBC (x10⁹/L)<input id="in-lab-wbc" type="number" step="0.1" style="background: var(--bg); border:1px solid var(--hair2); border-radius:6px; padding:7px; font-family:var(--mono); font-size:11.5px; color:var(--ink);"></label>
+              <label style="display:flex; flex-direction:column; gap:4px;">Neutrophil %<input id="in-lab-neut" type="number" step="0.1" style="background: var(--bg); border:1px solid var(--hair2); border-radius:6px; padding:7px; font-family:var(--mono); font-size:11.5px; color:var(--ink);"></label>
+              <label style="display:flex; flex-direction:column; gap:4px;">CRP (mg/L)<input id="in-lab-crp" type="number" step="0.1" style="background: var(--bg); border:1px solid var(--hair2); border-radius:6px; padding:7px; font-family:var(--mono); font-size:11.5px; color:var(--ink);"></label>
+              <label style="display:flex; flex-direction:column; gap:4px;">Procalcitonin<input id="in-lab-pct" type="number" step="0.01" style="background: var(--bg); border:1px solid var(--hair2); border-radius:6px; padding:7px; font-family:var(--mono); font-size:11.5px; color:var(--ink);"></label>
+              <label style="display:flex; flex-direction:column; gap:4px;">BNP (pg/mL)<input id="in-lab-bnp" type="number" step="1" style="background: var(--bg); border:1px solid var(--hair2); border-radius:6px; padding:7px; font-family:var(--mono); font-size:11.5px; color:var(--ink);"></label>
+              <label style="display:flex; flex-direction:column; gap:4px;">Troponin (ng/L)<input id="in-lab-trop" type="number" step="1" style="background: var(--bg); border:1px solid var(--hair2); border-radius:6px; padding:7px; font-family:var(--mono); font-size:11.5px; color:var(--ink);"></label>
+              <label style="display:flex; flex-direction:column; gap:4px;">D-dimer (ng/mL)<input id="in-lab-dimer" type="number" step="1" style="background: var(--bg); border:1px solid var(--hair2); border-radius:6px; padding:7px; font-family:var(--mono); font-size:11.5px; color:var(--ink);"></label>
+              <label style="display:flex; flex-direction:column; gap:4px;">SpO₂ (%)<input id="in-lab-spo2" type="number" step="1" min="0" max="100" style="background: var(--bg); border:1px solid var(--hair2); border-radius:6px; padding:7px; font-family:var(--mono); font-size:11.5px; color:var(--ink);"></label>
+            </div>
+          </section>
+
+          <section>
+            <div style="font-family: var(--mono); font-size: 11px; color: var(--brand-green); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; font-weight: bold;">History</div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 12.5px; color: var(--dim);">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="in-hist-copd" style="accent-color:var(--brand-green);"> COPD</label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="in-hist-hf" style="accent-color:var(--brand-green);"> Heart failure</label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="in-hist-cancer" style="accent-color:var(--brand-green);"> Prior cancer</label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="in-hist-surgery" style="accent-color:var(--brand-green);"> Recent surgery</label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;"><input type="checkbox" id="in-hist-immuno" style="accent-color:var(--brand-green);"> Immunosuppression</label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px;">Smoking (pack-years)<input id="in-hist-packs" type="number" step="0.5" min="0" style="width:70px; background: var(--bg); border:1px solid var(--hair2); border-radius:6px; padding:5px 7px; font-family:var(--mono); font-size:11.5px; color:var(--ink);"></label>
+            </div>
+          </section>
+
+          <section>
+            <div style="font-family: var(--mono); font-size: 11px; color: var(--brand-green); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; font-weight: bold;">Clinical notes</div>
+            <textarea id="in-clinical-notes" rows="3" placeholder="optional free-text context" style="width:100%; box-sizing:border-box; background: var(--bg); border:1px solid var(--hair2); border-radius:6px; padding:10px; font-family:var(--sans); font-size:12.5px; color:var(--ink); resize:vertical;"></textarea>
+          </section>
+
+          <section style="background: rgba(15, 23, 42, 0.02); border: 1px dashed var(--hair2); border-radius: 12px; padding: 16px;">
+            <div style="font-family: var(--mono); font-size: 11px; color: var(--brand-green); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 12px; font-weight: bold;">Imaging Scan Selection</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: end;">
+              <label style="display:flex; flex-direction:column; gap:4px; font-size:12px; color:var(--dim);">Planned Modality
+                <select id="in-modality" style="background: var(--bg2); border:1px solid var(--hair2); border-radius:6px; padding:8px; font-family:var(--mono); font-size:12px; color:var(--ink);">
+                  <option value="chest_xray">Chest X-ray</option>
+                  <option value="brain_mri">Brain MRI</option>
+                </select>
+              </label>
+              <div>
+                <button id="btn-intake-select-files" type="button" class="btn-core" style="background: var(--brand-green); border-color: var(--brand-green); width: 100%; font-family: var(--mono); font-size: 12.5px; padding: 9px 16px; border-radius: 6px; cursor: pointer; color: white; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+                  <span>Select Scan Files</span>
+                </button>
+              </div>
+            </div>
+            <div id="intake-staged-status" style="margin-top: 10px; font-size: 11.5px; font-family: var(--mono); color: #ef4444; display: flex; align-items: center; gap: 6px;">
+              <i class="dot" style="display:inline-block; width:6px; height:6px; background:#ef4444; border-radius:50%"></i>
+              <span>No scan files selected (required)</span>
+            </div>
+          </section>
+
+        </div>
+
+        <div id="intake-error" style="display: none; margin-top: 12px; font-size: 12px; font-family: var(--mono); color: #ef4444;"></div>
+        <div style="display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid rgba(15, 23, 42, 0.08); padding-top: 16px; margin-top: 20px;">
+          <button id="btn-cancel-intake" type="button" class="tg" style="font-family: var(--mono); font-size: 13px; padding: 8px 16px; cursor: pointer;">Cancel</button>
+          <button id="btn-submit-intake" type="submit" class="btn-core" style="background: var(--brand-green); border-color: var(--brand-green); font-family: var(--mono); font-size: 13px; padding: 8px 24px; border-radius: 8px; cursor: pointer; color: white;" disabled>Create Case</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/auth.js?v=1"></script>
 <script src="/static/js/fx.js?v=5"></script>
 <script src="/static/js/landing.js?v=5"></script>
 <script src="/static/js/neuroview.js?v=1"></script>
-<script src="/static/js/console.js?v=11"></script>
+<script src="/static/js/console.js?v=10"></script>
 <script src="/static/js/main.js?v=5"></script>
 </body>
 </html>

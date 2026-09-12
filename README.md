@@ -67,7 +67,8 @@ immediately. (Retrain from scratch anytime with `py -m aura.aura_cli train` — 
   That gap is **four cases out of 69** and is not statistically resolvable — McNemar p ≥ 0.125
   under every possible pairing of the discordant cases. We also publish the entanglement
   ablation, which finds the CNOT ring **significantly worse on NLL** (Δ +0.056, CI [+0.022,
-  +0.090], n=447), and the quantum-kernel result, which loses to a classical RBF (p = 0.002).
+  +0.090], n=447), and the quantum-kernel result, which does not differ from a classical RBF
+  (ΔAUROC −0.003, CI [−0.044, +0.039], p = 0.90, nested CV over 185 subjects).
   A benchmark you only publish when it flatters you is not a benchmark. See
   [docs/METHODOLOGY_MAPPING.md](docs/METHODOLOGY_MAPPING.md) for the full problem → method
   mapping and [docs/BENCHMARKS.md](docs/BENCHMARKS.md) for the numbers.

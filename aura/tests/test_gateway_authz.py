@@ -132,11 +132,14 @@ def test_every_v1_route_is_gated_unless_explicitly_public():
     is genuinely meant to be public it has to be named in PUBLIC_PATHS, which is a
     deliberate act rather than an oversight.
     """
-    ungated = [
+    ungated = {
         r.path for r in app.routes
         if getattr(r, "path", "").startswith("/v1") and security.is_public_path(r.path)
-    ]
-    assert ungated == ["/v1/health"], f"unexpectedly public /v1 routes: {ungated}"
+    }
+    # health for probes; auth/status and auth/session are the sign-in handshake and
+    # return no case data (see security.PUBLIC_PATHS).
+    expected = {"/v1/health", "/v1/auth/status", "/v1/auth/session"}
+    assert ungated == expected, f"unexpectedly public /v1 routes: {sorted(ungated - expected)}"
 
 
 def test_gate_is_inert_when_no_token_is_configured():

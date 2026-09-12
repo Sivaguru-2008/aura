@@ -3,10 +3,12 @@
 > [!IMPORTANT]
 > **What was and was not measured.** Every AURA row below is computed by this script
 > from a served artifact and changes when the model changes. Every **competitor** row
-> is a *published literature value*, cited to its source and reproduced here for
-> orientation only — nnU-Net, SwinUNETR and MONAI were **not run** on this machine,
-> this split, or this preprocessing. The two kinds of number are not comparable as a
-> head-to-head, and §1 explains one specific reason they are not.
+> is a *published literature value*, cited to the table it was copied from and
+> reproduced here for orientation only — nnU-Net and SwinUNETR were **not run** on this
+> machine, this split, or this preprocessing. The two kinds of number are not comparable
+> as a head-to-head, and §1 explains one specific reason they are not. Two rows that
+> could not be traced to any published table (a "MONAI 3D ResU-Net" and a "ResNet-50
+> linear probe") were removed on 2026-09-12 rather than kept under a softer label.
 
 ## 1. Brain MRI Segmentation — AURA measured vs. published baselines
 
@@ -22,13 +24,14 @@
 | Architecture | Mean Composite Dice | Whole Tumor | Tumor Core | Enhancing Tumor | CPU Latency (Study) | Source |
 | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
 | **AURA Brain (ResU-Net)** | **0.865** | **0.915** | **0.846** | **0.835** | **15.50 s** | measured here, pooled 2-D |
-| nnU-Net | 0.871 | 0.920 | 0.852 | 0.841 | not measured | Isensee et al., *Nat. Methods* 18:203 (2021), BraTS20 per-case 3-D |
-| SwinUNETR | 0.858 | 0.910 | 0.838 | 0.825 | not measured | Hatamizadeh et al., *MICCAI BrainLes* (2021), BraTS21 per-case 3-D |
-| MONAI 3D ResU-Net | 0.835 | 0.895 | 0.812 | 0.798 | not measured | MONAI BraTS reference tutorial, per-case 3-D |
+| nnU-Net | 0.8535 | 0.8895 | 0.8506 | 0.8203 | not measured | published: Isensee et al., "nnU-Net for Brain Tumor Segmentation", BrainLes 2020 (arXiv:2011.00848), abstract — BraTS 2020 winning entry, per-case 3-D |
+| SwinUNETR | 0.8897 | 0.926 | 0.885 | 0.858 | not measured | published: Hatamizadeh et al., "Swin UNETR", BrainLes 2021 (arXiv:2201.01266), Table 3 — BraTS **2021** validation set (219 cases), per-case 3-D |
 
-*AURA's GPU latency is omitted rather than estimated: this evaluation runs on CPU and
-no GPU timing was collected in this pass. See `docs/BENCHMARKS.md` §2 for the chest
-model's measured GPU numbers.*
+*Composite = mean of the three published region scores, computed here. SwinUNETR's
+figures are on BraTS 2021, a larger and different cohort from the BraTS 2020 data AURA
+was trained on. AURA's GPU latency is omitted rather than estimated: this evaluation
+runs on CPU and no GPU timing was collected in this pass. See `docs/BENCHMARKS.md` §2
+for the chest model's measured GPU numbers.*
 
 ---
 
@@ -37,7 +40,12 @@ model's measured GPU numbers.*
 | Model / Framework | Macro AUROC | Macro F1 | ECE | Inference Latency | OOD Safety | Source |
 | :--- | :---: | :---: | :---: | :---: | :--- | :--- |
 | **AURA Chest (DenseNet-121)** | **0.8213** | **0.3853** | **0.1719** | **102.8 ms** | **Active** (rejects non-radiographs, OOD z-score) | measured here |
-| ResNet-50 linear probe | 0.7650 | 0.2850 | 0.2850 | ~25 ms | None | indicative reference, **not measured here** — no uncalibrated ResNet-50 probe is trained in this repo |
+
+No chest comparator is tabulated here. The only external model this repo has actually
+run is torchxrayvision's MIMIC DenseNet, as an independent label cross-check
+(`artifacts/kappa_crosscheck.json`), and published CXR products report on different
+finding sets and datasets — see `docs/MARKET_COMPARISON.md` §1 for that comparison and
+its caveats.
 
 ---
 
@@ -59,6 +67,9 @@ their own calibration split so ECE is not inflated for either.
 > [0.520, 0.744] — overlapping across nearly
 > their whole range — and a paired McNemar test cannot reach significance under *any*
 > assignment of the discordant pairs (best case p = 0.125).
-> Classical PoE is served as the fair-accuracy reference on grounds of interpretability
-> and cost, **not** on a demonstrated accuracy advantage. Per-class support is thin
-> (several classes in single digits), so per-class figures are directional only.
+> Classical PoE is the **served** backend. At this n the choice cannot rest on these
+> rows; it rests on the preregistered external validation
+> (`artifacts/chexpert_external.json`, n = 4,800 CheXpert studies), where
+> classical PoE is more accurate than the VQC (0.5273 vs
+> 0.4721, McNemar p < 0.001, Holm-adjusted). Per-class support here is
+> thin (several classes in single digits), so per-class figures are directional only.

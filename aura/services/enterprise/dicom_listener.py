@@ -1,14 +1,18 @@
 from __future__ import annotations
+import fnmatch
 import os
 import tempfile
 import threading
+from datetime import datetime
 from pathlib import Path
+from typing import Iterator
 from pynetdicom import AE, evt
 from pynetdicom.sop_class import (
-    ChestXRayImageStorage,
     MRImageStorage,
     ComputedRadiographyImageStorage,
     DigitalXRayImageStorageForPresentation,
+    PatientRootQueryRetrieveInformationModelFind,
+    StudyRootQueryRetrieveInformationModelFind,
 )
 import pydicom
 
@@ -20,20 +24,26 @@ class DicomListener:
         self.ae = AE(ae_title=b"AURA_PACS")
         
         # Add supported presentation contexts for storage SCP
-        self.ae.add_supported_context(ChestXRayImageStorage)
         self.ae.add_supported_context(MRImageStorage)
         self.ae.add_supported_context(ComputedRadiographyImageStorage)
         self.ae.add_supported_context(DigitalXRayImageStorageForPresentation)
+        
+        # Add supported presentation contexts for query find SCP
+        self.ae.add_supported_context(PatientRootQueryRetrieveInformationModelFind)
+        self.ae.add_supported_context(StudyRootQueryRetrieveInformationModelFind)
         
         self.server = None
         self._thread = None
         
     def start(self) -> None:
         def _run():
-            handlers = [(evt.EVT_C_STORE, self.handle_c_store)]
+            handlers = [
+                (evt.EVT_C_STORE, self.handle_c_store),
+                (evt.EVT_C_FIND, self.handle_c_find),
+            ]
             try:
                 self.server = self.ae.start_server(("", self.port), block=False, evt_handlers=handlers)
-                print(f"[DICOM Listener] Started C-STORE SCP on port {self.port}")
+                print(f"[DICOM Listener] Started C-STORE/C-FIND SCP on port {self.port}")
                 self.server.serve_forever()
             except Exception as e:
                 print(f"[DICOM Listener] Failed to start server: {e}")
@@ -96,3 +106,94 @@ class DicomListener:
                     os.remove(path)
                 except Exception:
                     pass
+
+    @staticmethod
+    def _match(pattern: str, value: str) -> bool:
+        """DICOM single-value matching: universal (empty) matches everything,
+        otherwise wildcard matching per PS3.4 C.2.2.2.4 ('*' any run, '?' one char)."""
+        if not pattern:
+            return True
+        return fnmatch.fnmatch((value or "").upper(), pattern.upper())
+
+    @staticmethod
+    def _study_datetime(created_at: str) -> tuple[str, str]:
+        """Split a stored ISO timestamp into DICOM DA/TM. Empty when unparseable —
+        a study date is a clinical fact, so an unknown one is returned zero-length
+        rather than filled with today's date."""
+        try:
+            dt = datetime.fromisoformat(str(created_at))
+        except (TypeError, ValueError):
+            return "", ""
+        return dt.strftime("%Y%m%d"), dt.strftime("%H%M%S")
+
+    def handle_c_find(self, event) -> Iterator[tuple[int, pydicom.dataset.Dataset | None]]:
+        """Handle a C-FIND query.
+
+        Every attribute returned here is either a value AURA actually holds or a
+        zero-length attribute. Nothing is synthesised: an SCU that receives a
+        PatientBirthDate or StudyDate from us is entitled to treat it as the real
+        one, so inventing those would put fabricated demographics into whatever
+        PACS or worklist consumed the response.
+        """
+        try:
+            ds = event.identifier
+            qr_level = str(getattr(ds, "QueryRetrieveLevel", "") or "STUDY")
+
+            # Request keys. A key present-but-empty is a universal match and must
+            # still be echoed back in the response; a key absent is not returned.
+            requested = {elem.keyword for elem in ds if elem.keyword}
+            q_patient_id = str(getattr(ds, "PatientID", "") or "").strip()
+            q_study_uid = str(getattr(ds, "StudyInstanceUID", "") or "").strip()
+            q_patient_name = str(getattr(ds, "PatientName", "") or "").strip()
+            q_accession = str(getattr(ds, "AccessionNumber", "") or "").strip()
+
+            for c in self.store.list_cases():
+                if event.is_cancelled:
+                    yield 0xFE00, None
+                    return
+
+                case_id = c["case_id"]
+                study_id = c["study_id"]
+                # Empty when the study arrived without a patient identifier.
+                patient_id = str(c.get("patient_id", "") or "")
+
+                if not self._match(q_patient_id, patient_id):
+                    continue
+                if not self._match(q_study_uid, study_id):
+                    continue
+                if not self._match(q_accession, case_id):
+                    continue
+                # AURA stores no patient name, so a name query can only be honoured
+                # as a universal match. Echoing the queried name back as if it were
+                # this record's name would fabricate a match.
+                if q_patient_name:
+                    continue
+
+                study_date, study_time = self._study_datetime(c.get("created_at", ""))
+
+                res = pydicom.dataset.Dataset()
+                res.SpecificCharacterSet = "ISO_IR 192"
+                res.QueryRetrieveLevel = qr_level
+                known = {
+                    "PatientID": patient_id,
+                    "PatientName": "",           # not held by AURA
+                    "PatientSex": "",            # not held by AURA
+                    "PatientBirthDate": "",      # not held by AURA
+                    "StudyInstanceUID": study_id,
+                    "StudyID": study_id,
+                    "AccessionNumber": case_id,
+                    "StudyDate": study_date,
+                    "StudyTime": study_time,
+                    "ModalitiesInStudy": c.get("modality", "") or "",
+                    "NumberOfStudyRelatedInstances": 1,
+                }
+                for keyword, value in known.items():
+                    if keyword in requested:
+                        setattr(res, keyword, value)
+
+                yield 0xFF00, res
+
+            yield 0x0000, None
+        except Exception as e:
+            print(f"[DICOM Listener] C-FIND exception: {e!r}")
+            yield 0xC000, None

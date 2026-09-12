@@ -56,7 +56,9 @@ def _infer_logits(image_paths, labels, batch_size: int = 32, model_path: Optiona
     from ..vision_cxr.inference import VisionModel
 
     vm = VisionModel(model_path or str(ARTIFACTS / "best_model.pt"))
-    ds = ChestXrayDataset(image_paths, labels, transform=get_transforms(train=False))
+    # Score at the resolution these weights were trained at, not a hardcoded default.
+    ds = ChestXrayDataset(image_paths, labels,
+                          transform=get_transforms(train=False, img_size=vm.img_size))
     loader = DataLoader(ds, batch_size=batch_size, shuffle=False, num_workers=0)
     logits, ys = [], []
     with torch.no_grad():
@@ -110,6 +112,37 @@ def fit_platt_binary(logits_c: np.ndarray, y_c: np.ndarray) -> tuple[float, floa
     return a, b
 
 
+#: Minimum sensitivity the served operating point must hold for a finding, or None
+#: to use the plain F1 optimum. Assigned on **clinical severity of a miss**, never by
+#: tuning against held-out scores:
+#:
+#:   * ``pneumothorax`` / ``consolidation`` — emergent. A missed tension pneumothorax
+#:     or a missed consolidation in a septic patient is a materially worse outcome
+#:     than a false alarm a radiologist dismisses in seconds.
+#:   * ``nodule`` — malignancy. Floored despite a costly precision trade (disclosed in
+#:     the calibration summary); a nodule head that catches one in five is not a
+#:     safety net. Nodule is independently flagged as the weakest head
+#:     (``kappa_crosscheck.json``: does not corroborate against torchxrayvision).
+#:   * ``pleural_effusion`` / ``cardiomegaly`` — clinically important, not emergent.
+#:   * ``opacity`` / ``hyperinflation`` — chronic or incidental; F1 optimum stands.
+#:
+#: Why a floor at all, beyond severity: argmax-F1 is *unstable on rare findings*.
+#: Fitted on ~1000 studies, pneumothorax carries ~30 positives, so the F1 curve is
+#: dominated by sampling noise and the argmax lands on a threshold that does not
+#: generalise — the served pneumothorax point scored recall 0.10 on held-out patients
+#: (3 of 29 caught) while a floored threshold reached recall 0.62 at the *same*
+#: precision and a better held-out F1. The floor regularises that selection.
+SENSITIVITY_FLOOR: dict[str, float | None] = {
+    "opacity": None,
+    "consolidation": 0.80,
+    "pleural_effusion": 0.70,
+    "cardiomegaly": 0.70,
+    "nodule": 0.70,
+    "pneumothorax": 0.80,
+    "hyperinflation": None,
+}
+
+
 def _best_f1_threshold(p: np.ndarray, y: np.ndarray) -> float:
     """Operating point that maximises F1 on calibrated probabilities.
 
@@ -132,6 +165,38 @@ def _best_f1_threshold(p: np.ndarray, y: np.ndarray) -> float:
     return best_t
 
 
+def _sensitivity_floor_threshold(p: np.ndarray, y: np.ndarray, floor: float) -> float:
+    """Highest-precision threshold that still recalls at least ``floor`` of positives.
+
+    Returns the F1 optimum when the floor is unreachable on this data (a head too weak
+    to hit it at any cutoff), so the caller always gets a usable operating point.
+    """
+    y = np.asarray(y, int)
+    if y.sum() == 0 or y.sum() == len(y):
+        return 0.5
+    best_t, best_prec = None, -1.0
+    for t in np.unique(np.round(p, 4)):
+        pred = (p >= t).astype(int)
+        tp = int(((pred == 1) & (y == 1)).sum())
+        fp = int(((pred == 1) & (y == 0)).sum())
+        fn = int(((pred == 0) & (y == 1)).sum())
+        recall = tp / (tp + fn) if (tp + fn) else 0.0
+        if recall < floor:
+            continue
+        prec = tp / (tp + fp) if (tp + fp) else 0.0
+        if prec > best_prec:
+            best_prec, best_t = prec, float(t)
+    return best_t if best_t is not None else _best_f1_threshold(p, y)
+
+
+def select_threshold(p: np.ndarray, y: np.ndarray, finding: str) -> tuple[float, str]:
+    """Per-finding operating point under ``SENSITIVITY_FLOOR``. Returns (thr, policy)."""
+    floor = SENSITIVITY_FLOOR.get(finding)
+    if floor is None:
+        return _best_f1_threshold(p, y), "f1_optimal"
+    return _sensitivity_floor_threshold(p, y, floor), f"sensitivity_floor>={floor:.2f}"
+
+
 def temperature_scaling(logits: np.ndarray, Y: np.ndarray) -> dict:
     """Fit per-finding Platt scaling (a, b) on a calibration half, evaluate on the
     other, and also record the temperature-only fit for reference.
@@ -145,7 +210,8 @@ def temperature_scaling(logits: np.ndarray, Y: np.ndarray) -> dict:
     idx = rng.permutation(n)
     cut = n // 2
     cal, test = idx[:cut], idx[cut:]
-    out = {"per_finding": {}, "temperatures": {}, "platt": {}, "thresholds": {}}
+    out = {"per_finding": {}, "temperatures": {}, "platt": {}, "thresholds": {},
+           "threshold_policy": {}}
     ece_before, ece_after = [], []
     for c, name in enumerate(FINDING_NAMES):
         T = fit_temperature_binary(logits[cal, c], Y[cal, c])
@@ -154,13 +220,16 @@ def temperature_scaling(logits: np.ndarray, Y: np.ndarray) -> dict:
         p_after = _sigmoid(a * logits[test, c] + b)
         eb = binary_ece(p_before, Y[test, c])
         ea = binary_ece(p_after, Y[test, c])
-        # F1-optimal operating point on the calibration half's calibrated probs.
-        thr = _best_f1_threshold(_sigmoid(a * logits[cal, c] + b), Y[cal, c])
+        # Operating point on the calibration half's calibrated probs, under the
+        # per-finding severity policy (SENSITIVITY_FLOOR) rather than plain argmax-F1.
+        thr, policy = select_threshold(_sigmoid(a * logits[cal, c] + b), Y[cal, c], name)
         out["temperatures"][name] = round(T, 4)
         out["platt"][name] = {"a": round(a, 4), "b": round(b, 4)}
         out["thresholds"][name] = round(thr, 4)
+        out["threshold_policy"][name] = policy
         out["per_finding"][name] = {"T": round(T, 4), "platt_a": round(a, 4),
                                     "platt_b": round(b, 4), "threshold": round(thr, 4),
+                                    "threshold_policy": policy,
                                     "ece_before": round(eb, 4), "ece_after": round(ea, 4)}
         ece_before.append(eb); ece_after.append(ea)
     out["mean_ece_before"] = round(float(np.mean(ece_before)), 4)
@@ -410,13 +479,24 @@ def _write_serving_calibration(temp: dict, n_images: int, out_dir: Optional[Path
     Always writes a copy into ``out_dir`` (when given). Only overwrites the
     PRODUCTION ``SERVING_CAL_PATH`` when ``write_production`` is True, so a redirected
     (test/smoke) run cannot clobber the served calibration."""
+    # Which labeler produced the ground truth this fit was conditioned on. The label
+    # set is selected by the AURA_LABELER env var at dataset-import time, and the two
+    # labelers disagree enough to move every temperature (opacity T 0.89 under v2 vs
+    # 1.09 under v1) — so a canonical re-run under the wrong labeler silently replaces
+    # the served calibration with one fitted against different ground truth. Recording
+    # it makes that mismatch visible in the artifact instead of undetectable.
+    from ..vision_cxr.dataset import _USE_V2_LABELER
+
     payload = {
         "method": "per_finding_platt",
+        "labeler": "v2" if _USE_V2_LABELER else "v1",
         "n_images": n_images,
         "per_finding_platt": {n: {"a": float(temp["platt"][n]["a"]),
                                   "b": float(temp["platt"][n]["b"])} for n in FINDING_NAMES},
         "per_finding_temperature": {n: float(temp["temperatures"][n]) for n in FINDING_NAMES},
         "per_finding_threshold": {n: float(temp["thresholds"][n]) for n in FINDING_NAMES},
+        "per_finding_threshold_policy": {n: temp["threshold_policy"][n]
+                                         for n in FINDING_NAMES},
         "mean_ece_before": temp["mean_ece_before"],
         "mean_ece_after": temp["mean_ece_after"],
     }
@@ -451,6 +531,22 @@ def _summary_md(rep: dict, path: Path) -> None:
         c = cf["per_finding"][n]
         L.append(f"| {n} | {pf['T']} | {pf['ece_before']} | {pf['ece_after']} | "
                  f"{c['empirical_coverage']} | {c['avg_set_size']} |")
+
+    L += ["", "## Operating point (threshold) policy", "",
+          "Thresholds are **not** plain argmax-F1. Findings whose miss is clinically",
+          "severe carry a minimum-sensitivity floor, and the highest-precision cutoff",
+          "meeting that floor is served. Floors are assigned on severity of a miss, not",
+          "by tuning against held-out scores. Argmax-F1 is additionally unstable on rare",
+          "findings — fitted on ~1000 studies, pneumothorax carries ~30 positives.", "",
+          "| finding | threshold | policy |", "|---|---|---|"]
+    for n in t["per_finding"]:
+        pf = t["per_finding"][n]
+        L.append(f"| {n} | {pf['threshold']} | {pf.get('threshold_policy', 'f1_optimal')} |")
+    L += ["", "**Disclosed trade:** the `nodule` floor buys sensitivity at a large "
+          "precision cost, and nodule is independently the weakest head (it does not "
+          "corroborate against torchxrayvision — see `kappa_crosscheck.json`). It is "
+          "floored anyway because a nodule head that catches one in five is not a "
+          "safety net; treat positive nodule calls as prompts to look, not as findings."]
     path.write_text("\n".join(L), encoding="utf-8")
 
 

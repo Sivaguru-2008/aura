@@ -10,6 +10,16 @@ quantum optimization 10 · quantum implementation 10 — **50 total, 30 of it (6
 > project as it stands, and what moves each number. Judges vary; the *reasoning* is the
 > useful part, not the digits.
 
+> **Status update, 2026-09-12 — two statements below are no longer current.**
+> (1) *"QMBA is on the serving path"*: the product now serves the **classical** fusion
+> backend (`aura/pyproject.toml`), following the preregistered CheXpert external validation
+> (n = 4,800; accuracy 0.5273 classical vs 0.4721 quantum, McNemar p < 0.001;
+> `aura/artifacts/chexpert_external.json`). QMBA and the measurement-budget panel run only
+> with `AURA_FUSION_BACKEND=quantum`, which reproduces the configuration graded here.
+> (2) QMBA's typed abstention, presented as a capability classical inference lacks, was
+> **retracted** on source audit (`docs/RESEARCH_PAPER_v5.md` §2.8). The scorecard is kept as
+> a record of the hackathon submission, not as a description of the product.
+
 ---
 
 ## 1. Predicted scorecard
@@ -166,8 +176,12 @@ The project's most prominent quantum claim is currently **a negative result abou
 * Entanglement ablation, n=447, 2000 bootstrap resamples:
   accuracy Δ **−0.029** CI [−0.058, 0.000] (ns) · NLL Δ **+0.056** CI [+0.022, +0.090]
   **(significantly worse)** · ECE Δ **−0.027** CI [−0.068, +0.018] (ns)
-* QKL, n=669: quantum AUROC 0.706 vs classical RBF 0.721, Δ **−0.016**, p = **0.002**
-  **(significantly worse)**
+* QKL, nested CV over all 185 subjects: quantum AUROC **0.7723** vs classical RBF
+  **0.7749**, Δ **−0.0026**, 95% CI [−0.044, +0.039], DeLong p = **0.90**
+  **(no difference — an informative null, not an absence of evidence)**.
+  This supersedes two earlier figures that remain quoted in older documents: the
+  669-slice run (Δ −0.016, p = 0.002) and the 11-subject tuned run (Δ +0.0446,
+  p = 0.55). Neither should be cited; see `artifacts/brain/qkl_full_coverage.json`.
 
 **That honesty is the project's best quality and I am not suggesting you soften a word of
 it.** It is also, right now, the first thing a judge scoring *utilization* reads — and the
@@ -192,11 +206,13 @@ That is the same evidence with the load-bearing claim first. It costs nothing in
 and it is the difference between "quantum is decorative" and "quantum is doing a job
 classical cannot."
 
-**One genuinely positive quantum finding is currently buried and should be surfaced:** the
-QKL head is *better calibrated* than its classical counterpart — **ECE 0.0277 vs 0.0408**,
-a 32% reduction — while losing 0.016 AUROC. In a system whose entire thesis is calibrated
-doubt, "the quantum kernel trades a little discrimination for materially better calibration"
-is directly on-message and is sitting unmentioned in
+**A calibration advantage that was once claimed here has since been withdrawn.** Earlier
+versions of this document proposed surfacing the QKL head as "better calibrated than its
+classical counterpart — ECE 0.0277 vs 0.0408, a 32% reduction — while losing 0.016 AUROC".
+That framing does not survive. The paired subject-level bootstrap put the ECE difference at
+Δ −0.0009 (CI [−0.029, +0.015], p = 0.88), and the full-coverage nested-CV comparison finds
+no AUROC difference either (Δ −0.0026, p = 0.90). There is no discrimination-for-calibration
+trade to report, because neither term of it is resolvable. The superseded numbers were in
 `artifacts/brain/qkl_training_report.json`. Check whether that ECE gap is significant under
 the bootstrap you already run; if it is, it belongs in the README.
 

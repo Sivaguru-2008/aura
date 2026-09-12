@@ -3,11 +3,17 @@ upload validation.
 
 Design constraint: AURA's differentiator is that it runs **entirely offline** on an
 edge box, so security must never require an external identity provider or network
-call. Every control here is therefore local and, crucially, **opt-in**: with the
-default configuration (no ``auth_token``, ``rate_limit_rpm=0``) the controls are
-inert and the P0 offline demo behaves exactly as before. Setting the corresponding
-``AURA_*`` env vars (or ``[tool.aura]`` keys) switches them on for a deployment
-without touching any endpoint signature.
+call. Every control here is therefore local. Since 2026-09-12 the default is closed:
+with no ``auth_token`` the gateway answers only direct connections from this machine,
+so the offline single-box demo still works and nothing on a network can read a case;
+``allow_open_access`` is the explicit opt-out. Setting the corresponding ``AURA_*``
+env vars (or ``[tool.aura]`` keys) configures a deployment without touching any
+endpoint signature.
+
+  * Sessions        — browsers cannot send a custom header on a navigation or a
+                      download, so they trade the token for a signed, HttpOnly,
+                      SameSite=Strict cookie at ``POST /v1/auth/session``. The name
+                      given at sign-in is the principal on every audit row.
 
   * Authentication  — a shared bearer token compared in constant time. When
                       ``auth_token`` is set, every request to a non-public path
@@ -30,13 +36,16 @@ without touching any endpoint signature.
 """
 from __future__ import annotations
 
+import base64
+import hashlib
 import hmac
+import re
 import threading
 import time
 from collections import deque
 from pathlib import Path
 
-from fastapi import HTTPException, Request
+from fastapi import APIRouter, Body, HTTPException, Request, Response
 
 from aura.common.config import get_settings
 
@@ -57,12 +66,19 @@ _ALLOWED_CONTENT_TYPES = {
 # forgetting to register it fails closed (401) instead of silently exposing a case.
 #   /v1/health  — liveness/readiness probes run before any credential is injected
 #                 (docker-compose healthcheck, k8s probes). Returns no case data.
+#   /v1/auth/status,
+#   /v1/auth/session
+#               — the sign-in handshake. Status says only whether this caller must
+#                 sign in and whether it has; session trades the shared token for a
+#                 signed, expiring cookie. Neither returns case data, and a browser
+#                 cannot get past the gate without reaching them first.
 #   /, /app,
 #   /history,
 #   /quantum    — HTML shells. They carry no patient data themselves; every panel is
 #                 filled by a /v1/* fetch that IS gated. /quantum renders model-level
 #                 evidence only and reads /v1/quantum/evidence, which is gated.
-PUBLIC_PATHS = frozenset({"/v1/health", "/", "/app", "/history", "/quantum",
+PUBLIC_PATHS = frozenset({"/v1/health", "/v1/auth/status", "/v1/auth/session",
+                          "/", "/app", "/history", "/quantum",
                           "/docs", "/redoc", "/openapi.json", "/favicon.ico"})
 PUBLIC_PREFIXES = ("/static", "/assets", "/css", "/js")
 
@@ -111,12 +127,114 @@ def _principal(request: Request) -> str:
     return request.headers.get("x-aura-user", "anonymous")
 
 
+def _presented_token(request: Request, header: str) -> str:
+    presented = request.headers.get(header, "")
+    if not presented:
+        auth = request.headers.get("authorization", "")
+        if auth.lower().startswith("bearer "):
+            presented = auth[7:]
+    return presented
+
+
+def _token_matches(presented: str, token: str) -> bool:
+    # Compare bytes. hmac.compare_digest raises TypeError on a non-ASCII str, which
+    # used to turn a garbage header into a 500 instead of a 401.
+    return hmac.compare_digest(presented.encode("utf-8"), token.encode("utf-8"))
+
+
+# --------------------------------------------------------------------------- #
+# Secure default: with no token, answer this machine only
+# --------------------------------------------------------------------------- #
+_LOOPBACK_HOSTS = frozenset({"127.0.0.1", "::1", "localhost"})
+# Any of these means a proxy relayed the request, whatever address it arrived from.
+_FORWARDING_HEADERS = ("x-forwarded-for", "forwarded", "x-real-ip")
+
+NOT_CONFIGURED_REASON = (
+    "No AURA_AUTH_TOKEN is set, so this server only answers requests from the machine "
+    "it runs on. Set AURA_AUTH_TOKEN to allow network access (clients then sign in "
+    "with it), or AURA_ALLOW_OPEN_ACCESS=1 on an isolated demo network."
+)
+
+
+def is_local_request(request: Request) -> bool:
+    """True only for a direct, un-proxied connection from this machine.
+
+    A reverse proxy on the same host (nginx terminating TLS, say) also connects from
+    127.0.0.1, so a forwarding header marks the request as remote. Without that rule,
+    putting AURA behind a proxy would publish the open API to the whole network.
+    """
+    host = (request.client.host if request.client else "") or ""
+    if host.startswith("::ffff:"):                   # IPv4-mapped IPv6
+        host = host[len("::ffff:"):]
+    if not (host in _LOOPBACK_HOSTS or host.startswith("127.")):
+        return False
+    return not any(h in request.headers for h in _FORWARDING_HEADERS)
+
+
+# --------------------------------------------------------------------------- #
+# Browser sessions
+# --------------------------------------------------------------------------- #
+# A browser cannot attach a custom header to a navigation or a download, and a token
+# kept in JavaScript-readable storage is one XSS bug away from leaking. So browsers
+# trade the shared token for a cookie that is HttpOnly (scripts cannot read it),
+# SameSite=Strict (other sites cannot ride it) and signed (the name it carries cannot
+# be edited). There is no server-side session store: the signature and the expiry are
+# the whole state, so sessions survive a restart and need no database.
+SESSION_COOKIE = "aura_session"
+# 1-64 characters, no leading/trailing space. The name lands in every audit row.
+_PRINCIPAL_RE = re.compile(r"^[A-Za-z0-9._@-](?:[A-Za-z0-9 ._@-]{0,62}[A-Za-z0-9._@-])?$")
+
+
+def _session_key(token: str) -> bytes:
+    # Derived, so the cookie MAC never keys directly on the API credential; derived
+    # from the token, so rotating AURA_AUTH_TOKEN ends every session.
+    return hashlib.sha256(b"aura-session-v1|" + token.encode("utf-8")).digest()
+
+
+def _mac(token: str, message: str) -> str:
+    return hmac.new(_session_key(token), message.encode("ascii"), hashlib.sha256).hexdigest()
+
+
+def issue_session(principal: str, token: str, ttl_s: int, now: float | None = None) -> str:
+    """Signed ``v1.<name>.<expiry>.<mac>`` cookie value for *principal*."""
+    expires = int((time.time() if now is None else now) + ttl_s)
+    name = base64.urlsafe_b64encode(principal.encode("utf-8")).decode("ascii").rstrip("=")
+    message = f"v1.{name}.{expires}"
+    return f"{message}.{_mac(token, message)}"
+
+
+def read_session(cookie: str | None, token: str, now: float | None = None) -> str | None:
+    """The principal of a valid, unexpired session cookie; ``None`` for anything else."""
+    if not cookie or not token:
+        return None
+    parts = cookie.split(".")
+    if len(parts) != 4 or parts[0] != "v1":
+        return None
+    _, name, expires, mac = parts
+    try:
+        good = _mac(token, f"v1.{name}.{expires}")
+        if not hmac.compare_digest(mac.encode("ascii"), good.encode("ascii")):
+            return None
+        if int(expires) < (time.time() if now is None else now):
+            return None
+        principal = base64.urlsafe_b64decode(name + "=" * (-len(name) % 4)).decode("utf-8")
+    except (ValueError, UnicodeError):
+        return None
+    return principal if _PRINCIPAL_RE.match(principal) else None
+
+
 def enforce(request: Request) -> str:
     """Authenticate + authorize + rate-limit one request. Returns the principal.
 
-    Inert unless configured. Raises 401/403/429 as appropriate. Called from the
-    gateway middleware for **every** request whose path is not public, so every
-    endpoint is covered without per-handler wiring — reads as well as mutations.
+    Called from the gateway middleware for **every** request whose path is not
+    public, so every endpoint is covered without per-handler wiring — reads as well
+    as mutations. Raises 401/403/429 as appropriate.
+
+    With a token configured, a request passes on either credential: a valid session
+    cookie (browsers; the name bound at sign-in becomes the principal) or the token in
+    ``auth_header`` / ``Authorization: Bearer`` plus an ``x-aura-user`` name (scripts
+    and integrations). With no token configured, only direct connections from this
+    machine pass, unless ``allow_open_access`` is set.
     """
     s = get_settings()
     principal = _principal(request)
@@ -125,20 +243,24 @@ def enforce(request: Request) -> str:
     if is_public_path(request.url.path):
         return principal
 
-    # --- authentication (shared bearer token, constant-time compare) ---
     if s.auth_token:
-        presented = request.headers.get(s.auth_header, "")
-        if not presented:
-            auth = request.headers.get("authorization", "")
-            if auth.lower().startswith("bearer "):
-                presented = auth[7:]
-        if not hmac.compare_digest(str(presented), str(s.auth_token)):
-            raise HTTPException(401, {"error": "unauthenticated",
-                                      "reason": "missing or invalid API token"})
-        # --- authorization: an authenticated call must name its actor ---
-        if principal == "anonymous":
-            raise HTTPException(403, {"error": "forbidden",
-                                      "reason": "x-aura-user principal required"})
+        signed_in = read_session(request.cookies.get(SESSION_COOKIE), s.auth_token)
+        if signed_in is not None:
+            # The name bound at sign-in wins over a self-asserted header, so the audit
+            # log attributes browser actions to the person who signed in.
+            principal = signed_in
+        else:
+            # --- authentication (shared token, constant-time compare) ---
+            if not _token_matches(_presented_token(request, s.auth_header), s.auth_token):
+                raise HTTPException(401, {"error": "unauthenticated",
+                                          "reason": "missing or invalid API token"})
+            # --- authorization: an authenticated call must name its actor ---
+            if principal == "anonymous":
+                raise HTTPException(403, {"error": "forbidden",
+                                          "reason": "x-aura-user principal required"})
+    elif not s.allow_open_access and not is_local_request(request):
+        raise HTTPException(403, {"error": "auth_not_configured",
+                                  "reason": NOT_CONFIGURED_REASON})
 
     # --- rate limiting (per principal) ---
     if s.rate_limit_rpm > 0:
@@ -148,6 +270,72 @@ def enforce(request: Request) -> str:
             raise HTTPException(429, {"error": "rate_limited",
                                       "reason": f"exceeded {s.rate_limit_rpm} req/min"})
     return principal
+
+
+# --------------------------------------------------------------------------- #
+# Sign-in endpoints (mounted by gateway/app.py)
+# --------------------------------------------------------------------------- #
+router = APIRouter()
+
+#: Failed sign-ins allowed per client address per minute. A 32-byte token cannot be
+#: guessed at any rate; this keeps a misconfigured script from flooding the audit log.
+_SIGNIN_LIMITER = RateLimiter(10)
+
+
+def _is_https(request: Request) -> bool:
+    return (request.url.scheme == "https"
+            or request.headers.get("x-forwarded-proto", "").lower() == "https")
+
+
+@router.get("/v1/auth/status")
+def auth_status(request: Request) -> dict:
+    """Whether this caller must sign in, and whether it has. Returns no case data."""
+    s = get_settings()
+    signed_in = (read_session(request.cookies.get(SESSION_COOKIE), s.auth_token)
+                 if s.auth_token else None)
+    blocked = bool(not s.auth_token and not s.allow_open_access
+                   and not is_local_request(request))
+    return {
+        "auth_required": bool(s.auth_token),
+        "authenticated": signed_in is not None,
+        "principal": signed_in,
+        "open_access": bool(not s.auth_token and s.allow_open_access),
+        "blocked": blocked,
+        "reason": NOT_CONFIGURED_REASON if blocked else "",
+    }
+
+
+@router.post("/v1/auth/session")
+def sign_in(request: Request, response: Response, body: dict = Body(...)) -> dict:
+    """Exchange the shared token plus a name for a signed session cookie."""
+    s = get_settings()
+    if not s.auth_token:
+        raise HTTPException(400, {"error": "auth_disabled",
+                                  "reason": "no AURA_AUTH_TOKEN is configured, so there is "
+                                            "nothing to sign in to"})
+    user = str(body.get("user", "")).strip()
+    if not _PRINCIPAL_RE.match(user):
+        raise HTTPException(422, {"error": "invalid_user",
+                                  "reason": "name must be 1-64 characters: letters, digits, "
+                                            "spaces and . _ @ -"})
+    if not _token_matches(str(body.get("token", "")), s.auth_token):
+        client = request.client.host if request.client else "unknown"
+        if not _SIGNIN_LIMITER.allow(client):
+            raise HTTPException(429, {"error": "rate_limited",
+                                      "reason": "too many failed sign-ins; wait a minute"})
+        raise HTTPException(401, {"error": "unauthenticated",
+                                  "reason": "that access token is not valid"})
+    ttl = int(max(0.25, float(s.session_ttl_hours)) * 3600)
+    response.set_cookie(SESSION_COOKIE, issue_session(user, s.auth_token, ttl),
+                        max_age=ttl, httponly=True, samesite="strict",
+                        secure=_is_https(request), path="/")
+    return {"authenticated": True, "principal": user, "expires_in_s": ttl}
+
+
+@router.delete("/v1/auth/session")
+def sign_out(response: Response) -> dict:
+    response.delete_cookie(SESSION_COOKIE, path="/", httponly=True, samesite="strict")
+    return {"authenticated": False}
 
 
 def validate_upload_name(filename: str | None, content_type: str | None) -> None:

@@ -26,7 +26,14 @@ class VisionModel:
             self.model.load_state_dict(checkpoint["model_state_dict"])
         else:
             self.model.load_state_dict(checkpoint)
-            
+
+        # Resolution the weights were trained at. Feeding a checkpoint a different
+        # input size degrades it silently — no error, just worse predictions — so the
+        # size travels with the weights. Checkpoints written before this field existed
+        # were all trained at 224.
+        self.img_size = int(checkpoint.get("img_size", 224)) if isinstance(checkpoint, dict) else 224
+
+
         self.model.to(self.device)
         self.model.eval()
         
@@ -73,14 +80,16 @@ class VisionModel:
             return None, None, None
 
     def _to_tensor(self, img: np.ndarray) -> torch.Tensor:
-        """Preprocesses image to tensor (grayscale, 224x224, ImageNet normalization)."""
+        """Preprocesses image to tensor (grayscale, self.img_size square, normalized)."""
         import torch
         import cv2
-        
-        # Resize to 224x224
-        if img.shape[:2] != (224, 224):
-            img = cv2.resize(img, (224, 224), interpolation=cv2.INTER_LINEAR)
-            
+
+        # Resize to whatever resolution this checkpoint was trained at.
+        s = self.img_size
+        if img.shape[:2] != (s, s):
+            img = cv2.resize(img, (s, s), interpolation=cv2.INTER_LINEAR)
+
+
         # Convert to grayscale if it is RGB/BGR
         if img.ndim == 3:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)

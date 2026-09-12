@@ -111,17 +111,41 @@ def test_the_two_recovered_fields_are_declared():
     assert "geometry" in contracts.Explanation.model_fields
 
 
-def test_qbn_flag_is_gone():
-    """QuantumBayesianNetwork is not on the serving path, so no flag may claim it is.
+def test_qbn_flag_reports_execution_not_configuration():
+    """The QBN flag must be set by the code that runs the circuit.
 
-    Reinstate `qbn_enabled` only alongside a QBN the pipeline actually constructs.
+    The QBN executes in ClinicalReasoner, so fusion can only ever derive a flag
+    from `reasoner_backend` — configuration intent, not a component that ran.
+    The flag therefore lives on ReasoningTrace and must stay off FusionResult.
     """
     assert "qbn_enabled" not in contracts.FusionResult.model_fields
-    engine_src = (PKG_ROOT / "services" / "fusion" / "engine.py").read_text(encoding="utf-8")
-    assert "qbn_enabled=" not in engine_src, (
-        "services/fusion/engine.py still passes qbn_enabled. The QBN is not wired "
-        "into the serving path; a flag that reports a setting as a running component "
-        "is the failure mode AURA_ALLOW_FALLBACK_VISION exists to prevent."
+    assert "qbn_enabled" in contracts.ReasoningTrace.model_fields
+
+    fusion_src = (PKG_ROOT / "services" / "fusion" / "engine.py").read_text(encoding="utf-8")
+    assert "qbn_enabled=" not in fusion_src, (
+        "services/fusion/engine.py passes qbn_enabled again. Fusion does not run the "
+        "QBN; a flag that reports a setting as a running component is the failure "
+        "mode AURA_ALLOW_FALLBACK_VISION exists to prevent."
+    )
+
+    reasoning_src = (PKG_ROOT / "services" / "reasoning" / "engine.py").read_text(encoding="utf-8")
+    assert "load_trained()" in reasoning_src, (
+        "ClinicalReasoner must load the QBN via load_trained(), which returns None "
+        "when untrained. load() falls back to unfitted constants."
+    )
+
+
+def test_qbn_does_not_replace_the_guideline_rules():
+    """The rules are the citation trail; a quantum refinement layers on top."""
+    reasoning_src = (PKG_ROOT / "services" / "reasoning" / "engine.py").read_text(encoding="utf-8")
+    rules_loop = "for rule in RULES:"
+    assert rules_loop in reasoning_src
+    # The rule loop must not sit inside a quantum/classical branch — it runs always.
+    head = reasoning_src.split(rules_loop)[0]
+    assert 'reasoner_backend == "quantum"' not in head, (
+        "The RULES loop is gated behind the quantum backend. Selecting the quantum "
+        "reasoner would then drop every guideline citation and collapse the "
+        "differential to a single opaque step."
     )
 
 

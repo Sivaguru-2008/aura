@@ -28,5 +28,10 @@ pynetdicom>=2.0
 # and ml/vision_cxr/dataset.py. Also absent from both lists.
 pandas>=2.0
 
+# --- PostgreSQL case store -------------------------------------------------- #
+# Used only when AURA_DATABASE_URL points at PostgreSQL; the SQLite default needs
+# nothing. The binary extra bundles libpq, so the slim runtime needs no apt package.
+psycopg[binary]>=3.2,<4
+
 # --- ops -------------------------------------------------------------------- #
 psutil>=5.9

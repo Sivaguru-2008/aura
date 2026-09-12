@@ -145,7 +145,7 @@ def figure_risk_coverage(plt) -> None:
     ax1.set_xlabel("Coverage (fraction of studies answered)")
     ax1.set_ylabel("Selective risk (error rate among answered)")
     ax1.set_title("A  Risk–coverage, with the served policy marked", loc="left")
-    ax1.legend(loc="lower right", fontsize=7.5)
+    ax1.legend(loc="upper right", fontsize=7.5)
     ax1.set_xlim(0.05, 1.0)
 
     # -- Panel B: policy minus matched-coverage control, with intervals -- #
@@ -177,9 +177,134 @@ def figure_risk_coverage(plt) -> None:
     print("wrote fig6_risk_coverage")
 
 
+def figure_comparator_and_control(plt) -> None:
+    """Figure 1 — the paper's thesis and its positive control, side by side.
+
+    Panel A is the claim: whether a quantum advantage is reported depends on which
+    classical model is placed opposite the circuit *and* on how carefully that model
+    was fitted. It shows the same four arms on the same split under the published
+    heterogeneous optimisers and under one shared optimiser protocol.
+
+    Panel B is the control that stops Panel A from being a tautology. The clinical
+    target is linear in the evidence vector, so a null there is predicted rather
+    than measured. Panel B varies only the target's structure and shows the same
+    comparison detecting a nonlinear advantage where one exists.
+    """
+    pub_path = ARTIFACTS / "fusion_baselines_n447.json"
+    mat_path = ARTIFACTS / "fusion_matched_optimiser.json"
+    ctl_path = ARTIFACTS / "nonlinear_control.json"
+    for p in (pub_path, mat_path, ctl_path):
+        if not p.exists():
+            print(f"skip fig1: {p.name} not generated yet")
+            return
+
+    pub = json.loads(pub_path.read_text(encoding="utf-8"))
+    mat = json.loads(mat_path.read_text(encoding="utf-8"))
+    ctl = json.loads(ctl_path.read_text(encoding="utf-8"))
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11.0, 4.3))
+
+    # ---- Panel A: NLL by arm, published optimisers vs matched protocol ---- #
+    width = 0.36
+    xs = np.arange(len(ARMS))
+    pub_nll = [pub["backends"][a]["nll"] for a in ARMS]
+    mat_nll = [mat["backends"][a]["nll"] for a in ARMS]
+
+    ax1.bar(xs - width / 2, pub_nll, width, label="As published\n(each arm's own optimiser)",
+            color=[COLOR[a] for a in ARMS], alpha=0.45, edgecolor="white")
+    ax1.bar(xs + width / 2, mat_nll, width, label="Matched optimiser protocol",
+            color=[COLOR[a] for a in ARMS], edgecolor="white")
+
+    for x, (p_, m_) in enumerate(zip(pub_nll, mat_nll)):
+        ax1.text(x - width / 2, p_ + 0.004, f"{p_:.3f}", ha="center", fontsize=7.5,
+                 color="0.35")
+        ax1.text(x + width / 2, m_ + 0.004, f"{m_:.3f}", ha="center", fontsize=7.5,
+                 weight="bold")
+
+    ax1.set_xticks(xs)
+    ax1.set_xticklabels([SHORT[a] for a in ARMS])
+    ax1.set_ylabel("Negative log-likelihood (lower is better)")
+    ax1.set_title("A  The verdict depends on the comparator\n"
+                  "     and on how carefully it was fitted", loc="left")
+    lo = min(min(pub_nll), min(mat_nll))
+    hi = max(max(pub_nll), max(mat_nll))
+    ax1.set_ylim(lo - 0.02, hi + 0.055)
+
+    # The two sentences the panel exists to support, read from the artifacts.
+    pub_q = pub["pairwise"]["classical_vs_quantum"]
+    mat_q = mat["pairwise"]["classical_vs_quantum"]
+    ax1.annotate(
+        f"published: VQC beats PoE by {abs(pub_q['delta_nll']):.3f} "
+        f"(p = {pub_q['nll_wilcoxon_p']:.3g})\n"
+        f"matched:   PoE beats VQC by {abs(mat_q['delta_nll']):.3f} "
+        f"(Holm p = {mat_q['nll_wilcoxon_p_holm']:.2g})",
+        xy=(0.03, 0.97), xycoords="axes fraction", fontsize=7.5,
+        va="top", ha="left",
+        bbox=dict(boxstyle="round,pad=0.4", fc="0.96", ec="0.8", lw=0.6))
+    ax1.legend(loc="upper right", fontsize=7.5)
+    # The axis is truncated to resolve differences of ~0.01 NLL; say so, because a
+    # truncated axis that is not labelled overstates every difference on it.
+    ax1.text(0.99, -0.13, "axis truncated", transform=ax1.transAxes,
+             ha="right", va="top", fontsize=6.5, color="0.45")
+
+    # ---- Panel B: likelihood advantage over the best linear model ---------- #
+    #
+    # Plotted on negative log-likelihood, not accuracy, because that is the metric
+    # the section's claim is made on and the metric the whole paper treats as
+    # primary. Accuracy at n = 447 has a minimum detectable difference of 9.3
+    # points and resolves none of these comparisons; plotting it would show four
+    # near-equal bars and imply the control had failed when it had not.
+    targets = ["T1_clinical_linear", "T2a_conjunctive", "T2b_pairwise"]
+    tlabel = {"T1_clinical_linear": "T1  linear target\n(clinical rule)",
+              "T2a_conjunctive": "T2a  conjunctive",
+              "T2b_pairwise": "T2b  pairwise"}
+    plotted = [a for a in ARMS if a != "logistic"]      # logistic is the baseline
+    bar_w = 0.24
+    base = np.arange(len(targets))
+
+    for i, arm in enumerate(plotted):
+        vals = []
+        for t in targets:
+            b = ctl["targets"][t]["backends"]
+            vals.append(b[arm]["nll"] - b["logistic"]["nll"])
+        ax2.bar(base + (i - (len(plotted) - 1) / 2) * bar_w, vals, bar_w,
+                color=COLOR[arm], edgecolor="white", label=SHORT[arm])
+        for x, v in zip(base + (i - (len(plotted) - 1) / 2) * bar_w, vals):
+            ax2.text(x, v + (0.006 if v >= 0 else -0.006), f"{v:+.3f}",
+                     ha="center", va="bottom" if v >= 0 else "top", fontsize=6.8)
+
+    ax2.axhline(0, color="0.3", lw=1.0)
+    # Headroom for the value labels at both ends; without it the negative bars'
+    # labels are clipped by the axis, and those are the ones carrying the finding.
+    _all = [ctl["targets"][t]["backends"][a]["nll"]
+            - ctl["targets"][t]["backends"]["logistic"]["nll"]
+            for t in targets for a in plotted]
+    ax2.set_ylim(min(_all) - 0.035, max(_all) + 0.035)
+    ax2.set_xticks(base)
+    ax2.set_xticklabels(
+        [tlabel[t] + "\nceiling gap "
+         + f"{ctl['targets'][t]['ceilings']['gap']:+.3f}"
+         for t in targets], fontsize=8)
+    ax2.set_ylabel("Δ NLL vs. converged logistic regression")
+    ax2.set_title("B  Same inputs, same arms, same protocol —\n"
+                  "     only the target's structure changes", loc="left")
+
+    ax2.annotate("below zero = beats the best linear model",
+                 xy=(0.02, 0.04), xycoords="axes fraction", fontsize=7.5,
+                 bbox=dict(boxstyle="round,pad=0.35", fc="0.96", ec="0.8", lw=0.6))
+    ax2.legend(loc="upper left", fontsize=7.5, ncol=1)
+
+    fig.tight_layout()
+    for ext_ in ("png", "pdf"):
+        fig.savefig(FIGDIR / f"fig1_comparator_and_control.{ext_}", bbox_inches="tight")
+    plt.close(fig)
+    print("wrote fig1_comparator_and_control")
+
+
 def main() -> None:
     FIGDIR.mkdir(parents=True, exist_ok=True)
     plt = _style()
+    figure_comparator_and_control(plt)
     figure_external(plt)
     figure_risk_coverage(plt)
 

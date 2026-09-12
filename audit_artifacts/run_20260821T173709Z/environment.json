@@ -1,0 +1,35 @@
+{
+  "captured_utc": "2026-08-21T17:37:09.260196+00:00",
+  "seed": 7,
+  "python_version": "3.12.10",
+  "python_executable": "E:\\AURA\\venv\\Scripts\\python.exe",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "AMD64 Family 25 Model 117 Stepping 2, AuthenticAMD",
+  "machine": "AMD64",
+  "cpu_count": 16,
+  "packages": {
+    "numpy": "2.4.4",
+    "scipy": "1.18.0",
+    "sklearn": "1.9.0",
+    "matplotlib": "3.11.1",
+    "pandas": "3.0.3",
+    "torch": "2.11.0+cu128"
+  },
+  "git_commit": "3e5a20239f6ecc780ced2427f31a95a6f502e78a",
+  "git_branch": "chore/review-remediation-and-quantum-evidence",
+  "git_dirty": true,
+  "ram_total_gb": 16.44,
+  "torch_cuda_available": true,
+  "cuda_version": "12.8",
+  "cudnn_version": 91900,
+  "gpu": "NVIDIA GeForce RTX 5050 Laptop GPU",
+  "artifact_sha256": {
+    "fusion_quantum.npz": "f84726ce109f83482371ca4896d2bdb488bbd86301e056faf3003e4e88aaa871",
+    "fusion_classical.npz": "8b3360fc5f9f33d0dbc4ef9bcd7f02f3a4fe1bfd5c3b66f00664529004310133",
+    "fusion_ensemble.npz": "f016a989eb5ced99f0eac3409c443a405aaf6386946b4347ed7d4d6ca2b21b20",
+    "fusion_learnable.npz": "7bab6d29b3a69cbe5de29745ba8fdb2c80647d7cefa7f5a88306be3301a554c7",
+    "safety.npz": "aadf3220bedd1525abeae0dac16d3ec94a56068d09e57aa11e7ca0a0ee1f1d52",
+    "vision.npz": "a9018ce326dd0aae458750bf40964a05d821ad0e4830936e3206bb0b7c787786",
+    "benchmark.json": "833fd0a6b61be8d55687aae1ec58a8d1f87f14d7d9156bfc20035559af2187eb"
+  }
+}

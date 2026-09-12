@@ -1,0 +1,336 @@
+{
+  "purpose": "Refits every fusion arm under one optimiser protocol \u2014 same optimiser, batch size, epoch cap, learning-rate grid, early-stopping rule, seed and weight decay \u2014 so that any ordering between arms is attributable to model class rather than to optimisation. Addresses Section 11.5.",
+  "protocol": {
+    "optimiser": "Adam",
+    "learning_rate_grid": [
+      0.01,
+      0.05,
+      0.1
+    ],
+    "learning_rate_selected_per_arm_on": "calibration split, by cross-entropy",
+    "batch_size": 50,
+    "max_epochs": 150,
+    "early_stopping": "calibration cross-entropy, patience 20 epochs, best-epoch weights restored",
+    "weight_decay": 0.0,
+    "seed": 7,
+    "temperature": "one per arm, fitted on the calibration split (P1)",
+    "note": "The learning rate is searched per arm rather than fixed across arms. A single shared rate is not symmetry; it is a choice that suits whichever arm it was tuned on. Symmetry is the same grid, the same split and the same criterion for every arm."
+  },
+  "data": {
+    "source": "mimic-cxr",
+    "train_studies": 1338,
+    "calibration_studies": 446,
+    "test_studies": 447,
+    "patient_disjoint": true,
+    "evidence_channels": 8,
+    "constant_channels": [
+      7
+    ]
+  },
+  "trainable_parameters": {
+    "classical": 54,
+    "learnable": 126,
+    "quantum": 102,
+    "logistic": 54
+  },
+  "fitting": {
+    "classical": {
+      "selected_lr": 0.05,
+      "selected_on": "calibration split, by cross-entropy",
+      "best_epoch": 32,
+      "epochs_run": 53,
+      "converged_by_early_stopping": true,
+      "final_train_nll": 1.214179,
+      "grid": [
+        {
+          "lr": 0.01,
+          "best_calibration_nll": 1.278616,
+          "best_epoch": 128,
+          "epochs_run": 149,
+          "stopped_early": true,
+          "final_train_nll": 1.214145,
+          "seconds": 6.4
+        },
+        {
+          "lr": 0.05,
+          "best_calibration_nll": 1.278418,
+          "best_epoch": 32,
+          "epochs_run": 53,
+          "stopped_early": true,
+          "final_train_nll": 1.214179,
+          "seconds": 1.3
+        },
+        {
+          "lr": 0.1,
+          "best_calibration_nll": 1.278801,
+          "best_epoch": 39,
+          "epochs_run": 60,
+          "stopped_early": true,
+          "final_train_nll": 1.216916,
+          "seconds": 1.4
+        }
+      ]
+    },
+    "learnable": {
+      "selected_lr": 0.1,
+      "selected_on": "calibration split, by cross-entropy",
+      "best_epoch": 27,
+      "epochs_run": 48,
+      "converged_by_early_stopping": true,
+      "final_train_nll": 1.19609,
+      "grid": [
+        {
+          "lr": 0.01,
+          "best_calibration_nll": 1.27884,
+          "best_epoch": 148,
+          "epochs_run": 150,
+          "stopped_early": false,
+          "final_train_nll": 1.211376,
+          "seconds": 4.7
+        },
+        {
+          "lr": 0.05,
+          "best_calibration_nll": 1.266282,
+          "best_epoch": 83,
+          "epochs_run": 104,
+          "stopped_early": true,
+          "final_train_nll": 1.185348,
+          "seconds": 2.6
+        },
+        {
+          "lr": 0.1,
+          "best_calibration_nll": 1.265379,
+          "best_epoch": 27,
+          "epochs_run": 48,
+          "stopped_early": true,
+          "final_train_nll": 1.19609,
+          "seconds": 1.2
+        }
+      ]
+    },
+    "quantum": {
+      "selected_lr": 0.1,
+      "selected_on": "calibration split, by cross-entropy",
+      "best_epoch": 76,
+      "epochs_run": 97,
+      "converged_by_early_stopping": true,
+      "final_train_nll": 1.259751,
+      "grid": [
+        {
+          "lr": 0.01,
+          "best_calibration_nll": 1.286095,
+          "best_epoch": 149,
+          "epochs_run": 150,
+          "stopped_early": false,
+          "final_train_nll": 1.226595,
+          "seconds": 422.3
+        },
+        {
+          "lr": 0.05,
+          "best_calibration_nll": 1.284212,
+          "best_epoch": 35,
+          "epochs_run": 56,
+          "stopped_early": true,
+          "final_train_nll": 1.231478,
+          "seconds": 169.9
+        },
+        {
+          "lr": 0.1,
+          "best_calibration_nll": 1.271191,
+          "best_epoch": 76,
+          "epochs_run": 97,
+          "stopped_early": true,
+          "final_train_nll": 1.259751,
+          "seconds": 237.8
+        }
+      ]
+    },
+    "logistic": {
+      "selected_C": 1000.0,
+      "lbfgs_iterations": 356,
+      "converged": true,
+      "grid": [
+        {
+          "C": 0.01,
+          "calibration_nll": 1.6121
+        },
+        {
+          "C": 0.1,
+          "calibration_nll": 1.3945
+        },
+        {
+          "C": 1.0,
+          "calibration_nll": 1.3065
+        },
+        {
+          "C": 10.0,
+          "calibration_nll": 1.28
+        },
+        {
+          "C": 100.0,
+          "calibration_nll": 1.2767
+        },
+        {
+          "C": 1000.0,
+          "calibration_nll": 1.2766
+        }
+      ]
+    }
+  },
+  "budget_adequacy": {
+    "question": "Is the shared budget sufficient? Measured on the one arm whose optimum is knowable \u2014 the linear model, fitted both under the shared Adam protocol and to optimality by L-BFGS.",
+    "adam_linear_nll": 1.2362,
+    "lbfgs_optimum_nll": 1.231,
+    "gap_nll": 0.0052,
+    "adam_linear_accuracy": 0.5593,
+    "lbfgs_optimum_accuracy": 0.557,
+    "gap_accuracy": 0.0023
+  },
+  "majority_class_floor": {
+    "accuracy": 0.2371,
+    "class": "heart_failure",
+    "support": {
+      "normal": 102,
+      "pneumonia": 98,
+      "heart_failure": 106,
+      "copd": 67,
+      "malignancy": 59,
+      "pneumothorax_dx": 15
+    }
+  },
+  "backends": {
+    "classical": {
+      "n": 447,
+      "temperature": 1.0537,
+      "accuracy": 0.5593,
+      "correct": 250,
+      "accuracy_ci95_jeffreys": [
+        0.513,
+        0.6048
+      ],
+      "nll": 1.2362,
+      "ece": 0.081,
+      "macro_auroc": 0.8219
+    },
+    "learnable": {
+      "n": 447,
+      "temperature": 1.0071,
+      "accuracy": 0.5682,
+      "correct": 254,
+      "accuracy_ci95_jeffreys": [
+        0.522,
+        0.6136
+      ],
+      "nll": 1.2291,
+      "ece": 0.0804,
+      "macro_auroc": 0.8252
+    },
+    "quantum": {
+      "n": 447,
+      "temperature": 1.0033,
+      "accuracy": 0.5436,
+      "correct": 243,
+      "accuracy_ci95_jeffreys": [
+        0.4973,
+        0.5894
+      ],
+      "nll": 1.2395,
+      "ece": 0.0486,
+      "macro_auroc": 0.8009
+    },
+    "logistic": {
+      "n": 447,
+      "temperature": 1.0717,
+      "accuracy": 0.557,
+      "correct": 249,
+      "accuracy_ci95_jeffreys": [
+        0.5108,
+        0.6026
+      ],
+      "nll": 1.231,
+      "ece": 0.0862,
+      "macro_auroc": 0.8227
+    }
+  },
+  "pairwise": {
+    "classical_vs_quantum": {
+      "delta_accuracy": 0.0157,
+      "mcnemar": {
+        "discordant": 33,
+        "a_only": 20,
+        "b_only": 13,
+        "p": 0.296206
+      },
+      "delta_nll": -0.0033,
+      "nll_wilcoxon_p": 0.66,
+      "mcnemar_p_holm": 1.0,
+      "nll_wilcoxon_p_holm": 1.0
+    },
+    "classical_vs_learnable": {
+      "delta_accuracy": -0.0089,
+      "mcnemar": {
+        "discordant": 22,
+        "a_only": 9,
+        "b_only": 13,
+        "p": 0.523467
+      },
+      "delta_nll": 0.0071,
+      "nll_wilcoxon_p": 0.007272,
+      "mcnemar_p_holm": 1.0,
+      "nll_wilcoxon_p_holm": 0.04363
+    },
+    "classical_vs_logistic": {
+      "delta_accuracy": 0.0023,
+      "mcnemar": {
+        "discordant": 13,
+        "a_only": 7,
+        "b_only": 6,
+        "p": 1.0
+      },
+      "delta_nll": 0.0052,
+      "nll_wilcoxon_p": 0.1606,
+      "mcnemar_p_holm": 1.0,
+      "nll_wilcoxon_p_holm": 0.6425
+    },
+    "quantum_vs_learnable": {
+      "delta_accuracy": -0.0246,
+      "mcnemar": {
+        "discordant": 49,
+        "a_only": 19,
+        "b_only": 30,
+        "p": 0.152408
+      },
+      "delta_nll": 0.0104,
+      "nll_wilcoxon_p": 0.2987,
+      "mcnemar_p_holm": 0.914448,
+      "nll_wilcoxon_p_holm": 0.8961
+    },
+    "quantum_vs_logistic": {
+      "delta_accuracy": -0.0134,
+      "mcnemar": {
+        "discordant": 36,
+        "a_only": 15,
+        "b_only": 21,
+        "p": 0.405032
+      },
+      "delta_nll": 0.0085,
+      "nll_wilcoxon_p": 0.6627,
+      "mcnemar_p_holm": 1.0,
+      "nll_wilcoxon_p_holm": 1.0
+    },
+    "learnable_vs_logistic": {
+      "delta_accuracy": 0.0112,
+      "mcnemar": {
+        "discordant": 27,
+        "a_only": 16,
+        "b_only": 11,
+        "p": 0.442068
+      },
+      "delta_nll": -0.0019,
+      "nll_wilcoxon_p": 0.08122,
+      "mcnemar_p_holm": 1.0,
+      "nll_wilcoxon_p_holm": 0.4061
+    }
+  },
+  "runtime_seconds": 858.6
+}

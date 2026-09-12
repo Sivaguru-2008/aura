@@ -532,6 +532,17 @@ class NeuroMindEngine(AnalysisEngine):
 
         if self._store:
             self._store.save_case(bundle)
+            if self._pipeline_handle and hasattr(self._pipeline_handle, "memory") and self._pipeline_handle.memory and output.study_embedding is not None:
+                try:
+                    self._pipeline_handle.memory.index(
+                        case_id,
+                        output.study_embedding,
+                        bundle.safety.top.value,
+                        modality="brain_mri",
+                        study_id=prepared.study_id
+                    )
+                except Exception as e:
+                    log.warning(f"Failed to index brain study in memory store: {e}")
             self._store.save_neuroview(
                 case_id,
                 prepared.study_id,

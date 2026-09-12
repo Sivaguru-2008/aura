@@ -328,15 +328,18 @@ Conformal sets guarantee that the true clinical label is included in the output 
     # prose that said "compares the AURA architecture against industry-standard
     # baseline models" — which reads as a head-to-head that was never run.
     fus = _fusion_rows(fusion_data)
+    served_note = _served_backend_note(_external_fusion_summary())
     bench_md = f"""# AURA Baseline Comparison Report
 
 > [!IMPORTANT]
 > **What was and was not measured.** Every AURA row below is computed by this script
 > from a served artifact and changes when the model changes. Every **competitor** row
-> is a *published literature value*, cited to its source and reproduced here for
-> orientation only — nnU-Net, SwinUNETR and MONAI were **not run** on this machine,
-> this split, or this preprocessing. The two kinds of number are not comparable as a
-> head-to-head, and §1 explains one specific reason they are not.
+> is a *published literature value*, cited to the table it was copied from and
+> reproduced here for orientation only — nnU-Net and SwinUNETR were **not run** on this
+> machine, this split, or this preprocessing. The two kinds of number are not comparable
+> as a head-to-head, and §1 explains one specific reason they are not. Two rows that
+> could not be traced to any published table (a "MONAI 3D ResU-Net" and a "ResNet-50
+> linear probe") were removed on 2026-09-12 rather than kept under a softer label.
 
 ## 1. Brain MRI Segmentation — AURA measured vs. published baselines
 
@@ -352,13 +355,14 @@ Conformal sets guarantee that the true clinical label is included in the output 
 | Architecture | Mean Composite Dice | Whole Tumor | Tumor Core | Enhancing Tumor | CPU Latency (Study) | Source |
 | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
 | **AURA Brain (ResU-Net)** | **{eval_summary["brain_model"]["metrics"]["dice_mean"]:.3f}** | **{eval_summary["brain_model"]["metrics"]["dice_whole_tumor"]:.3f}** | **{eval_summary["brain_model"]["metrics"]["dice_tumor_core"]:.3f}** | **{eval_summary["brain_model"]["metrics"]["dice_enhancing_tumor"]:.3f}** | **{eval_summary["brain_model"]["performance"]["cpu_study_latency_ms"]/1000.0:.2f} s** | measured here, pooled 2-D |
-| nnU-Net | 0.871 | 0.920 | 0.852 | 0.841 | not measured | Isensee et al., *Nat. Methods* 18:203 (2021), BraTS20 per-case 3-D |
-| SwinUNETR | 0.858 | 0.910 | 0.838 | 0.825 | not measured | Hatamizadeh et al., *MICCAI BrainLes* (2021), BraTS21 per-case 3-D |
-| MONAI 3D ResU-Net | 0.835 | 0.895 | 0.812 | 0.798 | not measured | MONAI BraTS reference tutorial, per-case 3-D |
+| nnU-Net | 0.8535 | 0.8895 | 0.8506 | 0.8203 | not measured | published: Isensee et al., "nnU-Net for Brain Tumor Segmentation", BrainLes 2020 (arXiv:2011.00848), abstract — BraTS 2020 winning entry, per-case 3-D |
+| SwinUNETR | 0.8897 | 0.926 | 0.885 | 0.858 | not measured | published: Hatamizadeh et al., "Swin UNETR", BrainLes 2021 (arXiv:2201.01266), Table 3 — BraTS **2021** validation set (219 cases), per-case 3-D |
 
-*AURA's GPU latency is omitted rather than estimated: this evaluation runs on CPU and
-no GPU timing was collected in this pass. See `docs/BENCHMARKS.md` §2 for the chest
-model's measured GPU numbers.*
+*Composite = mean of the three published region scores, computed here. SwinUNETR's
+figures are on BraTS 2021, a larger and different cohort from the BraTS 2020 data AURA
+was trained on. AURA's GPU latency is omitted rather than estimated: this evaluation
+runs on CPU and no GPU timing was collected in this pass. See `docs/BENCHMARKS.md` §2
+for the chest model's measured GPU numbers.*
 
 ---
 
@@ -367,7 +371,12 @@ model's measured GPU numbers.*
 | Model / Framework | Macro AUROC | Macro F1 | ECE | Inference Latency | OOD Safety | Source |
 | :--- | :---: | :---: | :---: | :---: | :--- | :--- |
 | **AURA Chest (DenseNet-121)** | **{eval_summary["chest_model"]["metrics"]["auroc"]:.4f}** | **{eval_summary["chest_model"]["metrics"]["f1"]:.4f}** | **{eval_summary["chest_model"]["metrics"]["ece"]:.4f}** | **{eval_summary["chest_model"]["performance"]["cpu_latency_ms"]:.1f} ms** | **Active** (rejects non-radiographs, OOD z-score) | measured here |
-| ResNet-50 linear probe | 0.7650 | 0.2850 | 0.2850 | ~25 ms | None | indicative reference, **not measured here** — no uncalibrated ResNet-50 probe is trained in this repo |
+
+No chest comparator is tabulated here. The only external model this repo has actually
+run is torchxrayvision's MIMIC DenseNet, as an independent label cross-check
+(`artifacts/kappa_crosscheck.json`), and published CXR products report on different
+finding sets and datasets — see `docs/MARKET_COMPARISON.md` §1 for that comparison and
+its caveats.
 
 ---
 
@@ -389,9 +398,7 @@ their own calibration split so ECE is not inflated for either.
 > [{fus["ci_quantum"][0]:.3f}, {fus["ci_quantum"][1]:.3f}] — overlapping across nearly
 > their whole range — and a paired McNemar test cannot reach significance under *any*
 > assignment of the discordant pairs (best case p = {fus["mcnemar_best_case_p"]:.3f}).
-> Classical PoE is served as the fair-accuracy reference on grounds of interpretability
-> and cost, **not** on a demonstrated accuracy advantage. Per-class support is thin
-> (several classes in single digits), so per-class figures are directional only.
+{served_note}
 """
     (DOCS_DIR / "benchmark_report.md").write_text(bench_md, encoding="utf-8")
     print(f"[AURA Eval] Exported benchmark_report.md to {DOCS_DIR / 'benchmark_report.md'}")

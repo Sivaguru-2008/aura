@@ -122,12 +122,10 @@ class FusionEngine:
             fallback_triggered=fallback_triggered,
             quantum_entanglement=quantum_entanglement,
             qae_applied=bool(qae_applied),
-            # No qbn_enabled. It used to be reported as
-            # `reasoner_backend == "quantum"`, but QuantumBayesianNetwork is
-            # constructed nowhere in the serving path — only in a test. The flag
-            # therefore described a setting, not a component that runs, and the
-            # console rendered a "QBN" telemetry row from it. Reinstate this only
-            # together with a QBN that is actually on the pipeline.
+            # No qbn_enabled. The QBN runs in ClinicalReasoner, so the only thing
+            # fusion could report is `reasoner_backend == "quantum"` — a setting,
+            # not a component that ran. ReasoningTrace.qbn_enabled carries the
+            # real answer, set by the code path that actually executes the circuit.
         )
 
     def fuse(self, vision: VisionResult, priors: StructuredPriors) -> FusionResult:

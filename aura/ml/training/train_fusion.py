@@ -223,16 +223,21 @@ def run(n_samples: int = 700) -> dict:
     registry = [
         {"service": "vision", "name": "vision-cxr-region-v1", "version": "1.0",
          "status": "active", "metrics": {"note": "region-feature detectors"}},
+        # `role` is derived from the configured backend, never hand-written: a registry
+        # edited by hand once said "quantum: served" for weeks after that stopped being
+        # the question anyone had checked.
         {"service": "fusion", "name": "fusion-vqc-v1", "version": "1.0",
          "status": "active" if backend == "quantum" else "canary",
+         "role": "served" if backend == "quantum" else "selectable (AURA_FUSION_BACKEND=quantum)",
          "backend": "quantum", "metrics": q_metrics, "train_data": data_source},
         {"service": "fusion", "name": "fusion-poe-v1", "version": "1.0",
          "status": "active" if backend == "classical" else "canary",
+         "role": "served" if backend == "classical" else "selectable (AURA_FUSION_BACKEND=classical)",
          "backend": "classical", "metrics": c_metrics, "train_data": data_source},
         {"service": "safety", "name": "safety-v1", "version": "1.0", "status": "active",
          "calibration": {"temperature": round(T, 4), "conformal_qhat": round(qhat, 4),
                          "coverage": s.conformal_coverage, "ece": round(ece, 4),
-                         "train_data": data_source}},
+                         "fit_on_backend": backend, "train_data": data_source}},
     ]
     (ARTIFACTS / "registry.json").write_text(json.dumps(registry, indent=2))
 

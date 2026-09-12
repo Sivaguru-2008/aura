@@ -1,8 +1,11 @@
-# AURA — local / single-host deployment.
+# AURA — single-host deployment.
 #
-#   docker compose up --build          start
-#   docker compose logs -f aura        follow
-#   docker compose run --rm aura preflight   diagnose a bad deploy
+#   docker compose up -d --build                      start (SQLite case store)
+#   docker compose --profile postgres up -d --build   start with PostgreSQL
+#   docker compose logs -f aura                       follow
+#   docker compose run --rm aura preflight            diagnose a bad deploy
+#
+# Read docs/HOSPITAL_IT_INSTALL.md before putting this on a hospital network.
 #
 # The `version:` key is obsolete in Compose v2 and emits a warning on every
 # invocation, so it is gone.
@@ -37,33 +40,46 @@ services:
       # dev and tests; with it enabled a container whose DenseNet weights failed
       # to load serves fabricated findings and still reports healthy.
       AURA_ALLOW_FALLBACK_VISION: "0"
-      # Access control. Empty token = OFF, which leaves every endpoint open —
-      # including GET /v1/cases (enumerates case ids), /v1/cases/{id} and the
-      # FHIR/HL7 exports that emit patient data for downstream ingestion. Fine for
-      # a single-box offline demo, wrong for anything another machine can reach.
-      # Generate one with: python -c "import secrets;print(secrets.token_urlsafe(32))"
-      # preflight warns on every boot while this is empty.
+      # Access control. With no token the API answers only requests that start
+      # inside this container, which in practice is nothing but the healthcheck:
+      # a browser reaches the container through Docker's network, not loopback,
+      # and gets a 403 saying to set a token. Set one in .env:
+      #   python -c "import secrets;print(secrets.token_urlsafe(32))"
+      # Browsers then sign in once (name + token) and get a session cookie; scripts
+      # send the token as `x-aura-token` plus `x-aura-user`.
       AURA_AUTH_TOKEN: "${AURA_AUTH_TOKEN:-}"
       AURA_AUTH_HEADER: "${AURA_AUTH_HEADER:-x-aura-token}"
+      AURA_SESSION_TTL_HOURS: "${AURA_SESSION_TTL_HOURS:-12}"
+      # 1 = serve the network with no token. Isolated demo networks only;
+      # preflight warns on every boot while it is set.
+      AURA_ALLOW_OPEN_ACCESS: "${AURA_ALLOW_OPEN_ACCESS:-0}"
       # Per-principal req/min; 0 = unlimited. In-process bucket, so N replicas
       # means an effective ceiling of N x this value.
       AURA_RATE_LIMIT_RPM: "${AURA_RATE_LIMIT_RPM:-0}"
       OMP_NUM_THREADS: "${AURA_THREADS:-4}"
-      # Redirect the SQLite case store onto the mounted volume below. The
-      # previous compose file set AURA_DATA_DIR, which nothing in the codebase
-      # reads, so the store stayed at aura/artifacts/aura.db inside the image
-      # layer and every restart silently discarded the worklist.
+      # The hospital/site this server belongs to. The first start stamps it into
+      # the database; a server with a different AURA_SITE_ID then refuses to open it.
+      AURA_SITE_ID: "${AURA_SITE_ID:-}"
+      # SQLite case store on the mounted volume below: the default. The previous
+      # compose file set AURA_DATA_DIR, which nothing in the codebase reads, so the
+      # store stayed inside the image layer and every restart discarded the worklist.
       AURA_DB_PATH: "/var/lib/aura/aura.db"
+      # PostgreSQL instead: start with `--profile postgres` and set in .env
+      #   AURA_PG_PASSWORD=<long random password>
+      #   AURA_DATABASE_URL=postgresql+psycopg://aura:<same password>@postgres:5432/aura
+      # Empty = SQLite. The local EHR fixture and embedding cache stay on the volume.
+      AURA_DATABASE_URL: "${AURA_DATABASE_URL:-}"
 
-    # Deliberately NOT listed above: AURA_FUSION_BACKEND. common/config.py picks
-    # an env override on `is not None`, so a compose default of "" would be read
-    # as a real backend name and break fusion. Left unset, the container serves
-    # exactly what [tool.aura] in aura/pyproject.toml selects, same as a local
-    # run. To override, export it on the host and uncomment the pass-through:
-    #   - AURA_FUSION_BACKEND
-    # (pyproject currently says "quantum" while artifacts/registry.json marks
-    #  classical `role: served` and quantum `status: research`; that
-    #  disagreement predates this file and is not resolved here.)
+    # Deliberately NOT listed above: AURA_FUSION_BACKEND. Left unset, the container
+    # serves exactly what [tool.aura] in aura/pyproject.toml selects ("classical"
+    # since 2026-09-12), same as a local run. To override, export it on the host and
+    # add `AURA_FUSION_BACKEND: "${AURA_FUSION_BACKEND}"` above.
+
+    # Only waits when the postgres profile is active; without it this is skipped.
+    depends_on:
+      postgres:
+        condition: service_healthy
+        required: false
 
     volumes:
       # Named volume, not a bind mount onto aura/artifacts: mounting over that
@@ -96,5 +112,28 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  postgres:
+    image: postgres:16-alpine
+    profiles: ["postgres"]
+    container_name: aura-postgres
+    environment:
+      POSTGRES_DB: aura
+      POSTGRES_USER: aura
+      # No default on purpose: the image refuses to initialise without a password,
+      # which is the right failure for a database that will hold patient records.
+      POSTGRES_PASSWORD: "${AURA_PG_PASSWORD:-}"
+    volumes:
+      - aura-pg:/var/lib/postgresql/data
+    # Not published to the host: only the aura service reaches it, over the compose
+    # network. Publish 5432 deliberately if a backup job on the host needs it.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aura -d aura"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+    stop_grace_period: 30s
+
 volumes:
   aura-state:
+  aura-pg:

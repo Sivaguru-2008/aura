@@ -1,0 +1,11 @@
+2026-08-07 21:15:37,024 INFO === AURA reproducible audit  run=20260807T154537Z  seed=7 ===
+2026-08-07 21:15:39,558 INFO env: py=3.12.10 numpy=2.4.4 cuda=True commit=b7a9d33ec801130f791aac31d704966e6bcc5051
+2026-08-07 21:15:58,399 INFO held-out: n=100  classes=6  class_counts=[35, 22, 7, 17, 12, 7]
+2026-08-07 21:15:59,115 INFO temperatures: quantum(shipped)=0.9057  classical(fair-fit)=20.0854
+2026-08-07 21:16:04,126 INFO accuracy: quantum=0.010 classical_fair=0.040 classical_raw=0.040
+2026-08-07 21:16:04,127 INFO ECE: quantum=0.384 classical_fair=0.131 classical_raw=0.228
+2026-08-07 21:16:04,427 INFO CLAIM [NOT VALIDATED] Quantum fusion accuracy exceeds classical (0.96 vs 0.93 claimed)
+2026-08-07 21:16:04,427 INFO CLAIM [CONFOUNDED] Quantum is far better calibrated (ECE 0.020 vs 0.276)
+2026-08-07 21:16:04,427 INFO CLAIM [VALIDATED] Quantum ranking (AUROC) beats classical
+2026-08-07 21:16:07,207 INFO figures written: 14 files
+2026-08-07 21:16:07,208 INFO === audit complete -> E:\AURA\aura-main\audit_artifacts\run_20260807T154537Z ===

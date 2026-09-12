@@ -49,6 +49,11 @@ N_DX = len(DIAGNOSES)
 EVIDENCE_CACHE = ARTIFACTS / "quantum_study_evidence.npz"
 REPORT = ARTIFACTS / "backend_calibration.json"
 
+#: Backends this script calibrates. The nightly feedback-driven recalibration in
+#: services/training/recalibrate.py imports this rather than restating the list,
+#: so adding a backend does not leave one of the two paths behind.
+BACKENDS: tuple[str, ...] = ("classical", "quantum", "learnable")
+
 
 def _load_backend(name: str):
     return {
@@ -132,7 +137,7 @@ def calibrate(backend: str, Xcal, ycal, Xte, yte, coverage: float) -> dict | Non
     return result
 
 
-def run(backends: tuple[str, ...] = ("classical", "quantum", "learnable"),
+def run(backends: tuple[str, ...] = BACKENDS,
         n: int = 900) -> dict:
     ensure_dirs()
     s = get_settings()

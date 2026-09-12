@@ -183,10 +183,17 @@ def test_fusion_gap_is_reported_with_its_uncertainty():
 def test_published_safety_thresholds_match_the_served_policy():
     """docs/KNOWN_LIMITATIONS.md must describe the envelope the app actually uses.
 
-    It published epistemic 0.45 / OOD z 3.0 / conformal set > 3 long after those were
-    recalibrated to 0.15 / 2.5 / > 4 — values the code comment in common/config.py
-    explicitly calls superseded. The safety-boundary doc is the worst place to be
-    stale, so the thresholds are pinned the same way the benchmark tables are.
+    History of this test, because it is the reason the next one exists. It first
+    caught a doc publishing epistemic 0.45 / OOD z 3.0 / conformal set > 3 after
+    those were recalibrated. It was then written to compare the doc against
+    ``Settings.epistemic_threshold`` (0.15) and ``Settings.ood_threshold`` (2.5) —
+    neither of which the abstention path reads. Those two fields belong to the CDRE
+    *controller's* policy profile; the abstention decision in
+    ``services/safety/engine.py`` reads ``ood_energy_threshold`` (1.5) and
+    ``epistemic_abstention_threshold`` (0.20). So the test passed for four revisions
+    while the published envelope was wrong on two of its four criteria.
+
+    It now asserts the four values the abstention path actually reads.
     """
     import sys
 
@@ -199,15 +206,56 @@ def test_published_safety_thresholds_match_the_served_policy():
     text = doc.read_text(encoding="utf-8")
     s = get_settings()
 
+    # Exactly the four criteria SafetyEngine.assess() branches on, in its order.
     for label, value in (
-        ("epistemic_threshold", f"{s.epistemic_threshold:g}"),
-        ("ood_threshold", f"{s.ood_threshold:g}"),
+        ("ood_energy_threshold", f"{s.ood_energy_threshold:g}"),
+        ("low_confidence_threshold", f"{s.low_confidence_threshold:g}"),
         ("abstention_conformal_size", f"{s.abstention_conformal_size:g}"),
+        ("epistemic_abstention_threshold", f"{s.epistemic_abstention_threshold:g}"),
     ):
         assert f"`{value}`" in text, (
             f"KNOWN_LIMITATIONS.md does not publish the served {label} = {value}. "
             f"Re-copy from get_settings(); do not loosen this test."
         )
+
+
+def test_abstention_criteria_are_read_from_settings_not_literals():
+    """The mechanism check the previous test could not perform.
+
+    A test that compares a document against a *setting* is satisfied whether or not
+    the serving path reads that setting. That is how the epistemic criterion stayed
+    hardcoded at 0.20 through four published revisions of a 0.15 figure. Verifying
+    the number is not the same as verifying the wiring, so this reads the source of
+    the abstention branch and requires every criterion to come from ``self.settings``.
+
+    If you add a fifth criterion, add it here too.
+    """
+    engine = PKG_ROOT / "services" / "safety" / "engine.py"
+    assert engine.exists(), f"{engine} is missing"
+    src = engine.read_text(encoding="utf-8")
+
+    # The window starts at the OOD energy computation rather than at the branch,
+    # because the first criterion is evaluated into `is_ood` a few lines above the
+    # if/elif chain and would otherwise fall outside the check.
+    start = src.index("e = energy_score(")
+    end = src.index("return SafetyAssessment", start)
+    branch = src[start:end]
+
+    for setting in ("ood_energy_threshold", "low_confidence_threshold",
+                    "abstention_conformal_size", "epistemic_abstention_threshold"):
+        assert f"self.settings.{setting}" in branch, (
+            f"the abstention branch does not read self.settings.{setting}. "
+            f"Every criterion must come from configuration, or the published safety "
+            f"envelope cannot be verified against the served one."
+        )
+
+    # No bare numeric comparison may survive in the branch: `> 0.20` is exactly the
+    # defect this test exists to prevent recurring.
+    literals = re.findall(r"[<>]=?\s*[0-9]+\.?[0-9]*", branch)
+    assert not literals, (
+        f"the abstention branch compares against numeric literals {literals}. "
+        f"Move them into Settings so they are configurable and inspectable."
+    )
 
 
 def _manuscript_text():
@@ -549,3 +597,195 @@ def test_manuscript_v4_tables_match_artifacts():
             assert f"{sign}{m['mean']:.4f}" in row or f"{sign}{m['mean']:.3f}" in row or f"{sign}{m['mean']:g}" in row, f"Mean mismatch for {row_name} in Table 12"
             p_val = m["p_two_sided"]
             assert f"{p_val:.3f}" in row or f"{p_val:.2f}" in row or f"{p_val:g}" in row or (p_val < 0.001 and "< 0.001" in row), f"p-value mismatch for {row_name} in Table 12"
+
+
+# --------------------------------------------------------------------------- #
+# The v5 submission manuscript
+#
+# Section 11.7 of v4 reported that the drift test "does not parse the abstract or
+# Table 3 — a gap that allowed the abstract and Section 8.5 to disagree about the
+# kernel result between two revisions". These tests close that gap for v5: the
+# abstract's figures are checked against the same artifacts as the body's, so the
+# two cannot diverge again.
+# --------------------------------------------------------------------------- #
+V5 = REPO_ROOT / "docs" / "RESEARCH_PAPER_v5.md"
+V5_SUPP = REPO_ROOT / "docs" / "RESEARCH_PAPER_v5_SUPPLEMENTARY.md"
+
+
+def _v5_text(path=None):
+    p = path or V5
+    if not p.exists():
+        pytest.skip(f"{p} not present")
+    return (p.read_text(encoding="utf-8")
+            .replace("**", "").replace("−", "-").replace("—", "-"))
+
+
+def _v5_abstract():
+    text = _v5_text()
+    return text.split("## Abstract")[1].split("## 1.")[0]
+
+
+def test_v5_has_no_unfilled_placeholders():
+    """A placeholder that reaches the manuscript is a fabricated number waiting to
+    happen. Both documents are checked."""
+    for p in (V5, V5_SUPP):
+        if not p.exists():
+            continue
+        text = p.read_text(encoding="utf-8")
+        stray = re.findall(r"\[\[[A-Z_]+\]\]", text)
+        assert not stray, f"{p.name} still contains placeholders: {sorted(set(stray))}"
+
+
+def test_v5_table1_matches_the_matched_optimiser_artifact():
+    """Table 1's lower block is the paper's central new result: under one optimiser
+    protocol no ordering among the four backends survives."""
+    f = PKG_ROOT / "artifacts" / "fusion_matched_optimiser.json"
+    assert f.exists(), "fusion_matched_optimiser.json is missing; Table 1 is unbacked"
+    data = json.loads(f.read_text(encoding="utf-8"))
+    text = _v5_text()
+
+    label = {"classical": "Product-of-experts", "quantum": "Quantum VQC",
+             "learnable": "Gated head", "logistic": "Logistic regression"}
+    # The matched block is the second occurrence of each row label.
+    for arm, name in label.items():
+        rows = [ln for ln in text.splitlines()
+                if ln.strip().startswith("|") and len(ln.split("|")) > 2
+                and ln.split("|")[2].strip() == name]
+        assert len(rows) >= 2, f"expected published and matched rows for {name}"
+        row = rows[1]
+        b = data["backends"][arm]
+        for key in ("accuracy", "nll", "ece", "macro_auroc"):
+            _any_fmt(row, b[key], f"Table 1 matched / {name} / {key}")
+        assert str(data["trainable_parameters"][arm]) in row, (
+            f"Table 1 matched / {name}: parameter count "
+            f"{data['trainable_parameters'][arm]} not in row"
+        )
+
+
+def test_v5_abstract_entanglement_figures_match_the_artifact():
+    """The abstract's entanglement claim must read from the controlled 7-qubit run."""
+    f = PKG_ROOT / "artifacts" / "entanglement_multiseed_7q.json"
+    if not f.exists():
+        pytest.skip("entanglement_multiseed_7q.json not present")
+    data = json.loads(f.read_text(encoding="utf-8"))
+    abstract = _v5_abstract()
+
+    n_bad = data["delta_nll"]["n_seeds_favouring_entanglement"]
+    assert n_bad == 0, "artifact no longer shows 0 of 10 seeds favouring entanglement"
+    assert "ten of ten seeds" in abstract, (
+        "the abstract no longer states the ten-of-ten seed count"
+    )
+    holm = data["delta_nll"]["wilcoxon_p_holm"]
+    assert f"{holm:.3f}" in abstract or f"{holm:.4f}" in abstract, (
+        f"abstract does not carry the Holm-adjusted p of {holm}"
+    )
+
+
+def test_v5_kernel_result_is_consistent_between_abstract_body_and_artifact():
+    """The specific failure v4 disclosed: abstract and body disagreeing about the
+    kernel. Both are now checked against the artifact."""
+    f = PKG_ROOT / "artifacts" / "brain" / "qkl_full_coverage.json"
+    if not f.exists():
+        pytest.skip("qkl_full_coverage.json not present")
+    data = json.loads(f.read_text(encoding="utf-8"))
+    dl = data["pooled_out_of_fold"]["delong"]
+    text = _v5_text()
+    body = text.split("### 2.6")[1].split("### 2.7")[0]
+
+    _any_fmt(body, dl["delta_auroc"], "section 2.6 / delta AUROC")
+    _any_fmt(body, dl["auroc_a"], "section 2.6 / quantum AUROC")
+    _any_fmt(body, dl["auroc_b"], "section 2.6 / rbf AUROC")
+    assert str(data["corpus"]["subjects"]) in body, (
+        "section 2.6 does not state the subject count it was computed on"
+    )
+    # The abstract must not contradict the body: it claims no difference, so the
+    # artifact must actually show one that is not significant.
+    assert dl["p"] > 0.05, (
+        f"the artifact now shows a significant kernel difference (p={dl['p']}); "
+        f"the abstract's 'did not differ' is no longer true"
+    )
+
+
+def test_v5_external_validation_matches_the_artifact():
+    f = PKG_ROOT / "artifacts" / "chexpert_external.json"
+    if not f.exists():
+        pytest.skip("chexpert_external.json not present")
+    prim = json.loads(f.read_text(encoding="utf-8"))["primary_uncertain_as_negative"]
+    text = _v5_text()
+    label = {"classical": "Product-of-experts", "quantum": "Quantum VQC",
+             "learnable": "Gated head", "logistic": "Logistic regression"}
+    table = text.split("Table 2.")[1].split("Pairwise:")[0]
+    for arm, name in label.items():
+        row = [ln for ln in table.splitlines()
+               if ln.strip().startswith("|") and len(ln.split("|")) > 1
+               and ln.split("|")[1].strip() == name]
+        assert row, f"no Table 2 row for {name}"
+        b = prim["backends"][arm]
+        for key in ("accuracy", "nll", "ece", "macro_auroc"):
+            _any_fmt(row[0], b[key], f"Table 2 / {name} / {key}")
+
+
+def test_v5_design_sweep_claim_matches_the_artifact():
+    """The corrected D12 claim: three of five best cells by NLL, not four."""
+    f = PKG_ROOT / "artifacts" / "design_sweep.json"
+    if not f.exists():
+        pytest.skip("design_sweep.json not present")
+    cells = json.loads(f.read_text(encoding="utf-8"))["cells"]
+    top5 = sorted(cells, key=lambda c: c["nll"])[:5]
+    n_none = sum(1 for c in top5 if c["entangler"] == "none")
+    words = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five"}
+    body = _v5_text().split("### 2.5")[1].split("### 2.6")[0]
+    assert f"{words[n_none]} of the five best" in body.lower(), (
+        f"section 2.5 does not state that {words[n_none]} of the five best cells by "
+        f"negative log-likelihood are at zero entanglement (artifact says {n_none})"
+    )
+    assert top5[0]["entangler"] == "none", (
+        "the best cell by NLL is no longer the unentangled one; section 2.5 says it is"
+    )
+
+
+def test_v5_table4_matches_the_nonlinear_control_artifact():
+    """Table 4 reports each arm's likelihood delta against the logistic anchor.
+
+    Written by hand from the artifact, one of its Holm p-values was initially taken
+    from the wrong pairwise comparison (classical-vs-quantum in place of
+    classical-vs-logistic). Both are real numbers in the same artifact, so nothing
+    downstream could have flagged it. This recomputes every cell.
+    """
+    f = PKG_ROOT / "artifacts" / "nonlinear_control.json"
+    if not f.exists():
+        pytest.skip("nonlinear_control.json not present")
+    data = json.loads(f.read_text(encoding="utf-8"))
+    section = _v5_text().split("### 2.3")[1].split("### 2.4")[0]
+
+    for target, rec in data["targets"].items():
+        b = rec["backends"]
+        ceil = rec["ceilings"]
+        _any_fmt(section, ceil["linear_ceiling"], f"{target} linear ceiling")
+        _any_fmt(section, ceil["interaction_ceiling"], f"{target} interaction ceiling")
+
+        for arm in ("classical", "learnable", "quantum"):
+            delta = b[arm]["nll"] - b["logistic"]["nll"]
+            _any_fmt(section, round(delta, 3), f"{target}/{arm} delta NLL vs logistic")
+
+            key = f"classical_vs_logistic" if arm == "classical" else f"{arm}_vs_logistic"
+            holm = rec["pairwise"][key]["nll_wilcoxon_p_holm"]
+            # Only non-negligible p-values are written out in full; the tiny ones
+            # are rendered as an inequality, which is checked separately below.
+            if holm >= 1e-4:
+                assert (f"{holm:.3f}" in section or f"{holm:.4f}" in section
+                        or f"{holm:.1e}".replace("e-0", "x10-") in section
+                        or f"{holm * 1e4:.1f}" in section), (
+                    f"{target}/{arm}: Holm p={holm} not found in section 2.3"
+                )
+
+    # The section's headline claim, recomputed rather than trusted.
+    q = data["targets"]["T2b_pairwise"]
+    q_delta = (q["backends"]["quantum"]["nll"] - q["backends"]["logistic"]["nll"])
+    assert q_delta < 0, (
+        "section 2.3 states the quantum circuit beats the logistic regression on "
+        "T2b; the artifact no longer shows that"
+    )
+    assert q["pairwise"]["quantum_vs_logistic"]["nll_wilcoxon_p_holm"] < 0.05, (
+        "section 2.3 states that T2b win is significant; the artifact disagrees"
+    )

@@ -36,6 +36,7 @@ dependencies = [
 #   pip install -e '.[pacs]'         DICOM networking (C-STORE/FIND/MOVE/GET)
 #   pip install -e '.[security]'     JWT auth, RBAC, encrypted upload-at-rest
 #   pip install -e '.[monitoring]'   host/process metrics + Prometheus export
+#   pip install -e '.[postgres]'     PostgreSQL case store (AURA_DATABASE_URL)
 #   pip install -e '.[all]'          everything above
 [project.optional-dependencies]
 ibm = ["qiskit>=1.0", "qiskit-ibm-runtime>=0.20"]
@@ -44,6 +45,7 @@ vectordb = ["qdrant-client>=1.7"]
 pacs = ["pynetdicom>=2.0", "pydicom>=2.4"]
 security = ["PyJWT>=2.8", "cryptography>=42.0"]
 monitoring = ["psutil>=5.9", "prometheus-client>=0.20"]
+postgres = ["psycopg[binary]>=3.2,<4"]
 all = [
     "qiskit>=1.0", "qiskit-ibm-runtime>=0.20",
     "amazon-braket-sdk>=1.70", "boto3>=1.30",
@@ -51,6 +53,7 @@ all = [
     "pynetdicom>=2.0", "pydicom>=2.4",
     "PyJWT>=2.8", "cryptography>=42.0",
     "psutil>=5.9", "prometheus-client>=0.20",
+    "psycopg[binary]>=3.2,<4",
 ]
 
 [tool.setuptools]
@@ -78,8 +81,12 @@ filterwarnings = [
 
 [tool.aura]
 # Central config surface. Engines read defaults from here via aura_common.config.
-fusion_backend = "quantum"      # SERVED backend (8-qubit VQC). "classical" = selectable interpretable
-                                # fallback / fair-benchmark accuracy reference; see docs/QUANTUM.md, registry.json
+fusion_backend = "classical"    # SERVED backend: Bayesian product-of-experts. Switched from "quantum" on
+                                # 2026-09-12 after the preregistered external validation on CheXpert
+                                # (artifacts/chexpert_external.json, n=4800): accuracy 0.5273 classical vs
+                                # 0.4721 quantum, McNemar p<0.001. Calibration is per backend
+                                # (artifacts/safety_classical.npz), so this line alone is a complete switch.
+                                # "quantum" stays selectable for research: AURA_FUSION_BACKEND=quantum.
 abstention_conformal_size = 4     # abstain if the 90% conformal set has > N labels
                                   # (recalibrated to the real MIMIC distribution — audit F1/F8)
 ood_energy_threshold = 1.5

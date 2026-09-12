@@ -116,6 +116,16 @@ def main():
     parser.add_argument("--epochs", type=int, default=10, help="Number of epochs to train.")
     parser.add_argument("--batch", type=int, default=16, help="Batch size.")
     parser.add_argument("--lr", type=float, default=3e-4, help="Learning rate.")
+    parser.add_argument("--weight-decay", type=float, default=None,
+                        help="AdamW weight decay (default 1e-4). retrain_v2 overfits from "
+                             "epoch 4 — val loss 0.8964 -> 0.9590 while train loss falls "
+                             "0.99 -> 0.77 — so raising this is the first regularisation "
+                             "knob to sweep. Left at the shipped default until measured.")
+    parser.add_argument("--img-size", type=int, default=None,
+                        help="Input resolution (default 224, must be a multiple of 32). "
+                             "224 is the binding constraint on small lesions: an 8 mm "
+                             "nodule on a ~2500 px film is ~1 px at 224. The value is "
+                             "stored in the checkpoint and read back at serving.")
     parser.add_argument("--limit", type=int, default=None, help="Limit number of samples for testing.")
     parser.add_argument("--patience", type=int, default=4, help="Early stopping patience.")
     parser.add_argument("--no-amp", action="store_true", help="Disable mixed precision training.")
@@ -145,7 +155,12 @@ def main():
     )
     if args.out_dir:
         cfg_kw["out_dir"] = args.out_dir
+    if args.weight_decay is not None:
+        cfg_kw["weight_decay"] = args.weight_decay
+    if args.img_size is not None:
+        cfg_kw["img_size"] = args.img_size
     config = TrainConfig(**cfg_kw)
+    print(f"[Train] img_size={config.img_size} weight_decay={config.weight_decay:g}")
     
     set_seed(config.seed)
     

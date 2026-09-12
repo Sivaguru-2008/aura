@@ -74,28 +74,35 @@ AURA is configured via `common/config.py` (which parses `pyproject.toml` and env
 | Environment Variable | Default Value | Purpose |
 |---|---|---|
 | `AURA_DEVICE` | `cpu` or `cuda` | Forces CPU or GPU execution for the vision model. |
-| `AURA_FUSION_BACKEND` | `quantum` | Active backend for fusion (`quantum` \| `classical` \| `learnable`). |
+| `AURA_FUSION_BACKEND` | `classical` | Active backend for fusion (`classical` \| `quantum` \| `learnable`). Classical is served since 2026-09-12 — see `docs/MARKET_COMPARISON.md` §3.2. |
 | `AURA_MIMIC_ROOT` | `../datasets` | Paths to dataset files. |
 | `AURA_DATA_SOURCE` | `mimic` | Seed source for cases (`mimic` \| `synthetic`). |
 | `AURA_OOD_ENERGY_THRESHOLD` | `1.5` | Threshold for energy-score OOD rejection. |
 | `AURA_LOW_CONFIDENCE_THRESHOLD` | `0.3` | Probability cutoff for low-confidence abstention. |
-| `AURA_AUTH_TOKEN` | *(empty)* | **Shared bearer token. Empty = every endpoint is open.** See below. |
+| `AURA_AUTH_TOKEN` | *(empty)* | **Shared API token.** Empty = the API answers direct requests from this machine only; set = every `/v1` data route needs it. See below. |
 | `AURA_AUTH_HEADER` | `x-aura-token` | Header the token is read from (`Authorization: Bearer …` also accepted). |
+| `AURA_ALLOW_OPEN_ACCESS` | `0` | `1` = with no token, serve network clients anyway. Isolated demo networks only. |
+| `AURA_SESSION_TTL_HOURS` | `12` | Lifetime of a browser sign-in. |
 | `AURA_RATE_LIMIT_RPM` | `0` | Per-principal requests/minute; `0` disables the cap. |
+| `AURA_DATABASE_URL` | *(empty)* | SQLAlchemy URL for the case store; empty = SQLite at `AURA_DB_PATH`. PostgreSQL: `postgresql+psycopg://user:pass@host:5432/aura`. |
+| `AURA_SITE_ID` | *(empty)* | The hospital/site this server belongs to; binds the database on first start. |
 
 A present-but-empty `AURA_*` variable is treated as unset, so writing `KEY=` in a
 `.env` falls back to the default rather than being parsed as a value.
 
 ### Access control
 
-Authentication is **opt-in and off by default**, which is correct for the offline
-single-box demo and wrong for anything else. With no `AURA_AUTH_TOKEN`, every
-endpoint is reachable by anyone who can route a packet to the port — including the
-reads that emit patient data: `GET /v1/cases` enumerates case ids,
-`GET /v1/cases/{id}` returns the full bundle, and `/export/fhir` and `/export/hl7`
-emit standards-conformant clinical records built for another system to ingest.
+AURA is **secure by default** (since 2026-09-12). With no `AURA_AUTH_TOKEN` the API
+answers only direct, un-proxied requests from the machine it runs on: the offline
+single-box demo keeps working and nothing else gets in. Network clients receive a 403
+telling them to set a token. That protects exactly the reads that matter:
+`GET /v1/cases` enumerates case ids, `GET /v1/cases/{id}` returns the full bundle, and
+`/export/fhir` and `/export/hl7` emit standards-conformant clinical records built for
+another system to ingest. A request relayed by a proxy counts as remote even when the
+proxy runs on the same host. `AURA_ALLOW_OPEN_ACCESS=1` restores the old open behaviour
+for an isolated demo network; preflight warns on every boot while it is set.
 
-Set a token before a second machine can reach AURA:
+Set a token before a second machine needs to reach AURA:
 
 ```bash
 export AURA_AUTH_TOKEN=$(python -c "import secrets;print(secrets.token_urlsafe(32))")

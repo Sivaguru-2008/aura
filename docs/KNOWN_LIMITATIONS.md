@@ -32,14 +32,16 @@ This document outlines the known clinical boundaries, algorithmic constraints, a
 ## 3. Clinical Safety Boundaries
 
 - **Not a Diagnostic Replacement:** AURA is a clinical intelligence copilot designed to assist radiologists and physicians. It is not approved for autonomous primary diagnostic interpretation.
-- **Safety Abstentions:** Under the default `community_conservative` policy, AURA abstains from a clinical claim and advises manual radiological review when **any** of the following holds:
-  - epistemic uncertainty (mutual information between deep-ensemble members) exceeds `0.15`;
-  - the OOD energy-score z-score exceeds `2.5`;
+- **Safety Abstentions:** AURA abstains from a clinical claim and advises manual radiological review when **any** of the following holds, evaluated in this order by `SafetyEngine.assess()`:
+  - the OOD energy-score z-score exceeds `1.5`;
+  - the top calibrated probability falls below `0.3` (a weak call across six classes);
   - the 90% conformal set contains more than `4` labels;
-  - the top calibrated probability falls below `0.3` (a weak call across six classes).
+  - epistemic uncertainty (deep-ensemble disagreement) exceeds `0.2`.
 
-  These are the values the server actually runs; `aura/tests/test_doc_numbers.py::test_published_safety_thresholds_match_the_served_policy` fails the build if this list drifts from `get_settings()`. Selecting the `academic_aggressive` profile (`AURA_SAFETY_POLICY=academic_aggressive`) loosens the first three to `0.25` / `3.5` / min-coverage `0.50`.
+  These are the values the server actually runs, read from `Settings` by the abstention branch itself. Two build tests hold this list to the code: `test_published_safety_thresholds_match_the_served_policy` compares each number against `get_settings()`, and `test_abstention_criteria_are_read_from_settings_not_literals` reads the source of the branch and fails if any criterion is a hardcoded literal rather than a setting.
 
-  > **Historical note.** Versions of this document before 2026-07-30 published `0.45`, `3.0` and set size `> 3`. Those were tuned against an overconfident *synthetic* fusion model (temperature 0.77); once fusion was honestly calibrated (temperature 0.94) they abstained on roughly **91% of real films**, and were recalibrated to the values above. See the abstention-operating-point comment in `aura/common/config.py`.
+  > **Two subsystems, similar names.** `SafetyPolicyThresholds` — the profile loaded from `safety_policy.yaml`, carrying `ood_threshold` = 2.5 and `epistemic_threshold` = 0.15 — does **not** govern abstention. It is read by the CDRE controller (`services/safety/controller.py`) for its gate-check severities. The abstention decision is made earlier, in `services/safety/engine.py`, from the four `Settings` values listed above. Selecting the `academic_aggressive` profile (`AURA_SAFETY_POLICY=academic_aggressive`) loosens the *controller's* gates to `0.25` / `3.5` / min-coverage `0.50`; it does not move the abstention envelope.
+
+  > **Historical note.** Versions of this document before 2026-07-30 published `0.45`, `3.0` and set size `> 3`. Those were tuned against an overconfident *synthetic* fusion model (temperature 0.77); once fusion was honestly calibrated (temperature 0.94) they abstained on roughly **91% of real films**, and were recalibrated. Versions before 2026-08-21 then published the *controller's* `0.15` and `2.5` as the abstention envelope, which was wrong on two of the four criteria: the served OOD threshold is `1.5`, and the epistemic criterion was a literal `0.20` hardcoded in the engine and unreachable from configuration. It is now `Settings.epistemic_abstention_threshold`. The build test that should have caught this compared the document against settings the serving path never read — a test of a number rather than of a mechanism, which is why the second test above now exists.
 
 - **Conformal Set Scannability:** Conformal prediction sets guarantee 90% coverage but routinely include multiple competing diagnoses when the presentation is ambiguous — at 90% coverage a genuinely uncertain six-class model needs sets of 4–6, and the measured mean set size is ~3.3–3.5. AURA commits to a single answer on roughly a third of films and defers the rest. Users must review every item in the set, not only the top-ranked one.

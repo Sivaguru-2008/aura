@@ -1,12 +1,25 @@
-"""Persistence — SQLite (P0) behind a small repository API.
+"""Persistence — SQLite or PostgreSQL behind a small repository API.
 
-The architecture targets PostgreSQL; SQLAlchemy + a repository boundary keep the
-swap to Postgres a config change. Case bundles are stored as JSON documents with
-indexed columns for worklist queries; feedback and audit_log are first-class.
+SQLite at ``DB_PATH`` is the default and needs no setup, which is what a single-box
+deployment wants. Setting ``AURA_DATABASE_URL`` moves the case store, outcomes, ACI
+state and the hash-chained audit ledger to PostgreSQL with no other change. Case
+bundles are stored as JSON documents with indexed columns for worklist queries;
+feedback and audit_log are first-class.
+
+Two engine differences are handled here rather than left to callers: PostgreSQL
+sessions are pinned to UTC (the audit hash covers naive timestamps), and hash-chain
+appends take a lock so concurrent writers cannot fork the chain (``_chain_append``).
+
+``AURA_DATABASE_URL`` does not move the demo EHR fixture (``services/enterprise/
+ehr.py``) or the SQLite embedding cache (``services/memory/vectorstore.py``); both keep
+their local file at ``DB_PATH``. Neither is the record of what AURA decided.
 """
 from __future__ import annotations
 
+import hashlib
 import json
+import threading
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -21,13 +34,62 @@ from sqlalchemy import (
     UniqueConstraint,
     create_engine,
     select,
+    text,
 )
+from sqlalchemy.engine import Engine, make_url
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
 from aura.schemas.contracts import CaseBundle
-import hashlib
 
 _GENESIS_HASH = "0" * 64
+
+#: pg_advisory_xact_lock key for hash-chain appends ("AURA" in ASCII).
+_CHAIN_LOCK_KEY = 0x41555241
+_CHAIN_MUTEX = threading.Lock()
+
+
+class SiteMismatchError(RuntimeError):
+    """This server's AURA_SITE_ID does not match the site the database belongs to."""
+
+
+def engine_for(url: str) -> Engine:
+    """Create the SQLAlchemy engine for a case-store URL.
+
+    ``postgresql://`` and ``postgres://`` are rewritten to the psycopg 3 driver the
+    image ships (SQLAlchemy's bare ``postgresql`` means psycopg2, which it does not).
+    PostgreSQL sessions are pinned to UTC, appended to any ``options`` already in the
+    URL so a per-site ``search_path`` survives. ``created_at`` is stored without a
+    zone and the audit hash covers its naive ISO form, so a server whose TimeZone is
+    not UTC would shift every timestamp on read-back and fail verification.
+    """
+    u = make_url(url)
+    if u.drivername in ("postgresql", "postgres"):
+        u = u.set(drivername="postgresql+psycopg")
+    if u.get_backend_name() == "postgresql":
+        existing = u.query.get("options", "")
+        if isinstance(existing, tuple):
+            existing = " ".join(existing)
+        u = u.update_query_dict({"options": f"{existing} -c timezone=UTC".strip()})
+        return create_engine(u, future=True, pool_pre_ping=True)
+    return create_engine(u, future=True)
+
+
+@contextmanager
+def _chain_append(engine: Engine):
+    """A session in which reading the chain head and appending to it is atomic.
+
+    Every append reads the previous record's hash and writes the next one. Two
+    writers doing that at once both link to the same predecessor and fork the chain,
+    which ``verify_audit_trail`` then reports as tampering. FastAPI runs sync handlers
+    on a thread pool, so this can happen inside one process: the mutex covers threads,
+    and on PostgreSQL a transaction-scoped advisory lock covers other processes.
+    """
+    with _CHAIN_MUTEX, Session(engine) as ses:
+        if ses.get_bind().dialect.name == "postgresql":
+            ses.execute(text("SELECT pg_advisory_xact_lock(CAST(:k AS bigint))"),
+                        {"k": _CHAIN_LOCK_KEY})
+        yield ses
 
 
 def _compute_audit_hash(previous_hash: str, action: str, entity_id: str,
@@ -133,6 +195,31 @@ class AuditRow(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
+class IntakeBaselineRow(Base):
+    """A clinical intake recorded *before* any imaging arrives.
+
+    Deliberately NOT a ``CaseRow``. A pre-imaging intake has no study, no image
+    and no posterior, so it is not a case bundle: putting it in ``cases`` would
+    surface an imaging-less row in the worklist and in ``/history``, and would
+    move ``Store.count()``, which the upload adapters use to mint
+    ``CASE-UPLOAD-{n}`` (deleting the row on attach would then let the next
+    upload collide with an existing case id and overwrite it).
+
+    Rows here are short-lived: created when the clinician submits the intake
+    form, consumed by ``POST /v1/cases/{case_id}/attach`` once the scan has been
+    analysed, or dropped by ``DELETE /v1/cases/{case_id}``.
+    """
+
+    __tablename__ = "intake_baselines"
+    case_id: Mapped[str] = mapped_column(String, primary_key=True)
+    priority_score: Mapped[float] = mapped_column(Float, default=0.0)
+    payload: Mapped[dict] = mapped_column(JSON, default=dict)
+    attached_case_id: Mapped[str] = mapped_column(String, default="")
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+
+
 class NeuroViewRow(Base):
     """MRI-only visualization artifact keyed by case id."""
 
@@ -175,11 +262,69 @@ class DecisionProvenanceRow(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
+class SiteBindingRow(Base):
+    """Which hospital/site this database belongs to. At most one row (id = 1).
+
+    Data separation between hospitals is physical: one AURA server and one database
+    (or one PostgreSQL schema) per site, never rows from several sites in one table.
+    This row makes that arrangement fail safe. The first server started with
+    ``AURA_SITE_ID`` stamps its site here; a later server configured for a different
+    site, or for none, refuses to open the database rather than serve one hospital's
+    cases under another's name.
+    """
+    __tablename__ = "site_binding"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    site_id: Mapped[str] = mapped_column(String)
+    bound_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+
+
 class Store:
-    def __init__(self, db_path: Path):
-        db_path.parent.mkdir(parents=True, exist_ok=True)
-        self.engine = create_engine(f"sqlite:///{db_path}", future=True)
+    def __init__(self, db_path: Path, url: str | None = None, site_id: str | None = None):
+        """Open (creating if needed) the case store.
+
+        ``db_path`` is the SQLite file used when ``url`` is empty; it stays the home of
+        the local EHR fixture and embedding cache either way (see the module docstring).
+        ``url`` is any SQLAlchemy URL, normally ``AURA_DATABASE_URL``. ``site_id`` is
+        ``AURA_SITE_ID``; see :class:`SiteBindingRow`.
+        """
+        self.db_path = Path(db_path)
+        if url:
+            self.engine = engine_for(url)
+        else:
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
+            self.engine = create_engine(f"sqlite:///{self.db_path}", future=True)
         Base.metadata.create_all(self.engine)
+        self.site_id = self._bind_site((site_id or "").strip())
+
+    def _bind_site(self, configured: str) -> str:
+        """Stamp or check the site this database belongs to (see SiteBindingRow)."""
+        with Session(self.engine) as ses:
+            row = ses.get(SiteBindingRow, 1)
+            bound = row.site_id if row else ""
+            if not bound and configured:
+                ses.add(SiteBindingRow(id=1, site_id=configured))
+                try:
+                    ses.commit()
+                except IntegrityError:               # another server bound it first
+                    ses.rollback()
+                    bound = ses.get(SiteBindingRow, 1).site_id
+                else:
+                    self.audit("site.bound", entity_type="system", entity_id=configured,
+                               detail={"site_id": configured})
+                    return configured
+        if bound and bound != configured:
+            where = self.engine.url.render_as_string(hide_password=True)
+            if configured:
+                raise SiteMismatchError(
+                    f"refusing to open {where}: it belongs to site '{bound}', and this "
+                    f"server is configured as AURA_SITE_ID='{configured}'. Point "
+                    f"AURA_DATABASE_URL / AURA_DB_PATH at this site's own database.")
+            raise SiteMismatchError(
+                f"refusing to open {where}: it belongs to site '{bound}', and this server "
+                f"has no AURA_SITE_ID. Set AURA_SITE_ID='{bound}' if this server is that site.")
+        return bound
 
     # ---- cases ----
     def save_case(self, bundle: CaseBundle) -> None:
@@ -231,6 +376,9 @@ class Store:
                 out.append({
                     "case_id": r.case_id,
                     "study_id": r.study_id,
+                    # Empty when the study arrived without one — C-FIND returns a
+                    # zero-length PatientID in that case rather than inventing one.
+                    "patient_id": b.get("patient_id", "") or "",
                     "state": r.state,
                     "priority_score": r.priority_score,
                     "top_diagnosis": r.top_diagnosis,
@@ -247,6 +395,62 @@ class Store:
     def count(self) -> int:
         with Session(self.engine) as ses:
             return ses.query(CaseRow).count()
+
+    # ---- pre-imaging intake baselines ----
+    def next_intake_id(self) -> str:
+        """Mint the next ``CASE-INTAKE-{n}`` id.
+
+        Numbered off the highest suffix present rather than off a row count, so an
+        attached baseline (which is retained) can never have its id handed out
+        again. A discarded baseline's id may be reused — nothing references it.
+        """
+        with Session(self.engine) as ses:
+            rows = ses.execute(select(IntakeBaselineRow.case_id)).scalars().all()
+        top = 0
+        for cid in rows:
+            try:
+                top = max(top, int(str(cid).rsplit("-", 1)[-1]))
+            except ValueError:
+                continue
+        return f"CASE-INTAKE-{top + 1}"
+
+    def save_intake(self, case_id: str, payload: dict, priority_score: float = 0.0) -> None:
+        with Session(self.engine) as ses:
+            row = ses.get(IntakeBaselineRow, case_id)
+            if row is None:
+                row = IntakeBaselineRow(case_id=case_id)
+                ses.add(row)
+            row.payload = payload
+            row.priority_score = float(priority_score)
+            ses.commit()
+
+    def get_intake(self, case_id: str) -> dict | None:
+        with Session(self.engine) as ses:
+            row = ses.get(IntakeBaselineRow, case_id)
+            return dict(row.payload) if row and row.payload else None
+
+    def mark_intake_attached(self, case_id: str, attached_case_id: str) -> None:
+        """Record which case consumed this baseline, keeping the row as evidence.
+
+        The intake is a clinical record in its own right — the priors it carries
+        are what the reasoner fused — so it is retained and marked rather than
+        deleted once it has been merged into an analysed case.
+        """
+        with Session(self.engine) as ses:
+            row = ses.get(IntakeBaselineRow, case_id)
+            if row is not None:
+                row.attached_case_id = attached_case_id
+                ses.commit()
+
+    def delete_intake(self, case_id: str) -> bool:
+        """Drop a baseline the clinician discarded. True if a row was removed."""
+        with Session(self.engine) as ses:
+            row = ses.get(IntakeBaselineRow, case_id)
+            if row is None:
+                return False
+            ses.delete(row)
+            ses.commit()
+            return True
 
     # ---- MRI NeuroView artifacts ----
     def save_neuroview(self, case_id: str, study_id: str, payload: dict) -> None:
@@ -279,6 +483,15 @@ class Store:
             for r in rows:
                 counts[r.verdict] = counts.get(r.verdict, 0) + 1
             return {"total": len(rows), "by_verdict": counts}
+
+    def list_feedback(self) -> list[dict]:
+        """Every clinician feedback row, oldest first, as plain dicts."""
+        with Session(self.engine) as ses:
+            rows = ses.execute(
+                select(FeedbackRow).order_by(FeedbackRow.id.asc())
+            ).scalars().all()
+            return [{"case_id": r.case_id, "diagnosis": r.diagnosis,
+                     "verdict": r.verdict, "correction": r.correction} for r in rows]
 
     # ---- adaptive conformal inference (Module 8) ----
     def load_aci_state(self, stream: str = "global") -> dict | None:
@@ -352,7 +565,7 @@ class Store:
               actor: str = "system", detail: dict | None = None) -> None:
         now = datetime.now(timezone.utc)
         d = detail or {}
-        with Session(self.engine) as ses:
+        with _chain_append(self.engine) as ses:
             last = ses.execute(
                 select(AuditRow).order_by(AuditRow.id.desc()).limit(1)
             ).scalars().first()
@@ -434,7 +647,7 @@ class Store:
         so the provenance can be verified later.
         """
         now = datetime.now(timezone.utc)
-        with Session(self.engine) as ses:
+        with _chain_append(self.engine) as ses:
             last = ses.execute(
                 select(DecisionProvenanceRow).order_by(DecisionProvenanceRow.case_id.desc())
                 .limit(1)

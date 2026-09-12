@@ -16,17 +16,25 @@ async def seed(store: Store, pipeline: Pipeline, n: int = 12, seed: int = 202) -
     if store.count() > 0:
         return store.count()
 
+    from aura.services.enterprise.ehr import EHRClient
+    ehr = EHRClient(db_path=store.db_path if hasattr(store, "db_path") else None)
+
     samples = make_dataset(n, seed=seed)
     rng = np.random.default_rng(seed)
     created = 0
     for i, s in enumerate(samples):
+        patient_id = f"MIMIC-{1000 + i}"
+        context = make_multimodal(s.diagnosis, rng)
+        ehr.save_patient_context(patient_id, context)
+
         study = StudyInput(
             study_id=f"STU-{1000 + i}",
             image=[float(v) for v in s.image.flatten()],
             image_shape=(IMG, IMG),
             priors=s.priors,
-            multimodal=make_multimodal(s.diagnosis, rng),
+            multimodal=None, # Loaded from EHR Client
             ground_truth=s.diagnosis,
+            patient_id=patient_id,
         )
         bundle = await pipeline.run(study, case_id=f"CASE-{1000 + i}")
         store.save_case(bundle)
