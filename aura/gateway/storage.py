@@ -592,7 +592,10 @@ class Store:
             row.ground_truth = bundle.ground_truth.value if bundle.ground_truth else ""
             row.tenant_id = tenant_id or "default"
             row.model_version = model_version or (bundle.vision.model_version if bundle.vision else "") or "vision-cxr-densenet121-production"
-            if s and s.abstained:
+            if getattr(bundle, "decision_assurance", None) is not None:
+                row.decision = bundle.decision_assurance.verdict.value
+                row.decision_reason = bundle.decision_assurance.summary_reason()
+            elif s and s.abstained:
                 row.decision = "ABSTAIN"
                 row.decision_reason = getattr(s, "abstention_reason", "") or "High uncertainty / OOD detected"
             else:
@@ -1468,19 +1471,25 @@ def compute_provenance_hash(bundle: CaseBundle) -> str:
     image_hash = hashlib.sha256(img_str.encode()).hexdigest()
     
     # 2. Vision Result
-    vision_dict = bundle.vision.model_dump() if bundle.vision else None
+    vision_dict = bundle.vision.model_dump(mode="json") if bundle.vision else None
     
     # 3. Evidence Graph
-    evidence_list = [e.model_dump() for e in bundle.evidence] if bundle.evidence else []
+    evidence_list = [e.model_dump(mode="json") for e in bundle.evidence] if bundle.evidence else []
     
     # 4. Reasoning Steps
-    reasoning_list = [s.model_dump() for s in bundle.reasoning.steps] if bundle.reasoning else []
+    reasoning_list = [s.model_dump(mode="json") for s in bundle.reasoning.steps] if bundle.reasoning else []
     
     # 5. Safety Verification
-    safety_dict = bundle.safety.model_dump() if bundle.safety else None
+    safety_dict = bundle.safety.model_dump(mode="json") if bundle.safety else None
     
     # 6. DRP
-    drp_dict = bundle.drp.model_dump() if bundle.drp else None
+    drp_dict = bundle.drp.model_dump(mode="json") if bundle.drp else None
+
+    # 7. Decision Assurance
+    da_dict = (
+        bundle.decision_assurance.model_dump(mode="json")
+        if getattr(bundle, "decision_assurance", None) else None
+    )
     
     path_dict = {
         "image_hash": image_hash,
@@ -1488,8 +1497,9 @@ def compute_provenance_hash(bundle: CaseBundle) -> str:
         "evidence_graph": evidence_list,
         "reasoning_steps": reasoning_list,
         "safety_verification": safety_dict,
-        "drp": drp_dict
+        "drp": drp_dict,
+        "decision_assurance": da_dict,
     }
     
-    serialized = json.dumps(path_dict, sort_keys=True)
+    serialized = json.dumps(path_dict, sort_keys=True, default=str)
     return hashlib.sha256(serialized.encode()).hexdigest()

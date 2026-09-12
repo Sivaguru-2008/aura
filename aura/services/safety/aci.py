@@ -172,3 +172,31 @@ class AdaptiveConformalInference:
     @property
     def qhat(self) -> float:
         return self.state.qhat
+
+
+class MultiStreamACI:
+    """Manages independent ACI instances across multiple model streams or clinical cohorts."""
+
+    def __init__(self, default_coverage: float = 0.90, gamma: float = 0.02, window: int = 200):
+        self.default_coverage = default_coverage
+        self.gamma = gamma
+        self.window = window
+        self.streams: dict[str, AdaptiveConformalInference] = {}
+
+    def get_stream(self, stream_name: str = "global") -> AdaptiveConformalInference:
+        if stream_name not in self.streams:
+            self.streams[stream_name] = AdaptiveConformalInference(
+                coverage=self.default_coverage,
+                gamma=self.gamma,
+                window=self.window,
+            )
+        return self.streams[stream_name]
+
+    def update(self, stream_name: str, probs: np.ndarray, true_index: int) -> dict:
+        return self.get_stream(stream_name).update(probs, true_index)
+
+    def predict_set(self, stream_name: str, probs: np.ndarray) -> list[int]:
+        return self.get_stream(stream_name).predict_set(probs)
+
+    def qhat(self, stream_name: str = "global") -> float:
+        return self.get_stream(stream_name).qhat

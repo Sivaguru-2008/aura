@@ -4,8 +4,10 @@ from typing import Any
 from aura.schemas.contracts import CaseBundle
 from aura.schemas.clinical import DIAGNOSIS_LABELS
 
-def export_fhir_diagnostic_report(b: CaseBundle) -> dict[str, Any]:
+def export_fhir_diagnostic_report(b: CaseBundle, tenant_id: str | None = None) -> dict[str, Any]:
+    from aura.gateway.storage import compute_provenance_hash
     issued_str = b.created_at.isoformat() if hasattr(b.created_at, "isoformat") else datetime.now(timezone.utc).isoformat()
+    p_hash = compute_provenance_hash(b)
     
     top_dx = b.safety.top.value if (b.safety and b.safety.top) else "unknown"
     top_dx_label = DIAGNOSIS_LABELS.get(b.safety.top, top_dx) if (b.safety and b.safety.top) else top_dx
@@ -14,10 +16,42 @@ def export_fhir_diagnostic_report(b: CaseBundle) -> dict[str, Any]:
     if b.vision and b.vision.findings:
         for i in range(len(b.vision.findings)):
             results.append({"reference": f"Observation/{b.case_id}-finding-{i}"})
-            
-    return {
+
+    extensions = []
+    da = getattr(b, "decision_assurance", None)
+    if da is not None:
+        extensions.append({
+            "url": "https://aura.healthcare/fhir/StructureDefinition/decision-assurance",
+            "extension": [
+                {"url": "verdict", "valueString": da.verdict.value},
+                {"url": "confidence", "valueDecimal": float(da.confidence)},
+                {"url": "conformalSet", "valueString": ", ".join(da.conformal_set)},
+                {"url": "conformalCoverage", "valueDecimal": float(da.conformal_coverage)},
+                {"url": "oodZScore", "valueDecimal": float(da.ood_zscore)},
+                {"url": "isOod", "valueBoolean": bool(da.is_ood)},
+                {"url": "epistemicUncertainty", "valueDecimal": float(da.epistemic_uncertainty)},
+                {"url": "requiresHumanReview", "valueBoolean": bool(da.requires_human_review)},
+                {"url": "limitingFactor", "valueString": str(da.limiting_factor)},
+            ]
+        })
+
+    conclusion_text = b.report.impression_text if b.report else "No impression text"
+    if da is not None:
+        conclusion_text = f"[{da.verdict.value}] {conclusion_text}"
+
+    report_dict = {
         "resourceType": "DiagnosticReport",
         "id": f"report-{b.case_id}",
+        "meta": {
+            "source": f"urn:aura:tenant:{tenant_id or 'default'}",
+            "tag": [
+                {
+                    "system": "https://aura.healthcare/provenance-hash",
+                    "code": p_hash,
+                    "display": "Tamper-Evident SHA-256 Provenance",
+                }
+            ],
+        },
         "identifier": [{
             "use": "official",
             "system": "http://aura.hospital.org/cases",
@@ -42,7 +76,7 @@ def export_fhir_diagnostic_report(b: CaseBundle) -> dict[str, Any]:
                 "reference": "Device/aura-copilot-v2"
             }
         }],
-        "conclusion": b.report.impression_text if b.report else "No impression text",
+        "conclusion": conclusion_text,
         "conclusionCode": [{
             "coding": [{
                 "system": "http://snomed.info/sct",
@@ -52,6 +86,9 @@ def export_fhir_diagnostic_report(b: CaseBundle) -> dict[str, Any]:
         }],
         "result": results
     }
+    if extensions:
+        report_dict["extension"] = extensions
+    return report_dict
 
 def export_fhir_observations(b: CaseBundle) -> list[dict[str, Any]]:
     obs_list = []

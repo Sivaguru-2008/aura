@@ -432,6 +432,38 @@ class SafetyAssessment(BaseModel):
 
 
 # --------------------------------------------------------------------------- #
+# Decision Assurance
+# --------------------------------------------------------------------------- #
+class DecisionVerdict(str, Enum):
+    ACCEPT = "ACCEPT"
+    REVIEW_REQUIRED = "REVIEW_REQUIRED"
+    ABSTAIN = "ABSTAIN"
+
+
+class DecisionAssurance(BaseModel):
+    verdict: DecisionVerdict = DecisionVerdict.ACCEPT
+    primary_diagnosis: str = ""
+    confidence: float = 0.0
+    conformal_set: list[str] = Field(default_factory=list)
+    conformal_coverage: float = 0.90
+    conformal_method: str = "marginal"
+    ood_zscore: float = 0.0
+    is_ood: bool = False
+    epistemic_uncertainty: float = 0.0
+    limiting_factor: str = ""
+    reasons: list[str] = Field(default_factory=list)
+    mitigations: list[str] = Field(default_factory=list)
+    requires_human_review: bool = False
+    model_version: str = "decision-assurance-v1"
+    created_at: datetime = Field(default_factory=_now)
+
+    def summary_reason(self) -> str:
+        if not self.reasons:
+            return "Decision criteria satisfied."
+        return "; ".join(self.reasons)
+
+
+# --------------------------------------------------------------------------- #
 # Explainability
 # --------------------------------------------------------------------------- #
 class Explanation(BaseModel):
@@ -582,6 +614,7 @@ class CaseBundle(BaseModel):
     decision_readiness: Optional[DecisionReadinessProfile] = None
     drp: Optional[DecisionReadinessProfile] = None
     consensus_result: Optional[dict] = None               # multi-agent panel consensus
+    decision_assurance: Optional[DecisionAssurance] = None
     created_at: datetime = Field(default_factory=_now)
     dx_labels: dict[str, str] = Field(default_factory=dict)
     ev_labels: dict[str, str] = Field(default_factory=dict)

@@ -59,11 +59,36 @@ class DicomListener:
             except Exception as e:
                 print(f"[DICOM Listener] Error during shutdown: {e}")
 
+    @staticmethod
+    def _resolve_tenant_id(event, ds: pydicom.dataset.Dataset | None = None) -> str:
+        """Extract tenant identity from DICOM dataset tags or association AE titles."""
+        if ds is not None:
+            for tag_name in ("InstitutionName", "StationName", "InstitutionalDepartmentName"):
+                val = getattr(ds, tag_name, None)
+                if val:
+                    cleaned = str(val).strip().lower().replace(" ", "_")
+                    if cleaned and cleaned not in ("none", "unknown"):
+                        return cleaned
+
+        assoc = getattr(event, "assoc", None)
+        if assoc:
+            for entity in ("requestor", "acceptor"):
+                actor = getattr(assoc, entity, None)
+                if actor and hasattr(actor, "ae_title"):
+                    aet = actor.ae_title
+                    if isinstance(aet, bytes):
+                        aet = aet.decode("ascii", errors="ignore")
+                    aet = str(aet).strip()
+                    if aet and aet.upper() not in ("ECHOSCU", "STORESCU", "FINDSCU", "AURA_PACS"):
+                        return aet.lower()
+        return "default"
+
     def handle_c_store(self, event) -> int:
         """Handle a C-STORE request."""
         try:
             ds = event.dataset
             patient_id = getattr(ds, "PatientID", "unknown")
+            tenant_id = self._resolve_tenant_id(event, ds)
             
             # Save dataset to a temporary file
             with tempfile.NamedTemporaryFile(delete=False, suffix=".dcm") as tmp:
@@ -73,7 +98,7 @@ class DicomListener:
             # Process study in background thread to avoid blocking the DICOM association
             t = threading.Thread(
                 target=self._process_dicom,
-                args=(tmp_path, patient_id),
+                args=(tmp_path, patient_id, tenant_id),
                 daemon=True
             )
             t.start()
@@ -82,7 +107,7 @@ class DicomListener:
             print(f"[DICOM Listener] C-STORE exception: {e}")
             return 0xC000 # Processing Failure status
 
-    def _process_dicom(self, path: Path, patient_id: str) -> None:
+    def _process_dicom(self, path: Path, patient_id: str, tenant_id: str = "default") -> None:
         try:
             from aura.backend.core.upload.intake import stage_bytes
             payload = path.read_bytes()
@@ -94,8 +119,10 @@ class DicomListener:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 try:
-                    envelope = loop.run_until_complete(self.dispatch.dispatch(asset))
-                    print(f"[DICOM Listener] Successfully routed/analyzed study {envelope.routing.study_id} (Modality: {envelope.routing.modality})")
+                    envelope = loop.run_until_complete(
+                        self.dispatch.dispatch(asset, clinical_context={"tenant_id": tenant_id})
+                    )
+                    print(f"[DICOM Listener] Successfully routed/analyzed study {envelope.routing.study_id} (Modality: {envelope.routing.modality}) for tenant '{tenant_id}'")
                 finally:
                     loop.close()
         except Exception as e:
@@ -127,17 +154,11 @@ class DicomListener:
         return dt.strftime("%Y%m%d"), dt.strftime("%H%M%S")
 
     def handle_c_find(self, event) -> Iterator[tuple[int, pydicom.dataset.Dataset | None]]:
-        """Handle a C-FIND query.
-
-        Every attribute returned here is either a value AURA actually holds or a
-        zero-length attribute. Nothing is synthesised: an SCU that receives a
-        PatientBirthDate or StudyDate from us is entitled to treat it as the real
-        one, so inventing those would put fabricated demographics into whatever
-        PACS or worklist consumed the response.
-        """
+        """Handle a C-FIND query with tenant isolation."""
         try:
             ds = event.identifier
             qr_level = str(getattr(ds, "QueryRetrieveLevel", "") or "STUDY")
+            tenant_id = self._resolve_tenant_id(event, ds)
 
             # Request keys. A key present-but-empty is a universal match and must
             # still be echoed back in the response; a key absent is not returned.
@@ -147,7 +168,11 @@ class DicomListener:
             q_patient_name = str(getattr(ds, "PatientName", "") or "").strip()
             q_accession = str(getattr(ds, "AccessionNumber", "") or "").strip()
 
-            for c in self.store.list_cases():
+            matching_cases = self.store.list_cases(tenant_id=tenant_id)
+            if not matching_cases and tenant_id == "default":
+                matching_cases = self.store.list_cases()
+
+            for c in matching_cases:
                 if event.is_cancelled:
                     yield 0xFE00, None
                     return

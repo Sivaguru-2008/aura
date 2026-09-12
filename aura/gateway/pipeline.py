@@ -32,7 +32,12 @@ from aura.services.memory import MemoryEngine
 from aura.services.reasoning import ClinicalReasoner
 from aura.services.recommend import RecommendEngine
 from aura.services.report import ReportEngine
-from aura.services.safety import SafetyEngine, ClinicalSafetyController, ClinicalDecisionReadinessEngine
+from aura.services.safety import (
+    SafetyEngine,
+    ClinicalSafetyController,
+    ClinicalDecisionReadinessEngine,
+    DecisionAssuranceEngine,
+)
 from aura.services.vision import VisionEngine
 from aura.schemas.clinical import Finding
 from aura.services.agent.consensus import ConsensusEngine
@@ -76,6 +81,7 @@ class Pipeline:
         # Both read their own config (settings / safety policy) at construction.
         self.safety_controller = ClinicalSafetyController()
         self.cdre = ClinicalDecisionReadinessEngine()
+        self.decision_assurance = DecisionAssuranceEngine()
         self.explain = ExplainEngine()
         self.recommend = RecommendEngine()
         self.reasoner = ClinicalReasoner()
@@ -208,6 +214,7 @@ class Pipeline:
                 study.study_id, x, self.fusion.model,
                 resolved_logits=resolved_logits, aci_qhat=self._aci_qhat(),
             )
+            da = self.decision_assurance.evaluate(safety=safety, controller=controller_output)
             bundle = CaseBundle(
                 case_id=case_id,
                 study_id=study.study_id,
@@ -223,6 +230,7 @@ class Pipeline:
                 measurement=measurement,
                 safety=safety,
                 safety_controller=controller_output,
+                decision_assurance=da,
                 multimodal=study.multimodal,
                 ground_truth=study.ground_truth,
             )
@@ -306,7 +314,14 @@ class Pipeline:
         # 9) Memory index (for similarity/priors)
         self.memory.index(case_id, vision.embedding, safety.top.value, modality="cxr", study_id=study.study_id)
 
-        state = CaseState.ABSTAINED if safety.abstained else CaseState.READY
+        # 7.7) Decision Assurance Engine
+        decision_assurance = self.decision_assurance.evaluate(
+            safety=safety,
+            readiness=decision_readiness,
+            controller=controller_output,
+        )
+
+        state = CaseState.ABSTAINED if (safety.abstained or decision_assurance.verdict.value == "ABSTAIN") else CaseState.READY
         bundle = CaseBundle(
             case_id=case_id,
             study_id=study.study_id,
@@ -330,6 +345,7 @@ class Pipeline:
             decision_readiness=decision_readiness,
             drp=decision_readiness,
             consensus_result=consensus_result.to_dict() if consensus_result else None,
+            decision_assurance=decision_assurance,
             multimodal=study.multimodal,
             ground_truth=study.ground_truth,
         )
@@ -343,6 +359,8 @@ class Pipeline:
                     "controller_confidence": controller_output.safety_confidence,
                     "readiness_state": decision_readiness.state.value if hasattr(decision_readiness.state, 'value') else str(decision_readiness.state),
                     "readiness_limiting": decision_readiness.limiting_factor,
+                    "decision_verdict": decision_assurance.verdict.value,
+                    "decision_reasons": decision_assurance.reasons,
                     "safety_abstained": safety.abstained,
                     "top_diagnosis": safety.top.value,
                 })
