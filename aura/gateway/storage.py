@@ -423,7 +423,7 @@ class AlertRow(Base):
 
 
 class Store:
-    def __init__(self, db_path: Path, url: str | None = None, site_id: str | None = None):
+    def __init__(self, db_path: Path | None = None, url: str | None = None, site_id: str | None = None):
         """Open (creating if needed) the case store.
 
         ``db_path`` is the SQLite file used when ``url`` is empty; it stays the home of
@@ -431,6 +431,9 @@ class Store:
         ``url`` is any SQLAlchemy URL, normally ``AURA_DATABASE_URL``. ``site_id`` is
         ``AURA_SITE_ID``; see :class:`SiteBindingRow`.
         """
+        if db_path is None:
+            from aura.common.config import DB_PATH
+            db_path = DB_PATH
         self.db_path = Path(db_path)
         if url:
             self.engine = engine_for(url)
@@ -438,27 +441,136 @@ class Store:
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
             self.engine = create_engine(f"sqlite:///{self.db_path}", future=True)
         Base.metadata.create_all(self.engine)
+        # Schema upgrades for databases created by an older AURA. A failed migration
+        # used to be swallowed here, which left a half-upgraded schema that broke later
+        # on some unrelated query, far from the cause. Stop at startup instead.
+        from aura.gateway.migrations import MigrationRunner
         try:
-            from aura.gateway.migrations import MigrationRunner
             MigrationRunner(self.engine).apply_all()
-        except Exception:
-            pass
+        except Exception as exc:
+            raise RuntimeError(
+                "database schema migration failed on "
+                f"{self.engine.url.render_as_string(hide_password=True)}: "
+                f"{type(exc).__name__}: {exc}") from exc
         self.site_id = self._bind_site((site_id or "").strip())
         self._seed_defaults()
+
+    # ---- passwords ----
+    # scrypt (RFC 7914) from the standard library: memory-hard, so offline guessing
+    # against a stolen users table is expensive. Stored as "scrypt$n$r$p$<hex>" in
+    # password_hash, with the salt in its own column.
+    _SCRYPT_N, _SCRYPT_R, _SCRYPT_P = 2 ** 14, 8, 1
+
+    #: Passwords that earlier code published in its source: the five accounts builds
+    #: before 2026-09-13 seeded on every fresh database, and the one password the
+    #: quarantined pilot script gave every account it created. An account that still
+    #: accepts one is a known credential rather than an account, so it is disabled at
+    #: startup. All of them were hashed by the legacy salted-SHA-256 code, so only legacy
+    #: hashes are checked, which keeps the scan cheap.
+    _PUBLISHED_PASSWORDS = (
+        "AdminSecret123!", "HospitalAdmin123!", "Clinician123!", "Auditor123!",
+        "Observer123!", "HospitalPilotSecure2026!",
+    )
 
     @staticmethod
     def hash_password(password: str) -> tuple[str, str]:
         salt = secrets.token_hex(16)
-        pw_hash = hashlib.sha256((password + salt).encode("utf-8")).hexdigest()
-        return pw_hash, salt
+        n, r, p = Store._SCRYPT_N, Store._SCRYPT_R, Store._SCRYPT_P
+        digest = hashlib.scrypt(password.encode("utf-8"), salt=bytes.fromhex(salt),
+                                n=n, r=r, p=p, dklen=32).hex()
+        return f"scrypt${n}${r}${p}${digest}", salt
 
     @staticmethod
     def verify_password(password: str, salt: str, expected_hash: str) -> bool:
-        pw_hash = hashlib.sha256((password + salt).encode("utf-8")).hexdigest()
-        return hmac.compare_digest(pw_hash, expected_hash)
+        if expected_hash.startswith("scrypt$"):
+            try:
+                _, n, r, p, digest = expected_hash.split("$")
+                got = hashlib.scrypt(password.encode("utf-8"), salt=bytes.fromhex(salt),
+                                     n=int(n), r=int(r), p=int(p), dklen=32).hex()
+            except (ValueError, TypeError):
+                return False
+            return secrets.compare_digest(got, digest)
+        # Legacy: one round of salted SHA-256, written by builds before 2026-09-13.
+        # Still accepted so existing accounts can sign in; the login endpoint rewrites
+        # the row as scrypt on the first successful sign-in (upgrade_password_hash).
+        legacy = hashlib.sha256((password + salt).encode("utf-8")).hexdigest()
+        return secrets.compare_digest(legacy, expected_hash)
+
+    @staticmethod
+    def password_needs_upgrade(expected_hash: str) -> bool:
+        return not expected_hash.startswith("scrypt$")
+
+    def upgrade_password_hash(self, user_id: str, password: str) -> None:
+        pw_hash, salt = self.hash_password(password)
+        with Session(self.engine) as ses:
+            u = ses.get(UserRow, user_id)
+            if u is not None:
+                u.password_hash, u.salt = pw_hash, salt
+                ses.commit()
+
+    def _disable_known_default_accounts(self) -> None:
+        disabled: list[str] = []
+        with Session(self.engine) as ses:
+            for u in ses.execute(
+                select(UserRow).where(UserRow.is_active.is_(True))
+            ).scalars().all():
+                if not self.password_needs_upgrade(u.password_hash):
+                    continue                          # scrypt: written by current code
+                if any(self.verify_password(pw, u.salt, u.password_hash)
+                       for pw in self._PUBLISHED_PASSWORDS):
+                    u.is_active = False
+                    u.disabled_at = datetime.now(timezone.utc)
+                    for sess in ses.execute(
+                        select(SessionRow).where(SessionRow.user_id == u.user_id)
+                    ).scalars():
+                        sess.revoked = True
+                    disabled.append(u.username)
+            if disabled:
+                ses.commit()
+        for username in disabled:
+            self.audit("security.default_account_disabled", entity_type="user",
+                       entity_id=username,
+                       detail={"reason": "password was a published default"})
+
+    def _bootstrap_admin(self) -> None:
+        """Create the first administrator from AURA_BOOTSTRAP_ADMIN_PASSWORD, once.
+
+        Only while no active account exists, so the variable is inert after the first
+        start and should then be removed. Username: AURA_BOOTSTRAP_ADMIN_USER
+        (default ``admin``).
+        """
+        import os
+
+        password = os.environ.get("AURA_BOOTSTRAP_ADMIN_PASSWORD", "")
+        if not password:
+            return
+        with Session(self.engine) as ses:
+            if ses.execute(select(UserRow.user_id).where(UserRow.is_active.is_(True))).first():
+                return
+        if len(password) < 12:
+            raise RuntimeError("AURA_BOOTSTRAP_ADMIN_PASSWORD must be at least 12 characters")
+        username = os.environ.get("AURA_BOOTSTRAP_ADMIN_USER", "").strip() or "admin"
+        try:
+            user = self.create_user(username=username, password=password,
+                                    role="AURA_ADMIN", org_id="default")
+        except ValueError as exc:
+            raise RuntimeError(
+                f"cannot create the bootstrap administrator: {exc}. If that is a disabled "
+                f"default account, set AURA_BOOTSTRAP_ADMIN_USER to another name.") from exc
+        self.audit("security.bootstrap_admin_created", entity_type="user",
+                   entity_id=user["user_id"], detail={"username": username})
 
     def _seed_defaults(self) -> None:
-        """Seed default organization, accounts for all roles, and initial model registry cards."""
+        """Seed the default organization and the model registry cards.
+
+        No user accounts are seeded. Builds before 2026-09-13 created five accounts
+        with passwords written in this file, so every fresh database could be opened
+        by anyone who had read the source. The first administrator now comes from
+        ``AURA_BOOTSTRAP_ADMIN_PASSWORD`` (:meth:`_bootstrap_admin`); without it the
+        server runs on the shared-token and loopback modes only.
+        """
+        self._disable_known_default_accounts()
+        self._bootstrap_admin()
         with Session(self.engine) as ses:
             # 1. Default Organization
             if not ses.get(OrganizationRow, "default"):
@@ -466,83 +578,36 @@ class Store:
                     org_id="default", name="Default Hospital", slug="default", is_active=True
                 ))
 
-            # 2. Seed Baseline Users for all 5 roles if table empty
-            has_user = ses.execute(select(UserRow.user_id)).first()
-            if not has_user:
-                defaults = [
-                    ("admin", "AdminSecret123!", "AURA_ADMIN", "default", "admin@aura.health"),
-                    ("hospital_admin", "HospitalAdmin123!", "HOSPITAL_ADMIN", "default", "hosp_admin@aura.health"),
-                    ("clinician", "Clinician123!", "CLINICAL_USER", "default", "dr.smith@aura.health"),
-                    ("auditor", "Auditor123!", "AUDITOR", "default", "audit@aura.health"),
-                    ("observer", "Observer123!", "READ_ONLY", "default", "observer@aura.health"),
-                ]
-                for uname, pwd, role, org, email in defaults:
-                    h, salt = self.hash_password(pwd)
-                    ses.add(UserRow(
-                        user_id=f"usr-{uname}",
-                        org_id=org,
-                        username=uname,
-                        email=email,
-                        password_hash=h,
-                        salt=salt,
-                        role=role,
-                        is_active=True,
-                    ))
-
-            # 3. Seed Baseline Models in Model Registry
-            has_models = ses.execute(select(RegisteredModelRow.model_id)).first()
-            if not has_models:
-                models = [
-                    {
-                        "model_id": "vision-cxr-densenet121-production",
-                        "org_id": "system",
-                        "name": "DenseNet-121 MIMIC-CXR",
-                        "version": "1.0.0",
-                        "modality": "CXR",
-                        "intended_use": "Frontal chest radiograph multi-label diagnostic screening",
-                        "source": "torchvision / internal fine-tuning",
-                        "training_data_provenance": "MIMIC-CXR-JPG frontal radiographs with expert radiologist reports",
-                        "validation_dataset": "MIMIC-CXR test split (n=602)",
-                        "validation_metrics": {"auroc": 0.8095, "macro_f1": 0.3330, "ece": 0.2087},
-                        "checksum_sha256": "4b5d2b7e1933df71650bb063625fbe3d2427ee0ec5bb72d2be237a4e69b51dd3",
-                        "approval_status": "APPROVED",
-                        "deployment_status": "ACTIVE",
-                    },
-                    {
-                        "model_id": "fusion-poe-v1",
-                        "org_id": "system",
-                        "name": "Bayesian Product-of-Experts Evidence Fusion",
-                        "version": "1.0.0",
-                        "modality": "MULTIMODAL_CXR",
-                        "intended_use": "Evidence integration across image, priors, and clinical lab findings",
-                        "source": "AURA Bayesian PoE",
-                        "training_data_provenance": "MIMIC-CXR matched cohort",
-                        "validation_dataset": "CheXpert external validation (n=4800)",
-                        "validation_metrics": {"accuracy": 0.5273, "nll": 1.4193, "macro_auroc": 0.7366},
-                        "checksum_sha256": "81fa7935cf1fdb7020bc8b1ee3f31742918809e5ee93cb95c866d7ad99ec983f",
-                        "approval_status": "APPROVED",
-                        "deployment_status": "ACTIVE",
-                    },
-                    {
-                        "model_id": "brain-resunet-v1",
-                        "org_id": "system",
-                        "name": "BraTS Multi-Task ResU-Net",
-                        "version": "1.0.0",
-                        "modality": "BRAIN_MRI",
-                        "intended_use": "Glioma volumetric segmentation and tumor presence scoring",
-                        "source": "BraTS 2020 volumetric MRI dataset",
-                        "training_data_provenance": "BraTS 2020 multi-institutional glioma cohort",
-                        "validation_dataset": "BraTS 2020 validation (n=7531 slices)",
-                        "validation_metrics": {"composite_dice": 0.86515, "presence_auroc": 0.97743},
-                        "checksum_sha256": "25f4a7c062c3f8e56ec74db81d6365bb518770df887eecfebe925f2061611b8f",
-                        "approval_status": "APPROVED",
-                        "deployment_status": "ACTIVE",
-                    },
-                ]
-                for m in models:
-                    ses.add(RegisteredModelRow(**m))
+            # Registry cards for the models this build serves, derived from the artifacts
+            # on disk (services/models/cards.py) rather than typed in, so a card cannot
+            # claim a figure the checkout does not contain. They are written
+            # PENDING_REVIEW: deployed is a fact, approved is a claim nobody has made. A
+            # person approves through POST /v1/models/registry/{id}/status, which is
+            # audited. Cards the 2026-09-12 seed left APPROVED are rewritten.
+            from aura.services.models.cards import (
+                SERVED_MODEL_IDS, SUPERSEDED_SEED_DATASETS, served_model_cards)
+            existing = {r.model_id: r for r in ses.execute(
+                select(RegisteredModelRow).where(
+                    RegisteredModelRow.model_id.in_(SERVED_MODEL_IDS))).scalars()}
+            stale = [mid for mid, r in existing.items()
+                     if r.approval_status == "APPROVED" and r.org_id == "system"
+                     and r.validation_dataset in SUPERSEDED_SEED_DATASETS]
+            corrected: list[str] = []
+            if stale or len(existing) < len(SERVED_MODEL_IDS):
+                for mid, card in served_model_cards().items():
+                    row = existing.get(mid)
+                    if row is None:
+                        ses.add(RegisteredModelRow(**card))
+                    elif mid in stale:
+                        for key, value in card.items():
+                            setattr(row, key, value)
+                        corrected.append(mid)
 
             ses.commit()
+        for mid in corrected:
+            self.audit("registry.card_corrected", entity_type="model", entity_id=mid,
+                       detail={"reason": "seeded APPROVED with figures that did not "
+                                         "trace to an artifact"})
 
     def _bind_site(self, configured: str) -> str:
         """Stamp or check the site this database belongs to (see SiteBindingRow)."""
@@ -759,6 +824,33 @@ class Store:
             ).scalars().all()
             return [{"case_id": r.case_id, "diagnosis": r.diagnosis,
                      "verdict": r.verdict, "correction": r.correction} for r in rows]
+
+    def verified_outcome_pairs(self, org_id: str | None = None,
+                               model_version: str | None = None) -> list[dict]:
+        """Cases that carry a verified outcome, with the posterior AURA stored for each.
+
+        The input to local cohort validation (``services/assurance/local_validation``):
+        ``{"case_id", "posterior": {dx: p}, "truth", "covered", "abstained"}`` per case.
+        """
+        with Session(self.engine) as ses:
+            stmt = select(CaseRow, OutcomeRow).join(
+                OutcomeRow, OutcomeRow.case_id == CaseRow.case_id)
+            if org_id and org_id not in ("system", "*"):
+                stmt = stmt.where(CaseRow.tenant_id == org_id)
+            if model_version:
+                stmt = stmt.where(CaseRow.model_version == model_version)
+            out = []
+            for case, outcome in ses.execute(stmt).all():
+                safety = (case.bundle or {}).get("safety") or {}
+                posterior = {
+                    p["diagnosis"]: float(p.get("probability", 0.0))
+                    for p in safety.get("predictions") or [] if p.get("diagnosis")
+                }
+                out.append({"case_id": case.case_id, "posterior": posterior,
+                            "truth": outcome.true_diagnosis,
+                            "covered": bool(outcome.covered),
+                            "abstained": bool(case.abstained)})
+            return out
 
     # ---- adaptive conformal inference (Module 8) ----
     def load_aci_state(self, stream: str = "global") -> dict | None:
@@ -1000,10 +1092,12 @@ class Store:
                 return False
             u.is_active = False
             u.disabled_at = datetime.now(timezone.utc)
-            ses.execute(
-                text("UPDATE sessions SET revoked = 1 WHERE user_id = :uid"),
-                {"uid": user_id},
-            )
+            # ORM rather than raw SQL: "SET revoked = 1" is an integer-into-boolean
+            # error on PostgreSQL.
+            for sess in ses.execute(
+                select(SessionRow).where(SessionRow.user_id == user_id)
+            ).scalars():
+                sess.revoked = True
             ses.commit()
             return True
 

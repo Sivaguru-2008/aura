@@ -108,11 +108,18 @@ Set a token before a second machine needs to reach AURA:
 export AURA_AUTH_TOKEN=$(python -c "import secrets;print(secrets.token_urlsafe(32))")
 ```
 
-Clients then send `x-aura-token: <value>` **and** `x-aura-user: <who>` — an
-authenticated call without a named principal is rejected 403, which is what keeps
-every call attributable in the audit log. `/v1/health` and the dashboard shell stay
-public so container probes and the UI still load; every `/v1` data route is gated.
-`deploy/preflight.py` prints a warning on each boot while the token is empty.
+**Browsers** then show a sign-in card: the user enters their name and the token once
+and receives a session cookie (signed, HttpOnly, SameSite=Strict, Secure behind HTTPS,
+lasting `AURA_SESSION_TTL_HOURS`). That name is the principal on every audit row for
+the session. **Scripts and integrations** send `x-aura-token: <value>` **and**
+`x-aura-user: <who>`; an authenticated call without a named principal is rejected 403,
+which keeps every call attributable in the audit log. Rotating the token signs every
+browser out. **User accounts** (username and password, five roles) are optional: a
+fresh database has none, and the first administrator comes from
+`AURA_BOOTSTRAP_ADMIN_PASSWORD` — see `docs/HOSPITAL_IT_INSTALL.md` §5. `/v1/health`,
+`/v1/auth/*` and the dashboard shell stay public so container probes and the sign-in
+card load; every `/v1` data route is gated. `deploy/preflight.py` reports the
+effective access mode on each boot.
 
 > [!NOTE]
 > **Rate limiting is per-process.** The limiter is an in-memory token bucket with no

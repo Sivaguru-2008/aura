@@ -288,6 +288,10 @@ def test_nightly_recalibration(tmp_path, monkeypatch):
 
     monkeypatch.setattr(rc, "_load_backend", lambda name: DummyModel())
     monkeypatch.setattr(rc, "calibrate", lambda backend, *a, **k: {"temperature": 1.0})
+    # Point the pre-fit backup at tmp_path. Otherwise every run copies the served
+    # safety_<backend>.npz files aside inside aura/artifacts, leaving *.bak.npz clutter.
+    monkeypatch.setattr(rc, "backend_calibration_path",
+                        lambda backend: tmp_path / f"safety_{backend}.npz")
 
     # One sample is below the threshold: recalibration must not touch the served
     # safety envelope, because refitting adds no information but does move the

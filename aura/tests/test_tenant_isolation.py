@@ -13,9 +13,11 @@ from aura.gateway.app import app, state as app_state
 
 
 @pytest.fixture
-def memory_store():
+def memory_store(tmp_path):
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
-    store = Store(db_path=Path("memory.db"))
+    # tmp_path, not a bare relative name: that wrote memory.db into whatever directory
+    # pytest ran from, which was the package root.
+    store = Store(db_path=tmp_path / "memory.db")
     store.engine = engine
     # Re-run migrations and seeds on static in-memory engine
     from aura.gateway.storage import Base

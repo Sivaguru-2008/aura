@@ -218,9 +218,12 @@ def pipeline() -> Pipeline:
 # --------------------------------------------------------------------------- #
 @app.get("/v1/health")
 def health():
+    # Public (probes run before any credential), so operational facts only. site_id
+    # says which hospital's database this server has open.
     return {"status": "ok", "backend": pipeline().fusion.backend,
             "trained": pipeline().fusion.is_trained(),
-            "cases": store().count()}
+            "cases": store().count(),
+            "site_id": getattr(store(), "site_id", "") or None}
 
 
 @app.get("/v1/studies")

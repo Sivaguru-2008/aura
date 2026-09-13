@@ -1,80 +1,82 @@
 """Tests for Model Registry, Local Cohort Validation, and Monitoring & Alerting APIs."""
 from __future__ import annotations
 
-from pathlib import Path
+import secrets
+
+import numpy as np
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.pool import StaticPool
 from fastapi.testclient import TestClient
 
-from aura.gateway.storage import Store, Base
-from aura.gateway.migrations import MigrationRunner
+from aura.common.config import ARTIFACTS
 from aura.gateway.app import app, state as app_state
+from aura.gateway.storage import Store
+from aura.schemas.clinical import DIAGNOSES, Diagnosis
+from aura.schemas.contracts import (
+    CaseBundle, FusionResult, Prediction, SafetyAssessment, StructuredPriors, VisionResult,
+)
+
+CXR_MODEL = "vision-cxr-densenet121-production"
 
 
 @pytest.fixture
-def model_store():
-    engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
-    store = Store(db_path=Path("model_memory.db"))
-    store.engine = engine
-    Base.metadata.create_all(engine)
-    MigrationRunner(engine).apply_all()
-    store._seed_defaults()
-    yield store
-    engine.dispose()
+def model_store(tmp_path):
+    """A store with an admin and a clinician; yields (store, {role: (user, pw)})."""
+    store = Store(tmp_path / "registry.db")
+    creds = {}
+    for role, username in (("AURA_ADMIN", "reg_admin"), ("CLINICAL_USER", "reg_clinician")):
+        password = secrets.token_urlsafe(16)
+        store.create_user(username, password, role=role, org_id="default")
+        creds[role] = (username, password)
+    yield store, creds
+    store.engine.dispose()
 
 
-def test_seeded_models_in_registry(model_store):
-    models = model_store.list_models()
-    assert len(models) >= 3
-    model_ids = [m["model_id"] for m in models]
-    assert "vision-cxr-densenet121-production" in model_ids
-    assert "fusion-poe-v1" in model_ids
-    assert "brain-resunet-v1" in model_ids
+def _headers(client, creds, role):
+    username, password = creds[role]
+    r = client.post("/v1/auth/login", json={"username": username, "password": password})
+    assert r.status_code == 200, r.text
+    return {"Authorization": f"Bearer {r.json()['token']}"}
 
-    cxr = model_store.get_model("vision-cxr-densenet121-production")
-    assert cxr is not None
-    assert cxr["modality"] == "CXR"
-    assert cxr["approval_status"] == "APPROVED"
+
+def test_seeded_models_are_pending_review_with_traceable_provenance(model_store):
+    store, _ = model_store
+    ids = {m["model_id"] for m in store.list_models()}
+    assert {CXR_MODEL, "fusion-poe-v1", "brain-resunet-v1"} <= ids
+
+    cxr = store.get_model(CXR_MODEL)
+    # Deployed is a fact; approved would be a claim nobody has made.
+    assert cxr["approval_status"] == "PENDING_REVIEW"
     assert cxr["deployment_status"] == "ACTIVE"
-    assert "auroc" in cxr["validation_metrics"]
+    assert "MIMIC-CXR" in cxr["training_data_provenance"]
+    assert "radiologist" not in cxr["training_data_provenance"].lower()
+    if (ARTIFACTS / "evaluation_retrain_v2" / "metrics.json").exists():
+        assert cxr["validation_metrics"]["macro_auroc"] == pytest.approx(0.821, abs=5e-4)
+    if (ARTIFACTS / "best_model.pt").exists():
+        assert len(cxr["checksum_sha256"]) == 64
 
 
 def test_model_lifecycle_governance(model_store):
+    store, creds = model_store
     with TestClient(app, raise_server_exceptions=False) as client:
-        app_state["store"] = model_store
+        app_state["store"] = store
+        headers = _headers(client, creds, "AURA_ADMIN")
 
-        # Login as AURA_ADMIN
-        res_admin = client.post("/v1/auth/login", json={"username": "admin", "password": "AdminSecret123!"})
-        tok = res_admin.json()["token"]
-        headers = {"Authorization": f"Bearer {tok}"}
-
-        # 1. Register candidate model
-        new_model_payload = {
+        payload = {
             "model_id": "pediatric-pneumonia-convnext-v2",
             "name": "Pediatric Pneumonia ConvNeXt",
             "version": "2.1.0",
             "modality": "CXR",
-            "intended_use": "Pediatric inpatient triage and pneumonia probability ranking",
+            "intended_use": "Pediatric inpatient triage",
             "source": "Internal fine-tuned ConvNeXt",
-            "training_data_provenance": "Guangzhou Women and Children's Medical Center cohort",
-            "validation_dataset": "Guangzhou test split (n=624)",
-            "validation_metrics": {"auroc": 0.884, "macro_f1": 0.742, "ece": 0.038},
-            "checksum_sha256": "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-            "approval_status": "PENDING_REVIEW",
-            "deployment_status": "STAGING",
         }
-        res_reg = client.post("/v1/models/registry", json=new_model_payload, headers=headers)
+        res_reg = client.post("/v1/models/registry", json=payload, headers=headers)
         assert res_reg.status_code == 201
-        registered = res_reg.json()
-        assert registered["model_id"] == "pediatric-pneumonia-convnext-v2"
-        assert registered["approval_status"] == "PENDING_REVIEW"
+        # Registration is not approval.
+        assert res_reg.json()["approval_status"] == "PENDING_REVIEW"
+        assert res_reg.json()["deployment_status"] == "STAGING"
 
-        # 2. Duplicate registration rejected with 409 Conflict
-        res_dup = client.post("/v1/models/registry", json=new_model_payload, headers=headers)
-        assert res_dup.status_code == 409
+        assert client.post("/v1/models/registry", json=payload, headers=headers).status_code == 409
 
-        # 3. Update status: PENDING_REVIEW -> APPROVED, STAGING -> ACTIVE
         res_status = client.post(
             "/v1/models/registry/pediatric-pneumonia-convnext-v2/status",
             json={"approval_status": "APPROVED", "deployment_status": "ACTIVE"},
@@ -82,144 +84,118 @@ def test_model_lifecycle_governance(model_store):
         )
         assert res_status.status_code == 200
         assert res_status.json()["approval_status"] == "APPROVED"
-        assert res_status.json()["deployment_status"] == "ACTIVE"
 
-        # 4. Retire model: ACTIVE -> RETIRED (sets retired_at)
         res_retire = client.post(
             "/v1/models/registry/pediatric-pneumonia-convnext-v2/status",
             json={"deployment_status": "RETIRED"},
             headers=headers,
         )
         assert res_retire.status_code == 200
-        assert res_retire.json()["deployment_status"] == "RETIRED"
         assert res_retire.json()["retired_at"] is not None
 
 
-def test_validation_run_workflow(model_store):
+def _queue(client, headers) -> str:
+    r = client.post("/v1/validation-runs", headers=headers,
+                    json={"model_id": CXR_MODEL, "dataset_name": "site_q3_cohort"})
+    assert r.status_code == 201
+    assert r.json()["status"] == "QUEUED"
+    return r.json()["run_id"]
+
+
+def test_client_supplied_metrics_are_stored_and_labelled_as_such(model_store):
+    store, creds = model_store
     with TestClient(app, raise_server_exceptions=False) as client:
-        app_state["store"] = model_store
+        app_state["store"] = store
+        headers = _headers(client, creds, "CLINICAL_USER")
+        run_id = _queue(client, headers)
 
-        # Login as clinician
-        res_login = client.post("/v1/auth/login", json={"username": "clinician", "password": "Clinician123!"})
-        tok = res_login.json()["token"]
-        headers = {"Authorization": f"Bearer {tok}"}
+        res = client.post(f"/v1/validation-runs/{run_id}/execute", headers=headers,
+                          json={"metrics": {"auroc": 0.8351, "samples_evaluated": 200}})
+        assert res.status_code == 200
+        done = res.json()
+        assert done["status"] == "COMPLETED"
+        assert done["metrics"]["auroc"] == 0.8351
+        assert done["metrics"]["provenance"] == "client_supplied"
+        assert "did not compute" in done["report_markdown"]
+        assert "Local Cohort Validation Report" in done["report_markdown"]
 
-        # 1. Queue local cohort validation run
-        res_create = client.post(
-            "/v1/validation-runs",
-            json={
-                "model_id": "vision-cxr-densenet121-production",
-                "dataset_name": "memorial_hospital_q3_cohort",
-                "config": {"sample_size": 200, "calibration_bins": 10},
-            },
-            headers=headers,
-        )
-        assert res_create.status_code == 201
-        run_data = res_create.json()
-        run_id = run_data["run_id"]
-        assert run_data["status"] == "QUEUED"
+        assert client.get(f"/v1/validation-runs/{run_id}", headers=headers).status_code == 200
+        assert run_id in [r["run_id"] for r in client.get("/v1/validation-runs", headers=headers).json()]
 
-        # 2. Execute validation run
-        res_exec = client.post(
-            f"/v1/validation-runs/{run_id}/execute",
-            json={
-                "sample_count": 200,
-                "metrics": {
-                    "auroc": 0.8351,
-                    "ece": 0.0382,
-                    "brier_score": 0.1189,
-                    "macro_f1": 0.7104,
-                    "conformal_coverage": 0.9085,
-                    "samples_evaluated": 200,
-                },
-                "subgroup_analysis": {
-                    "age": {"<65": {"auroc": 0.841}, ">=65": {"auroc": 0.829}},
-                    "sex": {"M": {"auroc": 0.833}, "F": {"auroc": 0.837}},
-                },
-                "failure_analysis": {
-                    "false_negatives": 5,
-                    "false_positives": 8,
-                    "abstention_count": 14,
-                },
-            },
-            headers=headers,
-        )
-        assert res_exec.status_code == 200
-        completed = res_exec.json()
-        assert completed["status"] == "COMPLETED"
-        assert completed["metrics"]["auroc"] == 0.8351
-        assert completed["subgroup_analysis"]["age"]["<65"]["auroc"] == 0.841
-        assert "Local Cohort Validation Report" in completed["report_markdown"]
 
-        # 3. Retrieve validation run details
-        res_get = client.get(f"/v1/validation-runs/{run_id}", headers=headers)
-        assert res_get.status_code == 200
-        assert res_get.json()["run_id"] == run_id
+def test_execute_without_outcomes_refuses_instead_of_inventing_metrics(model_store):
+    """This endpoint used to return AUROC 0.8124 and an age/sex table for any empty call."""
+    store, creds = model_store
+    with TestClient(app, raise_server_exceptions=False) as client:
+        app_state["store"] = store
+        headers = _headers(client, creds, "CLINICAL_USER")
+        run_id = _queue(client, headers)
 
-        # 4. List validation runs
-        res_list = client.get("/v1/validation-runs", headers=headers)
-        assert res_list.status_code == 200
-        runs = res_list.json()
-        assert len(runs) >= 1
-        assert run_id in [r["run_id"] for r in runs]
+        res = client.post(f"/v1/validation-runs/{run_id}/execute", headers=headers, json={})
+        assert res.status_code == 409
+        assert res.json()["detail"]["error"] == "insufficient_verified_outcomes"
+        run = client.get(f"/v1/validation-runs/{run_id}", headers=headers).json()
+        assert run["status"] == "FAILED"
+        assert run["metrics"] in ({}, None)
+
+
+def _case_with_outcome(store, i: int, top: Diagnosis, truth: Diagnosis) -> None:
+    probs = np.full(len(DIAGNOSES), 0.04)
+    probs[DIAGNOSES.index(top)] = 0.80
+    case_id, study = f"CASE-VAL-{i}", f"STU-VAL-{i}"
+    store.save_case(CaseBundle(
+        case_id=case_id, study_id=study, state="ready", priors=StructuredPriors(),
+        vision=VisionResult(study_id=study, findings=[], embedding=[], model_version=""),
+        fusion=FusionResult(study_id=study, backend="classical", posterior={}),
+        safety=SafetyAssessment(
+            study_id=study, top=top, top_probability=0.80, conformal_set=[top],
+            predictions=[Prediction(diagnosis=d, probability=float(p))
+                         for d, p in zip(DIAGNOSES, probs)]),
+    ), tenant_id="default", model_version=CXR_MODEL)
+    store.record_outcome(case_id, probs, DIAGNOSES.index(truth), true_diagnosis=truth.value)
+
+
+def test_execute_computes_metrics_from_verified_outcomes(model_store):
+    store, creds = model_store
+    for i in range(20):
+        _case_with_outcome(store, i, Diagnosis.PNEUMONIA, Diagnosis.PNEUMONIA)
+    for i in range(20, 25):
+        _case_with_outcome(store, i, Diagnosis.PNEUMONIA, Diagnosis.NORMAL)
+
+    with TestClient(app, raise_server_exceptions=False) as client:
+        app_state["store"] = store
+        headers = _headers(client, creds, "CLINICAL_USER")
+        run_id = _queue(client, headers)
+        res = client.post(f"/v1/validation-runs/{run_id}/execute", headers=headers, json={})
+        assert res.status_code == 200, res.text
+        m = res.json()["metrics"]
+        assert m["provenance"] == "computed_by_aura"
+        assert m["n"] == 25
+        assert m["accuracy"] == pytest.approx(0.8)
+        assert res.json()["failure_analysis"]["incorrect_top1"] == 5
+        assert res.json()["subgroup_analysis"] == {}
 
 
 def test_monitoring_and_alerts_api(model_store):
+    store, creds = model_store
     with TestClient(app, raise_server_exceptions=False) as client:
-        app_state["store"] = model_store
+        app_state["store"] = store
+        headers = _headers(client, creds, "CLINICAL_USER")
 
-        # Login as clinician
-        res_login = client.post("/v1/auth/login", json={"username": "clinician", "password": "Clinician123!"})
-        tok = res_login.json()["token"]
-        headers = {"Authorization": f"Bearer {tok}"}
+        assert client.post("/v1/monitoring/metrics", headers=headers,
+                           json={"metric_name": "inference_latency_ms", "value": 42.5,
+                                 "dimensions": {"modality": "CXR"}}).status_code == 201
+        res_get = client.get("/v1/monitoring/metrics?metric_name=inference_latency_ms", headers=headers)
+        assert res_get.status_code == 200
+        assert res_get.json()[0]["value"] == 42.5
 
-        # 1. Log metrics
-        res_m1 = client.post(
-            "/v1/monitoring/metrics",
-            json={"metric_name": "inference_latency_ms", "value": 42.5, "dimensions": {"modality": "CXR"}},
-            headers=headers,
-        )
-        assert res_m1.status_code == 201
-
-        res_m2 = client.post(
-            "/v1/monitoring/metrics",
-            json={"metric_name": "abstention_rate", "value": 0.08, "dimensions": {"window": "1h"}},
-            headers=headers,
-        )
-        assert res_m2.status_code == 201
-
-        # Query metrics
-        res_get_m = client.get("/v1/monitoring/metrics?metric_name=inference_latency_ms", headers=headers)
-        assert res_get_m.status_code == 200
-        metrics = res_get_m.json()
-        assert len(metrics) >= 1
-        assert metrics[0]["metric_name"] == "inference_latency_ms"
-        assert metrics[0]["value"] == 42.5
-
-        # 2. Create alert
-        res_alt = client.post(
-            "/v1/monitoring/alerts",
-            json={
-                "category": "OOD_SPIKE",
-                "severity": "CRITICAL",
-                "message": "Spike in out-of-distribution CXRs detected in Emergency Department",
-                "model_id": "vision-cxr-densenet121-production",
-                "details": {"mahalanobis_distance_mean": 14.8, "threshold": 12.0},
-            },
-            headers=headers,
-        )
+        res_alt = client.post("/v1/monitoring/alerts", headers=headers, json={
+            "category": "OOD_SPIKE", "severity": "CRITICAL",
+            "message": "Spike in out-of-distribution CXRs", "model_id": CXR_MODEL})
         assert res_alt.status_code == 201
-        alt_data = res_alt.json()
-        alert_id = alt_data["alert_id"]
-        assert alt_data["category"] == "OOD_SPIKE"
-        assert alt_data["acknowledged"] is False
-
-        # List unacknowledged alerts
-        res_list_alts = client.get("/v1/monitoring/alerts?acknowledged=false", headers=headers)
-        assert res_list_alts.status_code == 200
-        assert alert_id in [a["alert_id"] for a in res_list_alts.json()]
-
-        # Acknowledge alert
+        alert_id = res_alt.json()["alert_id"]
+        assert alert_id in [a["alert_id"] for a in
+                            client.get("/v1/monitoring/alerts?acknowledged=false", headers=headers).json()]
         res_ack = client.post(f"/v1/monitoring/alerts/{alert_id}/ack", headers=headers)
         assert res_ack.status_code == 200
         assert res_ack.json()["acknowledged"] is True

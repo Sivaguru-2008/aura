@@ -157,7 +157,9 @@ flatters you is not a benchmark.
   published unchanged rather than re-tuned to the winner, because a single grid search on
   this split is not grounds to alter a served clinical model — but the honest statement
   is that if the ring is kept, it is kept for representational reasons, not measured ones.
-* **The quantum kernel.** Under nested cross-validation over all 185 subjects with
+* **The quantum kernel.** *(Withdrawn 2026-09-13: the 185-subject grade labels below do not
+  trace to BraTS 2020; see `docs/DATA_LICENSES.md`, provenance audit.)* Under nested
+  cross-validation over all 185 subjects with
   symmetric hyperparameter grids, QKL does **not differ** from a classical RBF on
   glioma grading: ΔAUROC −0.0026 (95% CI [−0.044, +0.039], DeLong p = 0.90). The
   interval excludes any difference beyond about 0.045 in either direction, so this

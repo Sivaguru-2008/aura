@@ -60,6 +60,10 @@ services:
       # The hospital/site this server belongs to. The first start stamps it into
       # the database; a server with a different AURA_SITE_ID then refuses to open it.
       AURA_SITE_ID: "${AURA_SITE_ID:-}"
+      # The first administrator account, created once while no account exists. Set it
+      # for the first start only, then remove it (docs/HOSPITAL_IT_INSTALL.md §5).
+      AURA_BOOTSTRAP_ADMIN_PASSWORD: "${AURA_BOOTSTRAP_ADMIN_PASSWORD:-}"
+      AURA_BOOTSTRAP_ADMIN_USER: "${AURA_BOOTSTRAP_ADMIN_USER:-}"
       # SQLite case store on the mounted volume below: the default. The previous
       # compose file set AURA_DATA_DIR, which nothing in the codebase reads, so the
       # store stayed inside the image layer and every restart discarded the worklist.

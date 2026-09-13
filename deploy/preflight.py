@@ -92,7 +92,7 @@ REQUIRED_IMPORTS = [
 
 
 def check_imports() -> None:
-    print("\n[1/6] Python dependencies")
+    print("\n[1/7] Python dependencies")
     for mod, why in REQUIRED_IMPORTS:
         try:
             __import__(mod)
@@ -136,7 +136,7 @@ BRAIN_ARTIFACTS = [
 
 
 def check_artifacts(skip_brain: bool) -> None:
-    print("\n[2/6] Served artifacts")
+    print("\n[2/7] Served artifacts")
     if not ARTIFACTS.is_dir():
         _fail(
             "artifacts/ directory",
@@ -178,7 +178,7 @@ def check_artifacts(skip_brain: bool) -> None:
 # 3. The real vision model actually loads
 # --------------------------------------------------------------------------- #
 def check_vision_engine() -> None:
-    print("\n[3/6] Vision engine (real weights, not fallback)")
+    print("\n[3/7] Vision engine (real weights, not fallback)")
     fallback = os.environ.get("AURA_ALLOW_FALLBACK_VISION", "0")
     if fallback == "1":
         _warn(
@@ -224,7 +224,7 @@ def check_vision_engine() -> None:
 # 4. Modality router installs (gateway swallows this failure)
 # --------------------------------------------------------------------------- #
 def check_router() -> None:
-    print("\n[4/6] Modality router")
+    print("\n[4/7] Modality router")
     try:
         from aura.backend.bootstrap import install_router  # noqa: F401
 
@@ -242,7 +242,7 @@ def check_router() -> None:
 # 5. The ASGI app imports and the fusion model is trained
 # --------------------------------------------------------------------------- #
 def check_app() -> None:
-    print("\n[5/6] Gateway application")
+    print("\n[5/7] Gateway application")
     try:
         from aura.gateway.app import app
 

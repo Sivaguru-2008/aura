@@ -13,6 +13,10 @@
   const nativeFetch = window.fetch.bind(window);
   let scrim = null;
   let scrimKind = "";
+  // Only someone who was signed in can have a session that "ended". A first visit's
+  // data fetches also come back 401, and telling that person their session ended is
+  // wrong and alarming.
+  let wasSignedIn = false;
 
   const STYLE = `
     .aura-auth-scrim { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center;
@@ -157,6 +161,7 @@
   }
 
   function showSignedIn(principal) {
+    wasSignedIn = true;
     whenBodyReady(() => {
       injectStyle();
       const chip = document.createElement("div");
@@ -183,7 +188,9 @@
       let body = null;
       try { body = await resp.clone().json(); } catch { /* not a JSON error */ }
       const code = codeOf(body);
-      if (code === "unauthenticated") showSignIn("Your session has ended. Sign in again.");
+      if (code === "unauthenticated") {
+        showSignIn(wasSignedIn ? "Your session has ended. Sign in again." : "");
+      }
       else if (code === "auth_not_configured") showBlocked(reasonOf(body));
     }
     return resp;

@@ -349,7 +349,13 @@ def enforce(request: Request) -> str:
             if principal == "anonymous":
                 raise HTTPException(403, {"error": "forbidden",
                                           "reason": "x-aura-user principal required"})
+            # The shared token is the deployment's root credential, so its holder may act
+            # in any role and tenant; the headers only say which. An unknown role is
+            # refused rather than handed to require_role() as an opaque string.
             role = request.headers.get("x-aura-role", "AURA_ADMIN")
+            if role not in ROLES:
+                raise HTTPException(403, {"error": "forbidden",
+                                          "reason": f"unknown role '{role}'"})
             tenant = request.headers.get("x-aura-tenant", "default")
             request.state.user = {
                 "user_id": f"usr-{principal}",
@@ -364,10 +370,23 @@ def enforce(request: Request) -> str:
         raise HTTPException(403, {"error": "auth_not_configured",
                                   "reason": NOT_CONFIGURED_REASON})
     else:
-        # Local request or open access: default administrative access for offline demo
+        # Loopback: the machine's own operator, full rights, as the offline demo needs.
+        # AURA_ALLOW_OPEN_ACCESS: anyone who can reach the port, with no credential at
+        # all. Such a caller is capped at CLINICAL_USER in the default tenant, so an open
+        # demo network cannot create administrators, approve models, or read another
+        # tenant's cases just by naming it in a header.
+        local = is_local_request(request)
         principal = request.headers.get("x-aura-user", "local")
-        tenant = request.headers.get("x-aura-tenant", "default")
-        role = request.headers.get("x-aura-role", "AURA_ADMIN")
+        requested = request.headers.get("x-aura-role",
+                                        "AURA_ADMIN" if local else "CLINICAL_USER")
+        if requested not in ROLES:
+            raise HTTPException(403, {"error": "forbidden",
+                                      "reason": f"unknown role '{requested}'"})
+        if local:
+            role, tenant = requested, request.headers.get("x-aura-tenant", "default")
+        else:
+            role = requested if requested in ROLE_HIERARCHY["CLINICAL_USER"] else "CLINICAL_USER"
+            tenant = "default"
         request.state.user = {
             "user_id": f"usr-{principal}",
             "username": principal,
@@ -478,6 +497,10 @@ def login(request: Request, response: Response, body: dict = Body(...)) -> dict:
         if not _SIGNIN_LIMITER.allow(client):
             raise HTTPException(429, {"error": "rate_limited", "reason": "Too many sign-in attempts; wait a minute"})
         raise HTTPException(401, {"error": "unauthenticated", "reason": "Invalid credentials"})
+    # The plaintext is only in hand at sign-in, so this is the one moment a legacy
+    # salted-SHA-256 hash can be rewritten as scrypt.
+    if st.password_needs_upgrade(user["password_hash"]):
+        st.upgrade_password_hash(user["user_id"], password)
 
     s = get_settings()
     ttl_hours = int(max(0.25, float(s.session_ttl_hours)))

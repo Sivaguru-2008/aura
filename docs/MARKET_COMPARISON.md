@@ -213,7 +213,7 @@ Two further issues in the same file:
 - **Chest CXR:** genuinely at the level of a solid published DenseNet-121 MIMIC baseline (0.821 vs 0.8335). The honest gap to market is precision (0.264) and nodule detection (0.729 vs 0.93), not AUROC.
 - **Brain MRI:** the numbers look competitive with the BraTS2020 winner only because the metric is different. On a like-for-like per-case 3D protocol, expect materially lower. The four-sequence requirement is a harder limit than any accuracy number.
 - **Fusion:** at n=69 with a 0.6377 majority baseline, this is a demo, not a benchmark. The quantum-beats-classical claim is refuted by the repo's own audit; classical currently wins.
-- **What is actually differentiating** and does not appear in any competitor's spec sheet: conformal coverage guarantees (measured 91.3–92.8% at a 90% target), typed abstention, the OOD/non-radiograph gate, and the label-provenance chain (66-report hand-read gold, independent torchxrayvision corroboration with a disclosed nodule failure). Lead with those; do not lead with accuracy.
+- **What is actually differentiating** and does not appear in any competitor's spec sheet: conformal coverage guarantees (measured 91.3–92.8% at a 90% target), abstention with a stated reason, the OOD/non-radiograph gate, and the label-provenance chain (66-report hand-read gold, independent torchxrayvision corroboration with a disclosed nodule failure). Lead with those; do not lead with accuracy.
 
 ### Sources
 

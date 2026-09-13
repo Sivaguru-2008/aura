@@ -10,7 +10,7 @@
 >
 > | Section | What this document says | What the measured evidence says |
 > |---|---|---|
-> | §3.2 QKL | Brain-tumour *subtype* F1 ~0.85 vs ~0.79 for an SVM | Subtype is untrainable here: the corpus has no meningioma or metastasis imaging. QKL was trained on glioma grade instead; nested CV over 185 subjects gives ΔAUROC −0.0026 vs an RBF kernel, p = 0.90 (`aura/artifacts/brain/qkl_full_coverage.json`) |
+> | §3.2 QKL | Brain-tumour *subtype* F1 ~0.85 vs ~0.79 for an SVM | Subtype is untrainable here: the corpus has no meningioma or metastasis imaging. QKL was trained on glioma grade instead, on 55 BraTS 2020 subjects, with no significant difference from an RBF kernel (`aura/artifacts/brain/qkl_training_report.json`). The later 185-subject "full coverage" comparison is **withdrawn**: its grade labels come from a folder whose subject IDs do not exist in BraTS 2020 (`docs/DATA_LICENSES.md`, provenance audit) |
 > | §2, §9.1 QMBA | Top-scored method; "Very High" patent value | The typed-abstention capability was **retracted** on source audit (`docs/RESEARCH_PAPER_v5.md` §2.8) |
 > | §9.2 | "FTO Status: Clear" | No freedom-to-operate search is on record. Treat freedom to operate as unknown until a patent attorney runs one |
 > | §11.1 | De Novo "because no predicate incorporates quantum algorithms" | FDA classifies a device by intended use and technological characteristics, and chest-X-ray AI already has cleared 510(k) predicates. A quantum component in the decision path makes clearance harder, not newly possible. The product now serves classical fusion |

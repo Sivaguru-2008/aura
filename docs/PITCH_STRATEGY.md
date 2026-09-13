@@ -233,6 +233,11 @@ Then show `test_doc_numbers.py`. Its docstring says *"the fix is to re-copy the 
 of benchmark.json, never to loosen this test."*
 
 ### A11 · "Your QKL quantum kernel loses too." ★★
+
+> **Do not use the answer below (2026-09-13).** The 185-subject result it quotes is withdrawn:
+> the grade labels do not trace to BraTS 2020 (`docs/DATA_LICENSES.md`). Say instead: "On the
+> 55 BraTS 2020 subjects we can trace, the quantum kernel shows no significant difference from
+> a classical RBF kernel. A larger analysis is withdrawn until its labels are fixed."
 > "It doesn't differ, and we now have the power to say so. Nested cross-validation over
 > all 185 subjects with symmetric hyperparameter grids gives ΔAUROC −0.0026, 95% CI
 > [−0.044, +0.039], DeLong p = 0.90. The interval excludes anything beyond about 0.045 in
@@ -254,7 +259,8 @@ clinical trial. Say that plainly.
 
 | ✗ Never say | ✓ Say instead |
 |---|---|
-| "quantum advantage" / "quantum speed-up" | "a different resource model" |
+| "quantum advantage" / "quantum speed-up" | "a fair comparison, and the negative results it produced" |
+| "classical models can't tell measurement-limited from model-limited" | "retracted — `docs/RESEARCH_PAPER_v5.md` §2.8" |
 | "our quantum model outperforms classical" | "they're statistically indistinguishable at n=69" |
 | "entanglement improves our results" | "the ablation says the ring isn't earning its gates" |
 | "validated on patients" | "validated against a rule-based labeler + 66 hand-read reports" |
@@ -273,11 +279,12 @@ credibility win.
 
 Highest value first:
 
-1. **Quote `qkl_full_coverage.json`, never `qkl_training_report.json`.** The QKL figure
-   moved twice before it settled (ΔAUROC −0.0156 p=0.002 on 669 slices → −0.0051 p=0.27 →
-   +0.0446 p=0.55 on 11 subjects), and only the full-coverage nested-CV run over 185
-   subjects is properly powered (−0.0026, p = 0.90). Present a superseded number and A10
-   collapses. Re-run the sweep if anything was retrained.
+1. **Do not quote `qkl_full_coverage.json` (withdrawn 2026-09-13).** Its 185-subject grade
+   labels do not trace to BraTS 2020 (`docs/DATA_LICENSES.md`). The QKL figure had already
+   moved twice (ΔAUROC −0.0156 p=0.002 on 669 slices → −0.0051 p=0.27 → +0.0446 p=0.55 on
+   11 subjects). The defensible statement today is the 55-subject run
+   (`qkl_training_report.json`): no significant difference. Present a withdrawn number and
+   A10 collapses.
 2. **More hardware cases.** n=1 → n=20 turns A7 from a concession into a result. Queue time,
    not engineering.
 3. **Train the QBN, or delete it.** Inert-but-wired is defensible; trained is better.
@@ -309,7 +316,7 @@ backend fell back to classical — check `preflight` output before presenting.
 
 > "We could have claimed a quantum advantage. The measurements didn't support one, so we
 > published the measurements instead — including the ablation that says our own entangler
-> isn't earning its gates. What we built is a system that knows the difference between
-> needing more computation and needing a doctor. That distinction doesn't exist classically,
-> it runs on every study, and every number behind it regenerates from an artifact you can
-> open."
+> isn't earning its gates, and a capability claim we retracted after auditing our own code.
+> What we built is a system that says when it doesn't know, proves its coverage on real
+> data, and serves the model that generalised best on an external cohort. Every number
+> behind it regenerates from an artifact you can open."

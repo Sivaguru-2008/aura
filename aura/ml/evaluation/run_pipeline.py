@@ -139,51 +139,23 @@ def run_evaluation_pipeline():
     perf_results = run_perf(iters=15, out_dir=ARTIFACTS_DIR / "performance")
 
     print("[AURA Eval] Loading evaluation artifacts...")
-    # 1. Load Chest Vision metrics
+    # No fallbacks. These three files used to have hard-coded stand-ins here, so a
+    # checkout missing an evaluation still produced a report full of confident numbers
+    # nobody had measured on it. A missing artifact now stops the pipeline and names
+    # the command that regenerates it.
     chest_metrics_path = EVAL_DIR / "metrics.json"
-    if chest_metrics_path.exists():
-        chest_data = json.loads(chest_metrics_path.read_text())
-    else:
-        # Fallback if metrics.json not yet built
-        chest_data = {
-            "n_images": 602,
-            "macro": {
-                "auroc": 0.8095, "auprc": 0.3188, "f1": 0.3330,
-                "sensitivity": 0.7243, "specificity": 0.7481,
-                "precision": 0.2391, "ece": 0.2087, "brier": 0.1556
-            }
-        }
-
-    # 2. Load Brain Vision metrics
     brain_metrics_path = ARTIFACTS_DIR / "brain" / "reports" / "test_report.json"
-    if brain_metrics_path.exists():
-        brain_data = json.loads(brain_metrics_path.read_text())
-    else:
-        # Fallback if test_report.json not yet built
-        brain_data = {
-            "samples": 7531,
-            "segmentation": {
-                "per_composite": {
-                    "whole_tumor": {"dice": 0.91498, "hausdorff_p95_px": 7.0847},
-                    "tumor_core": {"dice": 0.84561, "hausdorff_p95_px": 6.1478},
-                    "enhancing_tumor": {"dice": 0.83486, "hausdorff_p95_px": 4.5285}
-                },
-                "composite_dice_mean": 0.86515
-            },
-            "presence": {
-                "whole_tumor": {"auroc": 0.97743}
-            }
-        }
-
-    # 3. Load Fusion/Safety benchmark metrics
     fusion_metrics_path = ARTIFACTS_DIR / "benchmark.json"
-    if fusion_metrics_path.exists():
-        fusion_data = json.loads(fusion_metrics_path.read_text())
-    else:
-        fusion_data = {
-            "quantum": {"conformal_coverage": 0.9275, "conformal_set_size": 3.464},
-            "classical": {"conformal_coverage": 0.9130, "conformal_set_size": 3.261}
-        }
+    missing = [f"{p} (regenerate with {how})" for p, how in (
+        (chest_metrics_path, "python -m aura.aura_cli evaluate"),
+        (brain_metrics_path, "the brain test run, see docs/BRAIN_VISION.md"),
+        (fusion_metrics_path, "python -m aura.aura_cli bench"),
+    ) if not p.exists()]
+    if missing:
+        raise FileNotFoundError("evaluation artifacts missing: " + "; ".join(missing))
+    chest_data = json.loads(chest_metrics_path.read_text())
+    brain_data = json.loads(brain_metrics_path.read_text())
+    fusion_data = json.loads(fusion_metrics_path.read_text())
 
     # 4. Measure model file sizes
     chest_model_size = get_file_size_mb(ARTIFACTS_DIR / "best_model.pt")
@@ -463,11 +435,11 @@ their own calibration split so ECE is not inflated for either.
         writer.writerow(["Component", "Model", "Mean Composite Dice", "Macro AUROC",
                          "Macro F1", "ECE", "CPU Latency", "Provenance", "Scoring"])
         writer.writerow(["Brain", "AURA ResU-Net", eval_summary["brain_model"]["metrics"]["dice_mean"], "N/A", "N/A", "N/A", f"{eval_summary['brain_model']['performance']['cpu_study_latency_ms']:.2f} ms", "measured here", "pooled 2-D per-slice"])
-        writer.writerow(["Brain", "nnU-Net", "0.8710", "N/A", "N/A", "N/A", "not measured", "published: Isensee 2021 Nat Methods 18:203", "per-case 3-D"])
-        writer.writerow(["Brain", "SwinUNETR", "0.8580", "N/A", "N/A", "N/A", "not measured", "published: Hatamizadeh 2021 MICCAI BrainLes", "per-case 3-D"])
-        writer.writerow(["Brain", "MONAI 3D ResU-Net", "0.8350", "N/A", "N/A", "N/A", "not measured", "published: MONAI BraTS tutorial", "per-case 3-D"])
+        # Same two cited rows as benchmark_report.md, same sources. The MONAI and
+        # ResNet-50 rows were removed on 2026-09-12: neither traces to a publication.
+        writer.writerow(["Brain", "nnU-Net", "0.8535", "N/A", "N/A", "N/A", "not measured", "published: Isensee et al. 2020, arXiv:2011.00848 abstract (BraTS 2020 winning entry)", "per-case 3-D"])
+        writer.writerow(["Brain", "SwinUNETR", "0.8897", "N/A", "N/A", "N/A", "not measured", "published: Hatamizadeh et al. 2021, arXiv:2201.01266 Table 3 (BraTS 2021 validation)", "per-case 3-D"])
         writer.writerow(["Chest", "AURA DenseNet-121", "N/A", eval_summary["chest_model"]["metrics"]["auroc"], eval_summary["chest_model"]["metrics"]["f1"], eval_summary["chest_model"]["metrics"]["ece"], f"{eval_summary['chest_model']['performance']['cpu_latency_ms']:.2f} ms", "measured here", "MIMIC-CXR held-out"])
-        writer.writerow(["Chest", "ResNet-50 linear probe", "N/A", "0.7650", "0.2850", "0.2850", "~25 ms", "indicative reference, not measured here", "no such probe is trained in this repo"])
 
     print(f"[AURA Eval] Exported comparison_table.csv to {comp_csv_path}")
 

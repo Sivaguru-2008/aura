@@ -12,6 +12,7 @@ Covers:
 from __future__ import annotations
 
 import uuid
+from datetime import datetime, timezone
 from typing import Any
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request
 
@@ -21,6 +22,7 @@ from aura.gateway.security import (
     get_tenant_id,
 )
 from aura.gateway.storage import CrossTenantAccessError, verify_audit_trail
+from aura.services.assurance import local_validation
 
 router = APIRouter()
 
@@ -136,8 +138,8 @@ def disable_user(request: Request, user_id: str) -> dict:
         raise HTTPException(404, {"error": "not_found", "reason": f"User '{user_id}' not found"})
     if current_user.get("role") != "AURA_ADMIN" and current_user.get("org_id") != u["org_id"]:
         raise HTTPException(403, {"error": "forbidden", "reason": "Cannot disable users from other organizations"})
-    if u["username"] == "admin" and current_user.get("role") != "AURA_ADMIN":
-        raise HTTPException(403, {"error": "forbidden", "reason": "Cannot disable root admin"})
+    if u["role"] == "AURA_ADMIN" and current_user.get("role") != "AURA_ADMIN":
+        raise HTTPException(403, {"error": "forbidden", "reason": "Only an AURA_ADMIN can disable an AURA_ADMIN"})
 
     ok = st.disable_user(user_id)
     st.audit("user.disabled", entity_type="user", entity_id=user_id,
@@ -185,15 +187,18 @@ def register_model(request: Request, body: dict = Body(...)) -> dict:
             validation_dataset=str(body.get("validation_dataset", "")),
             validation_metrics=body.get("validation_metrics", {}),
             checksum_sha256=str(body.get("checksum_sha256", "")),
-            approval_status=str(body.get("approval_status", "APPROVED")),
-            deployment_status=str(body.get("deployment_status", "ACTIVE")),
+            # Registration is not approval. A new card waits for an explicit status
+            # change, which is audited as its own act.
+            approval_status=str(body.get("approval_status", "PENDING_REVIEW")),
+            deployment_status=str(body.get("deployment_status", "STAGING")),
         )
     except ValueError as exc:
         raise HTTPException(409, {"error": "conflict", "reason": str(exc)})
 
     st.audit("model.registered", entity_type="model", entity_id=model_id,
              actor=current_user.get("username", "system"), tenant_id=org_id,
-             detail={"model_id": model_id, "version": version, "modality": modality})
+             detail={"model_id": model_id, "version": version, "modality": modality,
+                     "approval_status": res.get("approval_status")})
     return res
 
 
@@ -274,39 +279,53 @@ def get_validation_run(request: Request, run_id: str) -> dict:
 
 @router.post("/v1/validation-runs/{run_id}/execute", dependencies=[Depends(require_role("AURA_ADMIN", "HOSPITAL_ADMIN", "CLINICAL_USER"))])
 def execute_validation_run(request: Request, run_id: str, body: dict = Body(default={})) -> dict:
+    """Score a queued run.
+
+    By default AURA computes the metrics itself, from this organization's cases that
+    carry a verified outcome (``POST /v1/cases/{id}/outcome``), the only ground truth
+    the product holds (``services/assurance/local_validation.py``). Too few outcomes is
+    a 409 and a FAILED run, never a placeholder. This endpoint used to fill in fixed
+    figures (AUROC 0.8124, an age/sex breakdown) whenever the caller sent none, and
+    mark the run COMPLETED.
+
+    A caller that computed metrics elsewhere may pass them in ``metrics``. They are
+    stored as supplied and labelled ``provenance: client_supplied`` in the run and its
+    report, because AURA cannot vouch for numbers it did not compute.
+    """
     tenant_id = get_tenant_id(request)
     st = _store(request)
-    run = st.get_validation_run(run_id, org_id=tenant_id)
+    try:
+        run = st.get_validation_run(run_id, org_id=tenant_id)
+    except CrossTenantAccessError as exc:
+        raise HTTPException(403, {"error": "cross_tenant_access_denied", "reason": str(exc)})
     if not run:
         raise HTTPException(404, {"error": "not_found", "reason": f"Validation run '{run_id}' not found"})
+    actor = get_current_user(request).get("username", "system")
 
-    st.update_validation_run(run_id, status="RUNNING")
+    supplied = body.get("metrics")
+    if supplied:
+        metrics: dict[str, Any] = {**supplied, "provenance": "client_supplied"}
+        subgroup = body.get("subgroup_analysis") or {}
+        failure = body.get("failure_analysis") or {}
+        basis = "Metrics supplied by the caller. AURA did not compute or verify them."
+    else:
+        pairs = st.verified_outcome_pairs(org_id=tenant_id, model_version=run["model_id"])
+        try:
+            computed = local_validation.compute(pairs)
+        except local_validation.InsufficientOutcomes as exc:
+            st.update_validation_run(run_id, status="FAILED", error=str(exc))
+            st.audit("validation.failed", entity_type="validation_run", entity_id=run_id,
+                     actor=actor, tenant_id=tenant_id, detail={"reason": str(exc)})
+            raise HTTPException(409, {"error": "insufficient_verified_outcomes", "reason": str(exc)})
+        metrics = {**computed["metrics"], "provenance": "computed_by_aura"}
+        # Verified outcomes carry no demographic fields yet, so there is nothing honest
+        # to break down by age or sex. Empty, not estimated.
+        subgroup = {}
+        failure = computed["failure_analysis"]
+        basis = (f"Computed by AURA from {metrics['n']} case(s) with a verified outcome "
+                 f"(organization {tenant_id}, model {run['model_id']}).")
 
-    metrics = body.get("metrics") or {
-        "auroc": 0.8124,
-        "ece": 0.0432,
-        "brier_score": 0.1245,
-        "macro_f1": 0.6841,
-        "conformal_coverage": 0.9021,
-        "samples_evaluated": body.get("sample_count", 150),
-    }
-    subgroup = body.get("subgroup_analysis") or {
-        "age_groups": {"<50": {"auroc": 0.825}, ">=50": {"auroc": 0.804}},
-        "sex": {"M": {"auroc": 0.814}, "F": {"auroc": 0.811}},
-    }
-    failure = body.get("failure_analysis") or {
-        "false_negatives": 4,
-        "false_positives": 7,
-        "abstention_count": 12,
-    }
-    report_md = (
-        f"# Local Cohort Validation Report: {run['model_id']}\n\n"
-        f"- Dataset: {run['dataset_name']}\n"
-        f"- Tenant: {tenant_id}\n"
-        f"- AUROC: {metrics['auroc']}\n"
-        f"- Expected Calibration Error (ECE): {metrics['ece']}\n"
-    )
-
+    report_md = local_validation.render_report(run, tenant_id, metrics, basis)
     updated = st.update_validation_run(
         run_id=run_id,
         status="COMPLETED",
@@ -316,15 +335,21 @@ def execute_validation_run(request: Request, run_id: str, body: dict = Body(defa
         report_markdown=report_md,
     )
     st.audit("validation.completed", entity_type="validation_run", entity_id=run_id,
-             actor=get_current_user(request).get("username", "system"), tenant_id=tenant_id,
-             detail={"status": "COMPLETED", "auroc": metrics["auroc"]})
+             actor=actor, tenant_id=tenant_id,
+             detail={"status": "COMPLETED", "provenance": metrics["provenance"],
+                     "n": metrics.get("n", metrics.get("samples_evaluated"))})
     return updated
 
 
 # --------------------------------------------------------------------------- #
 # 5. Monitoring & Real-Time Alerting
 # --------------------------------------------------------------------------- #
-@router.post("/v1/monitoring/metrics", status_code=201)
+# Writing metrics and raising alerts changes what operators see and act on, so read-only
+# and auditor roles may inspect them but not create them.
+_MONITOR_WRITERS = require_role("AURA_ADMIN", "HOSPITAL_ADMIN", "CLINICAL_USER")
+
+
+@router.post("/v1/monitoring/metrics", status_code=201, dependencies=[Depends(_MONITOR_WRITERS)])
 def log_system_metric(request: Request, body: dict = Body(...)) -> dict:
     tenant_id = get_tenant_id(request)
     metric_name = str(body.get("metric_name", "")).strip()
@@ -344,7 +369,7 @@ def get_system_metrics(request: Request, metric_name: str | None = None, limit: 
     return st.get_metrics(metric_name=metric_name, org_id=tenant_id, limit=limit)
 
 
-@router.post("/v1/monitoring/alerts", status_code=201)
+@router.post("/v1/monitoring/alerts", status_code=201, dependencies=[Depends(_MONITOR_WRITERS)])
 def create_system_alert(request: Request, body: dict = Body(...)) -> dict:
     tenant_id = get_tenant_id(request)
     category = str(body.get("category", "SYSTEM")).strip()
@@ -380,7 +405,7 @@ def list_system_alerts(request: Request, acknowledged: bool | None = None, limit
     return st.list_alerts(org_id=tenant_id, acknowledged=acknowledged, limit=limit)
 
 
-@router.post("/v1/monitoring/alerts/{alert_id}/ack")
+@router.post("/v1/monitoring/alerts/{alert_id}/ack", dependencies=[Depends(_MONITOR_WRITERS)])
 def acknowledge_system_alert(request: Request, alert_id: str) -> dict:
     tenant_id = get_tenant_id(request)
     st = _store(request)
@@ -411,6 +436,6 @@ def verify_audit_ledger(request: Request) -> dict:
     is_valid = verify_audit_trail(st)
     return {
         "valid": is_valid,
-        "algorithm": "SHA-256 Hash Chain",
-        "verified_at": "now",
+        "algorithm": "SHA-256 hash chain over previous hash, action, entity id, detail and timestamp",
+        "verified_at": datetime.now(timezone.utc).isoformat(),
     }

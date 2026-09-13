@@ -1,55 +1,88 @@
-# AURA Enterprise — Security Policy & RBAC Governance
+# AURA — Security Model
 
-## 1. Security Architecture & Core Tenets
+**Status (2026-09-13).** This describes what the code does today. Where a control people
+often expect is missing, it says so in §6 rather than implying it.
 
-AURA is engineered to satisfy the stringent cybersecurity, auditability, and data governance standards demanded by clinical hospital enterprises:
-* **Zero Trust Boundary**: All incoming requests require strong cryptographic authentication.
-* **Tenant Isolation**: Patient cases, model evaluations, and audit records are partitioned by `tenant_id`. Cross-tenant data leakage is strictly prohibited at both the database and gateway layer.
-* **Cryptographic Tamper-Evidence**: Inferences, clinician feedback, and administrative actions are committed to an append-only SHA-256 hash-chained audit ledger.
-* **Safe Harbor De-identification**: DICOM and tabular evidence vectors strip 18 HIPAA Safe Harbor direct identifiers at the intake gate.
+## 1. Access modes
 
----
+The gateway (`aura/gateway/security.py`) decides every request's principal, role and tenant
+in one place, before any handler runs.
 
-## 2. Role-Based Access Control (RBAC)
+| Mode | When | Who gets in | Role |
+|---|---|---|---|
+| **Shared token** | `AURA_AUTH_TOKEN` set | Callers presenting the token (`x-aura-token` or `Authorization: Bearer`) with an `x-aura-user` name, and browsers holding a signed session cookie from `POST /v1/auth/session` | Token callers choose any valid role and tenant with `x-aura-role` / `x-aura-tenant`: the token is a root credential. Browser sessions are `CLINICAL_USER`. |
+| **User accounts** | always available once an account exists | `POST /v1/auth/login` with username and password, which returns an `aura_tok_*` session token (also set as a cookie) | The account's role and organisation |
+| **Loopback** | no token configured | Direct, un-proxied requests from the machine itself | Full rights, for on-box maintenance and the offline demo |
+| **Open access** | no token and `AURA_ALLOW_OPEN_ACCESS=1` | Anyone who can reach the port | Capped at `CLINICAL_USER` in the default organisation. Isolated demo networks only. |
 
-AURA enforces a 5-tier role hierarchy with explicit privileges:
+With no token and no open access, a network request gets a 403 that says to set a token.
+A request relayed by a proxy (`X-Forwarded-For`, `Forwarded`, `X-Real-IP`) always counts as
+remote.
 
-| Role | Description | Permitted Capabilities |
-|---|---|---|
-| `AURA_ADMIN` | Global Platform Administrator | Organization provisioning, system-wide configuration, security policy management, global model deployments. |
-| `HOSPITAL_ADMIN` | Hospital IT / Department Admin | User provisioning within hospital organization, local model approvals, validation dataset uploads, department audit inspection. |
-| `CLINICAL_USER` | Radiologist / Attending Physician | Diagnostic review, study uploads, signing clinical reports, recording confirmed diagnostic outcomes, clinical copilot chat. |
-| `AUDITOR` | Compliance Officer / Clinical Auditor | Read-only inspection of tamper-evident audit ledger, model cards, validation run metrics, and calibration histories. |
-| `READ_ONLY` | Clinical Observer / Research Fellow | Read-only access to de-identified cases, published model cards, and aggregated performance metrics. Cannot view audit logs or sign reports. |
+## 2. Roles
 
-### Role Hierarchy Inheritance
-```
-AURA_ADMIN
-   └── HOSPITAL_ADMIN
-          └── CLINICAL_USER
-                 └── AUDITOR
-                        └── READ_ONLY
-```
+| Role | Can additionally |
+|---|---|
+| `READ_ONLY` | Read the model registry, validation runs and monitoring data |
+| `AUDITOR` | Read and verify the audit ledger (`/v1/audit/records`, `/v1/audit/verify`) |
+| `CLINICAL_USER` | Queue and execute validation runs; write monitoring metrics and alerts |
+| `HOSPITAL_ADMIN` | Everything above within its organisation; create and disable users (not `AURA_ADMIN`); register models and change their status |
+| `AURA_ADMIN` | Everything, across organisations; create organisations |
 
----
+Inheritance (`ROLE_HIERARCHY`): `AURA_ADMIN` ⊃ `HOSPITAL_ADMIN` ⊃ {`CLINICAL_USER`, `AUDITOR`} ⊃
+`READ_ONLY`. `CLINICAL_USER` does not include `AUDITOR`.
 
-## 3. Session & Token Management
+**Gap:** the core clinical endpoints (upload, case review, feedback, FHIR/HL7 export) require
+authentication but do not yet check role. Any authenticated principal can use them.
 
-1. **API Tokens**: Bearer tokens formatted as `aura_tok_*` with database-backed expiration, revocation status, and role scoping.
-2. **Session Cookies**: Signed, `HttpOnly`, `SameSite=Strict`, and `Secure` cookies with configurable TTL (default: 12.0 hours, matching one hospital shift).
-3. **Revocation**: Disabling a user account or calling `POST /v1/auth/logout` immediately invalidates all active sessions.
+## 3. Credentials
 
----
+- **Shared token:** compared in constant time. Rotating it ends every browser session,
+  because the session signing key is derived from it.
+- **Browser sessions:** `v1.<name>.<expiry>.<HMAC-SHA256>` in an HttpOnly, SameSite=Strict
+  cookie, `Secure` behind HTTPS, lifetime `AURA_SESSION_TTL_HOURS`. Nothing is stored
+  server-side.
+- **Passwords:** scrypt (N=2^14, r=8, p=1) with a per-user salt. Hashes written by builds
+  before 2026-09-13 (one round of salted SHA-256) are still accepted and rewritten as scrypt
+  at the next successful sign-in.
+- **Account sessions:** random `aura_tok_*` tokens. Only their SHA-256 is stored. They expire,
+  can be revoked (`POST /v1/auth/logout`), and all of a user's sessions are revoked when the
+  account is disabled.
+- **No default accounts.** The first administrator comes from
+  `AURA_BOOTSTRAP_ADMIN_PASSWORD`, used once while no active account exists. Any account
+  still accepting one of the passwords that earlier builds published in the source is
+  disabled at startup and recorded in the audit log.
+- **Brute force:** failed sign-ins are limited to 10 per minute per client address.
 
-## 4. Cryptographic Audit Ledger & Provenance
+## 4. Separating hospitals
 
-Every case analysis produces a cryptographic provenance hash computed across:
-$$	ext{Provenance Hash} = 	ext{SHA256}(	ext{ImageHash} \parallel 	ext{VisionFeatures} \parallel 	ext{ReasoningTrace} \parallel 	ext{SafetyAssessment} \parallel 	ext{DecisionAssurance})$$
+Separation is physical: one server and one database (or schema) per site. `AURA_SITE_ID` is
+stamped into the database on first start, and a server configured for another site, or for
+none, refuses to open it (`storage.SiteBindingRow`, checked again by preflight). Within one
+database, `tenant_id` scopes cases, validation runs, metrics and alerts in application
+queries. The database does not enforce it, so it is not the boundary between hospitals.
 
-The audit ledger (`audit_log` table) maintains an unbroken SHA-256 hash chain:
-$$H_t = 	ext{SHA256}(H_{t-1} \parallel 	ext{Timestamp} \parallel 	ext{Action} \parallel 	ext{Actor} \parallel 	ext{EntityID} \parallel 	ext{TenantID} \parallel 	ext{DetailJSON})$$
+## 5. Audit and provenance
 
-Any modification, deletion, or re-ordering of historical records breaks the hash chain, immediately alerting auditors during validation runs or CLI checks:
-```bash
-python -m aura.aura_cli audit-verify
-```
+- **Audit ledger (`audit_log`):** each row stores the SHA-256 of
+  `previous_hash ‖ action ‖ entity_id ‖ detail JSON ‖ timestamp`. Appends are serialised by
+  a process lock and, on PostgreSQL, a transaction-scoped advisory lock, so concurrent writers
+  cannot fork the chain. Verify it with `python -m aura.aura_cli audit-verify` or
+  `GET /v1/audit/verify`. **Gap:** `actor` and `tenant_id` are stored but not yet covered by
+  the hash, so editing either is not detected.
+- **Case provenance:** `compute_provenance_hash` covers the image, vision result, evidence,
+  reasoning steps, safety assessment and readiness profile, and is recorded per case in
+  `decision_provenance`.
+
+## 6. Not provided — plan for these
+
+- **TLS.** AURA serves plain HTTP. Terminate TLS at a reverse proxy
+  (`docs/HOSPITAL_IT_INSTALL.md` §6).
+- **Single sign-on, SAML/OIDC, MFA.**
+- **De-identification.** Uploads, stored cases and FHIR/HL7 exports can contain PHI. Only the
+  MRI metadata layer drops dates; nothing strips identifiers from chest images or reports.
+- **Encryption at rest.** Use disk or volume encryption on the host.
+- **Model file integrity at load.** Weight checksums are verified when models are fetched
+  during the image build (`deploy/fetch_models.py`), not each time they are loaded.
+- **DICOM allowlisting.** The listener does not check calling AE titles. Restrict port 11112
+  at the firewall.

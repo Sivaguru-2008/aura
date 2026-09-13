@@ -4,6 +4,48 @@ All notable changes to the AURA project are documented here.
 
 ---
 
+## [1.3.1] — 2026-09-13 (Productization hardening and integrity fixes)
+
+Reviews and hardens the productization work committed on 2026-09-12
+(`chore/productization-foundation`), and withdraws a result that does not survive a
+provenance check.
+
+### Security
+* **No default accounts.** The store no longer seeds five accounts whose passwords were
+  written in `storage.py`. The first administrator comes from
+  `AURA_BOOTSTRAP_ADMIN_PASSWORD`; accounts still using a published default password are
+  disabled at startup and audited.
+* **scrypt password hashing** replaces one round of salted SHA-256. Legacy hashes are
+  upgraded on the next successful sign-in.
+* **Open access is bounded.** With `AURA_ALLOW_OPEN_ACCESS=1`, network callers are capped at
+  `CLINICAL_USER` in the default tenant, and unknown `x-aura-role` values are refused.
+* Monitoring writes require `CLINICAL_USER` or above. A failed schema migration now stops the
+  server instead of being swallowed. `disable_user` works on PostgreSQL.
+
+### Integrity
+* **Validation runs compute real metrics** from verified outcomes
+  (`services/assurance/local_validation.py`), and refuse with 409 below 20 outcomes. The
+  endpoint used to return fixed figures (AUROC 0.8124, an age/sex breakdown) for any call
+  that sent no metrics. Metrics a caller supplies are labelled `client_supplied`.
+* **Registry cards are derived from artifacts** (`services/models/cards.py`) and written
+  `PENDING_REVIEW` with computed checksums. Cards seeded `APPROVED` with untraceable figures
+  are corrected at startup. Registration defaults to `PENDING_REVIEW` / `STAGING`.
+* **Fabricated pilot quarantined.** An uncommitted `services/enterprise/pilot.py` wrote a fake
+  validation certificate, invented patients and invented telemetry under a real hospital's
+  name. It is moved out of the repository (to `E:\AURA\_quarantine_fabricated_pilot_20260913\`)
+  and the `pilot-run` CLI command is removed.
+* `run_pipeline.py` no longer substitutes hard-coded metrics when an artifact is missing, and
+  its CSV no longer writes the untraceable MONAI and ResNet-50 rows.
+* **QKL full-coverage result withdrawn.** The 185-subject grade labels do not trace to BraTS
+  2020 (`docs/DATA_LICENSES.md`, provenance audit). Errata are added to the v5 manuscript and
+  supplementary, the README, and the grading, methodology and pitch documents.
+
+### Documentation
+* `docs/HOSPITAL_IT_INSTALL.md`, `docs/SECURITY.md` and `docs/THREAT_MODEL.md` rewritten to
+  describe what the code does, including its gaps.
+
+---
+
 ## [1.3.0] — 2026-08-21 (Manuscript remediation: submission version 5.0)
 
 Closes every blocking issue identified in a Tier-1 readiness review of the manuscript. Four

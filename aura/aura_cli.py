@@ -52,6 +52,7 @@ if sys.platform == "win32":
 # ---------------------------------------------------------------------
 
 import argparse
+import json
 import os
 import sys
 
@@ -282,6 +283,43 @@ def _print_agent_trajectory(trajectory) -> None:
             print(f"  decision                : {step.decision}")
 
 
+def cmd_audit_verify(args: argparse.Namespace) -> None:
+    from aura.gateway.storage import Store, verify_audit_trail
+    store = Store(Path(args.db) if args.db else None)
+    valid = verify_audit_trail(store)
+    recents = store.recent_audit(limit=args.limit, tenant_id=args.tenant_id)
+    print("\n" + "=" * 60)
+    print(" AURA CRYPTOGRAPHIC AUDIT VERIFICATION")
+    print("=" * 60)
+    status_str = "VALID (Intact SHA-256 Hash Chain)" if valid else "TAMPERING DETECTED"
+    print(f"Chain Status : {status_str}")
+    print(f"Total Rows   : {len(recents)} audited events sampled")
+    if recents:
+        print(f"Latest Hash  : {recents[0]['record_hash']}")
+    print("=" * 60 + "\n")
+    if not valid:
+        sys.exit(1)
+
+
+def cmd_migrate(args: argparse.Namespace) -> None:
+    from aura.gateway.migrations.runner import MigrationRunner
+    from aura.gateway.storage import Store
+    store = Store(Path(args.db) if args.db else None)
+    runner = MigrationRunner(store.engine)
+    if args.action == "current":
+        applied = runner.applied_versions()
+        print(f"Current applied schema migration versions: {applied}")
+    elif args.action == "rollback":
+        rolled = runner.rollback_last()
+        print(f"Rolled back schema migration: {rolled}")
+    else:
+        applied = runner.apply_all()
+        if applied:
+            print(f"Successfully executed schema migrations: {applied}")
+        else:
+            print(f"Schema is already up to date (current versions: {runner.applied_versions()})")
+
+
 # --------------------------------------------------------------------------- #
 # Pretty printing
 # --------------------------------------------------------------------------- #
@@ -371,6 +409,17 @@ def _build_parser() -> argparse.ArgumentParser:
     qk.add_argument("--bootstrap", type=int, default=1000)
     qk.add_argument("--dry-run", action="store_true", help="train, report, write nothing")
     qk.set_defaults(func=cmd_qkl)
+
+    av = sub.add_parser("audit-verify", help="verify SHA-256 hash chains across audit logs")
+    av.add_argument("--db", default=None, help="custom SQLite database path")
+    av.add_argument("--tenant-id", default=None, help="tenant identifier filter")
+    av.add_argument("--limit", type=int, default=50, help="sample limit")
+    av.set_defaults(func=cmd_audit_verify)
+
+    mg = sub.add_parser("migrate", help="run or inspect database schema migrations")
+    mg.add_argument("action", choices=["upgrade", "current"], default="upgrade", nargs="?", help="migration action")
+    mg.add_argument("--db", default=None, help="custom SQLite database path")
+    mg.set_defaults(func=cmd_migrate)
     return p
 
 
@@ -388,7 +437,7 @@ def main() -> None:
 
     parser = _build_parser()
     if cmd in {"predict", "evaluate", "explain", "benchmark", "calibrate", "agent", "qkl",
-               "-h", "--help"}:
+               "audit-verify", "migrate", "-h", "--help"}:
         args = parser.parse_args(sys.argv[1:])
         if getattr(args, "func", None) is None:
             print(__doc__)

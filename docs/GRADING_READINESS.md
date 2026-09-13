@@ -176,7 +176,9 @@ The project's most prominent quantum claim is currently **a negative result abou
 * Entanglement ablation, n=447, 2000 bootstrap resamples:
   accuracy Δ **−0.029** CI [−0.058, 0.000] (ns) · NLL Δ **+0.056** CI [+0.022, +0.090]
   **(significantly worse)** · ECE Δ **−0.027** CI [−0.068, +0.018] (ns)
-* QKL, nested CV over all 185 subjects: quantum AUROC **0.7723** vs classical RBF
+* **Withdrawn 2026-09-13** (the 185-subject grade labels do not trace to BraTS 2020; see
+  `docs/DATA_LICENSES.md`, provenance audit):
+  QKL, nested CV over all 185 subjects: quantum AUROC **0.7723** vs classical RBF
   **0.7749**, Δ **−0.0026**, 95% CI [−0.044, +0.039], DeLong p = **0.90**
   **(no difference — an informative null, not an absence of evidence)**.
   This supersedes two earlier figures that remain quoted in older documents: the

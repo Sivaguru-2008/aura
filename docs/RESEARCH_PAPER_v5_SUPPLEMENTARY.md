@@ -191,6 +191,9 @@ The served configuration is 8 qubits, 3 layers, ring — which ranks outside the
 
 ### S4.5 Quantum kernel, full coverage
 
+> **Withdrawn (13 September 2026).** The grade labels behind this analysis do not trace to
+> BraTS 2020; see the erratum at the head of the main text.
+
 Design: five outer subject-level folds stratified by grade over all 185 subjects; inner 75/25 split of each fold's training subjects for hyperparameter selection and Platt scaling; 1,200 balanced fit slices and 800 calibration slices per fold; at most 30 slices per test subject so no large subject dominates; subject-level aggregation by mean predicted probability. Source: `qkl_full_coverage.json`.
 
 **Table S5.** Per-fold results and selections. Both arms search a 5 × 5 grid: `C` ∈ {0.1, 1, 10, 100, 1000} and a bandwidth — `gamma` ∈ {0.001, 0.01, 0.1, 1, 10} for RBF, projection scaling ∈ {0.25, 0.5, 1, 2, 4} for the quantum kernel.

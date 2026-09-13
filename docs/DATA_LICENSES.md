@@ -42,6 +42,24 @@ software runs inside the hospital, on the hospital's data, and nothing leaves th
   permits commercial use. Put it in the model card, so a future buyer's diligence can
   read it in one place.
 
+## Dataset provenance audit (2026-09-13)
+
+What is on disk under `E:\AURA`, checked against what each served model was trained on.
+
+| Folder | On disk | Used by a served model | How much |
+|---|---|---|---|
+| MIMIC-CXR (`datasets\simhadrisadaram\mimic-cxr-dataset\versions\2`, the default in `aura/mimic/config.py`) | **Missing.** The folder no longer exists and was not found elsewhere. Its path layout is a Kaggle download, i.e. a third-party re-upload rather than the PhysioNet release | Chest model, fusion heads, calibration | Chest DenseNet-121: about 259,000 training images, everything present on 2026-07-20 (the index listed about 369,000), plus 2,099 validation images. The 2,099-image set selected the best epoch (checkpoint `best_metric` = the headline 0.821) and is what the vision calibration reads, so the chest model has no untouched test set. Fusion: at most 540 studies. Safety calibration: 446 studies. |
+| BraTS 2020 (`datasets\brats2020\...\content\data`) | 369 subjects, 57,195 slices | Brain model | All 369 subjects: 258 train, 55 validation, 56 test (`artifacts/brain/reports/model_card.json`). The served QKL grade head used only the 55 validation subjects. |
+| `datasets\brats2021_hdf5` | 185 volumes | None | **Not what its name says, and its labels are untraceable.** Its "BraTS20_Training_…" IDs are volume numbers running to 1161, but BraTS 2020 stops at 369. Where a name happens to exist in BraTS 2020 (47 cases), the grade agrees 32 times, about chance. It feeds the current brain cache (`artifacts/brain/cache/manifest.json`) and the QKL "full coverage" study, whose result is therefore **withdrawn**. |
+| BraTS 2021 raw (`E:\AURA\BraTS2021`) | 454 of the 1,251 released subjects | None | No code reads it; two subjects became demo uploads. |
+| CheXpert-v1.0-small (stored twice, byte-identical) | 223,414 images, 64,540 patients | None | 8,000 patients for the preregistered external validation; one unserved experiment. |
+| MIMIC-IV (`datasets\mimiciv`) | Empty folders | None | — |
+
+Before any retraining or new published claim: restore MIMIC-CXR (or replace it with data
+licensed for the purpose), set aside a chest test set that nothing selects on, and either
+trace the `brats2021_hdf5` labels to an official source or rebuild the brain cache from
+`datasets\brats2020`.
+
 ## Sources
 
 - MIMIC-CXR 2.1.0 on PhysioNet: <https://physionet.org/content/mimic-cxr/2.1.0/>

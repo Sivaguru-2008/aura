@@ -7,6 +7,16 @@ Code, artifacts and pre-registration: github.com/Sivaguru-2008/aura
 
 Submission version 5.0, 21 August 2026. Supplementary Information accompanies this manuscript. The full-length preprint from which it is condensed is retained as `docs/RESEARCH_PAPER_v4.md`; Supplementary §S9 maps every section of that document to its location here.
 
+> **Erratum, 13 September 2026: do not submit this version unchanged.** A dataset provenance
+> audit found that the 185-subject grading cohort behind §2.6 (and row 5 of the results
+> table, the Data paragraph, and Supplementary §S4.5) came from a local folder whose subject
+> identifiers do not exist in BraTS 2020. Where the identifiers coincide with real BraTS 2020
+> subjects, the tumour grades match the official mapping in only 32 of 47 cases. The
+> quantum-kernel comparison in §2.6 is therefore withdrawn until those labels are traced to
+> an official source or the analysis is repeated on the 369-subject BraTS 2020 release. The
+> earlier 55-subject analysis (`qkl_training_report.json`) is unaffected. Details:
+> `docs/DATA_LICENSES.md`, section "Dataset provenance audit".
+
 ---
 
 ## Abstract
