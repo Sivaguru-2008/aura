@@ -1,0 +1,28 @@
+[matched] product-of-experts (linear softmax)
+    [linear] lr=0.01  best_cal_nll=1.0445 best_epoch= 73 epochs= 94 early=True (11.1s)
+    [linear] lr=0.05  best_cal_nll=1.0438 best_epoch= 11 epochs= 32 early=True (2.7s)
+    [linear] lr=0.1   best_cal_nll=1.0450 best_epoch= 11 epochs= 32 early=True (2.8s)
+[matched] gated head
+    [gated] lr=0.01  best_cal_nll=1.0451 best_epoch= 32 epochs= 53 early=True (6.2s)
+    [gated] lr=0.05  best_cal_nll=1.0444 best_epoch= 19 epochs= 40 early=True (4.9s)
+    [gated] lr=0.1   best_cal_nll=1.0463 best_epoch= 24 epochs= 45 early=True (6.1s)
+[matched] quantum variational circuit
+    [quantum] lr=0.01  best_cal_nll=1.0558 best_epoch= 76 epochs= 97 early=True (824.4s)
+    [quantum] lr=0.05  best_cal_nll=1.0608 best_epoch= 60 epochs= 81 early=True (584.1s)
+    [quantum] lr=0.1   best_cal_nll=1.0619 best_epoch= 23 epochs= 44 early=True (655.2s)
+[matched] L-BFGS convergence anchor
+
+classical  params=  54 T=1.0185 acc=0.5481 nll=1.1406 ece=0.0584 auroc=0.7465
+quantum    params= 102 T=0.9623 acc=0.5450 nll=1.1482 ece=0.0471 auroc=0.7407
+learnable  params= 126 T=1.0033 acc=0.5475 nll=1.1394 ece=0.0554 auroc=0.7469
+logistic   params=  45 T=0.9991 acc=0.5494 nll=1.1401 ece=0.0541 auroc=0.7489
+
+classical_vs_quantum     dAcc=+0.0031 McNemar Holm=1.0000  dNLL=-0.0076 Wilcoxon Holm=4.150e-02
+classical_vs_learnable   dAcc=+0.0006 McNemar Holm=1.0000  dNLL=+0.0012 Wilcoxon Holm=4.273e-03
+classical_vs_logistic    dAcc=-0.0013 McNemar Holm=1.0000  dNLL=+0.0005 Wilcoxon Holm=3.800e-05
+quantum_vs_learnable     dAcc=-0.0025 McNemar Holm=1.0000  dNLL=+0.0088 Wilcoxon Holm=4.326e-01
+quantum_vs_logistic      dAcc=-0.0044 McNemar Holm=1.0000  dNLL=+0.0081 Wilcoxon Holm=8.682e-02
+learnable_vs_logistic    dAcc=-0.0019 McNemar Holm=1.0000  dNLL=-0.0007 Wilcoxon Holm=4.326e-01
+
+[budget] Adam-linear NLL 1.1406 vs L-BFGS optimum 1.1401 (gap +0.0005)
+[done] wrote E:\AURA\aura-main\aura\artifacts\chexpert_internal\E1_matched_optimiser.json in 2116.3s
