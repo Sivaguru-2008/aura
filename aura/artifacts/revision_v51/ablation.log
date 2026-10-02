@@ -1,0 +1,162 @@
+[data] reusing cached evidence set from quantum_study_evidence.npz (train=1338 cal=446 test=447)
+[B] seed 7
+    [quantum] epoch  0  loss=1.5691
+    [quantum] epoch  5  loss=1.3146
+    [quantum] epoch 10  loss=1.2883
+    [quantum] epoch 15  loss=1.2782
+    [quantum] epoch 20  loss=1.2785
+    [quantum] epoch 25  loss=1.2630
+    [quantum] epoch 29  loss=1.2665
+    [quantum] epoch  0  loss=1.5351
+    [quantum] epoch  5  loss=1.2491
+    [quantum] epoch 10  loss=1.2371
+    [quantum] epoch 15  loss=1.2528
+    [quantum] epoch 20  loss=1.2196
+    [quantum] epoch 25  loss=1.2209
+    [quantum] epoch 29  loss=1.2300
+    ring 1.2824 prod 1.2785 d=+0.0039 (published +0.0039) reproduced=True
+[B] seed 11
+    [quantum] epoch  0  loss=1.5021
+    [quantum] epoch  5  loss=1.3068
+    [quantum] epoch 10  loss=1.2891
+    [quantum] epoch 15  loss=1.2740
+    [quantum] epoch 20  loss=1.2754
+    [quantum] epoch 25  loss=1.2737
+    [quantum] epoch 29  loss=1.2621
+    [quantum] epoch  0  loss=1.5679
+    [quantum] epoch  5  loss=1.2548
+    [quantum] epoch 10  loss=1.2531
+    [quantum] epoch 15  loss=1.2345
+    [quantum] epoch 20  loss=1.2406
+    [quantum] epoch 25  loss=1.2303
+    [quantum] epoch 29  loss=1.2376
+    ring 1.2522 prod 1.2171 d=+0.0351 (published +0.0351) reproduced=True
+[B] seed 13
+    [quantum] epoch  0  loss=1.5303
+    [quantum] epoch  5  loss=1.3208
+    [quantum] epoch 10  loss=1.2911
+    [quantum] epoch 15  loss=1.2671
+    [quantum] epoch 20  loss=1.2706
+    [quantum] epoch 25  loss=1.2588
+    [quantum] epoch 29  loss=1.2582
+    [quantum] epoch  0  loss=1.5400
+    [quantum] epoch  5  loss=1.2520
+    [quantum] epoch 10  loss=1.2567
+    [quantum] epoch 15  loss=1.2309
+    [quantum] epoch 20  loss=1.2453
+    [quantum] epoch 25  loss=1.2236
+    [quantum] epoch 29  loss=1.2159
+    ring 1.2416 prod 1.2069 d=+0.0347 (published +0.0347) reproduced=True
+[B] seed 17
+    [quantum] epoch  0  loss=1.4975
+    [quantum] epoch  5  loss=1.3250
+    [quantum] epoch 10  loss=1.3060
+    [quantum] epoch 15  loss=1.2874
+    [quantum] epoch 20  loss=1.2831
+    [quantum] epoch 25  loss=1.2741
+    [quantum] epoch 29  loss=1.2676
+    [quantum] epoch  0  loss=1.5308
+    [quantum] epoch  5  loss=1.2546
+    [quantum] epoch 10  loss=1.2587
+    [quantum] epoch 15  loss=1.2411
+    [quantum] epoch 20  loss=1.2414
+    [quantum] epoch 25  loss=1.2336
+    [quantum] epoch 29  loss=1.2416
+    ring 1.2719 prod 1.2455 d=+0.0264 (published +0.0264) reproduced=True
+[B] seed 19
+    [quantum] epoch  0  loss=1.5163
+    [quantum] epoch  5  loss=1.3341
+    [quantum] epoch 10  loss=1.3057
+    [quantum] epoch 15  loss=1.2877
+    [quantum] epoch 20  loss=1.2766
+    [quantum] epoch 25  loss=1.2745
+    [quantum] epoch 29  loss=1.2687
+    [quantum] epoch  0  loss=1.5512
+    [quantum] epoch  5  loss=1.2449
+    [quantum] epoch 10  loss=1.2294
+    [quantum] epoch 15  loss=1.2220
+    [quantum] epoch 20  loss=1.2323
+    [quantum] epoch 25  loss=1.2438
+    [quantum] epoch 29  loss=1.2208
+    ring 1.2883 prod 1.2253 d=+0.0630 (published +0.0630) reproduced=True
+[B] seed 23
+    [quantum] epoch  0  loss=1.5274
+    [quantum] epoch  5  loss=1.3295
+    [quantum] epoch 10  loss=1.3089
+    [quantum] epoch 15  loss=1.2890
+    [quantum] epoch 20  loss=1.2651
+    [quantum] epoch 25  loss=1.2621
+    [quantum] epoch 29  loss=1.2765
+    [quantum] epoch  0  loss=1.5338
+    [quantum] epoch  5  loss=1.2577
+    [quantum] epoch 10  loss=1.2346
+    [quantum] epoch 15  loss=1.2359
+    [quantum] epoch 20  loss=1.2254
+    [quantum] epoch 25  loss=1.2344
+    [quantum] epoch 29  loss=1.2495
+    ring 1.2653 prod 1.2612 d=+0.0041 (published +0.0041) reproduced=True
+[B] seed 29
+    [quantum] epoch  0  loss=1.5014
+    [quantum] epoch  5  loss=1.3209
+    [quantum] epoch 10  loss=1.2900
+    [quantum] epoch 15  loss=1.2831
+    [quantum] epoch 20  loss=1.2786
+    [quantum] epoch 25  loss=1.2734
+    [quantum] epoch 29  loss=1.2724
+    [quantum] epoch  0  loss=1.5118
+    [quantum] epoch  5  loss=1.2522
+    [quantum] epoch 10  loss=1.2470
+    [quantum] epoch 15  loss=1.2309
+    [quantum] epoch 20  loss=1.2316
+    [quantum] epoch 25  loss=1.2352
+    [quantum] epoch 29  loss=1.2454
+    ring 1.2330 prod 1.2128 d=+0.0202 (published +0.0202) reproduced=True
+[B] seed 31
+    [quantum] epoch  0  loss=1.5149
+    [quantum] epoch  5  loss=1.3117
+    [quantum] epoch 10  loss=1.2952
+    [quantum] epoch 15  loss=1.2698
+    [quantum] epoch 20  loss=1.2647
+    [quantum] epoch 25  loss=1.2779
+    [quantum] epoch 29  loss=1.2641
+    [quantum] epoch  0  loss=1.5193
+    [quantum] epoch  5  loss=1.2545
+    [quantum] epoch 10  loss=1.2359
+    [quantum] epoch 15  loss=1.2249
+    [quantum] epoch 20  loss=1.2191
+    [quantum] epoch 25  loss=1.2296
+    [quantum] epoch 29  loss=1.2302
+    ring 1.2349 prod 1.2195 d=+0.0154 (published +0.0154) reproduced=True
+[B] seed 37
+    [quantum] epoch  0  loss=1.5251
+    [quantum] epoch  5  loss=1.3306
+    [quantum] epoch 10  loss=1.2967
+    [quantum] epoch 15  loss=1.2788
+    [quantum] epoch 20  loss=1.2796
+    [quantum] epoch 25  loss=1.2791
+    [quantum] epoch 29  loss=1.2829
+    [quantum] epoch  0  loss=1.5107
+    [quantum] epoch  5  loss=1.2727
+    [quantum] epoch 10  loss=1.2364
+    [quantum] epoch 15  loss=1.2497
+    [quantum] epoch 20  loss=1.2586
+    [quantum] epoch 25  loss=1.2558
+    [quantum] epoch 29  loss=1.2575
+    ring 1.2782 prod 1.2562 d=+0.0220 (published +0.0220) reproduced=True
+[B] seed 41
+    [quantum] epoch  0  loss=1.5245
+    [quantum] epoch  5  loss=1.3219
+    [quantum] epoch 10  loss=1.3002
+    [quantum] epoch 15  loss=1.3070
+    [quantum] epoch 20  loss=1.2871
+    [quantum] epoch 25  loss=1.2906
+    [quantum] epoch 29  loss=1.2866
+    [quantum] epoch  0  loss=1.5519
+    [quantum] epoch  5  loss=1.2650
+    [quantum] epoch 10  loss=1.2471
+    [quantum] epoch 15  loss=1.2473
+    [quantum] epoch 20  loss=1.2330
+    [quantum] epoch 25  loss=1.2372
+    [quantum] epoch 29  loss=1.2272
+    ring 1.2702 prod 1.2450 d=+0.0252 (published +0.0252) reproduced=True
+[revision] wrote E:\AURA\aura-main\aura\artifacts\revision_v51\B_ablation.json

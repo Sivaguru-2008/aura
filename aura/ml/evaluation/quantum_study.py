@@ -114,7 +114,11 @@ def load_evidence(n: int, seed: int, refresh: bool = False):
     resample patients and silently confound the comparison.
     """
     if EVIDENCE_CACHE.exists() and not refresh:
+        from .provenance import assert_npz, assert_real_source
+
+        assert_npz(EVIDENCE_CACHE)                   # D14: pinned bytes, or refuse
         d = np.load(EVIDENCE_CACHE)
+        assert_real_source(str(d["source"]))
         print(f"[data] reusing cached evidence set from {EVIDENCE_CACHE.name} "
               f"(train={len(d['ytr'])} cal={len(d['ycal'])} test={len(d['yte'])})")
         return (d["Xtr"], d["ytr"], d["Xcal"], d["ycal"], d["Xte"], d["yte"],

@@ -1,0 +1,102 @@
+[data] reusing cached evidence set from quantum_study_evidence.npz (train=1338 cal=446 test=447)
+[D] seed 7
+    [reupload/ring] epoch  0 loss=1.6023
+    [reupload/ring] epoch 10 loss=1.2996
+    [reupload/ring] epoch 20 loss=1.2690
+    [reupload/ring] epoch 29 loss=1.2572
+    [reupload/none] epoch  0 loss=1.5133
+    [reupload/none] epoch 10 loss=1.1930
+    [reupload/none] epoch 20 loss=1.1989
+    [reupload/none] epoch 29 loss=1.1984
+    ring 1.2634 prod 1.2466 d=+0.0168
+[D] seed 11
+    [reupload/ring] epoch  0 loss=1.5591
+    [reupload/ring] epoch 10 loss=1.2754
+    [reupload/ring] epoch 20 loss=1.2486
+    [reupload/ring] epoch 29 loss=1.2418
+    [reupload/none] epoch  0 loss=1.4967
+    [reupload/none] epoch 10 loss=1.2051
+    [reupload/none] epoch 20 loss=1.1886
+    [reupload/none] epoch 29 loss=1.1919
+    ring 1.2292 prod 1.1987 d=+0.0305
+[D] seed 13
+    [reupload/ring] epoch  0 loss=1.5543
+    [reupload/ring] epoch 10 loss=1.2950
+    [reupload/ring] epoch 20 loss=1.2623
+    [reupload/ring] epoch 29 loss=1.2378
+    [reupload/none] epoch  0 loss=1.4945
+    [reupload/none] epoch 10 loss=1.2096
+    [reupload/none] epoch 20 loss=1.1855
+    [reupload/none] epoch 29 loss=1.1711
+    ring 1.2484 prod 1.1956 d=+0.0528
+[D] seed 17
+    [reupload/ring] epoch  0 loss=1.5630
+    [reupload/ring] epoch 10 loss=1.2771
+    [reupload/ring] epoch 20 loss=1.2795
+    [reupload/ring] epoch 29 loss=1.2491
+    [reupload/none] epoch  0 loss=1.5036
+    [reupload/none] epoch 10 loss=1.2067
+    [reupload/none] epoch 20 loss=1.2145
+    [reupload/none] epoch 29 loss=1.1919
+    ring 1.2652 prod 1.2097 d=+0.0555
+[D] seed 19
+    [reupload/ring] epoch  0 loss=1.5910
+    [reupload/ring] epoch 10 loss=1.2936
+    [reupload/ring] epoch 20 loss=1.2766
+    [reupload/ring] epoch 29 loss=1.2659
+    [reupload/none] epoch  0 loss=1.5076
+    [reupload/none] epoch 10 loss=1.1871
+    [reupload/none] epoch 20 loss=1.1890
+    [reupload/none] epoch 29 loss=1.1774
+    ring 1.3148 prod 1.2087 d=+0.1061
+[D] seed 23
+    [reupload/ring] epoch  0 loss=1.5522
+    [reupload/ring] epoch 10 loss=1.2776
+    [reupload/ring] epoch 20 loss=1.2435
+    [reupload/ring] epoch 29 loss=1.2486
+    [reupload/none] epoch  0 loss=1.5102
+    [reupload/none] epoch 10 loss=1.1885
+    [reupload/none] epoch 20 loss=1.1823
+    [reupload/none] epoch 29 loss=1.2029
+    ring 1.2750 prod 1.2517 d=+0.0233
+[D] seed 29
+    [reupload/ring] epoch  0 loss=1.5637
+    [reupload/ring] epoch 10 loss=1.2796
+    [reupload/ring] epoch 20 loss=1.2551
+    [reupload/ring] epoch 29 loss=1.2318
+    [reupload/none] epoch  0 loss=1.4991
+    [reupload/none] epoch 10 loss=1.2112
+    [reupload/none] epoch 20 loss=1.1791
+    [reupload/none] epoch 29 loss=1.1957
+    ring 1.2433 prod 1.2109 d=+0.0324
+[D] seed 31
+    [reupload/ring] epoch  0 loss=1.5985
+    [reupload/ring] epoch 10 loss=1.3122
+    [reupload/ring] epoch 20 loss=1.2604
+    [reupload/ring] epoch 29 loss=1.2545
+    [reupload/none] epoch  0 loss=1.5047
+    [reupload/none] epoch 10 loss=1.1995
+    [reupload/none] epoch 20 loss=1.2002
+    [reupload/none] epoch 29 loss=1.2037
+    ring 1.2462 prod 1.1835 d=+0.0627
+[D] seed 37
+    [reupload/ring] epoch  0 loss=1.5969
+    [reupload/ring] epoch 10 loss=1.3037
+    [reupload/ring] epoch 20 loss=1.2780
+    [reupload/ring] epoch 29 loss=1.2569
+    [reupload/none] epoch  0 loss=1.5243
+    [reupload/none] epoch 10 loss=1.1872
+    [reupload/none] epoch 20 loss=1.2017
+    [reupload/none] epoch 29 loss=1.2101
+    ring 1.2976 prod 1.2386 d=+0.0590
+[D] seed 41
+    [reupload/ring] epoch  0 loss=1.5934
+    [reupload/ring] epoch 10 loss=1.2990
+    [reupload/ring] epoch 20 loss=1.2502
+    [reupload/ring] epoch 29 loss=1.2382
+    [reupload/none] epoch  0 loss=1.5349
+    [reupload/none] epoch 10 loss=1.1947
+    [reupload/none] epoch 20 loss=1.1916
+    [reupload/none] epoch 29 loss=1.1968
+    ring 1.2658 prod 1.2118 d=+0.0540
+[revision] wrote E:\AURA\aura-main\aura\artifacts\revision_v51\D_reupload.json

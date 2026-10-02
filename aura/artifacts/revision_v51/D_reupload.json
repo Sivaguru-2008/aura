@@ -1,0 +1,242 @@
+{
+  "analysis": "D \u2014 data re-uploading ablation, 7 qubits, L=3",
+  "blind": true,
+  "trainable_parameters": {
+    "entangled": 111,
+    "product": 111
+  },
+  "per_seed": [
+    {
+      "seed": 7,
+      "entangled": {
+        "accuracy": 0.5369,
+        "nll": 1.2634,
+        "ece": 0.0621,
+        "temperature": 1.242,
+        "final_train_nll": 1.2572,
+        "trainable_parameters": 111,
+        "train_seconds": 89.6
+      },
+      "product": {
+        "accuracy": 0.5548,
+        "nll": 1.2466,
+        "ece": 0.0593,
+        "temperature": 1.1829,
+        "final_train_nll": 1.1984,
+        "trainable_parameters": 111,
+        "train_seconds": 82.4
+      },
+      "delta_nll": 0.0168
+    },
+    {
+      "seed": 11,
+      "entangled": {
+        "accuracy": 0.5481,
+        "nll": 1.2292,
+        "ece": 0.0364,
+        "temperature": 0.8687,
+        "final_train_nll": 1.2418,
+        "trainable_parameters": 111,
+        "train_seconds": 92.0
+      },
+      "product": {
+        "accuracy": 0.5369,
+        "nll": 1.1987,
+        "ece": 0.0349,
+        "temperature": 1.0417,
+        "final_train_nll": 1.1919,
+        "trainable_parameters": 111,
+        "train_seconds": 71.6
+      },
+      "delta_nll": 0.0305
+    },
+    {
+      "seed": 13,
+      "entangled": {
+        "accuracy": 0.5436,
+        "nll": 1.2484,
+        "ece": 0.0438,
+        "temperature": 0.9397,
+        "final_train_nll": 1.2378,
+        "trainable_parameters": 111,
+        "train_seconds": 91.0
+      },
+      "product": {
+        "accuracy": 0.5459,
+        "nll": 1.1956,
+        "ece": 0.0396,
+        "temperature": 1.1012,
+        "final_train_nll": 1.1711,
+        "trainable_parameters": 111,
+        "train_seconds": 63.0
+      },
+      "delta_nll": 0.0528
+    },
+    {
+      "seed": 17,
+      "entangled": {
+        "accuracy": 0.5369,
+        "nll": 1.2652,
+        "ece": 0.0232,
+        "temperature": 1.0197,
+        "final_train_nll": 1.2491,
+        "trainable_parameters": 111,
+        "train_seconds": 71.1
+      },
+      "product": {
+        "accuracy": 0.5391,
+        "nll": 1.2097,
+        "ece": 0.0398,
+        "temperature": 1.1522,
+        "final_train_nll": 1.1919,
+        "trainable_parameters": 111,
+        "train_seconds": 71.8
+      },
+      "delta_nll": 0.0555
+    },
+    {
+      "seed": 19,
+      "entangled": {
+        "accuracy": 0.5347,
+        "nll": 1.3148,
+        "ece": 0.073,
+        "temperature": 1.0022,
+        "final_train_nll": 1.2659,
+        "trainable_parameters": 111,
+        "train_seconds": 78.0
+      },
+      "product": {
+        "accuracy": 0.5324,
+        "nll": 1.2087,
+        "ece": 0.0439,
+        "temperature": 1.0223,
+        "final_train_nll": 1.1774,
+        "trainable_parameters": 111,
+        "train_seconds": 53.9
+      },
+      "delta_nll": 0.1061
+    },
+    {
+      "seed": 23,
+      "entangled": {
+        "accuracy": 0.5302,
+        "nll": 1.275,
+        "ece": 0.0519,
+        "temperature": 1.0986,
+        "final_train_nll": 1.2486,
+        "trainable_parameters": 111,
+        "train_seconds": 76.7
+      },
+      "product": {
+        "accuracy": 0.5235,
+        "nll": 1.2517,
+        "ece": 0.0157,
+        "temperature": 1.1629,
+        "final_train_nll": 1.2029,
+        "trainable_parameters": 111,
+        "train_seconds": 56.0
+      },
+      "delta_nll": 0.0233
+    },
+    {
+      "seed": 29,
+      "entangled": {
+        "accuracy": 0.5593,
+        "nll": 1.2433,
+        "ece": 0.0643,
+        "temperature": 1.068,
+        "final_train_nll": 1.2318,
+        "trainable_parameters": 111,
+        "train_seconds": 83.8
+      },
+      "product": {
+        "accuracy": 0.5347,
+        "nll": 1.2109,
+        "ece": 0.0454,
+        "temperature": 1.1133,
+        "final_train_nll": 1.1957,
+        "trainable_parameters": 111,
+        "train_seconds": 52.3
+      },
+      "delta_nll": 0.0324
+    },
+    {
+      "seed": 31,
+      "entangled": {
+        "accuracy": 0.5347,
+        "nll": 1.2462,
+        "ece": 0.0617,
+        "temperature": 1.0069,
+        "final_train_nll": 1.2545,
+        "trainable_parameters": 111,
+        "train_seconds": 44.2
+      },
+      "product": {
+        "accuracy": 0.566,
+        "nll": 1.1835,
+        "ece": 0.0531,
+        "temperature": 1.1479,
+        "final_train_nll": 1.2037,
+        "trainable_parameters": 111,
+        "train_seconds": 42.8
+      },
+      "delta_nll": 0.0627
+    },
+    {
+      "seed": 37,
+      "entangled": {
+        "accuracy": 0.5302,
+        "nll": 1.2976,
+        "ece": 0.0423,
+        "temperature": 1.0662,
+        "final_train_nll": 1.2569,
+        "trainable_parameters": 111,
+        "train_seconds": 69.0
+      },
+      "product": {
+        "accuracy": 0.566,
+        "nll": 1.2386,
+        "ece": 0.0685,
+        "temperature": 1.1952,
+        "final_train_nll": 1.2101,
+        "trainable_parameters": 111,
+        "train_seconds": 59.2
+      },
+      "delta_nll": 0.059
+    },
+    {
+      "seed": 41,
+      "entangled": {
+        "accuracy": 0.5369,
+        "nll": 1.2658,
+        "ece": 0.0554,
+        "temperature": 1.0174,
+        "final_train_nll": 1.2382,
+        "trainable_parameters": 111,
+        "train_seconds": 66.1
+      },
+      "product": {
+        "accuracy": 0.5593,
+        "nll": 1.2118,
+        "ece": 0.0397,
+        "temperature": 1.0768,
+        "final_train_nll": 1.1968,
+        "trainable_parameters": 111,
+        "train_seconds": 59.6
+      },
+      "delta_nll": 0.054
+    }
+  ],
+  "seed_level": {
+    "mean": 0.04931,
+    "sd": 0.0257,
+    "ci95_t": [
+      0.03093,
+      0.06769
+    ],
+    "t_p": 0.00019,
+    "wilcoxon_p": 0.00195,
+    "n_positive": 10,
+    "n": 10
+  }
+}
