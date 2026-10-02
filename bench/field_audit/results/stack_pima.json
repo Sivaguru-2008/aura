@@ -1,0 +1,927 @@
+{
+  "study": "stack_pima",
+  "pmid": "42286086",
+  "doi": "10.1038/s41598-026-56928-1",
+  "citation": "Sci Rep 2026 \u2014 adaptive quantum-kernel stacking (Pima diabetes)",
+  "claim": "Quantum-kernel stack raises diabetes recall from 0.553 (RBF-SVM) to 0.621",
+  "primary_metric": "sensitivity",
+  "reported": {
+    "stack": 0.621,
+    "RBF-SVM": 0.553
+  },
+  "data": {
+    "n": 768,
+    "positives": 268,
+    "source": "OpenML 37"
+  },
+  "features_in_pipeline": [
+    "preg",
+    "plas",
+    "pres",
+    "skin",
+    "insu",
+    "mass",
+    "pedi",
+    "age"
+  ],
+  "reproduction": {
+    "protocol": "paper (global PCA, 10-fold by recording)",
+    "stack": {
+      "accuracy": 0.7513020833333334,
+      "balanced_accuracy": 0.7388805970149254,
+      "f1": 0.6619469026548672,
+      "sensitivity": 0.6977611940298507,
+      "specificity": 0.78,
+      "nll": 0.524728598028639,
+      "auroc": 0.8215223880597016
+    },
+    "rbf_svm_untuned": {
+      "accuracy": 0.7669270833333334,
+      "balanced_accuracy": 0.7205820895522388,
+      "f1": 0.629399585921325,
+      "sensitivity": 0.5671641791044776,
+      "specificity": 0.874,
+      "nll": 0.4941360434929481,
+      "auroc": 0.823115671641791
+    },
+    "claimed_metric": "sensitivity"
+  },
+  "symmetric": {
+    "full": {
+      "verdict": {
+        "primary": "sensitivity",
+        "difference_quantum_minus_classical": {
+          "mean": -0.05302585604472397,
+          "t": -1.9215891030177714,
+          "p": 0.0666097511522787,
+          "ci95": [
+            -0.10997871232806247,
+            0.003927000238614538
+          ]
+        },
+        "verdict": "NOT SUPPORTED",
+        "arm_means_sd": {
+          "quantum": {
+            "accuracy": [
+              0.7481504116798235,
+              0.03562518022854616
+            ],
+            "balanced_accuracy": [
+              0.735480642907058,
+              0.03941486998245076
+            ],
+            "f1": [
+              0.6570521943460382,
+              0.05066942207498448
+            ],
+            "sensitivity": [
+              0.693361285814116,
+              0.06855271115148111
+            ],
+            "specificity": [
+              0.7776000000000001,
+              0.042263932613991334
+            ],
+            "nll": [
+              0.5250392467698984,
+              0.042548018906681
+            ],
+            "auroc": [
+              0.8241193570929419,
+              0.03592874742640519
+            ]
+          },
+          "classical": {
+            "accuracy": [
+              0.7523334182157712,
+              0.027539049975839027
+            ],
+            "balanced_accuracy": [
+              0.7509935709294199,
+              0.029056254430684103
+            ],
+            "f1": [
+              0.6776257228121186,
+              0.03500747895917012
+            ],
+            "sensitivity": [
+              0.74638714185884,
+              0.0505375595972737
+            ],
+            "specificity": [
+              0.7556000000000002,
+              0.03634061089194845
+            ],
+            "nll": [
+              0.5084813513998271,
+              0.035203555983592726
+            ],
+            "auroc": [
+              0.8299900069881201,
+              0.029746297974562574
+            ]
+          },
+          "named": {
+            "accuracy": [
+              0.7518190306425601,
+              0.030656450538663494
+            ],
+            "balanced_accuracy": [
+              0.7165204751921732,
+              0.0321601738943957
+            ],
+            "f1": [
+              0.6274367396002166,
+              0.04338538173961156
+            ],
+            "sensitivity": [
+              0.5994409503843466,
+              0.05474156344043428
+            ],
+            "specificity": [
+              0.8336,
+              0.04028697059844535
+            ],
+            "nll": [
+              0.4865167106146567,
+              0.0443743586591253
+            ],
+            "auroc": [
+              0.8242944793850455,
+              0.03941681029531725
+            ]
+          }
+        }
+      },
+      "chosen": {
+        "quantum": [
+          "KernelStack{'C': 1.0, 'bandwidth': 0.25}",
+          "KernelStack{'C': 0.1, 'bandwidth': 1.0}",
+          "KernelStack{'C': 1.0, 'bandwidth': 0.25}",
+          "KernelStack{'C': 0.1, 'bandwidth': 0.25}",
+          "KernelStack{'C': 10.0, 'bandwidth': 0.25}",
+          "KernelStack{'C': 10.0, 'bandwidth': 0.25}",
+          "KernelStack{'C': 0.1, 'bandwidth': 1.0}",
+          "KernelStack{'C': 1.0, 'bandwidth': 0.5}",
+          "KernelStack{'C': 1.0, 'bandwidth': 1.0}",
+          "KernelStack{'C': 1.0, 'bandwidth': 2.0}",
+          "KernelStack{'C': 10.0, 'bandwidth': 0.25}",
+          "KernelStack{'C': 10.0, 'bandwidth': 0.25}",
+          "KernelStack{'C': 10.0, 'bandwidth': 0.25}",
+          "KernelStack{'C': 10.0, 'bandwidth': 0.25}",
+          "KernelStack{'C': 100.0, 'bandwidth': 0.5}",
+          "KernelStack{'C': 0.1, 'bandwidth': 1.0}",
+          "KernelStack{'C': 10.0, 'bandwidth': 0.25}",
+          "KernelStack{'C': 1.0, 'bandwidth': 1.0}",
+          "KernelStack{'C': 10.0, 'bandwidth': 0.25}",
+          "KernelStack{'C': 0.1, 'bandwidth': 1.0}",
+          "KernelStack{'C': 10.0, 'bandwidth': 0.5}",
+          "KernelStack{'C': 10.0, 'bandwidth': 0.25}",
+          "KernelStack{'C': 1.0, 'bandwidth': 0.5}",
+          "KernelStack{'C': 0.1, 'bandwidth': 0.25}",
+          "KernelStack{'C': 0.1, 'bandwidth': 0.25}"
+        ],
+        "classical": [
+          "random_forest{'max_depth': 5}",
+          "logreg{'C': 10.0}",
+          "logreg{'C': 1.0}",
+          "logreg{'C': 1.0}",
+          "logreg{'C': 1.0}",
+          "random_forest{'max_depth': 5}",
+          "random_forest{'max_depth': 5}",
+          "logreg{'C': 1.0}",
+          "random_forest{'max_depth': 5}",
+          "random_forest{'max_depth': 5}",
+          "random_forest{'max_depth': 5}",
+          "random_forest{'max_depth': 5}",
+          "random_forest{'max_depth': 5}",
+          "random_forest{'max_depth': 5}",
+          "logreg{'C': 1.0}",
+          "logreg{'C': 1.0}",
+          "random_forest{'max_depth': None}",
+          "logreg{'C': 1.0}",
+          "random_forest{'max_depth': 5}",
+          "random_forest{'max_depth': 5}",
+          "random_forest{'max_depth': 10}",
+          "random_forest{'max_depth': 5}",
+          "logreg{'C': 0.1}",
+          "random_forest{'max_depth': 5}",
+          "logreg{'C': 0.1}"
+        ],
+        "named": [
+          "svm_rbf{'C': 10.0, 'gamma': 0.1}",
+          "svm_rbf{'C': 1.0, 'gamma': 0.1}",
+          "svm_rbf{'C': 1.0, 'gamma': 'scale'}",
+          "svm_rbf{'C': 1.0, 'gamma': 0.1}",
+          "svm_rbf{'C': 1.0, 'gamma': 'scale'}",
+          "svm_rbf{'C': 1.0, 'gamma': 'scale'}",
+          "svm_rbf{'C': 1.0, 'gamma': 0.1}",
+          "svm_rbf{'C': 1.0, 'gamma': 0.1}",
+          "svm_rbf{'C': 1.0, 'gamma': 0.1}",
+          "svm_rbf{'C': 10.0, 'gamma': 0.1}",
+          "svm_rbf{'C': 1.0, 'gamma': 0.1}",
+          "svm_rbf{'C': 1.0, 'gamma': 'scale'}",
+          "svm_rbf{'C': 1.0, 'gamma': 'scale'}",
+          "svm_rbf{'C': 1.0, 'gamma': 'scale'}",
+          "svm_rbf{'C': 1.0, 'gamma': 0.1}",
+          "svm_rbf{'C': 1.0, 'gamma': 0.1}",
+          "svm_rbf{'C': 1.0, 'gamma': 0.1}",
+          "svm_rbf{'C': 1.0, 'gamma': 'scale'}",
+          "svm_rbf{'C': 1.0, 'gamma': 0.1}",
+          "svm_rbf{'C': 1.0, 'gamma': 'scale'}",
+          "svm_rbf{'C': 1.0, 'gamma': 0.1}",
+          "svm_rbf{'C': 1.0, 'gamma': 0.1}",
+          "svm_rbf{'C': 1.0, 'gamma': 0.1}",
+          "svm_rbf{'C': 1.0, 'gamma': 'scale'}",
+          "svm_rbf{'C': 1.0, 'gamma': 0.1}"
+        ]
+      },
+      "per_fold": {
+        "quantum": [
+          {
+            "accuracy": 0.7402597402597403,
+            "balanced_accuracy": 0.7105555555555556,
+            "f1": 0.6226415094339622,
+            "sensitivity": 0.6111111111111112,
+            "specificity": 0.81,
+            "nll": 0.5286285730110565,
+            "auroc": 0.8162962962962963
+          },
+          {
+            "accuracy": 0.7662337662337663,
+            "balanced_accuracy": 0.768888888888889,
+            "f1": 0.7,
+            "sensitivity": 0.7777777777777778,
+            "specificity": 0.76,
+            "nll": 0.49088015510917443,
+            "auroc": 0.8616666666666667
+          },
+          {
+            "accuracy": 0.7012987012987013,
+            "balanced_accuracy": 0.6507407407407407,
+            "f1": 0.5306122448979592,
+            "sensitivity": 0.48148148148148145,
+            "specificity": 0.82,
+            "nll": 0.549563917889023,
+            "auroc": 0.7716666666666668
+          },
+          {
+            "accuracy": 0.7581699346405228,
+            "balanced_accuracy": 0.7617924528301887,
+            "f1": 0.6890756302521008,
+            "sensitivity": 0.7735849056603774,
+            "specificity": 0.75,
+            "nll": 0.4990066193692978,
+            "auroc": 0.8686792452830189
+          },
+          {
+            "accuracy": 0.7516339869281046,
+            "balanced_accuracy": 0.7523584905660378,
+            "f1": 0.6779661016949152,
+            "sensitivity": 0.7547169811320755,
+            "specificity": 0.75,
+            "nll": 0.5054025835619065,
+            "auroc": 0.8452830188679246
+          },
+          {
+            "accuracy": 0.8051948051948052,
+            "balanced_accuracy": 0.7903703703703704,
+            "f1": 0.7272727272727273,
+            "sensitivity": 0.7407407407407407,
+            "specificity": 0.84,
+            "nll": 0.46953176486993997,
+            "auroc": 0.8509259259259259
+          },
+          {
+            "accuracy": 0.7792207792207793,
+            "balanced_accuracy": 0.7661111111111112,
+            "f1": 0.6964285714285714,
+            "sensitivity": 0.7222222222222222,
+            "specificity": 0.81,
+            "nll": 0.4865829389588966,
+            "auroc": 0.8481481481481481
+          },
+          {
+            "accuracy": 0.7207792207792207,
+            "balanced_accuracy": 0.7040740740740741,
+            "f1": 0.6194690265486725,
+            "sensitivity": 0.6481481481481481,
+            "specificity": 0.76,
+            "nll": 0.542959548113695,
+            "auroc": 0.8192592592592592
+          },
+          {
+            "accuracy": 0.7124183006535948,
+            "balanced_accuracy": 0.7134905660377358,
+            "f1": 0.6333333333333333,
+            "sensitivity": 0.7169811320754716,
+            "specificity": 0.71,
+            "nll": 0.5528310788221668,
+            "auroc": 0.8232075471698114
+          },
+          {
+            "accuracy": 0.7124183006535948,
+            "balanced_accuracy": 0.7134905660377358,
+            "f1": 0.6333333333333333,
+            "sensitivity": 0.7169811320754716,
+            "specificity": 0.71,
+            "nll": 0.581382274104193,
+            "auroc": 0.7705660377358491
+          },
+          {
+            "accuracy": 0.7792207792207793,
+            "balanced_accuracy": 0.7831481481481481,
+            "f1": 0.7166666666666667,
+            "sensitivity": 0.7962962962962963,
+            "specificity": 0.77,
+            "nll": 0.5195333832906955,
+            "auroc": 0.8416666666666667
+          },
+          {
+            "accuracy": 0.7922077922077922,
+            "balanced_accuracy": 0.7803703703703704,
+            "f1": 0.7142857142857143,
+            "sensitivity": 0.7407407407407407,
+            "specificity": 0.82,
+            "nll": 0.4790974743133004,
+            "auroc": 0.8707407407407407
+          },
+          {
+            "accuracy": 0.7207792207792207,
+            "balanced_accuracy": 0.7040740740740741,
+            "f1": 0.6194690265486725,
+            "sensitivity": 0.6481481481481481,
+            "specificity": 0.76,
+            "nll": 0.5903898816341199,
+            "auroc": 0.7737037037037037
+          },
+          {
+            "accuracy": 0.7516339869281046,
+            "balanced_accuracy": 0.730188679245283,
+            "f1": 0.6481481481481481,
+            "sensitivity": 0.660377358490566,
+            "specificity": 0.8,
+            "nll": 0.5383968465070936,
+            "auroc": 0.8092452830188679
+          },
+          {
+            "accuracy": 0.738562091503268,
+            "balanced_accuracy": 0.7246226415094339,
+            "f1": 0.6428571428571429,
+            "sensitivity": 0.6792452830188679,
+            "specificity": 0.77,
+            "nll": 0.5227701707151662,
+            "auroc": 0.8196226415094339
+          },
+          {
+            "accuracy": 0.6818181818181818,
+            "balanced_accuracy": 0.6612962962962963,
+            "f1": 0.5663716814159292,
+            "sensitivity": 0.5925925925925926,
+            "specificity": 0.73,
+            "nll": 0.6328446934414034,
+            "auroc": 0.7244444444444446
+          },
+          {
+            "accuracy": 0.7337662337662337,
+            "balanced_accuracy": 0.7268518518518519,
+            "f1": 0.6495726495726496,
+            "sensitivity": 0.7037037037037037,
+            "specificity": 0.75,
+            "nll": 0.5215252985323122,
+            "auroc": 0.8412962962962963
+          },
+          {
+            "accuracy": 0.7597402597402597,
+            "balanced_accuracy": 0.7425925925925927,
+            "f1": 0.6666666666666666,
+            "sensitivity": 0.6851851851851852,
+            "specificity": 0.8,
+            "nll": 0.49498451638132795,
+            "auroc": 0.8433333333333334
+          },
+          {
+            "accuracy": 0.7777777777777778,
+            "balanced_accuracy": 0.750188679245283,
+            "f1": 0.6730769230769231,
+            "sensitivity": 0.660377358490566,
+            "specificity": 0.84,
+            "nll": 0.492184539106304,
+            "auroc": 0.8183018867924529
+          },
+          {
+            "accuracy": 0.7843137254901961,
+            "balanced_accuracy": 0.7773584905660378,
+            "f1": 0.7079646017699115,
+            "sensitivity": 0.7547169811320755,
+            "specificity": 0.8,
+            "nll": 0.5267415651700191,
+            "auroc": 0.8439622641509433
+          },
+          {
+            "accuracy": 0.7597402597402597,
+            "balanced_accuracy": 0.7511111111111111,
+            "f1": 0.6782608695652174,
+            "sensitivity": 0.7222222222222222,
+            "specificity": 0.78,
+            "nll": 0.48823374214291526,
+            "auroc": 0.845
+          },
+          {
+            "accuracy": 0.7792207792207793,
+            "balanced_accuracy": 0.7533333333333333,
+            "f1": 0.6792452830188679,
+            "sensitivity": 0.6666666666666666,
+            "specificity": 0.84,
+            "nll": 0.47541519164501156,
+            "auroc": 0.8470370370370371
+          },
+          {
+            "accuracy": 0.8051948051948052,
+            "balanced_accuracy": 0.7946296296296296,
+            "f1": 0.7321428571428571,
+            "sensitivity": 0.7592592592592593,
+            "specificity": 0.83,
+            "nll": 0.4833034611674218,
+            "auroc": 0.8566666666666666
+          },
+          {
+            "accuracy": 0.673202614379085,
+            "balanced_accuracy": 0.661320754716981,
+            "f1": 0.5689655172413793,
+            "sensitivity": 0.6226415094339622,
+            "specificity": 0.7,
+            "nll": 0.6117767971403169,
+            "auroc": 0.7683018867924528
+          },
+          {
+            "accuracy": 0.7189542483660131,
+            "balanced_accuracy": 0.7140566037735849,
+            "f1": 0.6324786324786325,
+            "sensitivity": 0.6981132075471698,
+            "specificity": 0.73,
+            "nll": 0.5420141542507033,
+            "auroc": 0.8239622641509434
+          }
+        ],
+        "classical": [
+          {
+            "accuracy": 0.7272727272727273,
+            "balanced_accuracy": 0.7303703703703703,
+            "f1": 0.6557377049180327,
+            "sensitivity": 0.7407407407407407,
+            "specificity": 0.72,
+            "nll": 0.5349448413435874,
+            "auroc": 0.8035185185185185
+          },
+          {
+            "accuracy": 0.7727272727272727,
+            "balanced_accuracy": 0.7781481481481481,
+            "f1": 0.7107438016528925,
+            "sensitivity": 0.7962962962962963,
+            "specificity": 0.76,
+            "nll": 0.501301241871299,
+            "auroc": 0.8557407407407407
+          },
+          {
+            "accuracy": 0.7207792207792207,
+            "balanced_accuracy": 0.6912962962962963,
+            "f1": 0.5981308411214953,
+            "sensitivity": 0.5925925925925926,
+            "specificity": 0.79,
+            "nll": 0.528923908209849,
+            "auroc": 0.7861111111111112
+          },
+          {
+            "accuracy": 0.7777777777777778,
+            "balanced_accuracy": 0.7900943396226415,
+            "f1": 0.7213114754098361,
+            "sensitivity": 0.8301886792452831,
+            "specificity": 0.75,
+            "nll": 0.4958381514577607,
+            "auroc": 0.8718867924528302
+          },
+          {
+            "accuracy": 0.7450980392156863,
+            "balanced_accuracy": 0.7384905660377359,
+            "f1": 0.6608695652173913,
+            "sensitivity": 0.7169811320754716,
+            "specificity": 0.76,
+            "nll": 0.49738280867459994,
+            "auroc": 0.8394339622641509
+          },
+          {
+            "accuracy": 0.7662337662337663,
+            "balanced_accuracy": 0.7603703703703704,
+            "f1": 0.6896551724137931,
+            "sensitivity": 0.7407407407407407,
+            "specificity": 0.78,
+            "nll": 0.4853974627183066,
+            "auroc": 0.8485185185185186
+          },
+          {
+            "accuracy": 0.7727272727272727,
+            "balanced_accuracy": 0.7611111111111111,
+            "f1": 0.6902654867256637,
+            "sensitivity": 0.7222222222222222,
+            "specificity": 0.8,
+            "nll": 0.47720277439219855,
+            "auroc": 0.8531481481481481
+          },
+          {
+            "accuracy": 0.7207792207792207,
+            "balanced_accuracy": 0.721111111111111,
+            "f1": 0.6446280991735537,
+            "sensitivity": 0.7222222222222222,
+            "specificity": 0.72,
+            "nll": 0.5411212093045059,
+            "auroc": 0.807962962962963
+          },
+          {
+            "accuracy": 0.7450980392156863,
+            "balanced_accuracy": 0.7695283018867924,
+            "f1": 0.6976744186046512,
+            "sensitivity": 0.8490566037735849,
+            "specificity": 0.69,
+            "nll": 0.5227808774187196,
+            "auroc": 0.8237735849056604
+          },
+          {
+            "accuracy": 0.7254901960784313,
+            "balanced_accuracy": 0.7190566037735848,
+            "f1": 0.6379310344827587,
+            "sensitivity": 0.6981132075471698,
+            "specificity": 0.74,
+            "nll": 0.5419271353499139,
+            "auroc": 0.789433962264151
+          },
+          {
+            "accuracy": 0.7532467532467533,
+            "balanced_accuracy": 0.7546296296296297,
+            "f1": 0.6833333333333333,
+            "sensitivity": 0.7592592592592593,
+            "specificity": 0.75,
+            "nll": 0.5032473942076857,
+            "auroc": 0.8266666666666667
+          },
+          {
+            "accuracy": 0.7467532467532467,
+            "balanced_accuracy": 0.7496296296296296,
+            "f1": 0.6776859504132231,
+            "sensitivity": 0.7592592592592593,
+            "specificity": 0.74,
+            "nll": 0.5027034867571218,
+            "auroc": 0.8438888888888889
+          },
+          {
+            "accuracy": 0.7597402597402597,
+            "balanced_accuracy": 0.7638888888888888,
+            "f1": 0.6942148760330579,
+            "sensitivity": 0.7777777777777778,
+            "specificity": 0.75,
+            "nll": 0.5321594039007276,
+            "auroc": 0.8105555555555556
+          },
+          {
+            "accuracy": 0.7581699346405228,
+            "balanced_accuracy": 0.7573584905660378,
+            "f1": 0.6837606837606838,
+            "sensitivity": 0.7547169811320755,
+            "specificity": 0.76,
+            "nll": 0.48627951048015267,
+            "auroc": 0.8411320754716981
+          },
+          {
+            "accuracy": 0.7712418300653595,
+            "balanced_accuracy": 0.7629245283018868,
+            "f1": 0.6902654867256637,
+            "sensitivity": 0.7358490566037735,
+            "specificity": 0.79,
+            "nll": 0.48495411550717477,
+            "auroc": 0.8437735849056605
+          },
+          {
+            "accuracy": 0.6948051948051948,
+            "balanced_accuracy": 0.6883333333333332,
+            "f1": 0.6050420168067226,
+            "sensitivity": 0.6666666666666666,
+            "specificity": 0.71,
+            "nll": 0.6042279099846196,
+            "auroc": 0.7594444444444445
+          },
+          {
+            "accuracy": 0.7402597402597403,
+            "balanced_accuracy": 0.7361111111111112,
+            "f1": 0.6610169491525424,
+            "sensitivity": 0.7222222222222222,
+            "specificity": 0.75,
+            "nll": 0.47876482321016006,
+            "auroc": 0.8339814814814815
+          },
+          {
+            "accuracy": 0.7792207792207793,
+            "balanced_accuracy": 0.7703703703703704,
+            "f1": 0.7017543859649122,
+            "sensitivity": 0.7407407407407407,
+            "specificity": 0.8,
+            "nll": 0.45445632083059845,
+            "auroc": 0.8662962962962963
+          },
+          {
+            "accuracy": 0.7908496732026143,
+            "balanced_accuracy": 0.7867924528301887,
+            "f1": 0.7192982456140351,
+            "sensitivity": 0.7735849056603774,
+            "specificity": 0.8,
+            "nll": 0.4785577487267695,
+            "auroc": 0.8477358490566037
+          },
+          {
+            "accuracy": 0.7450980392156863,
+            "balanced_accuracy": 0.7606603773584906,
+            "f1": 0.688,
+            "sensitivity": 0.8113207547169812,
+            "specificity": 0.71,
+            "nll": 0.5348780176684912,
+            "auroc": 0.8118867924528302
+          },
+          {
+            "accuracy": 0.7857142857142857,
+            "balanced_accuracy": 0.7796296296296297,
+            "f1": 0.7130434782608696,
+            "sensitivity": 0.7592592592592593,
+            "specificity": 0.8,
+            "nll": 0.45771507262042554,
+            "auroc": 0.8577777777777778
+          },
+          {
+            "accuracy": 0.7857142857142857,
+            "balanced_accuracy": 0.7796296296296297,
+            "f1": 0.7130434782608696,
+            "sensitivity": 0.7592592592592593,
+            "specificity": 0.8,
+            "nll": 0.46807381678258353,
+            "auroc": 0.861111111111111
+          },
+          {
+            "accuracy": 0.7987012987012987,
+            "balanced_accuracy": 0.7938888888888889,
+            "f1": 0.7304347826086957,
+            "sensitivity": 0.7777777777777778,
+            "specificity": 0.81,
+            "nll": 0.48809303001646237,
+            "auroc": 0.8635185185185185
+          },
+          {
+            "accuracy": 0.7189542483660131,
+            "balanced_accuracy": 0.7184905660377359,
+            "f1": 0.6386554621848739,
+            "sensitivity": 0.7169811320754716,
+            "specificity": 0.72,
+            "nll": 0.568660218187272,
+            "auroc": 0.7732075471698112
+          },
+          {
+            "accuracy": 0.7058823529411765,
+            "balanced_accuracy": 0.7129245283018868,
+            "f1": 0.6341463414634146,
+            "sensitivity": 0.7358490566037735,
+            "specificity": 0.69,
+            "nll": 0.5424425053746923,
+            "auroc": 0.8292452830188679
+          }
+        ],
+        "named": [
+          {
+            "accuracy": 0.7207792207792207,
+            "balanced_accuracy": 0.6742592592592592,
+            "f1": 0.5656565656565656,
+            "sensitivity": 0.5185185185185185,
+            "specificity": 0.83,
+            "nll": 0.548617438913597,
+            "auroc": 0.758888888888889
+          },
+          {
+            "accuracy": 0.7857142857142857,
+            "balanced_accuracy": 0.7455555555555555,
+            "f1": 0.6666666666666666,
+            "sensitivity": 0.6111111111111112,
+            "specificity": 0.88,
+            "nll": 0.42451108651203384,
+            "auroc": 0.8805555555555555
+          },
+          {
+            "accuracy": 0.7467532467532467,
+            "balanced_accuracy": 0.69,
+            "f1": 0.5806451612903226,
+            "sensitivity": 0.5,
+            "specificity": 0.88,
+            "nll": 0.5673385998366743,
+            "auroc": 0.7553703703703702
+          },
+          {
+            "accuracy": 0.7843137254901961,
+            "balanced_accuracy": 0.7773584905660378,
+            "f1": 0.7079646017699115,
+            "sensitivity": 0.7547169811320755,
+            "specificity": 0.8,
+            "nll": 0.42787863913071206,
+            "auroc": 0.8824528301886793
+          },
+          {
+            "accuracy": 0.7320261437908496,
+            "balanced_accuracy": 0.7018867924528303,
+            "f1": 0.6095238095238096,
+            "sensitivity": 0.6037735849056604,
+            "specificity": 0.8,
+            "nll": 0.491448342079499,
+            "auroc": 0.8149056603773585
+          },
+          {
+            "accuracy": 0.8051948051948052,
+            "balanced_accuracy": 0.7562962962962962,
+            "f1": 0.6808510638297872,
+            "sensitivity": 0.5925925925925926,
+            "specificity": 0.92,
+            "nll": 0.4267917437265474,
+            "auroc": 0.8790740740740741
+          },
+          {
+            "accuracy": 0.7532467532467533,
+            "balanced_accuracy": 0.7077777777777778,
+            "f1": 0.6122448979591837,
+            "sensitivity": 0.5555555555555556,
+            "specificity": 0.86,
+            "nll": 0.4807815700420616,
+            "auroc": 0.8298148148148149
+          },
+          {
+            "accuracy": 0.7142857142857143,
+            "balanced_accuracy": 0.682037037037037,
+            "f1": 0.5849056603773585,
+            "sensitivity": 0.5740740740740741,
+            "specificity": 0.79,
+            "nll": 0.5274009181922654,
+            "auroc": 0.784074074074074
+          },
+          {
+            "accuracy": 0.7581699346405228,
+            "balanced_accuracy": 0.7263207547169811,
+            "f1": 0.6407766990291263,
+            "sensitivity": 0.6226415094339622,
+            "specificity": 0.83,
+            "nll": 0.4867333277479687,
+            "auroc": 0.8267924528301888
+          },
+          {
+            "accuracy": 0.7581699346405228,
+            "balanced_accuracy": 0.730754716981132,
+            "f1": 0.6476190476190476,
+            "sensitivity": 0.6415094339622641,
+            "specificity": 0.82,
+            "nll": 0.5237155454551284,
+            "auroc": 0.7869811320754717
+          },
+          {
+            "accuracy": 0.7142857142857143,
+            "balanced_accuracy": 0.6905555555555556,
+            "f1": 0.6,
+            "sensitivity": 0.6111111111111112,
+            "specificity": 0.77,
+            "nll": 0.5010267998892566,
+            "auroc": 0.8124074074074075
+          },
+          {
+            "accuracy": 0.7792207792207793,
+            "balanced_accuracy": 0.749074074074074,
+            "f1": 0.6730769230769231,
+            "sensitivity": 0.6481481481481481,
+            "specificity": 0.85,
+            "nll": 0.43160261333471683,
+            "auroc": 0.8753703703703704
+          },
+          {
+            "accuracy": 0.7402597402597403,
+            "balanced_accuracy": 0.702037037037037,
+            "f1": 0.6078431372549019,
+            "sensitivity": 0.5740740740740741,
+            "specificity": 0.83,
+            "nll": 0.528530335642254,
+            "auroc": 0.7864814814814814
+          },
+          {
+            "accuracy": 0.7516339869281046,
+            "balanced_accuracy": 0.7124528301886792,
+            "f1": 0.62,
+            "sensitivity": 0.5849056603773585,
+            "specificity": 0.84,
+            "nll": 0.5020012842169564,
+            "auroc": 0.8101886792452829
+          },
+          {
+            "accuracy": 0.7516339869281046,
+            "balanced_accuracy": 0.7213207547169811,
+            "f1": 0.6346153846153846,
+            "sensitivity": 0.6226415094339622,
+            "specificity": 0.82,
+            "nll": 0.44487229331162337,
+            "auroc": 0.8549056603773585
+          },
+          {
+            "accuracy": 0.6753246753246753,
+            "balanced_accuracy": 0.635,
+            "f1": 0.5192307692307693,
+            "sensitivity": 0.5,
+            "specificity": 0.77,
+            "nll": 0.5582038696507866,
+            "auroc": 0.7637037037037037
+          },
+          {
+            "accuracy": 0.7467532467532467,
+            "balanced_accuracy": 0.7198148148148149,
+            "f1": 0.6355140186915887,
+            "sensitivity": 0.6296296296296297,
+            "specificity": 0.81,
+            "nll": 0.4752726201219612,
+            "auroc": 0.8287037037037037
+          },
+          {
+            "accuracy": 0.7727272727272727,
+            "balanced_accuracy": 0.7312962962962963,
+            "f1": 0.6464646464646465,
+            "sensitivity": 0.5925925925925926,
+            "specificity": 0.87,
+            "nll": 0.45496332536741857,
+            "auroc": 0.8512962962962962
+          },
+          {
+            "accuracy": 0.7581699346405228,
+            "balanced_accuracy": 0.7130188679245283,
+            "f1": 0.6185567010309279,
+            "sensitivity": 0.5660377358490566,
+            "specificity": 0.86,
+            "nll": 0.480640460997663,
+            "auroc": 0.8324528301886793
+          },
+          {
+            "accuracy": 0.7777777777777778,
+            "balanced_accuracy": 0.750188679245283,
+            "f1": 0.6730769230769231,
+            "sensitivity": 0.660377358490566,
+            "specificity": 0.84,
+            "nll": 0.450641152927604,
+            "auroc": 0.8567924528301887
+          },
+          {
+            "accuracy": 0.7662337662337663,
+            "balanced_accuracy": 0.739074074074074,
+            "f1": 0.660377358490566,
+            "sensitivity": 0.6481481481481481,
+            "specificity": 0.83,
+            "nll": 0.454945243684009,
+            "auroc": 0.8494444444444444
+          },
+          {
+            "accuracy": 0.7792207792207793,
+            "balanced_accuracy": 0.7277777777777779,
+            "f1": 0.6382978723404256,
+            "sensitivity": 0.5555555555555556,
+            "specificity": 0.9,
+            "nll": 0.4727318509281628,
+            "auroc": 0.8387037037037036
+          },
+          {
+            "accuracy": 0.7922077922077922,
+            "balanced_accuracy": 0.7548148148148148,
+            "f1": 0.68,
+            "sensitivity": 0.6296296296296297,
+            "specificity": 0.88,
+            "nll": 0.4412575972798156,
+            "auroc": 0.8659259259259259
+          },
+          {
+            "accuracy": 0.6928104575163399,
+            "balanced_accuracy": 0.6585849056603774,
+            "f1": 0.5523809523809524,
+            "sensitivity": 0.5471698113207547,
+            "specificity": 0.77,
+            "nll": 0.5706461266358801,
+            "auroc": 0.7637735849056604
+          },
+          {
+            "accuracy": 0.738562091503268,
+            "balanced_accuracy": 0.715754716981132,
+            "f1": 0.6296296296296297,
+            "sensitivity": 0.6415094339622641,
+            "specificity": 0.79,
+            "nll": 0.49036497974182197,
+            "auroc": 0.8183018867924529
+          }
+        ]
+      },
+      "n_train_per_fold": 615,
+      "n_test_per_fold": 153
+    }
+  },
+  "runtime_seconds": 532.8
+}

@@ -1,0 +1,130 @@
+pmid,s2,reason,title
+40877341,exclude,general image benchmark,Hybrid quantum-classical-quantum convolutional neural networks.
+35470831,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Δ-Quantum machine-learning for medicinal chemistry.
+36831846,exclude,no quantum-over-classical superiority reported in abstract,Case-Based and Quantum Classification for ERP-Based Brain-Computer Interfaces.
+38473030,include,hybrid steatosis +1.8%,Hybrid Quantum Image Classification and Federated Learning for Hepatic Steatosis Diagnosis.
+36980406,exclude,classical SVM better than QSVM,Performance Evaluation of Quantum-Based Machine Learning Algorithms for Cardiac Arrhythmia Classification.
+39532986,exclude,not patient/subject-level health outcome,Quantum machine learning enhanced laser speckle analysis for precise speed prediction.
+38902368,include,QML AD outperforms,Deep Ensemble learning and quantum machine learning approach for Alzheimer's disease detection.
+37806140,exclude,not patient/subject-level health outcome,EQNAS: Evolutionary Quantum Neural Architecture Search for Image Classification.
+37345042,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Hybrid Quantum Neural Network for Drug Response Prediction.
+39433779,include,QCCNN breast cancer,Quantum classical hybrid convolutional neural networks for breast cancer diagnosis.
+39650428,include,hybrid image CNN; claims > prior classical/quantum,Pre-trained quantum convolutional neural network for COVID-19 disease classification using computed tomography images.
+37509939,exclude,"general benchmark, not a medical-task study",On the Applicability of Quantum Machine Learning.
+40496630,include,claims QML higher with minimal data,Quantum machine learning-based electrokinetic mining for the identification of nanoparticles and exosomes with minimal training data.
+39177127,include,hybrid image; 96.5 vs CNN 94,Classification of Pneumonia via a Hybrid ZFNet-Quantum Neural Network Using a Chest X-ray Dataset.
+41850494,include,quantum features improve fusion,Pretreatment Radiation Esophagitis Prediction Using Quantum Machine Learning in Patients With Esophageal Cancer.
+37710188,include,hybrid QCNN > CNN on Kaggle brain,Medical image diagnosis based on adaptive Hybrid Quantum CNN.
+40764018,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Robust Quantum Reservoir Learning for Molecular Property Prediction.
+41492535,include,hybrid image; > classical baselines,Hybrid quantum-classical deep learning framework for balanced multiclass diabetic retinopathy classification.
+42497272,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Quantum convolutional HLA immunogenic peptide prediction (Q-CHIPP): Next-generation neoantigen prediction with quantum neural network.
+38441727,include,"QSVM superior, 100%",Quantum Machine-Based Decision Support System for the Detection of Schizophrenia from EEG Records.
+36421511,exclude,not patient/subject-level health outcome,A Preprocessing Perspective for Quantum Machine Learning Classification Advantage in Finance Using NISQ Algorithms.
+37223480,exclude,not patient/subject-level health outcome,Quantum Neural Network for Quantum Neural Computing.
+36561279,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Selected machine learning of HOMO-LUMO gaps with improved data-efficiency.
+41117927,exclude,best model classical (gradient boosting),Q-MIND: enhancing ADHD diagnosis using quantum machine learning for advanced neuroimaging analysis.
+37956147,exclude,classical RF better; general data,Implementation and empirical evaluation of a quantum machine learning pipeline for local classification.
+38672050,include,VQC superior brain age/gender,Predicting Brain Age and Gender from Brain Volume Data Using Variational Quantum Circuits.
+40785363,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Quantum-Embedded Graph Neural Network Architecture for Molecular Property Prediction.
+37437364,exclude,not patient/subject-level health outcome,Stereoscopic scalable quantum convolutional neural networks.
+40535694,include,QDBNN > classical transfer,Quantum dual-branch neural networks with transfer learning for early detection of skin cancer.
+39013438,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Near-Term Quantum Classification Algorithms Applied to Antimalarial Drug Discovery.
+41008033,exclude,not patient/subject-level health outcome,HQRNN-FD: A Hybrid Quantum Recurrent Neural Network for Fraud Detection.
+34294693,exclude,molecular/compound/peptide/cell-line task (excluded at S2),"Machine learning based energy-free structure predictions of molecules, transition states, and solids."
+40804330,exclude,not patient/subject-level health outcome,Quantum granular-ball generation methods and their application in KNN classification.
+40185909,exclude,quantum-inspired or no quantum circuit,A quantum inspired machine learning approach for multimodal Parkinson's disease screening.
+39960865,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Integrating Machine Learning and Quantum Circuits for Proton Affinity Predictions.
+40674380,exclude,no quantum-over-classical superiority reported in abstract,Use of hybrid quantum-classical algorithms for enhancing biomarker classification.
+37864075,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Binding affinity predictions with hybrid quantum-classical convolutional neural networks.
+37174746,exclude,quantum-inspired or no quantum circuit,Artificial Intelligence Based COVID-19 Detection and Classification Model on Chest X-ray Images.
+39593899,exclude,not patient/subject-level health outcome,A Hybrid Quantum-Classical Model for Stock Price Prediction Using Quantum-Enhanced Long Short-Term Memory.
+40676161,include,VQC outperforms KNN/SVC/DTC/RFC,Hybrid classical and quantum computing for enhanced glioma tumor classification using TCGA data.
+41966795,include,QSVM slightly higher than SVM in some settings,Performance evaluation of quantum support vector machine for COVID-19 biomarker analysis.
+37540237,include,QML > CML simulator 16 features,Error mitigation enables PET radiomic cancer characterization on quantum computers.
+41383998,include,hybrid QCNN dementia,Quantum AI for psychiatric diagnosis: enhancing dementia classification with quantum machine learning.
+41523782,include,QVGDN > classical baselines,Quantum variational graph-driven neural framework for genomic-clinical integration in precision diagnosis.
+40339526,exclude,"compares fuzzy-QML with QML, not with classical",Fuzzy quantum machine learning (FQML) logic for optimized disease prediction.
+35115630,include,qDS outperforms kernel-based methods (ambiguous),Clinical data classification with noisy intermediate scale quantum computers.
+34394762,include,QML COVID CT better than published,Quantum Machine Learning Architecture for COVID-19 Classification Based on Synthetic Data Generation Using Conditional Adversarial Neural Network.
+40715162,exclude,molecular/compound/peptide/cell-line task (excluded at S2),QKDTI A quantum kernel based machine learning model for drug target interaction prediction.
+42046760,include,QSVM AUC 0.799 > SVM-RBF 0.608,Prostate Cancer Classification Using Quantum Machine Learning on Multi-parametric MRI.
+42350468,include,hybrid > CNN 82%,Enhanced brain tumour prediction using quantum: a hybrid deep learning approach.
+40695887,include,QProteoML > SVM/RF/LR/KNN,A quantum machine learning framework for predicting drug sensitivity in multiple myeloma using proteomic data.
+37399158,include,HQCNN more stable than same-structure CNN,IoMT-Based Smart Healthcare Detection System Driven by Quantum Blockchain and Quantum Neural Network.
+40658631,exclude,not patient/subject-level health outcome,A Quantum-Classical Hybrid Model for Long-term Network Traffic Prediction.
+30769998,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Operators in quantum machine learning: Response properties in chemical space.
+41673069,exclude,quantum-inspired or no quantum circuit; synthetic labels,Quantum-enhanced multimodal prognostic transformer for skin disease progression prediction and visualization.
+41629345,exclude,not patient/subject-level health outcome,Quantum phase classification via partial tomography-based quantum hypothesis testing.
+42217191,exclude,molecular/compound/peptide/cell-line task (excluded at S2),QSyncFold: quantum neural network for multidimensional sync-discovery in protein folding.
+40652747,exclude,no abstract; perspective,Unlocking clinical quantum oncology through quantum control.
+37668061,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Coot-Lion optimized deep learning algorithm for COVID-19 point mutation rate prediction using genome sequences.
+41350552,exclude,"general benchmark (iris, wine...)","Robust evaluation of classical and quantum machine learning under noise, imbalance, feature reduction and explainability."
+40865268,include,KACQ-DCNN outperforms 37 benchmarks,KACQ-DCNN: Uncertainty-Aware Interpretable Kolmogorov-Arnold Classical-Quantum Dual-Channel Neural Network for Heart Disease Detection.
+42207361,exclude,reported as comparable to classical SVM,Quantum Machine Learning for Biomedical Classification Problems: A Feasibility Study on Real Quantum Hardware.
+41728802,include,QC-REUP > linear classical on low-dim data,Quantum Machine Learning and Data Re-Uploading: Evaluation on Benchmark and Laboratory Medicine Data Sets.
+37372204,exclude,general benchmark,Optimizing Quantum Classification Algorithms on Classical Benchmark Datasets.
+42414364,include,ProCDNet QML 99.27%,ProCDNet: prostate cancer detection network using quantum machine learning with enhanced addax optimization.
+42621447,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Benchmarking Classical and Quantum Machine Learning for Potency Prediction across Ten Therapeutically Relevant Targets.
+38227222,exclude,molecular/compound/peptide/cell-line task (excluded at S2),"SPAM(a,b): Encoding the Density Information from Guess Hamiltonian in Quantum Machine Learning Representations."
+37504805,include,Grad-CAM localisation QC 94% vs CC 61%,Hybrid Classical-Quantum Transfer Learning for Cardiomegaly Detection in Chest X-rays.
+39272696,exclude,superiority claim is for a classical model,RA-XTNet: A Novel CNN Model to Predict Rheumatoid Arthritis from Hand Radiographs and Thermal Images: A Comparison with CNN Transformer and Quantum Computing.
+40024047,exclude,not patient/subject-level health outcome,Quantum federated learning with pole-angle quantum local training and trainable measurement.
+40286477,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Amino acid sequence-based IDR classification using ensemble machine learning and quantum neural networks.
+42649719,exclude,not patient/subject-level health outcome,Federated Quantum Machine Learning over Satellite Networks: Toward Scalable Distributed Quantum Classification.
+41239225,exclude,not patient/subject-level health outcome,Quantum machine learning driven optimization of nutrient-hormone interactions for enhanced in vitro regeneration of common bean.
+38966533,include,QNN-LSTM CVD superior,Enhanced cardiovascular disease prediction through self-improved Aquila optimized feature selection in quantum neural network & LSTM model.
+40567645,include,VQC CKD 99.2% > traditional classifiers,Variational quantum classifier-based early identification and classification of chronic kidney disease using sparse autoencoder and LASSO shrinkage.
+32704032,exclude,not patient/subject-level health outcome,Experimental kernel-based quantum machine learning in finite feature space.
+42242682,exclude,no quantum-over-classical superiority reported in abstract,Quantum ensembling methods for healthcare and life science.
+36852337,exclude,not patient/subject-level health outcome,Quantum anomaly detection for collider physics.
+42277426,exclude,molecular/compound/peptide/cell-line task (excluded at S2),HIV-1 protease cleavage sites detection with a quantum convolutional neural network algorithm.
+42399301,include,hybrid brain MRI,A hybrid quantum-classical framework for MRI-based deep brain tumor segmentation and classification.
+32879908,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Implementation of a Hamming distance-like genomic quantum classifier using inner products on ibmqx2 and ibmq_16_melbourne.
+36347908,exclude,not patient/subject-level health outcome,Noise-robust optimization of quantum machine learning models for polymer properties using a simulator and validated on the IonQ quantum computer.
+40461703,exclude,not patient/subject-level health outcome,Quantum neural networks with data re-uploading for urban traffic time series forecasting.
+42463502,exclude,not patient/subject-level health outcome,Hybrid quantum-classical machine learning for industrial multi-anomaly detection via single acoustic sensor.
+40380709,exclude,no quantum-over-classical superiority reported in abstract,Novel Tinnitus Diagnosis: Biology and Technology for Public Health Management.
+39981059,include,hybrid transfer DR,QuantumNet: An enhanced diabetic retinopathy detection model using classical deep learning-quantum transfer learning.
+39202100,include,QCNN val 87.2 vs CNN 83.3,Breast Cancer Detection with Quanvolutional Neural Networks.
+41964986,exclude,not patient/subject-level health outcome,High-Accuracy Temporal Prediction via Experimental Quantum Reservoir Computing in Correlated Spins.
+40760074,exclude,not patient/subject-level health outcome,A comparative analysis of classical machine learning models with quantum-inspired models for predicting world surface temperature.
+30516999,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Boosting Quantum Machine Learning Models with a Multilevel Combination Technique: Pople Diagrams Revisited.
+41961942,exclude,not patient/subject-level health outcome,Experimental data reuploading with provable enhanced learning capabilities.
+41294241,exclude,molecular/compound/peptide/cell-line task (excluded at S2),QTFPred: robust high-performance quantum machine learning modeling that predicts main and cooperative transcription factor bindings with base resolution.
+42115706,include,QSVM stroke claims superiority,Quantum SVM-driven framework for accurate brain stroke classification.
+38920470,exclude,"general benchmark, not a medical-task study",Leveraging Data Locality in Quantum Convolutional Classifiers.
+42051325,include,hybrid mammography superior,Quantum-SpinalNet: a hybrid deep learning approach for mammographic breast cancer detection.
+41760787,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Quantum-augmented graph differential geometry enhances accuracy in protein-protein interaction prediction.
+41794871,include,QTMPN > baselines,Survival prediction for bladder cancer using multimodal data with quantum neural networks and transformer architectures.
+41513819,include,QNN advantage in data-scarce regime,A large scale statistical analysis of quantum and classical neural networks in the medical domain.
+41461781,exclude,no quantum-over-classical superiority reported in abstract,Functional near-infrared spectroscopy for the detection of fear using parameterized quantum circuits.
+42156799,exclude,not patient/subject-level health outcome,Exploiting quantum chaos diagnostics in QAOA for enhanced hybrid quantum classical deep learning classification.
+41612482,exclude,quantum-inspired or no quantum circuit,Quantum Angle-distance kernel for ECG classification and anomaly detection: a quantum-inspired framework for biomedical signal analysis.
+40681043,exclude,quantum-inspired or no quantum circuit,An integrated deep learning framework using adaptive enhanced vision fusion and modified mobilenet architecture for precision classification of skin diseases with enhanced diagnostic performance.
+34330278,exclude,no quantum-over-classical superiority reported in abstract,Quantum algorithm for quicker clinical prognostic analysis: an application and experimental study using CT scan images of COVID-19 patients.
+42649650,exclude,not patient/subject-level health outcome,Hardware-Aware Quantum Kernel Design Based on Graph Neural Networks.
+37300043,exclude,quantum-inspired or no quantum circuit,Remora Namib Beetle Optimization Enabled Deep Learning for Severity of COVID-19 Lung Infection Identification and Classification Using CT Images.
+42460865,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Quantum kernel-based delta (Δ)-learning for correcting a semiempirical method in the prediction of reaction barrier heights.
+42536287,exclude,"claims parameter efficiency, not better performance",H-QDCT: hierarchical quantum DCT for structural-textural feature fusion in medical imaging.
+40281686,exclude,quantum-inspired or no quantum circuit,CAD-Skin: A Hybrid Convolutional Neural Network-Autoencoder Framework for Precise Detection and Classification of Skin Lesions and Cancer.
+40717139,exclude,not patient/subject-level health outcome,An online tool based on the Internet of Things and intelligent blockchain technology for data privacy and security in rural and agricultural development.
+35007471,exclude,molecular/compound/peptide/cell-line task (excluded at S2),QPoweredCompound2DeNovoDrugPropMax - a novel programmatic tool incorporating deep learning andmethods for automated in silico bio-activity discovery for any compound of interest.
+37552590,exclude,federated; no superiority over classical claimed,DTQFL: A Digital Twin-Assisted Quantum Federated Learning Algorithm for Intelligent Diagnosis in 5G Mobile Network.
+40389708,include,quantum kernel heart 99%,IoT driven smart health monitoring for heart disease prediction using quantum kernel enhanced sardine diffusion and CNN.
+42156417,include,QNN highest AUC vs tuned classical,Quantum machine learning for predicting anastomotic leak: a clinical study.
+42506121,exclude,"methodological benchmark, no medical superiority claim",Benchmarking Barren Plateau Mitigation Strategies in Quantum Neural Networks on Standard and Medical Image Datasets.
+40646489,include,all QML > classical SVM,An integrated strategy based on radiomics and quantum machine learning: diagnosis and clinical interpretation of pulmonary ground-glass nodules.
+41690972,exclude,no quantum-over-classical superiority reported in abstract,Benchmarking MedMNIST dataset on real quantum hardware.
+42053170,exclude,no quantum-over-classical superiority reported in abstract,Linking External Variables to the Prediction of Anxiety and Suicide Attempt Cases.
+42591753,exclude,explicitly reports no quantum advantage,A comparative evaluation of quantum machine learning architectures for breast cancer classification using clinical and genomic data.
+40267546,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Prediction of newly synthesized heparin mimic's effects as heparanase inhibitor in cancer treatments via variational quantum neural networks.
+42513300,exclude,hybrid ties classical; advantage only on synthetic data,Quantum Computing in a Diagnostic-First Quantum Residual Boosting Framework for Clinical Survival Analysis in Oncology and Cardiology.
+41517992,include,quantum ensemble superior CVD,Early cardiovascular disease detection using hierarchical quantum ensemble model.
+42286086,include,quantum kernel ensemble raises specificity/recall,Adaptive quantum kernel selection via leakage-free stacking for clinical diagnostics on NISQ hardware.
+41865083,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Q-CaDD: accelerating in silico methodologies with quantum computation and machine learning for Epidermal growth factor receptor.
+41462429,exclude,not patient/subject-level health outcome,Carbon efficient quantum AI: an empirical study of ansätz design trade-offs in QNN and QLSTM models.
+42449777,exclude,explicitly no quantum advantage (RBF-SVM best),"A Robustness-Oriented Quantum-Classical Hybrid Machine Learning Pipeline for Breast Cancer Diagnosis: External Validation, Explainability, and Rigorous Benchmarking in the NISQ Era."
+41050338,exclude,molecular/compound/peptide/cell-line task (excluded at S2),Quantum graph embedding of transcription factor-gene networks reveals key modules in periodontal bone inflammation: Comparative analysis of GAE and GAN.
+42426030,exclude,not patient/subject-level health outcome,Predictive fault management in smart sensor networks using a dynamic quantum-AI architecture (DynaQuAI).
+41545462,exclude,quantum-inspired or no quantum circuit,Hybrid quantum classical framework for electroencephalogram driven neurological processing in epileptic seizure taxonomy.
+42031956,exclude,not patient/subject-level health outcome,Hybrid optimization-based quantum-driven multi-relational graph attention networks for cyber attack detection in medical IoT networks.
