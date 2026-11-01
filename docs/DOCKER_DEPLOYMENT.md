@@ -191,16 +191,21 @@ write, and the container dies on its first upload.
 | `AURA_FUSION_BACKEND` | from `pyproject.toml` | `classical` / `quantum` |
 | `AURA_LOG_LEVEL` | `info` | uvicorn log level |
 | `OMP_NUM_THREADS` | `4` | torch / scikit-learn CPU threads |
+| `AURA_AUTH_TOKEN` | *(empty)* | shared API token. Empty means the API answers only requests from inside the container, in practice the healthcheck: a browser on the host gets a 403 telling it to set one |
+| `AURA_ALLOW_OPEN_ACCESS` | `0` | `1` serves the network with no token, capped at `CLINICAL_USER`; isolated demo networks only |
+| `AURA_SESSION_TTL_HOURS` | `12` | lifetime of the browser sign-in cookie |
+| `AURA_SITE_ID` | *(empty)* | the hospital or site a database belongs to; a server with a different id refuses to open it |
+| `AURA_DATABASE_URL` | *(empty)* | PostgreSQL instead of SQLite (start with `--profile postgres`); empty uses SQLite at `AURA_DB_PATH` |
+| `AURA_BOOTSTRAP_ADMIN_PASSWORD` / `_USER` | *(empty)* / `admin` | creates the first `AURA_ADMIN` while no account exists; set it for one start, then remove it |
 
 `AURA_FUSION_BACKEND` is intentionally absent from `docker-compose.yml`.
 `common/config.py` accepts an env override on `is not None`, so a compose default
 of `""` would be read as a real backend name and break fusion. Left unset, the
 container serves exactly what `[tool.aura]` selects.
 
-> `aura/pyproject.toml` sets `fusion_backend = "quantum"` while
-> `artifacts/registry.json` marks classical `role: served` and quantum
-> `status: research`. That disagreement predates this deployment work and is not
-> resolved here — decide which is authoritative before a judged run.
+> Since 2026-09-12 both `aura/pyproject.toml` and `artifacts/registry.json` serve
+> `classical`. Quantum was the least accurate of four backends on the preregistered
+> CheXpert external test (`docs/MARKET_COMPARISON.md` §3.2).
 
 ### Workers
 
@@ -252,7 +257,7 @@ brain support; without it CI builds chest-only.
 | Symptom | Cause | Fix |
 |---|---|---|
 | `COPY failed: requirements.txt not found` | the file is at `aura/requirements.txt`, not the context root | corrected path |
-| `E: Unable to locate package libgl1-mesa-glx` | that package does not exist on bookworm, which `python:3.11-slim` is based on | `libgomp1` + `libglib2.0-0` |
+| `E: Unable to locate package libgl1-mesa-glx` | that package does not exist on bookworm, which `python:3.11-slim` was then based on (it has since moved to Debian trixie, where `libglib2.0-0` still installs; 2026-09-14 build) | `libgomp1` + `libglib2.0-0` |
 | Container exits 0 immediately | old `CMD ["python", "aura/gateway/app.py"]` — `app.py` has no `__main__` block, so it imported and exited | entrypoint runs uvicorn |
 | Server unreachable from the host | `aura_cli serve` binds `127.0.0.1`, which inside a container is not the host | entrypoint binds `0.0.0.0` |
 | `exec /app/deploy/entrypoint.sh: no such file or directory` | CRLF on the shebang, or no exec bit, from a Windows working tree | `.gitattributes` forces LF; the Dockerfile strips CR and chmods |
@@ -261,6 +266,9 @@ brain support; without it CI builds chest-only.
 | DICOM upload 500s in the container | `pydicom` missing; the lazy import hid it until upload time | added to `requirements-docker.txt`; preflight imports it eagerly |
 | `mock DICOM listener failed to start` | `pynetdicom` missing | added to `requirements-docker.txt` |
 | First brain study OOM-kills the container | CPU torch with a 3D BraTS model | memory limit ≥ 4 GB (compose defaults to 6 GB) |
+| Docker Desktop crashes at start: `remove …\Docker\run\dockerInference: The file cannot be accessed by the system`, then the same for `docker-secrets-engine\engine.sock` | Windows keeps the AF_UNIX socket files from the previous run inaccessible until a reboot, and Docker Desktop crashes when it cannot delete them ([docker/desktop-feedback#460](https://github.com/docker/desktop-feedback/issues/460)). On 2026-09-14 even a clean `docker desktop stop` left them | with Docker stopped, rename `%LOCALAPPDATA%\Docker\run` and `%LOCALAPPDATA%\docker-secrets-engine` (Docker recreates both), or reboot. Nothing can delete the files themselves |
+| `input/output error` from BuildKit or containerd mid-build; `docker images` fails | the drive holding Docker's VM disk is full, so the disk cannot grow | free space, or move the disk to a roomier drive: Settings → Resources → Disk image location, or `"CustomWslDistroDir"` in `%APPDATA%\Docker\settings-store.json` with the disk at `<dir>\disk\docker_data.vhdx`. `WslDataFolder` is not a valid key there: Docker ignores it and silently creates a new, empty disk |
+| `pip` fails with `incomplete-download` part-way through a wheel | a slow or flaky link (DNS failures, 37 kB/s) | `PIP_DEFAULT_TIMEOUT`, `PIP_RETRIES`, `PIP_RESUME_RETRIES`, and a BuildKit cache mount on the dependency layer so a retry does not download everything again |
 
 ---
 
@@ -272,6 +280,7 @@ Dockerfile                  multi-stage build; runs preflight as its last step
 .gitattributes              LF for .sh/Dockerfile/yml — CRLF breaks the entrypoint
 docker-compose.yml          single-host deployment
 requirements-docker.txt     container deps (adds pydicom, pynetdicom, pandas, cv2)
+requirements-docker.lock    dependency lock file from verified container build
 deploy/
   entrypoint.sh             preflight, then uvicorn on 0.0.0.0
   preflight.py              deps + artifacts + real model load + router + ASGI app

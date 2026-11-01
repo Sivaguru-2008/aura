@@ -187,6 +187,7 @@ window.CONSOLE = (() => {
 
   function bindChrome() {
     bindPager();
+    bindChatbotUI();
     
     // RBAC Profile setup
     const activeUser = localStorage.getItem("aura-active-user") || "dr.smith";
@@ -2851,9 +2852,7 @@ window.CONSOLE = (() => {
       });
     }
 
-    // Bind Chat UI
-    const form = $("chatbot-panel-form");
-    const input = $("chatbot-panel-input");
+    bindChatbotUI();
     const log = $("chat-messages-log");
 
     // Fetch and populate chat history from the backend
@@ -2866,51 +2865,68 @@ window.CONSOLE = (() => {
             const sender = m.role === "user" ? "doctor" : "assistant";
             appendMsg(log, sender, m.content);
           });
+        } else {
+          log.innerHTML = `
+            <div style="background: rgba(75, 225, 195, 0.04); border: 1px solid rgba(75, 225, 195, 0.15); border-radius: 8px; padding: 10px 14px; align-self: flex-start; max-width: 90%; font-size: 12.5px; color: var(--ink); line-height: 1.5;">
+              <strong>AURA Llama:</strong> Ask about <strong>${b.case_id}</strong>: its findings, laboratory values, or the evidence for and against each diagnosis. Answers are generated from this case's evidence graph and can be wrong, so check them against the images.
+            </div>`;
         }
       } catch (err) {
         console.warn("Could not fetch chat history, starting with clean slate.", err);
       }
     })();
+  }
 
-    if (form) {
-      form.onsubmit = async (e) => {
-        e.preventDefault();
-        const query = input.value.trim();
-        if (!query) return;
+  function bindChatbotUI() {
+    const form = $("chatbot-panel-form");
+    const input = $("chatbot-panel-input");
+    const log = $("chat-messages-log");
+    if (!form || form.dataset.bound === "true") return;
+    form.dataset.bound = "true";
 
-        appendMsg(log, "doctor", query);
-        input.value = "";
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const query = input ? input.value.trim() : "";
+      if (!query) return;
 
-        const loaderId = appendMsg(log, "assistant", "AURA-Llama is thinking...", true);
+      appendMsg(log, "doctor", query);
+      if (input) input.value = "";
 
-        // Build history array from existing messages
-        const historyList = [];
-        log.querySelectorAll(".chat-msg").forEach(msg => {
-          const contentEl = msg.querySelector(".msg-content");
-          if (!contentEl) return;
-          const role = msg.classList.contains("doctor") ? "user" : "assistant";
-          historyList.push({ role: role, content: contentEl.innerText });
+      const b = S.bundles.get(S.current);
+      if (!b) {
+        appendMsg(log, "assistant", "Please select a study from the worklist or upload a scan first so I can ground clinical reasoning in the patient's evidence graph.");
+        return;
+      }
+
+      const loaderId = appendMsg(log, "assistant", "AURA-Llama is thinking...", true);
+
+      // Build history array from existing messages
+      const historyList = [];
+      log.querySelectorAll(".chat-msg").forEach(msg => {
+        const contentEl = msg.querySelector(".msg-content");
+        if (!contentEl) return;
+        const role = msg.classList.contains("doctor") ? "user" : "assistant";
+        historyList.push({ role: role, content: contentEl.innerText });
+      });
+
+      try {
+        const data = await api(`/v1/cases/${b.case_id}/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: query, history: historyList })
         });
+        const textEl = document.getElementById(loaderId);
+        if (textEl) textEl.remove();
 
-        try {
-          const data = await api(`/v1/cases/${b.case_id}/chat`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ question: query, history: historyList })
-          });
-          const textEl = document.getElementById(loaderId);
-          if (textEl) textEl.remove();
-
-          appendMsg(log, "assistant", formatAnswerWithCitations(data.answer));
-        } catch (err) {
-          const textEl = document.getElementById(loaderId);
-          if (textEl) textEl.remove();
-          // Fallback response generator if Ollama is not running
-          const answer = generateGroundedFallbackResponse(query, b);
-          appendMsg(log, "assistant", formatAnswerWithCitations(answer));
-        }
-      };
-    }
+        appendMsg(log, "assistant", formatAnswerWithCitations(data.answer));
+      } catch (err) {
+        const textEl = document.getElementById(loaderId);
+        if (textEl) textEl.remove();
+        // Fallback response generator if Ollama is not running
+        const answer = generateGroundedFallbackResponse(query, b);
+        appendMsg(log, "assistant", formatAnswerWithCitations(answer));
+      }
+    };
 
     // Bind suggestion chips
     document.querySelectorAll(".chat-chip-btn").forEach(chip => {
@@ -2960,6 +2976,9 @@ window.CONSOLE = (() => {
   }
 
   function generateGroundedFallbackResponse(query, b) {
+    if (!b) {
+      return "Please select a study from the worklist or upload a scan first so I can ground clinical reasoning in the patient's evidence graph.";
+    }
     const q = query.toLowerCase();
     const g = b.evidence_graph || { nodes: {}, edges: [] };
     const findingsList = Object.keys(g.nodes).map(k => g.nodes[k].label);

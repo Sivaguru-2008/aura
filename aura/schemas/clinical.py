@@ -177,3 +177,15 @@ FINDING_LABELS: dict[Finding, str] = {
     Finding.HYPINTENSITY: "T1 hypointensity",
     Finding.HYPERINTENSITY: "T2/FLAIR hyperintensity",
 }
+
+
+class ClinicalOperatingMode(str, Enum):
+    """Operating point policies for clinical decision-making.
+
+    TRIAGE: High sensitivity floor (>=0.70-0.80) to maximize recall for acute emergency triage.
+    BALANCED: F1-optimal operating point balancing precision and sensitivity.
+    SPECIFICITY_GUARD: High precision mode (>=0.75) minimizing false positives and clinical alert fatigue.
+    """
+    TRIAGE = "triage"
+    BALANCED = "balanced"
+    SPECIFICITY_GUARD = "specificity_guard"

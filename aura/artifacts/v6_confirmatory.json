@@ -1,0 +1,1018 @@
+{
+  "preregistration": "docs/PREREGISTRATION_v6_2026-10-03.md (commit 61e777b)",
+  "development": {
+    "source": "chexpert_evidence.npz (first 8,000 patients)",
+    "split": "80/20 train/calibration, default_rng(7)"
+  },
+  "test": {
+    "source": "every later CheXpert patient, same selection rule",
+    "n": 56534
+  },
+  "simulator_check": {
+    "criterion": "max |diff| < 1e-8",
+    "checks": [
+      {
+        "qubits": 7,
+        "entangler": "ring",
+        "pairs": 1000,
+        "max_abs_diff": 4.996003610813204e-16
+      },
+      {
+        "qubits": 7,
+        "entangler": "none",
+        "pairs": 1000,
+        "max_abs_diff": 5.551115123125783e-16
+      },
+      {
+        "qubits": 8,
+        "entangler": "ring",
+        "pairs": 1000,
+        "max_abs_diff": 5.551115123125783e-16
+      },
+      {
+        "qubits": 8,
+        "entangler": "none",
+        "pairs": 1000,
+        "max_abs_diff": 7.771561172376096e-16
+      }
+    ],
+    "passed": true
+  },
+  "C1": {
+    "arms": {
+      "classical": {
+        "n": 56534,
+        "temperature": 1.1017,
+        "accuracy": 0.5443,
+        "correct": 30773,
+        "accuracy_ci95_jeffreys": [
+          0.5402,
+          0.5484
+        ],
+        "nll": 1.1157,
+        "ece": 0.0131,
+        "macro_auroc": 0.7534,
+        "ece_ci95_boot": [
+          0.01,
+          0.0172
+        ]
+      },
+      "learnable": {
+        "n": 56534,
+        "temperature": 1.0918,
+        "accuracy": 0.5398,
+        "correct": 30518,
+        "accuracy_ci95_jeffreys": [
+          0.5357,
+          0.5439
+        ],
+        "nll": 1.1165,
+        "ece": 0.0085,
+        "macro_auroc": 0.7553,
+        "ece_ci95_boot": [
+          0.0071,
+          0.013
+        ]
+      },
+      "quantum": {
+        "n": 56534,
+        "temperature": 1.0246,
+        "accuracy": 0.5371,
+        "correct": 30365,
+        "accuracy_ci95_jeffreys": [
+          0.533,
+          0.5412
+        ],
+        "nll": 1.1362,
+        "ece": 0.0076,
+        "macro_auroc": 0.7436,
+        "ece_ci95_boot": [
+          0.0051,
+          0.0119
+        ]
+      },
+      "logistic": {
+        "n": 56534,
+        "temperature": 1.1274,
+        "accuracy": 0.5415,
+        "correct": 30614,
+        "accuracy_ci95_jeffreys": [
+          0.5374,
+          0.5456
+        ],
+        "nll": 1.1152,
+        "ece": 0.0128,
+        "macro_auroc": 0.7534,
+        "ece_ci95_boot": [
+          0.0105,
+          0.0171
+        ]
+      }
+    },
+    "fitting": {
+      "classical": {
+        "selected_lr": 0.05,
+        "best_epoch": 26,
+        "epochs_run": 47,
+        "converged_by_early_stopping": true,
+        "parameters": 54,
+        "grid": [
+          {
+            "lr": 0.01,
+            "best_calibration_nll": 1.137617,
+            "best_epoch": 38,
+            "epochs_run": 59,
+            "stopped_early": true,
+            "final_train_nll": 1.045061,
+            "seconds": 5.5
+          },
+          {
+            "lr": 0.05,
+            "best_calibration_nll": 1.137118,
+            "best_epoch": 26,
+            "epochs_run": 47,
+            "stopped_early": true,
+            "final_train_nll": 1.044663,
+            "seconds": 2.4
+          },
+          {
+            "lr": 0.1,
+            "best_calibration_nll": 1.138331,
+            "best_epoch": 2,
+            "epochs_run": 23,
+            "stopped_early": true,
+            "final_train_nll": 1.048681,
+            "seconds": 1.2
+          }
+        ]
+      },
+      "learnable": {
+        "selected_lr": 0.1,
+        "best_epoch": 46,
+        "epochs_run": 67,
+        "converged_by_early_stopping": true,
+        "parameters": 126,
+        "grid": [
+          {
+            "lr": 0.01,
+            "best_calibration_nll": 1.137517,
+            "best_epoch": 54,
+            "epochs_run": 75,
+            "stopped_early": true,
+            "final_train_nll": 1.042961,
+            "seconds": 6.9
+          },
+          {
+            "lr": 0.05,
+            "best_calibration_nll": 1.135071,
+            "best_epoch": 54,
+            "epochs_run": 75,
+            "stopped_early": true,
+            "final_train_nll": 1.041573,
+            "seconds": 8.3
+          },
+          {
+            "lr": 0.1,
+            "best_calibration_nll": 1.13412,
+            "best_epoch": 46,
+            "epochs_run": 67,
+            "stopped_early": true,
+            "final_train_nll": 1.041988,
+            "seconds": 6.9
+          }
+        ]
+      },
+      "quantum": {
+        "selected_lr": 0.05,
+        "best_epoch": 11,
+        "epochs_run": 32,
+        "converged_by_early_stopping": true,
+        "parameters": 102,
+        "grid": [
+          {
+            "lr": 0.01,
+            "best_calibration_nll": 1.146967,
+            "best_epoch": 40,
+            "epochs_run": 61,
+            "stopped_early": true,
+            "final_train_nll": 1.05504,
+            "seconds": 369.6
+          },
+          {
+            "lr": 0.05,
+            "best_calibration_nll": 1.145432,
+            "best_epoch": 11,
+            "epochs_run": 32,
+            "stopped_early": true,
+            "final_train_nll": 1.065308,
+            "seconds": 212.7
+          },
+          {
+            "lr": 0.1,
+            "best_calibration_nll": 1.154415,
+            "best_epoch": 8,
+            "epochs_run": 29,
+            "stopped_early": true,
+            "final_train_nll": 1.073613,
+            "seconds": 913.7
+          }
+        ]
+      },
+      "logistic": {
+        "selected_C": 100.0,
+        "lbfgs_iterations": 233,
+        "converged": true,
+        "classes_fitted": [
+          0,
+          1,
+          2,
+          4,
+          5
+        ],
+        "grid": [
+          {
+            "C": 0.01,
+            "calibration_nll": 1.198
+          },
+          {
+            "C": 0.1,
+            "calibration_nll": 1.1448
+          },
+          {
+            "C": 1.0,
+            "calibration_nll": 1.1347
+          },
+          {
+            "C": 10.0,
+            "calibration_nll": 1.1333
+          },
+          {
+            "C": 100.0,
+            "calibration_nll": 1.1333
+          },
+          {
+            "C": 1000.0,
+            "calibration_nll": 1.1333
+          }
+        ],
+        "parameters": 45
+      }
+    },
+    "simulator": "torch",
+    "n_train": 6400,
+    "n_cal": 1600,
+    "n_test": 56534,
+    "pairwise": {
+      "classical_vs_quantum": {
+        "delta_accuracy": 0.00722,
+        "mcnemar": {
+          "discordant": 4350,
+          "a_only": 2379,
+          "b_only": 1971,
+          "p": 0.0
+        },
+        "delta_nll": -0.02049,
+        "nll_wilcoxon_p": 2.974e-70,
+        "mcnemar_p_holm": 0.0,
+        "nll_wilcoxon_p_holm": 0.0
+      },
+      "classical_vs_learnable": {
+        "delta_accuracy": 0.00451,
+        "mcnemar": {
+          "discordant": 2513,
+          "a_only": 1384,
+          "b_only": 1129,
+          "p": 0.0
+        },
+        "delta_nll": -0.00085,
+        "nll_wilcoxon_p": 4.935e-07,
+        "mcnemar_p_holm": 0.0,
+        "nll_wilcoxon_p_holm": 1e-06
+      },
+      "classical_vs_logistic": {
+        "delta_accuracy": 0.00281,
+        "mcnemar": {
+          "discordant": 2207,
+          "a_only": 1183,
+          "b_only": 1024,
+          "p": 0.000767
+        },
+        "delta_nll": 0.00046,
+        "nll_wilcoxon_p": 0.2767,
+        "mcnemar_p_holm": 0.002301,
+        "nll_wilcoxon_p_holm": 0.2767
+      },
+      "quantum_vs_learnable": {
+        "delta_accuracy": -0.00271,
+        "mcnemar": {
+          "discordant": 3077,
+          "a_only": 1462,
+          "b_only": 1615,
+          "p": 0.006131
+        },
+        "delta_nll": 0.01964,
+        "nll_wilcoxon_p": 5.377e-127,
+        "mcnemar_p_holm": 0.012262,
+        "nll_wilcoxon_p_holm": 0.0
+      },
+      "quantum_vs_logistic": {
+        "delta_accuracy": -0.0044,
+        "mcnemar": {
+          "discordant": 3205,
+          "a_only": 1478,
+          "b_only": 1727,
+          "p": 1.2e-05
+        },
+        "delta_nll": 0.02096,
+        "nll_wilcoxon_p": 7.155e-220,
+        "mcnemar_p_holm": 4.8e-05,
+        "nll_wilcoxon_p_holm": 0.0
+      },
+      "learnable_vs_logistic": {
+        "delta_accuracy": -0.0017,
+        "mcnemar": {
+          "discordant": 1982,
+          "a_only": 943,
+          "b_only": 1039,
+          "p": 0.032826
+        },
+        "delta_nll": 0.00131,
+        "nll_wilcoxon_p": 1.044e-26,
+        "mcnemar_p_holm": 0.032826,
+        "nll_wilcoxon_p_holm": 0.0
+      }
+    },
+    "primary": {
+      "contrast": "NLL_quantum - NLL_poe (positive = quantum worse)",
+      "tost": {
+        "n": 56534,
+        "mean_difference": 0.02049,
+        "se": 0.00097,
+        "margin": 0.01,
+        "t_lower": 31.297,
+        "p_lower": 0.0,
+        "t_upper": -10.771,
+        "p_upper": 1.0,
+        "p_tost": 1.0,
+        "ci90": [
+          0.01889,
+          0.0221
+        ],
+        "equivalent": false
+      },
+      "ci95": [
+        0.01858,
+        0.0224
+      ],
+      "p_two_sided": 7.649e-98,
+      "reading": "quantum materially worse"
+    },
+    "majority_class_floor": 0.3129
+  },
+  "C1_uncertain_as_positive": {
+    "arms": {
+      "classical": {
+        "n": 56534,
+        "temperature": 1.0746,
+        "accuracy": 0.5309,
+        "correct": 30015,
+        "accuracy_ci95_jeffreys": [
+          0.5268,
+          0.535
+        ],
+        "nll": 1.124,
+        "ece": 0.0102,
+        "macro_auroc": 0.7464,
+        "ece_ci95_boot": [
+          0.0071,
+          0.0146
+        ]
+      },
+      "learnable": {
+        "n": 56534,
+        "temperature": 1.0403,
+        "accuracy": 0.5306,
+        "correct": 29995,
+        "accuracy_ci95_jeffreys": [
+          0.5265,
+          0.5347
+        ],
+        "nll": 1.1256,
+        "ece": 0.0162,
+        "macro_auroc": 0.7468,
+        "ece_ci95_boot": [
+          0.0122,
+          0.0202
+        ]
+      },
+      "quantum": {
+        "n": 56534,
+        "temperature": 1.0537,
+        "accuracy": 0.5249,
+        "correct": 29677,
+        "accuracy_ci95_jeffreys": [
+          0.5208,
+          0.5291
+        ],
+        "nll": 1.1314,
+        "ece": 0.0199,
+        "macro_auroc": 0.7443,
+        "ece_ci95_boot": [
+          0.0163,
+          0.0239
+        ]
+      },
+      "logistic": {
+        "n": 56534,
+        "temperature": 1.0873,
+        "accuracy": 0.5298,
+        "correct": 29953,
+        "accuracy_ci95_jeffreys": [
+          0.5257,
+          0.5339
+        ],
+        "nll": 1.1249,
+        "ece": 0.0151,
+        "macro_auroc": 0.7466,
+        "ece_ci95_boot": [
+          0.0114,
+          0.0191
+        ]
+      }
+    },
+    "fitting": {
+      "classical": {
+        "selected_lr": 0.05,
+        "best_epoch": 31,
+        "epochs_run": 52,
+        "converged_by_early_stopping": true,
+        "parameters": 54,
+        "grid": [
+          {
+            "lr": 0.01,
+            "best_calibration_nll": 1.130483,
+            "best_epoch": 31,
+            "epochs_run": 52,
+            "stopped_early": true,
+            "final_train_nll": 1.067117,
+            "seconds": 11.1
+          },
+          {
+            "lr": 0.05,
+            "best_calibration_nll": 1.129027,
+            "best_epoch": 31,
+            "epochs_run": 52,
+            "stopped_early": true,
+            "final_train_nll": 1.071114,
+            "seconds": 6.0
+          },
+          {
+            "lr": 0.1,
+            "best_calibration_nll": 1.130254,
+            "best_epoch": 43,
+            "epochs_run": 64,
+            "stopped_early": true,
+            "final_train_nll": 1.071327,
+            "seconds": 7.8
+          }
+        ]
+      },
+      "learnable": {
+        "selected_lr": 0.05,
+        "best_epoch": 5,
+        "epochs_run": 26,
+        "converged_by_early_stopping": true,
+        "parameters": 126,
+        "grid": [
+          {
+            "lr": 0.01,
+            "best_calibration_nll": 1.130006,
+            "best_epoch": 47,
+            "epochs_run": 68,
+            "stopped_early": true,
+            "final_train_nll": 1.066056,
+            "seconds": 11.6
+          },
+          {
+            "lr": 0.05,
+            "best_calibration_nll": 1.129291,
+            "best_epoch": 5,
+            "epochs_run": 26,
+            "stopped_early": true,
+            "final_train_nll": 1.073303,
+            "seconds": 4.8
+          },
+          {
+            "lr": 0.1,
+            "best_calibration_nll": 1.13095,
+            "best_epoch": 5,
+            "epochs_run": 26,
+            "stopped_early": true,
+            "final_train_nll": 1.074324,
+            "seconds": 4.9
+          }
+        ]
+      },
+      "quantum": {
+        "selected_lr": 0.01,
+        "best_epoch": 68,
+        "epochs_run": 89,
+        "converged_by_early_stopping": true,
+        "parameters": 102,
+        "grid": [
+          {
+            "lr": 0.01,
+            "best_calibration_nll": 1.139405,
+            "best_epoch": 68,
+            "epochs_run": 89,
+            "stopped_early": true,
+            "final_train_nll": 1.067721,
+            "seconds": 661.1
+          },
+          {
+            "lr": 0.05,
+            "best_calibration_nll": 1.145402,
+            "best_epoch": 7,
+            "epochs_run": 28,
+            "stopped_early": true,
+            "final_train_nll": 1.076858,
+            "seconds": 193.0
+          },
+          {
+            "lr": 0.1,
+            "best_calibration_nll": 1.149312,
+            "best_epoch": 17,
+            "epochs_run": 38,
+            "stopped_early": true,
+            "final_train_nll": 1.123457,
+            "seconds": 250.2
+          }
+        ]
+      },
+      "logistic": {
+        "selected_C": 100.0,
+        "lbfgs_iterations": 251,
+        "converged": true,
+        "classes_fitted": [
+          0,
+          1,
+          2,
+          4,
+          5
+        ],
+        "grid": [
+          {
+            "C": 0.01,
+            "calibration_nll": 1.2099
+          },
+          {
+            "C": 0.1,
+            "calibration_nll": 1.1426
+          },
+          {
+            "C": 1.0,
+            "calibration_nll": 1.1297
+          },
+          {
+            "C": 10.0,
+            "calibration_nll": 1.1283
+          },
+          {
+            "C": 100.0,
+            "calibration_nll": 1.1283
+          },
+          {
+            "C": 1000.0,
+            "calibration_nll": 1.1283
+          }
+        ],
+        "parameters": 45
+      }
+    },
+    "simulator": "torch",
+    "n_train": 6400,
+    "n_cal": 1600,
+    "n_test": 56534,
+    "pairwise": {
+      "classical_vs_quantum": {
+        "delta_accuracy": 0.00598,
+        "mcnemar": {
+          "discordant": 3828,
+          "a_only": 2083,
+          "b_only": 1745,
+          "p": 0.0
+        },
+        "delta_nll": -0.00742,
+        "nll_wilcoxon_p": 0.001432,
+        "mcnemar_p_holm": 0.0,
+        "nll_wilcoxon_p_holm": 0.005727
+      },
+      "classical_vs_learnable": {
+        "delta_accuracy": 0.00035,
+        "mcnemar": {
+          "discordant": 626,
+          "a_only": 323,
+          "b_only": 303,
+          "p": 0.447643
+        },
+        "delta_nll": -0.00157,
+        "nll_wilcoxon_p": 0.3318,
+        "mcnemar_p_holm": 0.647406,
+        "nll_wilcoxon_p_holm": 0.6636
+      },
+      "classical_vs_logistic": {
+        "delta_accuracy": 0.0011,
+        "mcnemar": {
+          "discordant": 1546,
+          "a_only": 804,
+          "b_only": 742,
+          "p": 0.120777
+        },
+        "delta_nll": -0.00089,
+        "nll_wilcoxon_p": 5.31e-05,
+        "mcnemar_p_holm": 0.362331,
+        "nll_wilcoxon_p_holm": 0.000319
+      },
+      "quantum_vs_learnable": {
+        "delta_accuracy": -0.00562,
+        "mcnemar": {
+          "discordant": 3750,
+          "a_only": 1716,
+          "b_only": 2034,
+          "p": 0.0
+        },
+        "delta_nll": 0.00585,
+        "nll_wilcoxon_p": 0.09364,
+        "mcnemar_p_holm": 0.0,
+        "nll_wilcoxon_p_holm": 0.2809
+      },
+      "quantum_vs_logistic": {
+        "delta_accuracy": -0.00488,
+        "mcnemar": {
+          "discordant": 2680,
+          "a_only": 1202,
+          "b_only": 1478,
+          "p": 0.0
+        },
+        "delta_nll": 0.00654,
+        "nll_wilcoxon_p": 0.0001076,
+        "mcnemar_p_holm": 0.0,
+        "nll_wilcoxon_p_holm": 0.000538
+      },
+      "learnable_vs_logistic": {
+        "delta_accuracy": 0.00074,
+        "mcnemar": {
+          "discordant": 1726,
+          "a_only": 884,
+          "b_only": 842,
+          "p": 0.323703
+        },
+        "delta_nll": 0.00069,
+        "nll_wilcoxon_p": 0.9403,
+        "mcnemar_p_holm": 0.647406,
+        "nll_wilcoxon_p_holm": 0.9403
+      }
+    },
+    "primary": {
+      "contrast": "NLL_quantum - NLL_poe (positive = quantum worse)",
+      "tost": {
+        "n": 56534,
+        "mean_difference": 0.00742,
+        "se": 0.00076,
+        "margin": 0.01,
+        "t_lower": 22.814,
+        "p_lower": 0.0,
+        "t_upper": 3.372,
+        "p_upper": 0.00037,
+        "p_tost": 0.00037,
+        "ci90": [
+          0.00617,
+          0.00868
+        ],
+        "equivalent": true
+      },
+      "ci95": [
+        0.00593,
+        0.00892
+      ],
+      "p_two_sided": 2.565e-22,
+      "reading": "detectable difference, quantum worse, smaller than the margin; practically equivalent"
+    },
+    "majority_class_floor": 0.3429
+  },
+  "C1b": {
+    "per_seed": [
+      {
+        "seed": 7,
+        "entangled": {
+          "accuracy": 0.5304,
+          "nll": 1.1413,
+          "ece": 0.0271,
+          "temperature": 1.1124
+        },
+        "product": {
+          "accuracy": 0.5334,
+          "nll": 1.13,
+          "ece": 0.0293,
+          "temperature": 1.1601
+        },
+        "delta_nll": 0.0113
+      },
+      {
+        "seed": 11,
+        "entangled": {
+          "accuracy": 0.5216,
+          "nll": 1.1404,
+          "ece": 0.0324,
+          "temperature": 1.1467
+        },
+        "product": {
+          "accuracy": 0.5331,
+          "nll": 1.1302,
+          "ece": 0.0282,
+          "temperature": 1.1715
+        },
+        "delta_nll": 0.0102
+      },
+      {
+        "seed": 13,
+        "entangled": {
+          "accuracy": 0.5322,
+          "nll": 1.1302,
+          "ece": 0.0224,
+          "temperature": 1.1345
+        },
+        "product": {
+          "accuracy": 0.538,
+          "nll": 1.1183,
+          "ece": 0.018,
+          "temperature": 1.1963
+        },
+        "delta_nll": 0.0119
+      },
+      {
+        "seed": 17,
+        "entangled": {
+          "accuracy": 0.5369,
+          "nll": 1.1371,
+          "ece": 0.0218,
+          "temperature": 1.0753
+        },
+        "product": {
+          "accuracy": 0.539,
+          "nll": 1.1168,
+          "ece": 0.0133,
+          "temperature": 1.137
+        },
+        "delta_nll": 0.0203
+      },
+      {
+        "seed": 19,
+        "entangled": {
+          "accuracy": 0.5332,
+          "nll": 1.1322,
+          "ece": 0.0075,
+          "temperature": 1.1471
+        },
+        "product": {
+          "accuracy": 0.5348,
+          "nll": 1.128,
+          "ece": 0.0108,
+          "temperature": 1.1624
+        },
+        "delta_nll": 0.0042
+      },
+      {
+        "seed": 23,
+        "entangled": {
+          "accuracy": 0.5384,
+          "nll": 1.1274,
+          "ece": 0.0215,
+          "temperature": 1.1841
+        },
+        "product": {
+          "accuracy": 0.5289,
+          "nll": 1.133,
+          "ece": 0.0286,
+          "temperature": 1.2094
+        },
+        "delta_nll": -0.0056
+      },
+      {
+        "seed": 29,
+        "entangled": {
+          "accuracy": 0.512,
+          "nll": 1.1688,
+          "ece": 0.0208,
+          "temperature": 0.9936
+        },
+        "product": {
+          "accuracy": 0.5229,
+          "nll": 1.1537,
+          "ece": 0.0191,
+          "temperature": 1.1231
+        },
+        "delta_nll": 0.0151
+      },
+      {
+        "seed": 31,
+        "entangled": {
+          "accuracy": 0.5343,
+          "nll": 1.1445,
+          "ece": 0.0378,
+          "temperature": 1.1265
+        },
+        "product": {
+          "accuracy": 0.5358,
+          "nll": 1.1367,
+          "ece": 0.0353,
+          "temperature": 1.1947
+        },
+        "delta_nll": 0.0078
+      },
+      {
+        "seed": 37,
+        "entangled": {
+          "accuracy": 0.5352,
+          "nll": 1.1335,
+          "ece": 0.0079,
+          "temperature": 1.0242
+        },
+        "product": {
+          "accuracy": 0.54,
+          "nll": 1.1204,
+          "ece": 0.0094,
+          "temperature": 1.1047
+        },
+        "delta_nll": 0.0131
+      },
+      {
+        "seed": 41,
+        "entangled": {
+          "accuracy": 0.5373,
+          "nll": 1.139,
+          "ece": 0.0267,
+          "temperature": 1.1224
+        },
+        "product": {
+          "accuracy": 0.5381,
+          "nll": 1.1238,
+          "ece": 0.0227,
+          "temperature": 1.2083
+        },
+        "delta_nll": 0.0152
+      }
+    ],
+    "seed_level": {
+      "mean": 0.01035,
+      "sd": 0.00711,
+      "ci95_t": [
+        0.00527,
+        0.01543
+      ],
+      "t_p": 0.00128,
+      "wilcoxon_p": 0.00586,
+      "n_positive": 9,
+      "n": 10
+    },
+    "patient_bootstrap": {
+      "point": 0.01037,
+      "ci95": [
+        0.00934,
+        0.01138
+      ],
+      "n_resamples": 10000
+    },
+    "tost": {
+      "n": 56534,
+      "mean_difference": 0.01037,
+      "se": 0.00052,
+      "margin": 0.01,
+      "t_lower": 39.471,
+      "p_lower": 0.0,
+      "t_upper": -0.716,
+      "p_upper": 0.76288,
+      "p_tost": 0.76288,
+      "ci90": [
+        0.00952,
+        0.01122
+      ],
+      "equivalent": false
+    },
+    "reading": "the entanglement penalty replicates on untouched patients"
+  },
+  "C2": {
+    "quantum": {
+      "configs_run": 36,
+      "selected": {
+        "config": [
+          4,
+          0.5,
+          0.01,
+          0.01
+        ],
+        "file": "C2_quantum_20.npz",
+        "best_calibration_nll": 1.132646,
+        "best_epoch": 121,
+        "epochs_run": 142,
+        "parameters": 118,
+        "seconds": 961.3
+      },
+      "temperature": 1.0393,
+      "nll": 1.11438,
+      "accuracy": 0.54167,
+      "ece": 0.01107,
+      "search_boundary_reached": true
+    },
+    "classical": {
+      "configs_run": 36,
+      "selected": {
+        "config": [
+          0.05,
+          0.0001,
+          0.01
+        ],
+        "file": "C2_classical_17.npz",
+        "best_calibration_nll": 1.136911,
+        "best_epoch": 26,
+        "epochs_run": 47,
+        "parameters": 54,
+        "seconds": 3.9
+      },
+      "temperature": 1.0751,
+      "nll": 1.11698,
+      "accuracy": 0.54401,
+      "ece": 0.01247
+    },
+    "learnable": {
+      "configs_run": 36,
+      "selected": {
+        "config": [
+          0.1,
+          0.0001,
+          0.01
+        ],
+        "file": "C2_learnable_24.npz",
+        "best_calibration_nll": 1.130943,
+        "best_epoch": 46,
+        "epochs_run": 67,
+        "parameters": 126,
+        "seconds": 6.4
+      },
+      "temperature": 1.0477,
+      "nll": 1.11554,
+      "accuracy": 0.54178,
+      "ece": 0.00817
+    },
+    "primary": {
+      "contrast": "NLL_quantum - NLL_poe (positive = quantum worse)",
+      "tost": {
+        "n": 56534,
+        "mean_difference": -0.0026,
+        "se": 0.00051,
+        "margin": 0.01,
+        "t_lower": 14.594,
+        "p_lower": 0.0,
+        "t_upper": 24.833,
+        "p_upper": 0.0,
+        "p_tost": 0.0,
+        "ci90": [
+          -0.00343,
+          -0.00176
+        ],
+        "equivalent": true
+      },
+      "ci95": [
+        -0.00359,
+        -0.0016
+      ],
+      "p_two_sided": 3.071e-07,
+      "reading": "detectable difference, quantum better, smaller than the margin; practically equivalent"
+    },
+    "quantum_vs_gated": {
+      "contrast": "NLL_quantum - NLL_poe (positive = quantum worse)",
+      "tost": {
+        "n": 56534,
+        "mean_difference": -0.00116,
+        "se": 0.00038,
+        "margin": 0.01,
+        "t_lower": 22.97,
+        "p_lower": 0.0,
+        "t_upper": 29.023,
+        "p_upper": 0.0,
+        "p_tost": 0.0,
+        "ci90": [
+          -0.0018,
+          -0.00053
+        ],
+        "equivalent": true
+      },
+      "ci95": [
+        -0.00192,
+        -0.00041
+      ],
+      "p_two_sided": 0.002473,
+      "reading": "detectable difference, quantum better, smaller than the margin; practically equivalent"
+    }
+  }
+}

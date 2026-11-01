@@ -279,19 +279,44 @@ class VisionEngine:
             return self.backbone.embedding(img)
         return feature_vector(img)
 
-    def analyze(self, study_id: str, img: np.ndarray) -> VisionResult:
+    def analyze(self, study_id: str, img: np.ndarray, operating_mode: str | None = None) -> VisionResult:
+        """Score every finding and record the threshold each 'present' call used.
+
+        ``operating_mode`` (default: the ``clinical_operating_mode`` setting) applies only
+        if the serving calibration records thresholds fitted for it. Otherwise the
+        validated per-finding thresholds apply and ``operating_mode`` is None, so a result
+        never names a mode it did not use.
+        """
+        from aura.common.config import (
+            finding_present_threshold,
+            get_settings,
+            measured_operating_modes,
+        )
+
+        requested = (operating_mode or get_settings().clinical_operating_mode or "").lower()
+        mode = requested if requested in measured_operating_modes() else None
         scores = self.score_findings(img)
-        findings = [
-            FindingScore(finding=f, probability=round(p, 4), region=_FINDING_REGION[f])
-            for f, p in sorted(scores.items(), key=lambda kv: -kv[1])
-        ]
+        findings = []
+        for f, p in sorted(scores.items(), key=lambda kv: -kv[1]):
+            thr = finding_present_threshold(f.value, default=0.5, mode=mode)
+            findings.append(
+                FindingScore(
+                    finding=f,
+                    probability=round(p, 4),
+                    region=_FINDING_REGION[f],
+                    operating_mode=mode,
+                    threshold=round(thr, 4),
+                    present=bool(p >= thr),
+                )
+            )
         return VisionResult(
             study_id=study_id,
             findings=findings,
             embedding=[round(float(v), 5) for v in self.embedding(img)],
             model_version=self.model_version,
+            operating_mode=mode,
         )
 
-    def predict(self, img: np.ndarray, study_id: str = "default") -> VisionResult:
+    def predict(self, img: np.ndarray, study_id: str = "default", operating_mode: str | None = None) -> VisionResult:
         """Alias for analyze to satisfy predictability of prediction invocation."""
-        return self.analyze(study_id, img)
+        return self.analyze(study_id, img, operating_mode=operating_mode)

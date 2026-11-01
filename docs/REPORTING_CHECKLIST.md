@@ -1,16 +1,14 @@
 # Reporting checklist — TRIPOD+AI and CLAIM
 
-**Quantum advantage claims in clinical machine learning do not survive a symmetric comparison: six negative results from a deployed decision-support system** (submission version 5.0)
+**Auditing quantum machine learning in digital health: one deployed system and five published claims under symmetric evaluation** (manuscript v5.1)
 
-This document maps the manuscript against TRIPOD+AI (Collins et al., *BMJ* 2024;385:e078378) for the prediction-model components and CLAIM (Mongan et al., *Radiol Artif Intell* 2020;2:e200029) for the imaging components. Item descriptions below are **paraphrases**, not the checklists' wording; consult the source publications for the authoritative text.
+This document maps the manuscript against TRIPOD+AI (Collins et al., *BMJ* 2024;385:e078378): 27 items, 52 sub-items. It also maps the imaging components against CLAIM (Mongan et al., *Radiol Artif Intell* 2020;2:e200029).
 
-**Two notes on scope, stated up front rather than buried in the table.**
+> **Before submission:** the item descriptions below are paraphrases. The numbering and sub-item structure follow the published statement: 27 items and 52 sub-items, with open science at item 18 and patient and public involvement at item 19. That structure is cross-checked against the statement's own text (PMID 38626948). The paraphrases of 12d–12g, however, were reconstructed without the official form. Transfer this mapping onto the official template (the statement's supplementary table 2) and check every item's wording there. **The previous version of this file used TRIPOD 2015 numbering under a TRIPOD+AI heading. It is replaced, not amended.**
 
-First, this is a **methodological comparison study**, not a clinical prediction-model report. Its primary claims concern how quantum and classical components compare under a symmetric protocol. The prediction models exist to make that comparison possible. Several TRIPOD+AI items therefore concern reporting we deliberately do not make — the manuscript makes no clinical performance claim and recommends no clinical use.
+**Scope.** This is a methodological comparison study, not a clinical prediction-model report. The models exist so that the comparison can be made. Several items concern claims the manuscript deliberately does not make: it makes no clinical performance claim and recommends no clinical use.
 
-Second, **items marked "Not reported" are genuine gaps, not editorial choices.** They are listed again in Supplementary §S8 as analyses identified as necessary and not performed. The most consequential is item 13c: no demographic subgroup analysis was conducted despite the metadata being available.
-
-Legend: **✔** reported · **◐** partly reported, with the limit stated in the manuscript · **✘** not reported · **n/a** not applicable to this study design.
+Legend: **✔** reported · **◐** partly reported, with the limit stated · **✘** not reported (a genuine gap) · **n/a** not applicable to this design. Section numbers refer to v5.1. §S refers to the Supplementary.
 
 ---
 
@@ -18,74 +16,97 @@ Legend: **✔** reported · **◐** partly reported, with the limit stated in th
 
 ### Title and abstract
 
-| # | Item | Status | Location |
+| # | Item (paraphrase) | Status | Location / note |
 |---|---|:--:|---|
-| 1 | Title identifies the study as developing/validating a prediction model, the target population, and the outcome | ◐ | Title. Identifies the comparison and the outcome class; frames the work as a methodological study rather than a prediction-model report, which is what it is |
-| 2 | Structured abstract covering objectives, methods, results, conclusions | ✔ | Abstract (372 words, structured) |
+| 1 | Title identifies a study developing or evaluating a prediction model, the population and the outcome | ◐ | Title names the study as an audit of comparisons, not a prediction-model report |
+| 2 | Abstract per TRIPOD+AI for Abstracts | ◐ | Structured abstract. Not separately checked against the 13-item abstract checklist |
 
 ### Introduction
 
-| # | Item | Status | Location |
+| # | Item | Status | Location / note |
 |---|---|:--:|---|
-| 3a | Background: rationale, existing models, and why this work is needed | ✔ | §1 |
-| 3b | Objectives, stated with the target population and outcome | ✔ | §1, final three paragraphs |
+| 3a | Healthcare context and rationale | ✔ | §1 |
+| 3b | Target population and intended purpose in the care pathway | ◐ | §1 and Disclaimer: no intended clinical use. The system is a test bed |
+| 3c | Known health inequalities between groups | ✘ | Not discussed |
+| 4 | Objectives, including development vs evaluation | ✔ | §1, final paragraphs |
 
-### Methods — data
+### Methods
 
-| # | Item | Status | Location |
+| # | Item | Status | Location / note |
 |---|---|:--:|---|
-| 4a | Data sources, separately for development and evaluation | ✔ | Methods "Data"; §S1 |
-| 4b | Dates of data collection and follow-up | ◐ | Corpus release versions are named (MIMIC-CXR, CheXpert, BraTS-2020); acquisition date ranges are properties of the public corpora and are not restated |
-| 5a | Participant eligibility, setting, and inclusion/exclusion | ✔ | Methods "Data"; pre-registration §4 for the external cohort (frontal views, one study per patient) |
-| 5b | Details of treatments received, where relevant | n/a | No treatment data; imaging interpretation only |
-| 6a | Outcome definition and how/when it was determined | ✔ | Methods "Prediction target"; §S2 — full weighted-score derivation |
-| 6b | Whether outcome assessors were blinded to predictors | ✘ | The outcome is rule-derived from the report by an automated labeller, so blinding does not apply in the usual sense. **The 66-report reference standard was read by the author, who was not blinded to the labeller's output** — stated in §S5.2 |
-| 7 | Predictors: definition, timing, and assessment | ✔ | Methods "System"; §S1. Eight-channel evidence vector; the eighth channel is identically zero and this is disclosed (Methods; §2.4) |
-| 8 | Sample size rationale | ◐ | Minimum detectable effects are reported rather than a prospective size calculation: 9.3 accuracy points internally, ≈3.6 externally (§S7.1). The external cohort's target size was fixed in the pre-registration before the run |
-| 9 | Missing data handling | ✔ | Methods; CheXpert uncertainty policy pre-specified (U-Zeros primary, U-Ones sensitivity), §2.7 |
+| 5a | Data sources and their representativeness | ◐ | Methods "Data"; §S1. Representativeness of MIMIC-CXR/CheXpert/BraTS populations not discussed |
+| 5b | Dates of data collection | ◐ | Corpus versions named; date ranges are corpus properties, not restated |
+| 6a | Setting and centres | ✔ | Methods "Data" (two chest centres, BraTS multi-institution) |
+| 6b | Eligibility criteria | ✔ | Methods "Data"; one study per patient (most recent) for fusion; frontal views for CheXpert |
+| 6c | Treatments received | n/a | Imaging interpretation only |
+| 7 | Data preparation and quality checks, incl. across groups | ◐ | §S1 (standardisation); `grade_mapping_check.json` label-integrity check (§3.1). Not by demographic group |
+| 8a | Outcome definition, time horizon, and why | ✔ | Methods "Prediction target"; §S2. **The chest target is rule-derived from reports, not a clinical reference standard** (§2.4, §3.1) |
+| 8b | Qualifications and demographics of outcome assessors, if subjective | ◐ | The rule labeller is automatic. The 66-report reference read was done by the author, a single non-radiologist (§S5.2) |
+| 8c | Blinding of outcome assessment | ✘ | The 66-report reader was not blinded to the labeller's output (§S5.2) |
+| 9a | Choice of initial predictors and pre-selection | ✔ | Methods "System"; §S1. The eight-channel evidence vector has one identically zero channel, which is disclosed (§2.5) |
+| 9b | Predictor definitions and measurement | ✔ | §S1 |
+| 9c | Qualifications and demographics of predictor assessors | n/a | Predictors are model outputs, not human assessments |
+| 10 | Sample size and its justification | ◐ | No prospective calculation. Minimum detectable effects are reported instead (§S7.1). The external cohort size was fixed in its pre-registration. The TOST interval (§2.3) shows that n = 447 cannot resolve differences below about 0.03 nats |
+| 11 | Missing data handling | ✔ | CheXpert uncertainty policy pre-specified (§2.8) |
+| 12a | How data were used (development / tuning / evaluation) | ✔ | Methods; 1,338/446/447 train/calibration/test; per-arm temperature on calibration only (P1) |
+| 12b | Predictor handling in the analysis | ✔ | §S1 |
+| 12c | Model type, building, hyperparameter tuning, internal validation | ✔ | Methods "Matched optimiser protocol" (§2.3); §S4.2 |
+| 12d | Heterogeneity across clusters (e.g. centres) | ◐ | Two chest centres are analysed separately (§2.8). There is no within-corpus cluster analysis |
+| 12e | Performance measures and rationale, incl. in subgroups | ◐ | Methods "Statistics": NLL as the primary proper scoring rule, plus accuracy, ECE and macro AUROC. **No subgroup measures** |
+| 12f | Model updating and recalibration | ✔ | Frozen weights and one temperature refit per arm (§2.8). Boundary pre-registered |
+| 12g | For evaluation, how predictions were computed | ✔ | Methods; all prediction arrays released (`*_predictions.npz`) |
+| 13 | Class imbalance and its handling | ✔ | Per-class capping; majority-class floors reported for every comparison |
+| 14 | Fairness approaches and rationale | ✘ | **Not assessed.** Sex, age and race are available in MIMIC-CXR metadata and were not used (§S8) |
+| 15 | Model output and how it was derived | ✔ | Six-way calibrated posterior |
+| 16 | Differences between development and evaluation data | ✔ | §2.8: prevalence, site, reachable categories. The text warns that internal and external accuracy are not comparable |
+| 17 | Ethical approval | ✔ | Declarations "Ethics" (public de-identified data; PhysioNet credentialed DUA) |
 
-### Methods — model development and evaluation
+### Open science
 
-| # | Item | Status | Location |
+| # | Item | Status | Location / note |
 |---|---|:--:|---|
-| 10a | How predictors were handled in the analysis | ✔ | Methods; §S1 |
-| 10b | Model type, building procedure, and internal validation | ✔ | Methods "Matched optimiser protocol"; §S1, §S4.2 |
-| 10c | Approach to class imbalance | ✔ | Per-class capping in the fusion training split; majority-class floors reported for every comparison; class support tabulated (§S2) |
-| 11 | Model output: predicted probability, class, or score | ✔ | Six-way calibrated posterior; Methods |
-| 12 | Performance measures and their rationale | ✔ | Methods "Statistics". Accuracy, negative log-likelihood, ECE and macro AUROC; NLL is the primary proper scoring rule |
-| 13a | Model updating for the evaluation cohort | ✔ | §2.7 — all weights frozen, one temperature per arm refit, boundary pre-registered |
-| 13b | Fairness: how it was assessed | ✘ | **Not assessed.** No demographic subgroup analysis, despite sex, age and race being available in MIMIC-CXR metadata. §S7.1; §S8 item 6 |
-| 14 | Model interpretability/explainability methods | ✔ | Grad-CAM++ localisation from raw activations, with calibrated probability modulating overlay alpha only; §S1 |
-| 15 | Risk of bias or methodological quality assessment | ✔ | §S7 in full, including a thirteen-item register of this project's own defects (§S7.3) |
+| 18a | Funding | ✔ | Declarations: none |
+| 18b | Conflicts of interest | ✔ | Declarations: none |
+| 18c | Protocol availability | ✔ | `PREREGISTRATION_CHEXPERT.md`, `FIELD_AUDIT_PROTOCOL.md`, `PREREGISTRATION_ADDENDUM_2026-10.md`, all in the repository |
+| 18d | Study registration | ◐ | Each document is registered by its git commit, not on an external registry (OSF/ClinicalTrials). **Only §2.8 and the §2.5 re-split and re-uploading analyses were blind at registration.** The addendum states that §2.3's TOST and §2.5's bootstrap were not blind |
+| 18e | Data availability | ✔ | Declarations; credentialed corpora are not redistributed |
+| 18f | Code availability | ✔ | Declarations; claim-to-artifact map in §S9.1 |
+| 19 | Patient and public involvement | ✘ | None. State this explicitly in Declarations |
 
 ### Results
 
-| # | Item | Status | Location |
+| # | Item | Status | Location / note |
 |---|---|:--:|---|
-| 16 | Flow of participants, with a diagram where useful | ◐ | Split sizes and disjointness are reported at every stage (Methods; §S2); no flow diagram is provided |
-| 17 | Participant characteristics, including outcome distribution | ◐ | Outcome distribution reported for every split (§S2, §S4.6). **Demographic characteristics are not reported** — the same gap as 13b |
-| 18 | Comparison of development and evaluation data | ✔ | §2.7 — corpus differences in prevalence, site, scanner mix and reachable categories stated, with the explicit warning that internal and external accuracy are not comparable |
-| 19 | Model specification sufficient for use | ✔ | §S1; all weights and artifacts released |
-| 20 | Model performance with uncertainty | ✔ | Tables 1, 2, S1–S7; Jeffreys intervals, bootstrap intervals, Holm-adjusted *p*-values |
-| 21 | Model updating results | ✔ | §2.7; refit temperatures reported per arm |
+| 20a | Participant flow, with diagram | ◐ | Split sizes at every stage. **No flow diagram.** For the field audit, the screening funnel 231 → 129 → 41 → 8 → 4 studies / 5 claims is in §2.1 |
+| 20b | Participant characteristics, incl. demographics | ◐ | Outcome distribution per split (§S2). **No demographics** |
+| 20c | Comparison of development and evaluation data | ✔ | §2.8 |
+| 21 | Number of participants and outcome events per analysis | ✔ | Per-class support for every split (§S2, §S4.6); 23 LGG in the 111-subject glioma cohort (§2.7) |
+| 22 | Full model specification | ✔ | §S1; all weights released |
+| 23a | Performance with CIs, incl. key subgroups | ◐ | Jeffreys, bootstrap and t intervals; Holm-adjusted *p*. **No subgroups** |
+| 23b | Heterogeneity across clusters | ◐ | Internal vs external only (§2.8) |
+| 24 | Model updating results | ✔ | Refit temperatures per arm (§2.8) |
 
 ### Discussion
 
-| # | Item | Status | Location |
+| # | Item | Status | Location / note |
 |---|---|:--:|---|
-| 22 | Interpretation, in the context of objectives and evidence | ✔ | §3 |
-| 23 | Limitations | ✔ | §3; §S7 in full |
-| 24 | Usability in practice and implications | ✔ | §3; Disclaimer. **The manuscript makes no clinical claim and recommends no clinical use** |
+| 25 | Interpretation, incl. fairness | ◐ | §3. Fairness is not discussed (follows from 14) |
+| 26 | Limitations, incl. non-representative data and bias | ✔ | §3; §S7, including the defect register |
+| 27a | Handling of poor-quality or unavailable input data at deployment | ◐ | §S1 (intake QC, modality gate); not discussed in the manuscript body |
+| 27b | Whether users need to interact with or interpret inputs/outputs, and the expertise required | n/a | No clinical use is recommended |
+| 27c | Future research and open questions | ✔ | §S8 |
 
-### Other
+---
 
-| # | Item | Status | Location |
-|---|---|:--:|---|
-| 25 | Funding and role of funders | ✔ | Declarations — none |
-| 26 | Conflicts of interest | ✔ | Declarations — none |
-| 27a | Protocol and registration | ◐ | §2.7 is governed by a pre-registration deposited before the run (`docs/PREREGISTRATION_CHEXPERT.md`, commit `fa8c2b6`). **§2.1–§2.6 are not pre-registered**, and §S3 states this rather than implying otherwise |
-| 27b | Data availability | ✔ | Declarations |
-| 27c | Code availability | ✔ | Declarations; Supplementary Table S8 maps each claim to its artifact |
+## Summary of TRIPOD+AI gaps
+
+| Gap | Items | Fixable before submission? |
+|---|---|---|
+| No fairness / subgroup analysis | 3c, 12e, 14, 20b, 23a, 25 | **Not with the data on disk.** The MIMIC-CXR derivative used (`mimic_cxr_aug_*.csv`) carries no age, sex or race, and the evidence cache stores no patient IDs, so test studies cannot be linked to demographics. Doing so needs the MIMIC-IV `patients` table. This needs a re-download and a rebuild with IDs retained. Even then, the 447-study test set gives wide subgroup intervals, which should be reported as descriptive |
+| No patient and public involvement | 19 | State "none" explicitly in Declarations |
+| Unblinded single-reader reference read | 8b, 8c | No; disclose (already done) |
+| No flow diagram | 20a | Yes; numbers already exist |
+| Registration is by git commit, not an external registry | 18d | Partly: deposit the three protocol files on OSF with their commit hashes |
 
 ---
 
@@ -105,17 +126,4 @@ Applies to the chest-radiograph model (§S5.1) and the brain-MRI model (§S5.3).
 | Calibration | ✔ | Per-finding Platt scaling, ECE 0.181 → 0.026 (§S5.1); presence head 0.095 → 0.018 (§S5.3) |
 | Failure analysis | ✔ | §S5.2 — the nodule failure is disclosed, localised to the image model rather than the labeller, and traced through to the malignancy category |
 | Comparison with other methods | ◐ | §S5.3 states explicitly that the cited nnU-Net/SwinUNETR/MONAI figures are **published literature values, not measurements on these data**, and that pooled-2-D and per-case-3-D Dice are not comparable |
-| External validation | ◐ | Present for the fusion comparison (§2.7). **Absent for both imaging models**; §S8 item 1 |
-
----
-
-## Summary of gaps
-
-Four items are genuine and material gaps, and all four appear in Supplementary §S8:
-
-1. **No fairness or subgroup analysis** (TRIPOD+AI 13b, 17) — the largest gap for a clinical venue, and the metadata to close it is available.
-2. **No external validation of the imaging models** (CLAIM) — external validity is established for the fusion comparison only.
-3. **No blinded, adjudicated reference standard** (TRIPOD+AI 6b; CLAIM) — a single non-radiologist reader, no second reader.
-4. **Pre-registration covers one of seven analyses** (TRIPOD+AI 27a) — §2.7 only.
-
-Two further items are limitations of study design rather than of reporting: there is no participant flow diagram, and no prospective sample-size calculation (minimum detectable effects are reported instead).
+| External validation | ◐ | Present for the fusion comparison (§2.8). **Absent for both imaging models**; §S8 item 1 |

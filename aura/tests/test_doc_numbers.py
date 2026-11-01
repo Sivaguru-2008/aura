@@ -47,7 +47,7 @@ INTERVAL = re.compile(r"\[[^\]]*\]")
 
 def _metrics():
     if not BENCHMARK.exists():
-        pytest.skip(f"{BENCHMARK} not present; run `py -m aura.aura_cli bench` first")
+        raise FileNotFoundError(f"{BENCHMARK} not present; run `py -m aura.aura_cli bench` first. Silent skipping is prohibited.")
     return json.loads(BENCHMARK.read_text(encoding="utf-8"))["metrics_full"]
 
 
@@ -608,7 +608,12 @@ def test_manuscript_v4_tables_match_artifacts():
 # abstract's figures are checked against the same artifacts as the body's, so the
 # two cannot diverge again.
 # --------------------------------------------------------------------------- #
-V5 = REPO_ROOT / "docs" / "RESEARCH_PAPER_v5.md"
+V5_CANDIDATES = [
+    REPO_ROOT / "docs" / "MANUSCRIPT_v5.1.md",
+    REPO_ROOT / "docs" / "MANUSCRIPT_v5.0.md",
+    REPO_ROOT / "docs" / "RESEARCH_PAPER_v5.md",
+]
+V5 = next((p for p in V5_CANDIDATES if p.exists()), REPO_ROOT / "docs" / "RESEARCH_PAPER_v5.md")
 V5_SUPP = REPO_ROOT / "docs" / "RESEARCH_PAPER_v5_SUPPLEMENTARY.md"
 
 
@@ -627,7 +632,8 @@ def _v5_abstract():
 
 def test_v5_has_no_unfilled_placeholders():
     """A placeholder that reaches the manuscript is a fabricated number waiting to
-    happen. Both documents are checked."""
+    happen. Both documents are checked. Note: [PENDING: ...] research placeholders are audited
+    in PENDING_LIST.md, while [[TAG]] macro tokens must never appear."""
     for p in (V5, V5_SUPP):
         if not p.exists():
             continue
@@ -637,28 +643,46 @@ def test_v5_has_no_unfilled_placeholders():
 
 
 def test_v5_table1_matches_the_matched_optimiser_artifact():
-    """Table 1's lower block is the paper's central new result: under one optimiser
-    protocol no ordering among the four backends survives."""
-    f = PKG_ROOT / "artifacts" / "fusion_matched_optimiser.json"
-    assert f.exists(), "fusion_matched_optimiser.json is missing; Table 1 is unbacked"
-    data = json.loads(f.read_text(encoding="utf-8"))
+    """Table 1 (or Table 2 in v5.1 numbering) reports both published and matched
+    optimiser blocks. Every cell of both blocks is checked against the respective
+    artifact JSONs with strict rounding tolerance (metrics at 4 decimal places,
+    temperatures at 3 decimal places)."""
+    f_matched = PKG_ROOT / "artifacts" / "fusion_matched_optimiser.json"
+    f_pub = PKG_ROOT / "artifacts" / "fusion_baselines_n447.json"
+    assert f_matched.exists(), "fusion_matched_optimiser.json is missing"
+    assert f_pub.exists(), "fusion_baselines_n447.json is missing"
+
+    data_matched = json.loads(f_matched.read_text(encoding="utf-8"))
+    data_pub = json.loads(f_pub.read_text(encoding="utf-8"))
     text = _v5_text()
 
     label = {"classical": "Product-of-experts", "quantum": "Quantum VQC",
              "learnable": "Gated head", "logistic": "Logistic regression"}
-    # The matched block is the second occurrence of each row label.
+
     for arm, name in label.items():
         rows = [ln for ln in text.splitlines()
                 if ln.strip().startswith("|") and len(ln.split("|")) > 2
                 and ln.split("|")[2].strip() == name]
         assert len(rows) >= 2, f"expected published and matched rows for {name}"
-        row = rows[1]
-        b = data["backends"][arm]
+
+        # 1. Upper block: published baselines (fusion_baselines_n447.json)
+        row_pub = rows[0]
+        b_pub = data_pub["backends"][arm]
         for key in ("accuracy", "nll", "ece", "macro_auroc"):
-            _any_fmt(row, b[key], f"Table 1 matched / {name} / {key}")
-        assert str(data["trainable_parameters"][arm]) in row, (
-            f"Table 1 matched / {name}: parameter count "
-            f"{data['trainable_parameters'][arm]} not in row"
+            _any_fmt(row_pub, b_pub[key], f"Table 1 published / {name} / {key}")
+        _any_fmt(row_pub, b_pub["temperature"], f"Table 1 published / {name} / temperature")
+        assert str(data_pub["trainable_parameters"][arm]) in row_pub, (
+            f"Table 1 published / {name}: parameter count {data_pub['trainable_parameters'][arm]} not in row"
+        )
+
+        # 2. Lower block: matched optimiser (fusion_matched_optimiser.json)
+        row_matched = rows[1]
+        b_matched = data_matched["backends"][arm]
+        for key in ("accuracy", "nll", "ece", "macro_auroc"):
+            _any_fmt(row_matched, b_matched[key], f"Table 1 matched / {name} / {key}")
+        _any_fmt(row_matched, b_matched["temperature"], f"Table 1 matched / {name} / temperature")
+        assert str(data_matched["trainable_parameters"][arm]) in row_matched, (
+            f"Table 1 matched / {name}: parameter count {data_matched['trainable_parameters'][arm]} not in row"
         )
 
 
@@ -675,28 +699,50 @@ def test_v5_abstract_entanglement_figures_match_the_artifact():
     assert "ten of ten seeds" in abstract, (
         "the abstract no longer states the ten-of-ten seed count"
     )
-    holm = data["delta_nll"]["wilcoxon_p_holm"]
-    assert f"{holm:.3f}" in abstract or f"{holm:.4f}" in abstract, (
-        f"abstract does not carry the Holm-adjusted p of {holm}"
-    )
+    # v5.1: the seed-level Holm p (0.006) measured optimiser variance only and overstated
+    # the evidence; the abstract must carry the over-patients intervals instead.
+    rev = PKG_ROOT / "artifacts" / "revision_v51.json"
+    if not rev.exists():
+        pytest.skip("revision_v51.json not present")
+    r = json.loads(rev.read_text(encoding="utf-8"))
+    lo, hi = r["B"]["study_bootstrap"]["primary_study_bootstrap"]["ci95"]
+    for v in (lo, hi):
+        assert f"{v:+.3f}" in abstract, (
+            f"abstract does not carry the over-patients bound {v:+.3f}"
+        )
+    # The abstract's non-replication claim must read from the out-of-sample run.
+    oos = PKG_ROOT / "artifacts" / "chexpert_internal.json"
+    if oos.exists():
+        c = json.loads(oos.read_text(encoding="utf-8"))
+        lo, hi = c["E2"]["study_bootstrap"]["primary_study_bootstrap"]["ci95"]
+        for v in (lo, hi):
+            # _v5_text() already folds U+2212 to ASCII '-'.
+            assert f"{v:+.3f}" in abstract, (
+                f"abstract does not carry the out-of-sample bound {v:+.3f}"
+            )
 
 
 def test_v5_kernel_result_is_consistent_between_abstract_body_and_artifact():
     """The specific failure v4 disclosed: abstract and body disagreeing about the
     kernel. Both are now checked against the artifact."""
-    f = PKG_ROOT / "artifacts" / "brain" / "qkl_full_coverage.json"
+    f = PKG_ROOT / "artifacts" / "brain" / "qkl_brats2020_official.json"
     if not f.exists():
-        pytest.skip("qkl_full_coverage.json not present")
+        f = PKG_ROOT / "artifacts" / "brain" / "qkl_full_coverage.json"
+    if not f.exists():
+        pytest.skip("neither qkl_brats2020_official.json nor qkl_full_coverage.json present")
     data = json.loads(f.read_text(encoding="utf-8"))
     dl = data["pooled_out_of_fold"]["delong"]
     text = _v5_text()
-    body = text.split("### 2.6")[1].split("### 2.7")[0]
+    if "### 2.7 The quantum kernel" in text:
+        body = text.split("### 2.7")[1].split("### 2.8")[0]
+    else:
+        body = text.split("### 2.6")[1].split("### 2.7")[0]
 
-    _any_fmt(body, dl["delta_auroc"], "section 2.6 / delta AUROC")
-    _any_fmt(body, dl["auroc_a"], "section 2.6 / quantum AUROC")
-    _any_fmt(body, dl["auroc_b"], "section 2.6 / rbf AUROC")
+    _any_fmt(body, dl["delta_auroc"], "section kernel / delta AUROC")
+    _any_fmt(body, dl["auroc_a"], "section kernel / quantum AUROC")
+    _any_fmt(body, dl["auroc_b"], "section kernel / rbf AUROC")
     assert str(data["corpus"]["subjects"]) in body, (
-        "section 2.6 does not state the subject count it was computed on"
+        "section kernel does not state the subject count it was computed on"
     )
     # The abstract must not contradict the body: it claims no difference, so the
     # artifact must actually show one that is not significant.
@@ -714,15 +760,18 @@ def test_v5_external_validation_matches_the_artifact():
     text = _v5_text()
     label = {"classical": "Product-of-experts", "quantum": "Quantum VQC",
              "learnable": "Gated head", "logistic": "Logistic regression"}
-    table = text.split("Table 2.")[1].split("Pairwise:")[0]
+    if "Table 3. External validation on CheXpert" in text:
+        table = text.split("Table 3.")[1].split("Pairwise:")[0]
+    else:
+        table = text.split("Table 2.")[1].split("Pairwise:")[0]
     for arm, name in label.items():
         row = [ln for ln in table.splitlines()
                if ln.strip().startswith("|") and len(ln.split("|")) > 1
                and ln.split("|")[1].strip() == name]
-        assert row, f"no Table 2 row for {name}"
+        assert row, f"no Table external validation row for {name}"
         b = prim["backends"][arm]
         for key in ("accuracy", "nll", "ece", "macro_auroc"):
-            _any_fmt(row[0], b[key], f"Table 2 / {name} / {key}")
+            _any_fmt(row[0], b[key], f"Table external validation / {name} / {key}")
 
 
 def test_v5_design_sweep_claim_matches_the_artifact():
@@ -734,18 +783,23 @@ def test_v5_design_sweep_claim_matches_the_artifact():
     top5 = sorted(cells, key=lambda c: c["nll"])[:5]
     n_none = sum(1 for c in top5 if c["entangler"] == "none")
     words = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five"}
-    body = _v5_text().split("### 2.5")[1].split("### 2.6")[0]
+    text = _v5_text()
+    if "### 2.6 Sensitivity across 48" in text:
+        body = _v5_text().split("### 2.6")[1].split("### 2.7")[0]
+    else:
+        body = _v5_text().split("### 2.5")[1].split("### 2.6")[0]
     assert f"{words[n_none]} of the five best" in body.lower(), (
-        f"section 2.5 does not state that {words[n_none]} of the five best cells by "
+        f"design sweep section does not state that {words[n_none]} of the five best cells by "
         f"negative log-likelihood are at zero entanglement (artifact says {n_none})"
     )
     assert top5[0]["entangler"] == "none", (
-        "the best cell by NLL is no longer the unentangled one; section 2.5 says it is"
+        "the best cell by NLL is no longer the unentangled one; design sweep section says it is"
     )
 
 
 def test_v5_table4_matches_the_nonlinear_control_artifact():
-    """Table 4 reports each arm's likelihood delta against the logistic anchor.
+    """Table 4 (or Table 5 in v5.1 numbering) reports each arm's likelihood delta
+    against the logistic anchor.
 
     Written by hand from the artifact, one of its Holm p-values was initially taken
     from the wrong pairwise comparison (classical-vs-quantum in place of
@@ -756,7 +810,11 @@ def test_v5_table4_matches_the_nonlinear_control_artifact():
     if not f.exists():
         pytest.skip("nonlinear_control.json not present")
     data = json.loads(f.read_text(encoding="utf-8"))
-    section = _v5_text().split("### 2.3")[1].split("### 2.4")[0]
+    text = _v5_text()
+    if "### 2.4 The comparison detects a nonlinear advantage" in text:
+        section = text.split("### 2.4")[1].split("### 2.5")[0]
+    else:
+        section = text.split("### 2.3")[1].split("### 2.4")[0]
 
     for target, rec in data["targets"].items():
         b = rec["backends"]
@@ -776,16 +834,16 @@ def test_v5_table4_matches_the_nonlinear_control_artifact():
                 assert (f"{holm:.3f}" in section or f"{holm:.4f}" in section
                         or f"{holm:.1e}".replace("e-0", "x10-") in section
                         or f"{holm * 1e4:.1f}" in section), (
-                    f"{target}/{arm}: Holm p={holm} not found in section 2.3"
+                    f"{target}/{arm}: Holm p={holm} not found in section positive control"
                 )
 
     # The section's headline claim, recomputed rather than trusted.
     q = data["targets"]["T2b_pairwise"]
     q_delta = (q["backends"]["quantum"]["nll"] - q["backends"]["logistic"]["nll"])
     assert q_delta < 0, (
-        "section 2.3 states the quantum circuit beats the logistic regression on "
+        "section positive control states the quantum circuit beats the logistic regression on "
         "T2b; the artifact no longer shows that"
     )
     assert q["pairwise"]["quantum_vs_logistic"]["nll_wilcoxon_p_holm"] < 0.05, (
-        "section 2.3 states that T2b win is significant; the artifact disagrees"
+        "section positive control states that T2b win is significant; the artifact disagrees"
     )

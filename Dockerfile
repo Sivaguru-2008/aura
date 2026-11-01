@@ -41,9 +41,19 @@ RUN pip install --index-url https://download.pytorch.org/whl/cpu \
         "torch>=2.2,<3" "torchvision>=0.17,<1"
 
 # Dependency layer, cached independently of the source tree.
+#
+# On a slow or flaky link pip gave up part-way through a wheel (2026-09-14: DNS
+# failures and 37 kB/s mid-build), so give each request longer, retry more and
+# resume partial downloads. The cache mount keeps downloaded wheels in BuildKit's
+# cache, so a retried or re-pinned build does not fetch them again. PIP_NO_CACHE_DIR
+# has to be unset rather than set to 0: pip disables its cache for any value of it.
+ENV PIP_DEFAULT_TIMEOUT=120 \
+    PIP_RETRIES=10 \
+    PIP_RESUME_RETRIES=20
 COPY aura/requirements.txt ./aura/requirements.txt
 COPY requirements-docker.txt ./requirements-docker.txt
-RUN pip install -r requirements-docker.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    env -u PIP_NO_CACHE_DIR pip install -r requirements-docker.txt
 
 # =========================================================================== #
 # Stage 2 — runtime

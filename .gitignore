@@ -100,3 +100,8 @@ aura/change/
 
 # field-audit raw datasets (public, re-downloadable by bench/field_audit/datasets.py)
 bench/field_audit/data/
+
+# v6 per-study evidence and predictions derived from CheXpert (licence: not redistributed)
+aura/artifacts/v6/*.npz
+aura/artifacts/v6/*.log
+aura/artifacts/v6/*.err

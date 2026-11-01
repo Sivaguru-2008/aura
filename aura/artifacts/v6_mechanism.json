@@ -1,0 +1,478 @@
+{
+  "preregistration": "docs/PREREGISTRATION_v6_2026-10-03.md \u00a74 (commit 61e777b)",
+  "M3": {
+    "fusion_encoding": {
+      "closed_form": "prod_i cos^2(pi (x_i - x'_i) / 2)",
+      "closed_form_max_abs_diff_vs_statevector": 3.1086244689504383e-15,
+      "readout_identity_max_abs_diff": 7.771561172376096e-16,
+      "rbf_gamma_rule": "median heuristic 1/median(||x - x'||^2) (deviation D1: no RBF arm exists in fusion)",
+      "rbf_gamma": 3.734468462367154,
+      "n": 2000,
+      "quantum_offdiag_mean": 0.5085960359413535,
+      "quantum_offdiag_var": 0.08998623034973174,
+      "classical_offdiag_mean": 0.42867836278705207,
+      "classical_offdiag_var": 0.09430509844374911,
+      "effective_dimension_quantum": 2.8654786980410916,
+      "effective_dimension_classical": 3.5915514951207324,
+      "kta_quantum": 0.5715628078119478,
+      "kta_classical": 0.5644407855748083,
+      "geometric_difference_g_CQ": 1.2712245215475872,
+      "g_bound_sqrt_n": 44.721359549995796,
+      "regulariser": 0.001
+    },
+    "glioma_qkl": {
+      "subjects": 111,
+      "slices": 1110,
+      "slices_per_subject_cap": 10,
+      "quantum_bandwidth": 0.25,
+      "rbf_gamma": 0.01,
+      "selection_note": "bandwidth 0.25 and gamma 0.01 were selected in all 5 folds of the published run; 0.25 is the lowest point of the quantum grid",
+      "n": 1110,
+      "quantum_offdiag_mean": 0.7594233341733159,
+      "quantum_offdiag_var": 0.014107707424656711,
+      "classical_offdiag_mean": 0.36926106755893523,
+      "classical_offdiag_var": 0.1473649921708879,
+      "effective_dimension_quantum": 1.6914745994514842,
+      "effective_dimension_classical": 3.5166192146576276,
+      "kta_quantum": 0.8149982128247991,
+      "kta_classical": 0.5655909405112435,
+      "geometric_difference_g_CQ": 25.23664942589361,
+      "g_bound_sqrt_n": 33.31666249791537,
+      "regulariser": 0.001,
+      "bandwidth_sweep": {
+        "0.25": {
+          "quantum_offdiag_mean": 0.7594233341733159,
+          "quantum_offdiag_var": 0.014107707424656711,
+          "effective_dimension_quantum": 1.6914745994514842,
+          "kta_quantum": 0.8149982128247991,
+          "geometric_difference_g_CQ": 25.23664942589361
+        },
+        "0.5": {
+          "quantum_offdiag_mean": 0.403393586602642,
+          "quantum_offdiag_var": 0.044812958251362126,
+          "effective_dimension_quantum": 4.8018453111426185,
+          "kta_quantum": 0.7363863050992958,
+          "geometric_difference_g_CQ": 58.78565540671
+        },
+        "1.0": {
+          "quantum_offdiag_mean": 0.1209139259469006,
+          "quantum_offdiag_var": 0.03317864151391674,
+          "effective_dimension_quantum": 20.552171955193224,
+          "kta_quantum": 0.46108728248690906,
+          "geometric_difference_g_CQ": 86.89352942132994
+        },
+        "2.0": {
+          "quantum_offdiag_mean": 0.040302860917804946,
+          "quantum_offdiag_var": 0.013216986466828716,
+          "effective_dimension_quantum": 63.57748976367627,
+          "kta_quantum": 0.2778625334587324,
+          "geometric_difference_g_CQ": 107.09161574654175
+        },
+        "4.0": {
+          "quantum_offdiag_mean": 0.021566781781558172,
+          "quantum_offdiag_var": 0.007222223538587284,
+          "effective_dimension_quantum": 116.53212095227846,
+          "kta_quantum": 0.2068372502194983,
+          "geometric_difference_g_CQ": 104.76985751459198
+        }
+      }
+    }
+  },
+  "M1": {
+    "evaluated_on": "C1 test set",
+    "C1_quantum_8q_ring": {
+      "qubits": 8,
+      "entangler": "ring",
+      "coefficient_energy_share_by_order": {
+        "0": 0.0,
+        "1": 0.0,
+        "2": 0.021613,
+        "3": 0.084964,
+        "4": 0.424527,
+        "5": 0.20982,
+        "6": 0.182965,
+        "7": 0.04484,
+        "8": 0.03127
+      },
+      "logit_variance_share_order_ge2": 0.999876,
+      "sanity_identity_holds": true
+    },
+    "C1b_7q": [
+      {
+        "seed": 7,
+        "ring": {
+          "qubits": 7,
+          "entangler": "ring",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 0.0,
+            "2": 0.061414,
+            "3": 0.181319,
+            "4": 0.193654,
+            "5": 0.344929,
+            "6": 0.109914,
+            "7": 0.108771
+          },
+          "logit_variance_share_order_ge2": 0.999976,
+          "sanity_identity_holds": true
+        },
+        "none": {
+          "qubits": 7,
+          "entangler": "none",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 1.0,
+            "2": 0.0,
+            "3": 0.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0
+          },
+          "logit_variance_share_order_ge2": 0.0,
+          "sanity_identity_holds": true
+        }
+      },
+      {
+        "seed": 11,
+        "ring": {
+          "qubits": 7,
+          "entangler": "ring",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 7.2e-05,
+            "2": 0.001076,
+            "3": 0.32983,
+            "4": 0.240271,
+            "5": 0.267357,
+            "6": 0.128881,
+            "7": 0.032513
+          },
+          "logit_variance_share_order_ge2": 0.993689,
+          "sanity_identity_holds": true
+        },
+        "none": {
+          "qubits": 7,
+          "entangler": "none",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 1.0,
+            "2": 0.0,
+            "3": 0.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0
+          },
+          "logit_variance_share_order_ge2": 0.0,
+          "sanity_identity_holds": true
+        }
+      },
+      {
+        "seed": 13,
+        "ring": {
+          "qubits": 7,
+          "entangler": "ring",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 4e-06,
+            "2": 0.003293,
+            "3": 0.087835,
+            "4": 0.604464,
+            "5": 0.291144,
+            "6": 0.013029,
+            "7": 0.000231
+          },
+          "logit_variance_share_order_ge2": 1.001772,
+          "sanity_identity_holds": true
+        },
+        "none": {
+          "qubits": 7,
+          "entangler": "none",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 1.0,
+            "2": 0.0,
+            "3": 0.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0
+          },
+          "logit_variance_share_order_ge2": 0.0,
+          "sanity_identity_holds": true
+        }
+      },
+      {
+        "seed": 17,
+        "ring": {
+          "qubits": 7,
+          "entangler": "ring",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 1.3e-05,
+            "2": 0.001688,
+            "3": 0.243666,
+            "4": 0.269368,
+            "5": 0.358467,
+            "6": 0.118879,
+            "7": 0.007919
+          },
+          "logit_variance_share_order_ge2": 1.002586,
+          "sanity_identity_holds": true
+        },
+        "none": {
+          "qubits": 7,
+          "entangler": "none",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 1.0,
+            "2": 0.0,
+            "3": 0.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0
+          },
+          "logit_variance_share_order_ge2": 0.0,
+          "sanity_identity_holds": true
+        }
+      },
+      {
+        "seed": 19,
+        "ring": {
+          "qubits": 7,
+          "entangler": "ring",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 4e-06,
+            "2": 0.061174,
+            "3": 0.301046,
+            "4": 0.356702,
+            "5": 0.196435,
+            "6": 0.035563,
+            "7": 0.049076
+          },
+          "logit_variance_share_order_ge2": 1.000417,
+          "sanity_identity_holds": true
+        },
+        "none": {
+          "qubits": 7,
+          "entangler": "none",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 1.0,
+            "2": 0.0,
+            "3": 0.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0
+          },
+          "logit_variance_share_order_ge2": 0.0,
+          "sanity_identity_holds": true
+        }
+      },
+      {
+        "seed": 23,
+        "ring": {
+          "qubits": 7,
+          "entangler": "ring",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 0.002273,
+            "2": 0.111422,
+            "3": 0.180119,
+            "4": 0.240444,
+            "5": 0.345854,
+            "6": 0.100184,
+            "7": 0.019705
+          },
+          "logit_variance_share_order_ge2": 0.976479,
+          "sanity_identity_holds": true
+        },
+        "none": {
+          "qubits": 7,
+          "entangler": "none",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 1.0,
+            "2": 0.0,
+            "3": 0.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0
+          },
+          "logit_variance_share_order_ge2": 0.0,
+          "sanity_identity_holds": true
+        }
+      },
+      {
+        "seed": 29,
+        "ring": {
+          "qubits": 7,
+          "entangler": "ring",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 0.000595,
+            "2": 0.001385,
+            "3": 0.174664,
+            "4": 0.388003,
+            "5": 0.269568,
+            "6": 0.147327,
+            "7": 0.018458
+          },
+          "logit_variance_share_order_ge2": 1.031718,
+          "sanity_identity_holds": true
+        },
+        "none": {
+          "qubits": 7,
+          "entangler": "none",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 1.0,
+            "2": 0.0,
+            "3": 0.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0
+          },
+          "logit_variance_share_order_ge2": 0.0,
+          "sanity_identity_holds": true
+        }
+      },
+      {
+        "seed": 31,
+        "ring": {
+          "qubits": 7,
+          "entangler": "ring",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 4e-06,
+            "2": 0.000999,
+            "3": 0.153407,
+            "4": 0.370035,
+            "5": 0.331782,
+            "6": 0.064667,
+            "7": 0.079107
+          },
+          "logit_variance_share_order_ge2": 1.000442,
+          "sanity_identity_holds": true
+        },
+        "none": {
+          "qubits": 7,
+          "entangler": "none",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 1.0,
+            "2": 0.0,
+            "3": 0.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0
+          },
+          "logit_variance_share_order_ge2": 0.0,
+          "sanity_identity_holds": true
+        }
+      },
+      {
+        "seed": 37,
+        "ring": {
+          "qubits": 7,
+          "entangler": "ring",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 2e-06,
+            "2": 0.000487,
+            "3": 0.329276,
+            "4": 0.303491,
+            "5": 0.241285,
+            "6": 0.113643,
+            "7": 0.011817
+          },
+          "logit_variance_share_order_ge2": 0.999471,
+          "sanity_identity_holds": true
+        },
+        "none": {
+          "qubits": 7,
+          "entangler": "none",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 1.0,
+            "2": 0.0,
+            "3": 0.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0
+          },
+          "logit_variance_share_order_ge2": 0.0,
+          "sanity_identity_holds": true
+        }
+      },
+      {
+        "seed": 41,
+        "ring": {
+          "qubits": 7,
+          "entangler": "ring",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 4.7e-05,
+            "2": 0.113104,
+            "3": 0.161456,
+            "4": 0.186287,
+            "5": 0.289189,
+            "6": 0.108739,
+            "7": 0.141179
+          },
+          "logit_variance_share_order_ge2": 1.000024,
+          "sanity_identity_holds": true
+        },
+        "none": {
+          "qubits": 7,
+          "entangler": "none",
+          "coefficient_energy_share_by_order": {
+            "0": 0.0,
+            "1": 1.0,
+            "2": 0.0,
+            "3": 0.0,
+            "4": 0.0,
+            "5": 0.0,
+            "6": 0.0,
+            "7": 0.0
+          },
+          "logit_variance_share_order_ge2": 0.0,
+          "sanity_identity_holds": true
+        }
+      }
+    ],
+    "sanity_product_has_no_order_ge2": true
+  },
+  "M2": {
+    "order_le_1": {
+      "features": 14,
+      "selected_C": 1.0,
+      "surrogate_nll": 1.11233,
+      "surrogate_accuracy": 0.54026,
+      "quantum_minus_surrogate_nll": 0.02384,
+      "ci95": [
+        0.02222,
+        0.02546
+      ]
+    },
+    "order_le_2": {
+      "features": 112,
+      "selected_C": 0.1,
+      "surrogate_nll": 1.1095,
+      "surrogate_accuracy": 0.54192,
+      "quantum_minus_surrogate_nll": 0.02667,
+      "ci95": [
+        0.02515,
+        0.02818
+      ]
+    }
+  }
+}

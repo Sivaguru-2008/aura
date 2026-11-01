@@ -1,0 +1,115 @@
+{
+  "fitting": {
+    "classical": {
+      "selected_lr": 0.05,
+      "best_epoch": 26,
+      "epochs_run": 47,
+      "converged_by_early_stopping": true,
+      "parameters": 54,
+      "grid": [
+        {
+          "lr": 0.01,
+          "best_calibration_nll": 1.137617,
+          "best_epoch": 38,
+          "epochs_run": 59,
+          "stopped_early": true,
+          "final_train_nll": 1.045061,
+          "seconds": 5.5
+        },
+        {
+          "lr": 0.05,
+          "best_calibration_nll": 1.137118,
+          "best_epoch": 26,
+          "epochs_run": 47,
+          "stopped_early": true,
+          "final_train_nll": 1.044663,
+          "seconds": 2.4
+        },
+        {
+          "lr": 0.1,
+          "best_calibration_nll": 1.138331,
+          "best_epoch": 2,
+          "epochs_run": 23,
+          "stopped_early": true,
+          "final_train_nll": 1.048681,
+          "seconds": 1.2
+        }
+      ]
+    },
+    "learnable": {
+      "selected_lr": 0.1,
+      "best_epoch": 46,
+      "epochs_run": 67,
+      "converged_by_early_stopping": true,
+      "parameters": 126,
+      "grid": [
+        {
+          "lr": 0.01,
+          "best_calibration_nll": 1.137517,
+          "best_epoch": 54,
+          "epochs_run": 75,
+          "stopped_early": true,
+          "final_train_nll": 1.042961,
+          "seconds": 6.9
+        },
+        {
+          "lr": 0.05,
+          "best_calibration_nll": 1.135071,
+          "best_epoch": 54,
+          "epochs_run": 75,
+          "stopped_early": true,
+          "final_train_nll": 1.041573,
+          "seconds": 8.3
+        },
+        {
+          "lr": 0.1,
+          "best_calibration_nll": 1.13412,
+          "best_epoch": 46,
+          "epochs_run": 67,
+          "stopped_early": true,
+          "final_train_nll": 1.041988,
+          "seconds": 6.9
+        }
+      ]
+    },
+    "quantum": {
+      "selected_lr": 0.05,
+      "best_epoch": 11,
+      "epochs_run": 32,
+      "converged_by_early_stopping": true,
+      "parameters": 102,
+      "grid": [
+        {
+          "lr": 0.01,
+          "best_calibration_nll": 1.146967,
+          "best_epoch": 40,
+          "epochs_run": 61,
+          "stopped_early": true,
+          "final_train_nll": 1.05504,
+          "seconds": 369.6
+        },
+        {
+          "lr": 0.05,
+          "best_calibration_nll": 1.145432,
+          "best_epoch": 11,
+          "epochs_run": 32,
+          "stopped_early": true,
+          "final_train_nll": 1.065308,
+          "seconds": 212.7
+        },
+        {
+          "lr": 0.1,
+          "best_calibration_nll": 1.154415,
+          "best_epoch": 8,
+          "epochs_run": 29,
+          "stopped_early": true,
+          "final_train_nll": 1.073613,
+          "seconds": 913.7
+        }
+      ]
+    }
+  },
+  "simulator": "torch",
+  "n_train": 6400,
+  "n_cal": 1600
+}

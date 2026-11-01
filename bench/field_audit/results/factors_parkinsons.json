@@ -1,0 +1,235 @@
+{
+  "analysis": "F1 \u2014 audit factor separation",
+  "preregistration": "docs/PREREGISTRATION_v6_2026-10-03.md \u00a75 (commit 61e777b)",
+  "metric": "specificity",
+  "quantum_model": "KernelStack(C=1, bandwidth=1), paper config",
+  "outer": "10-fold x seeds 0-4",
+  "cells": [
+    {
+      "pca_scope": "global",
+      "cv_unit": "recording",
+      "comparator": "untuned_rbf",
+      "quantum_mean": 0.86,
+      "comparator_mean": 0.5780000000000001,
+      "delta": {
+        "mean": 0.282,
+        "t": 2.6614230877862224,
+        "p": 0.010492190506867524,
+        "ci95": [
+          0.06906872294332278,
+          0.49493127705667717
+        ]
+      },
+      "folds": 50,
+      "advantage_reproduces": true
+    },
+    {
+      "pca_scope": "global",
+      "cv_unit": "recording",
+      "comparator": "nested_selected",
+      "quantum_mean": 0.86,
+      "comparator_mean": 0.8590000000000001,
+      "delta": {
+        "mean": 0.0009999999999999987,
+        "t": 0.015617903717094655,
+        "p": 0.9876026417095968,
+        "ci95": [
+          -0.12767125278340946,
+          0.12967125278340946
+        ]
+      },
+      "folds": 50,
+      "advantage_reproduces": false
+    },
+    {
+      "pca_scope": "global",
+      "cv_unit": "subject",
+      "comparator": "untuned_rbf",
+      "quantum_mean": 0.38333333333333336,
+      "comparator_mean": 0.3533333333333333,
+      "delta": {
+        "mean": 0.029999999999999992,
+        "t": 0.339106887419256,
+        "p": 0.7359782549622714,
+        "ci95": [
+          -0.14778246137283788,
+          0.20778246137283787
+        ]
+      },
+      "folds": 50,
+      "advantage_reproduces": false
+    },
+    {
+      "pca_scope": "global",
+      "cv_unit": "subject",
+      "comparator": "nested_selected",
+      "quantum_mean": 0.38333333333333336,
+      "comparator_mean": 0.38666666666666666,
+      "delta": {
+        "mean": -0.003333333333333335,
+        "t": -0.036412009620971436,
+        "p": 0.9711017755501751,
+        "ci95": [
+          -0.18729967283210397,
+          0.18063300616543732
+        ]
+      },
+      "folds": 50,
+      "advantage_reproduces": false
+    },
+    {
+      "pca_scope": "in_fold",
+      "cv_unit": "recording",
+      "comparator": "untuned_rbf",
+      "quantum_mean": 0.873,
+      "comparator_mean": 0.5740000000000001,
+      "delta": {
+        "mean": 0.29900000000000004,
+        "t": 2.956696297350201,
+        "p": 0.00477282182012234,
+        "ci95": [
+          0.09577892638478375,
+          0.5022210736152164
+        ]
+      },
+      "folds": 50,
+      "advantage_reproduces": true
+    },
+    {
+      "pca_scope": "in_fold",
+      "cv_unit": "recording",
+      "comparator": "nested_selected",
+      "quantum_mean": 0.873,
+      "comparator_mean": 0.8590000000000001,
+      "delta": {
+        "mean": 0.013999999999999997,
+        "t": 0.21505061456843502,
+        "p": 0.8306204264304287,
+        "ci95": [
+          -0.11682526351421475,
+          0.14482526351421474
+        ]
+      },
+      "folds": 50,
+      "advantage_reproduces": false
+    },
+    {
+      "pca_scope": "in_fold",
+      "cv_unit": "subject",
+      "comparator": "untuned_rbf",
+      "quantum_mean": 0.41999999999999993,
+      "comparator_mean": 0.36333333333333334,
+      "delta": {
+        "mean": 0.056666666666666664,
+        "t": 0.5397592646519114,
+        "p": 0.5918076951444043,
+        "ci95": [
+          -0.15430873952192067,
+          0.267642072855254
+        ]
+      },
+      "folds": 50,
+      "advantage_reproduces": false
+    },
+    {
+      "pca_scope": "in_fold",
+      "cv_unit": "subject",
+      "comparator": "nested_selected",
+      "quantum_mean": 0.41999999999999993,
+      "comparator_mean": 0.3533333333333333,
+      "delta": {
+        "mean": 0.06666666666666667,
+        "t": 0.7378647873726218,
+        "p": 0.4641157855873224,
+        "ci95": [
+          -0.11490004415622952,
+          0.24823337748956287
+        ]
+      },
+      "folds": 50,
+      "advantage_reproduces": false
+    }
+  ],
+  "attribution": {
+    "paper_cell": {
+      "pca_scope": "global",
+      "cv_unit": "recording",
+      "comparator": "untuned_rbf",
+      "quantum_mean": 0.86,
+      "comparator_mean": 0.5780000000000001,
+      "delta": {
+        "mean": 0.282,
+        "t": 2.6614230877862224,
+        "p": 0.010492190506867524,
+        "ci95": [
+          0.06906872294332278,
+          0.49493127705667717
+        ]
+      },
+      "folds": 50,
+      "advantage_reproduces": true
+    },
+    "main_effects": {
+      "pca_scope": {
+        "paper_level": "global",
+        "corrected_level": "in_fold",
+        "mean_delta_paper_level": 0.07741666666666665,
+        "mean_delta_corrected_level": 0.10908333333333334,
+        "main_effect": 0.03166666666666669
+      },
+      "cv_unit": {
+        "paper_level": "recording",
+        "corrected_level": "subject",
+        "mean_delta_paper_level": 0.14900000000000002,
+        "mean_delta_corrected_level": 0.03749999999999999,
+        "main_effect": -0.11150000000000003
+      },
+      "comparator": {
+        "paper_level": "untuned_rbf",
+        "corrected_level": "nested_selected",
+        "mean_delta_paper_level": 0.16691666666666666,
+        "mean_delta_corrected_level": 0.01958333333333333,
+        "main_effect": -0.14733333333333332
+      }
+    },
+    "single_corrections_from_paper_cell": {
+      "pca_scope": {
+        "delta": {
+          "mean": 0.29900000000000004,
+          "t": 2.956696297350201,
+          "p": 0.00477282182012234,
+          "ci95": [
+            0.09577892638478375,
+            0.5022210736152164
+          ]
+        },
+        "removes_advantage": false
+      },
+      "cv_unit": {
+        "delta": {
+          "mean": 0.029999999999999992,
+          "t": 0.339106887419256,
+          "p": 0.7359782549622714,
+          "ci95": [
+            -0.14778246137283788,
+            0.20778246137283787
+          ]
+        },
+        "removes_advantage": true
+      },
+      "comparator": {
+        "delta": {
+          "mean": 0.0009999999999999987,
+          "t": 0.015617903717094655,
+          "p": 0.9876026417095968,
+          "ci95": [
+            -0.12767125278340946,
+            0.12967125278340946
+          ]
+        },
+        "removes_advantage": true
+      }
+    }
+  },
+  "runtime_seconds": 1095
+}

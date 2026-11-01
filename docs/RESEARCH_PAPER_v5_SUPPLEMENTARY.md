@@ -1,10 +1,10 @@
-# Supplementary Information
+# Additional file 3 — Supplementary Information
 
-**Quantum advantage claims in clinical machine learning do not survive a symmetric comparison: six negative results from a deployed decision-support system**
+**Auditing quantum machine learning in digital health: one deployed system and four published studies under symmetric evaluation**
 
-Sivaguru R. M. — Submission version 5.0, 21 August 2026
+Sivaguru R. M. (Independent researcher) — Submission version 5.1, October 2026
 
-This document accompanies the main manuscript (`RESEARCH_PAPER_v5.md`). Section numbers prefixed **S** are Supplementary; unprefixed numbers refer to the main text.
+This document accompanies the main manuscript (`MANUSCRIPT_v5.1.md`). Section numbers prefixed **S** are Supplementary; unprefixed numbers refer to the main text.
 
 ---
 
@@ -74,7 +74,7 @@ Three consequences bound every result in the main text.
 
 **The target is a deterministic function of the same concepts that generate the model's input features.** The fusion task is recovery of a known weighted-sum-then-argmax map from noisy estimates of its arguments. The only thing standing between input and target is the vision model's error.
 
-**The Bayes-optimal decision rule is therefore linear in the evidence vector, up to the tie-break.** Previous versions of this work asserted this from the labeller's source. §2.3 measures it: a multinomial logistic regression fitted against the noise-free target attains accuracy **0.9991** against an interaction model's 1.0000. The residual 0.0009 is the tie-break and the constant "normal" floor, neither of which is linear. This is a task with no inter-channel nonlinearity for an entangling ansatz to exploit, and the null of §2.2 is a predicted outcome for it.
+**The Bayes-optimal decision rule is therefore linear in the evidence vector, up to the tie-break.** Previous versions of this work asserted this from the labeller's source. §2.4 measures it: a multinomial logistic regression fitted against the noise-free target attains accuracy **0.9991** against an interaction model's 1.0000. The residual 0.0009 is the tie-break and the constant "normal" floor, neither of which is linear. This is a task with no inter-channel nonlinearity for an entangling ansatz to exploit, and the null of §2.3 is a predicted outcome for it.
 
 **What is and is not validated.** The seven *finding* labels feeding the evidence vector are validated against a hand-read reference standard (§S5.2). The six-way *category map above is not validated*: its weights are transparent clinical heuristics chosen by the author, no clinician reviewed them, and no agreement study was performed against clinician-assigned categories.
 
@@ -98,9 +98,9 @@ Three consequences bound every result in the main text.
 
 **P7. Audit of mechanisms, not only metrics.** A claim about what a system can express is a claim about its implementation and is verified at source. Metrics cannot falsify a capability that holds by construction.
 
-**P8. Optimiser symmetry** *(added at this revision)*. Where arms of different model classes are compared, they are fitted under one optimiser protocol with the same budget and the same per-arm hyperparameter search, and the residual optimisation gap is measured on an arm whose optimum is knowable. §2.2 is the demonstration that this is not a hypothetical concern: converging one arm moved it further than the quantum effect the project opened with.
+**P8. Optimiser symmetry** *(added at this revision)*. Where arms of different model classes are compared, they are fitted under one optimiser protocol with the same budget and the same per-arm hyperparameter search, and the residual optimisation gap is measured on an arm whose optimum is knowable. §2.3 is the demonstration that this is not a hypothetical concern: converging one arm moved it further than the quantum effect the project opened with.
 
-**Provenance.** We state what can be evidenced and no more. P1 was written in response to the audit reported in §2.1 and was in force for every subsequent comparison. P2 to P6 were formulated during the same revision period as the experiments they govern; **no timestamped pre-registration is held for them**, and artifact timestamps establish only when experiments ran, not when the rules were written. P7 was written as a consequence of the finding in §2.8 and was not in force when the mechanism it invalidated was proposed. P8 was written as a consequence of §2.2. Only §2.7 is governed by a pre-registration deposited before its run (`docs/PREREGISTRATION_CHEXPERT.md`, commit `fa8c2b6`), which is the only form in which the pre-specification claim is verifiable rather than asserted.
+**Provenance.** We state what can be evidenced and no more. P1 was written in response to the audit reported in §2.2 and was in force for every subsequent comparison. P2 to P6 were formulated during the same revision period as the experiments they govern; **no timestamped pre-registration is held for them**, and artifact timestamps establish only when experiments ran, not when the rules were written. P7 was written as a consequence of the finding in §2.9 and was not in force when the mechanism it invalidated was proposed. P8 was written as a consequence of §2.3. Only §2.8 is governed by a pre-registration deposited before its run (`docs/PREREGISTRATION_CHEXPERT.md`, commit `fa8c2b6`), which is the only form in which the pre-specification claim is verifiable rather than asserted.
 
 ---
 
@@ -187,7 +187,7 @@ A Murphy decomposition of the Brier score across ten seeds, two widths and three
 
 The served configuration is 8 qubits, 3 layers, ring — which ranks outside the top five on both metrics.
 
-**Caveats.** The sweep was run at 8 qubits and carries the constant-channel confound of §2.4; it has not been repeated at 7. It is one split at one seed with the top of the ranking selected from 48 cells, and is therefore exposed to selection. No interval is attached to any cell.
+**Caveats.** The sweep was run at 8 qubits and carries the constant-channel confound of §2.5; it has not been repeated at 7. It is one split at one seed with the top of the ranking selected from 48 cells, and is therefore exposed to selection. No interval is attached to any cell.
 
 ### S4.5 Quantum kernel, full coverage
 
@@ -245,7 +245,7 @@ Design: five outer subject-level folds stratified by grade over all 185 subjects
 
 ### S4.7 Nonlinear positive control
 
-The control varies only the label-generating rule. Evidence vectors, splits, arms, optimiser protocol, calibration and tests are identical to §2.2's matched-optimiser experiment. Source: `nonlinear_control.json`.
+The control varies only the label-generating rule. Evidence vectors, splits, arms, optimiser protocol, calibration and tests are identical to §2.3's matched-optimiser experiment. Source: `nonlinear_control.json`.
 
 **Target definitions.** **T1** reproduces the clinical target's generating rule of §S2 as a function of the evidence channels. **T2a** assigns categories by conjunction and negated conjunction of channels binarised at their corpus median — pneumothorax alone; nodule **and not** consolidation; cardiomegaly **and** effusion; consolidation **and** opacity **and not** effusion; hyperinflation **and not** opacity; normal otherwise. **T2b** is `argmax_k (a_k·x + xᵀM_kx)` with `a_k` and symmetric zero-diagonal `M_k` drawn once at seed 11.
 
@@ -275,13 +275,35 @@ T1's linear ceiling of 0.9991 is the empirical confirmation of §S2's claim. The
 | | Gated head | +0.0224 | 0.453 | **−0.0595** | <10⁻⁴ |
 | | Quantum VQC | 0.0000 | 1.000 | **−0.0640** | **2.7×10⁻⁴** |
 
-**Reading the control.** The gated head's likelihood advantage over the best linear arm is 0.010 on the linear target and 0.057 and 0.060 on the two interaction targets — five to six times larger where structure exists. The comparison therefore has the sensitivity required for §2.2's null to be informative.
+**Reading the control.** The gated head's likelihood advantage over the best linear arm is 0.010 on the linear target and 0.057 and 0.060 on the two interaction targets — five to six times larger where structure exists. The comparison therefore has the sensitivity required for §2.3's null to be informative.
 
 **The quantum circuit's single win in this paper is T2b** (Δ NLL −0.0640, Holm *p* = 2.7 × 10⁻⁴), having lost to the same arm by +0.0915 on T1 and +0.2334 on T2a. The entangling ansatz captures generic pairwise interaction; it does not capture conjunctive structure, where it finishes worst of four on both metrics; and it has nothing to capture on the clinical target.
 
-**Accuracy resolves almost none of this**, which is why the claim is made on negative log-likelihood. At *n* = 447 the minimum detectable accuracy difference is 9.3 points (§S7.1); only the quantum arm's deficits on T1 and T2a exceed it. A reader who prefers accuracy as the primary metric should read this control as establishing nothing, and should read §2.2's accuracy nulls the same way.
+**Accuracy resolves almost none of this**, which is why the claim is made on negative log-likelihood. At *n* = 447 the minimum detectable accuracy difference is 9.3 points (§S7.1); only the quantum arm's deficits on T1 and T2a exceed it. A reader who prefers accuracy as the primary metric should read this control as establishing nothing, and should read §2.3's accuracy nulls the same way.
 
-**Scope.** T2a and T2b are semi-synthetic — real evidence vectors, constructed labels. They carry no clinical interpretation. T2b leaves COPD unreachable, so it is effectively a five-class problem. The control is single-split and has not been replicated on a second corpus (§S8, item 13).
+### S4.8 Field-wide literature audit: study specifications and extended metrics
+
+Following the pre-registered protocol (`docs/FIELD_AUDIT_PROTOCOL.md`), five peer-reviewed studies claiming quantum advantage on biomedical data were audited. Each study was evaluated across 25 outer folds (5 repeats of stratified 5-fold cross-validation, seed 7) with 3-fold inner cross-validation for hyperparameter tuning. The Nadeau–Bengio corrected resampled *t*-test (25 folds, test/train ratio 0.25) evaluated the primary metric difference.
+
+**Table S6d.** Complete evaluation metrics across all 25 outer folds for the five audited studies (`bench/field_audit/results/`). Values are mean ± standard deviation across folds.
+
+| Study | Model Arm | Primary Metric | Balanced Acc. | F1 Score | Sensitivity | Specificity | AUROC | NLL |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| **CKD** | Quantum VQC | 0.877 ± 0.041 | 0.848 ± 0.056 | 0.908 ± 0.028 | 0.963 ± 0.025 | 0.733 ± 0.119 | 0.971 ± 0.018 | 0.459 ± 0.022 |
+| (*PeerJ* 2025) | Classical (Nested) | **0.974 ± 0.019** | **0.974 ± 0.019** | **0.979 ± 0.016** | 0.973 ± 0.024 | **0.975 ± 0.024** | **0.997 ± 0.003** | **0.092 ± 0.070** |
+| | Named Classical | 0.969 ± 0.018 | 0.966 ± 0.021 | 0.975 ± 0.015 | 0.975 ± 0.021 | 0.957 ± 0.037 | 0.995 ± 0.005 | 0.086 ± 0.053 |
+| **Glioma** | Quantum VQC | 0.856 ± 0.024 | 0.863 ± 0.024 | 0.841 ± 0.025 | 0.903 ± 0.040 | 0.822 ± 0.041 | 0.901 ± 0.025 | 0.539 ± 0.025 |
+| (*Sci Rep* 2025) | Classical (Nested) | 0.854 ± 0.029 | 0.860 ± 0.029 | 0.838 ± 0.031 | 0.897 ± 0.046 | 0.823 ± 0.042 | 0.906 ± 0.027 | 0.368 ± 0.054 |
+| | Named Classical | 0.849 ± 0.027 | 0.853 ± 0.029 | 0.830 ± 0.031 | 0.883 ± 0.057 | 0.824 ± 0.042 | 0.905 ± 0.025 | 0.371 ± 0.050 |
+| **Parkinson's** | Quantum Stack | 0.723 ± 0.077 | 0.621 ± 0.144 | 0.811 ± 0.061 | 0.808 ± 0.115 | 0.433 ± 0.342 | 0.675 ± 0.236 | 0.609 ± 0.214 |
+| (*Sci Rep* 2026) | Classical (Nested) | 0.727 ± 0.120 | 0.622 ± 0.175 | 0.810 ± 0.103 | 0.813 ± 0.158 | 0.430 ± 0.397 | 0.768 ± 0.173 | 0.973 ± 0.736 |
+| | Named Classical | 0.752 ± 0.080 | 0.587 ± 0.127 | 0.843 ± 0.058 | 0.900 ± 0.101 | 0.273 ± 0.296 | 0.673 ± 0.237 | 0.932 ± 0.804 |
+| **Diabetes** | Quantum Stack | 0.748 ± 0.036 | 0.735 ± 0.039 | 0.657 ± 0.051 | 0.693 ± 0.069 | 0.778 ± 0.042 | 0.824 ± 0.036 | 0.525 ± 0.043 |
+| (*Sci Rep* 2026) | Classical (Nested) | 0.752 ± 0.028 | 0.751 ± 0.029 | 0.678 ± 0.035 | **0.746 ± 0.051** | 0.756 ± 0.036 | 0.830 ± 0.030 | 0.508 ± 0.035 |
+| | Named Classical | 0.752 ± 0.031 | 0.717 ± 0.032 | 0.627 ± 0.043 | 0.599 ± 0.055 | 0.834 ± 0.040 | 0.824 ± 0.039 | 0.487 ± 0.044 |
+| **Schizophrenia** | Quantum QSVM | 0.591 ± 0.111 | 0.583 ± 0.109 | 0.644 ± 0.106 | 0.707 ± 0.163 | 0.459 ± 0.160 | 0.641 ± 0.142 | 0.672 ± 0.080 |
+| (*J Med Syst* 2024)| Classical (Nested) | 0.667 ± 0.078 | 0.664 ± 0.080 | 0.698 ± 0.073 | 0.724 ± 0.122 | 0.603 ± 0.174 | 0.735 ± 0.095 | 0.881 ± 0.415 |
+| | Named Classical | 0.651 ± 0.082 | 0.643 ± 0.086 | 0.703 ± 0.068 | 0.778 ± 0.130 | 0.508 ± 0.205 | 0.700 ± 0.097 | 0.648 ± 0.050 |
 
 ---
 
@@ -331,7 +353,7 @@ Stated ceiling and stated defect: a single annotator applying CheXpert conventio
 
 Six of seven corroborate. Nodule does not, on any axis: rank correlation near zero, AUROC below chance. Disclosed on the model card, in the interface, and in the generated report.
 
-Running both axes **localises** the failure. Nodule is the labeller's strongest finding (κ 0.933, axis 1) and the image model's weakest (κ −0.031, axis 2). Text extraction is adequate; image discrimination is not. A single-axis validation would have attributed the failure to the wrong component. The consequence propagates: the malignancy category is defined by the nodule concept, so the diagnosis-level malignancy failure in §2.2 *is* this image-model failure, and no choice of fusion backend could repair it.
+Running both axes **localises** the failure. Nodule is the labeller's strongest finding (κ 0.933, axis 1) and the image model's weakest (κ −0.031, axis 2). Text extraction is adequate; image discrimination is not. A single-axis validation would have attributed the failure to the wrong component. The consequence propagates: the malignancy category is defined by the nodule concept, so the diagnosis-level malignancy failure in §2.3 *is* this image-model failure, and no choice of fusion backend could repair it.
 
 Independence is bounded: the comparison model was also trained on MIMIC-CXR and patient-level overlap with our evaluation images was not excluded.
 
@@ -371,23 +393,23 @@ This is the failure mode of P7 occurring inside the test that enforces P6: **a t
 
 **Construct validity.** Quantum advantage is operationalised as per-metric superiority under matched capacity, per-arm calibration and a matched optimiser. A reader preferring a different construct — expressivity, sample efficiency, robustness under shift — would require different experiments; none is tested. Parameter-count matching is a weak operationalisation of capacity for quantum models, and effective-dimension matching was not performed.
 
-**The prediction target.** The six-way target is a rule-derived radiographic-pattern proxy whose derivation map has not been validated against clinician judgement, and whose Bayes-optimal rule is linear (§S2). Results in §2.2 to §2.5 are scoped to targets of this kind. §2.3 establishes that the *comparison* detects nonlinear advantage where a target contains it, which addresses circularity but does not extend the clinical result to structured targets.
+**The prediction target.** The six-way target is a rule-derived radiographic-pattern proxy whose derivation map has not been validated against clinician judgement, and whose Bayes-optimal rule is linear (§S2). Results in §2.3 to §2.6 are scoped to targets of this kind. §2.4 establishes that the *comparison* detects nonlinear advantage where a target contains it, which addresses circularity but does not extend the clinical result to structured targets.
 
-**Internal validity.** The ablation in §2.4 is replicated across ten seeds with data held fixed, so its effect is not an initialisation artifact, but its intervals condition on a single test split. The sweep in §2.5 remains single-seed and single-split with its top-of-ranking selected from 48 cells.
+**Internal validity.** The ablation in §2.5 is replicated across ten seeds with data held fixed, so its effect is not an initialisation artifact. Its seed intervals condition on a single test split; the patient bootstrap and five patient-disjoint re-splits added in revision (§2.5(b)) address this, and over patients the effect is marginal. The sweep in §2.6 remains single-seed and single-split with its top-of-ranking selected from 48 cells.
 
-**Statistical power and test-set reuse.** The primary 447-study comparison has a minimum detectable accuracy difference of 9.3 points at 80% power; accuracy nulls there are statements about undetectability, not equality. §2.7 converts this from a hedge into a measured fact: at *n* = 4,800 (MDE ≈ 3.6 points) five of six pairwise accuracy comparisons are significant and the true differences are 4 to 6 points — inside the internal experiment's blind spot by construction. **The nulls in §2.4 and §2.5 have not been re-run at adequate power and have no external check**, so they remain undetectability statements. Separately, the same 447-study split is used for §2.1 to §2.5 and §2.8 across more than sixty model evaluations including a 48-cell sweep from which the top five were selected. No held-out split remains to bound adaptive overfitting, and its magnitude is not estimated.
+**Statistical power and test-set reuse.** The primary 447-study comparison has a minimum detectable accuracy difference of 9.3 points at 80% power; accuracy nulls there are statements about undetectability, not equality. §2.8 converts this from a hedge into a measured fact: at *n* = 4,800 (MDE ≈ 3.6 points) five of six pairwise accuracy comparisons are significant and the true differences are 4 to 6 points — inside the internal experiment's blind spot by construction. **The sweep in §2.6 has not been re-run at adequate power and has no external check**, so it remains an undetectability statement. The §2.5 ablation was repeated on out-of-sample CheXpert evidence, where the penalty was not detected (§2.5(d)). Separately, the same 447-study split is used for §2.2 to §2.6 and §2.9 across more than sixty model evaluations including a 48-cell sweep from which the top five were selected. No held-out split remains to bound adaptive overfitting, and its magnitude is not estimated.
 
-**Comparator and hyperparameter symmetry.** §2.2's matched protocol removes the optimiser confound that Table S2's published block carries, but leaves a residual gap of 0.0052 NLL on the anchor arm, of the same order as the one surviving effect. §2.6's kernel comparison gives both arms grids of identical shape, which the superseded comparison did not.
+**Comparator and hyperparameter symmetry.** §2.3's matched protocol removes the optimiser confound that Table S2's published block carries, but leaves a residual gap of 0.0052 NLL on the anchor arm, of the same order as the one surviving effect. §2.7's kernel comparison gives both arms grids of identical shape, which the superseded comparison did not.
 
-**A constant evidence channel.** `prior_risk` is identically zero in all 2,231 MIMIC and all 8,000 CheXpert studies. §2.4's controlled re-run resolves this for the ablation. **The 48-cell sweep (§2.5) and the 20-epoch robustness check were run at eight qubits and have not been repeated at seven**, so their magnitudes are not controlled estimates.
+**A constant evidence channel.** `prior_risk` is identically zero in all 2,231 MIMIC and all 8,000 CheXpert studies. §2.5's controlled re-run resolves this for the ablation. **The 48-cell sweep (§2.6) and the 20-epoch robustness check were run at eight qubits and have not been repeated at seven**, so their magnitudes are not controlled estimates.
 
 **Single-instance results.** The hardware execution and the noise attribution each rest on one case and carry no interval.
 
-**Generalisation.** Development used MIMIC-CXR, a single United States tertiary academic centre; BraTS-2020 comprises preoperative glioma only. §2.7 supplies external validity **across sites and only for §2.2**, and its result is a caution rather than a reassurance: every arm degraded, higher-capacity arms degraded more, and one internal ordering reversed. It is not external validity across populations, label regimes or care settings — both corpora are large US academic centres labelling by rule from free text. There is no prospective cohort, no reader study, and no demographic subgroup analysis despite sex, age and race being available in the MIMIC-CXR metadata. The brain model is not validated for postoperative monitoring, radiation-necrosis differentiation, or non-glial tumours, and no external brain cohort was used. The modality router cannot distinguish axial head CT from axial brain MRI on pixel data alone once DICOM metadata is removed.
+**Generalisation.** Development used MIMIC-CXR, a single United States tertiary academic centre; BraTS-2020 comprises preoperative glioma only. §2.8 supplies external validity **across sites and only for §2.3**, and its result is a caution rather than a reassurance: every arm degraded, higher-capacity arms degraded more, and one internal ordering reversed. It is not external validity across populations, label regimes or care settings — both corpora are large US academic centres labelling by rule from free text. There is no prospective cohort, no reader study, and no demographic subgroup analysis despite sex, age and race being available in the MIMIC-CXR metadata. The brain model is not validated for postoperative monitoring, radiation-necrosis differentiation, or non-glial tumours, and no external brain cohort was used. The modality router cannot distinguish axial head CT from axial brain MRI on pixel data alone once DICOM metadata is removed.
 
 ### S7.2 A note on an error caught before publication
 
-The first execution of the full-coverage kernel comparison (§2.6) produced subject-level AUROC of 0.228 for the quantum arm and 0.225 for the RBF arm — both far below chance, and nearly equal. The cause was a sign convention: `fit_platt` returns coefficients for `p = 1/(1 + exp(a·f + b))`, Platt's original parameterisation, and the new script applied the more familiar `σ(a·f + b)`, inverting every probability. Probabilities stayed in [0, 1], calibration looked plausible, and only the AUROC betrayed it.
+The first execution of the full-coverage kernel comparison (§2.7) produced subject-level AUROC of 0.228 for the quantum arm and 0.225 for the RBF arm — both far below chance, and nearly equal. The cause was a sign convention: `fit_platt` returns coefficients for `p = 1/(1 + exp(a·f + b))`, Platt's original parameterisation, and the new script applied the more familiar `σ(a·f + b)`, inverting every probability. Probabilities stayed in [0, 1], calibration looked plausible, and only the AUROC betrayed it.
 
 We record this because it is the same class of error as the defects below, caught one step earlier, and because the fix generalises: the script now derives both arms' probabilities from one helper, and refuses to write an artifact when both arms score below chance — an outcome that is an orientation bug rather than a result. An inverted run produces numbers that look publishable.
 
@@ -397,22 +419,22 @@ Applying P6 to our own repository identifies fourteen defects. We report them ra
 
 | | Defect | Status |
 |---|---|---|
-| D1 | README and grading documentation quote the superseded kernel result ΔAUROC = −0.016, *p* = 0.002 from the 669-slice run, superseded twice since | **Closed** — updated to the §2.6 full-coverage result |
+| D1 | README and grading documentation quote the superseded kernel result ΔAUROC = −0.016, *p* = 0.002 from the 669-slice run, superseded twice since | **Closed** — updated to the §2.7 full-coverage result |
 | D2 | `docs/benchmark_report.md` published nnU-Net / SwinUNETR / MONAI rows as if measured on these data | **Closed** — rows attributed to their publications, marked "not measured", warned above the table, and held by two build tests |
 | D3 | `quantum_study.json` records the retracted measurement-budget interpretation ("No classical fusion model can make this distinction") | **Closed** — annotated in place with the retraction; original text retained as `note_withdrawn` for provenance |
 | D4 | The same artifact's honesty block records "simulated; no quantum hardware was used", contradicted by §S5.4 | **Closed** — corrected to scope the statement to that artifact and name the hardware run |
 | D5 | `fusion_headline_n447.json` recorded a Wilcoxon *p* as `0.0` rather than at full precision | Closed previously — regenerated as 7.296×10⁻⁶ |
 | D6 | `fusion_ablation.json` records neither sample size nor split identifier; `fusion_headline_n447.json` did not record the training length of the models it evaluates | **Closed** — ablation artifact marked superseded with its unknowns stated; training lengths recorded with their provenance |
 | D7 | `brain/qkl_training_report.json` reported tuned results without the hyperparameter grid | Closed previously |
-| D8 | Brain embedding dumps inconsistent in coverage: `epoch_001.npz` holds 25,268 slices from 185 subjects, later checkpoints 7,407 from 55, with nothing recording the discrepancy | **Closed** — the discrepancy is documented, and §2.6 now uses the full-coverage dump at the same checkpoint, which removes the power loss it caused |
+| D8 | Brain embedding dumps inconsistent in coverage: `epoch_001.npz` holds 25,268 slices from 185 subjects, later checkpoints 7,407 from 55, with nothing recording the discrepancy | **Closed** — the discrepancy is documented, and §2.7 now uses the full-coverage dump at the same checkpoint, which removes the power loss it caused |
 | D9 | Table 2 published the gated head at 54 trainable parameters through four revisions; it has 126 | Closed previously — all four counts now recorded in the artifact |
 | D10 | The published abstention envelope was wrong on two of four criteria, and the build test enforcing it compared documentation against settings the serving path never read | **Closed** — see §S6; fixed at the mechanism, with a source-level test |
 | D11 | `murphy_decomp.py` was reported as a completed experiment that had changed a conclusion; it had never been executed, and the drift test skipped silently when the artifact was absent | Closed previously — executed, reported, and the test now fails on a missing artifact |
-| D12 | **New.** The abstract and §8.4 of previous versions state that four of the five best sweep configurations by negative log-likelihood lie at zero entanglement. The artifact gives **three of five** by that metric; four of five holds only under an accuracy ranking with an ill-defined cut-off | **Closed** — corrected in §2.5 and §S4.4; the corrected statement is weaker |
+| D12 | **New.** The abstract and §8.4 of previous versions state that four of the five best sweep configurations by negative log-likelihood lie at zero entanglement. The artifact gives **three of five** by that metric; four of five holds only under an accuracy ranking with an ill-defined cut-off | **Closed** — corrected in §2.6 and §S4.4; the corrected statement is weaker |
 | D13 | **New.** DeLong's test, which §5.3 of previous versions named as the method for AUROC comparisons, existed only inside `audit_all.py` at the repository root and in no packaged evaluation module. Consolidating it revealed the risk directly: two implementations of one statistic can drift | **Closed** — single implementation in `aura/ml/evaluation/delong.py`, validated against `sklearn.metrics.roc_auc_score`, with `audit_all.py` delegating to it and a test forbidding a second copy |
 | D14 | **New, and the most serious.** `audit_all.py` — the harness this paper's Code Availability section directs a reviewer to run — drew its held-out split from the **synthetic** evidence world. That was correct while the fusion heads were themselves fitted on synthetic evidence; audit finding F1 then refitted them on real MIMIC-CXR evidence (2026-07-21) and this file was never updated. Every run from that date evaluated real-trained models on out-of-distribution vectors and reported **below-chance accuracy — 0.010 against a 1/6 floor** — while still printing `CLAIM [VALIDATED]` for one of the three claims it checks. The failure is silent because both data paths return well-formed arrays | **Closed** — the harness now reads the same cached real-evidence split the manuscript's experiments use, records the data world in its manifest, falls back to synthetic only with a loud warning, and **aborts** rather than reporting metrics when a served head scores below chance. It now reproduces Table 1's published block exactly (quantum accuracy 0.5324, classical 0.5414, ECE 0.0896 / 0.1266, temperatures 0.9057 / 0.4790) |
 
-**Consequence of D14 for §2.1.** The ECE figures of 0.020 and 0.276 that §2.1 audits were produced by this harness on the synthetic split, before the F1 refit. §2.1 now reports the real-data replication alongside them: 0.0896 quantum, 0.1266 classical-fair, 0.2289 classical-raw, with the confound accounting for 0.139 of a 0.176 difference. The diagnosis is unchanged and the magnitude is smaller. `audit_artifacts/run_20260719T175647Z` is retained as the record of the original audit and is labelled with its data world; `run_20260821T173709Z` is the real-data replication.
+**Consequence of D14 for §2.2.** The ECE figures of 0.020 and 0.276 that §2.2 audits were produced by this harness on the synthetic split, before the F1 refit. §2.2 now reports the real-data replication alongside them: 0.0896 quantum, 0.1266 classical-fair, 0.2289 classical-raw, with the confound accounting for 0.139 of a 0.176 difference. The diagnosis is unchanged and the magnitude is smaller. `audit_artifacts/run_20260719T175647Z` is retained as the record of the original audit and is labelled with its data world; `run_20260821T173709Z` is the real-data replication.
 
 The drift test invoked by P6 covers this manuscript's Tables 1, 2, S1, S2, S3, S4 and S6 against their artifacts. It did not do so when D5 and D6 reached publication, and it does not cover `audit_all.py`'s outputs at all — which is why D14 survived four months and thirteen prior defect entries.
 
@@ -422,19 +444,19 @@ The drift test invoked by P6 covers this manuscript's Tables 1, 2, S1, S2, S3, S
 
 Listed explicitly rather than as an omission, in order of the strength they would add.
 
-1. **External validation of §2.4 to §2.6.** §2.7 retires this for §2.2 only. The entanglement ablation and design sweep have not been repeated on CheXpert-derived evidence, and BraTS-2021 remains unused for the kernel comparison. Both are now straightforward, since the CheXpert evidence tensor is released.
+1. **External validation of §2.6 and §2.7.** §2.8 retires this for §2.3, and the out-of-sample CheXpert analysis (§2.5(d)) for the entanglement ablation. The design sweep has not been repeated on CheXpert-derived evidence, and no external brain cohort has been used for the kernel comparison.
 2. **Seven-qubit repetition of the 48-cell design sweep** and of the 20-epoch robustness check, both of which still carry the constant-channel confound.
-3. **Re-fitting the §2.2 arms under a common budget at convergence**, closing the residual 0.0052 NLL gap on the anchor arm, so that the one surviving effect can be attributed to model class rather than to residual optimisation.
-4. **Nested bootstrap** over seeds and studies jointly, to give the total uncertainty that the ablation's intervals bracket.
+3. **Re-fitting the §2.3 arms under a common budget at convergence**, closing the residual 0.0052 NLL gap on the anchor arm, so that the one surviving effect can be attributed to model class rather than to residual optimisation.
+4. **Nested bootstrap** over seeds and studies jointly for the re-uploading ablation and the out-of-sample replication. (For the seven-channel ablation, the patient bootstrap including initialisation variance is reported in §2.5(b).)
 5. **Noise attribution over ≥100 evidence vectors** with a squared-error decomposition, and hardware execution over ≥50 cases with a top-1 agreement interval, to give §S5.4 a sample size.
 6. **Subgroup analysis** on sex, age band and race for the vision model and the fusion backends.
 7. **Per-case three-dimensional segmentation re-scoring**, to make a comparison with BraTS values valid.
 8. **Radiologist over-read** of the 66-report reference standard with a majority-vote design, and a stratum-weighted κ estimate.
 9. **Extension of the drift test** to the abstract's figures and to prose constants.
-10. **Execution of the shot-allocation loop on hardware**, and the margin-versus-shots rank correlation, both bearing on §2.8.
+10. **Execution of the shot-allocation loop on hardware**, and the margin-versus-shots rank correlation, both bearing on §2.9.
 11. **Extraction of reported advantage margins** from the studies synthesised in [1], to support or retire the field-level comparison.
 12. **A rejector ablation** for §S6, isolating each of the four abstention criteria, now that the policy as a whole is known not to beat its control.
-13. **A nonlinear-target replication on a second corpus**, so that §2.3's positive control is not itself single-split.
+13. **A nonlinear-target replication on a second corpus**, so that §2.4's positive control is not itself single-split.
 
 ---
 
@@ -447,19 +469,19 @@ Listed explicitly rather than as an omission, in order of the strength they woul
 | §5.1 Data, §5.1.2 target, §5.1.3 constant channel | Main Methods; §S2 |
 | §5.2 Environment, §5.3 Statistics | Main Methods |
 | §6 Protocol | §S3 (with P8 added) |
-| §7 Size of the confound | Main §2.1; §S4.1 |
-| §8.1 Calibration artifact | Main §2.1 |
-| §8.2 Comparator choice | Main §2.2; §S4.2 — **extended with the matched-optimiser experiment** |
-| §8.3, §8.3.1, §8.3.2 Entanglement | Main §2.4; §S4.3 |
-| §8.4 Design sweep | Main §2.5; §S4.4 — **corrected (D12)** |
-| §8.5 Quantum kernel | Main §2.6; §S4.5 — **superseded by the full-coverage nested-CV comparison** |
-| §8.6 External validation | Main §2.7; §S4.6 |
+| §7 Size of the confound | Main §2.2; §S4.1 |
+| §8.1 Calibration artifact | Main §2.2 |
+| §8.2 Comparator choice | Main §2.3; §S4.2 — **extended with the matched-optimiser experiment** |
+| §8.3, §8.3.1, §8.3.2 Entanglement | Main §2.5; §S4.3 |
+| §8.4 Design sweep | Main §2.6; §S4.4 — **corrected (D12)** |
+| §8.5 Quantum kernel | Main §2.7; §S4.5 — **superseded by the full-coverage nested-CV comparison** |
+| §8.6 External validation | Main §2.8; §S4.6 |
 | §9.1 Selective prediction | §S6 |
 | §9.2–§9.5 Positive controls | §S5 |
-| §10 Discussion, §10.6 Retraction | Main §3, §2.8 |
+| §10 Discussion, §10.6 Retraction | Main §3, §2.9 |
 | §11 Threats and limitations, §11.7 defects | §S7 |
 | §11.9 Analyses not performed | §S8 |
-| — | Main §2.3 — **new: nonlinear positive control** |
+| — | Main §2.4 — **new: nonlinear positive control** |
 
 ### S9.1 Claim-to-artifact map
 
@@ -468,24 +490,28 @@ Listed explicitly rather than as an omission, in order of the strength they woul
 | Section | Claim | Artifact |
 |---|---|---|
 | Methods, §S2 | Prediction-target derivation | `aura/mimic/labeling.py`, `_map_diagnosis` |
-| Methods, §2.4 | Constant `prior_risk` channel | `aura/artifacts/quantum_study_evidence.npz` |
-| §2.1, §S4.1 | Calibration confound and the 1.89 temperature spread | `aura/artifacts/backend_calibration.json` |
-| §2.1 | Audit of previously published fusion claims | `audit_artifacts/run_20260719T175647Z/metrics/claim_verdicts.json` |
-| §2.2 upper, §S4.2 | Published fusion comparison, *n* = 447 | `aura/artifacts/fusion_headline_n447.json`, `fusion_baselines_n447.json` |
-| §2.2 lower, §S4.2 | **Matched optimiser comparison** | `aura/artifacts/fusion_matched_optimiser.json` |
-| §2.2, §S1 | Trainable parameter counts of every arm | `aura/artifacts/fusion_{classical,quantum,learnable}.npz` |
-| §2.3, Fig. 1B | **Nonlinear positive control** | `aura/artifacts/nonlinear_control.json` |
-| §2.4, §S4.3 | Entanglement ablation, 10 seeds, 8 qubits (confounded) | `aura/artifacts/entanglement_multiseed.json` |
-| §2.4, §S4.3 | Entanglement ablation, 10 seeds, 7 channels (controlled) | `aura/artifacts/entanglement_multiseed_7q.json` |
+| Methods, §2.5 | Constant `prior_risk` channel | `aura/artifacts/quantum_study_evidence.npz` |
+| §2.2, §S4.1 | Calibration confound and the 1.89 temperature spread | `aura/artifacts/backend_calibration.json` |
+| §2.2 | Audit of previously published fusion claims | `audit_artifacts/run_20260719T175647Z/metrics/claim_verdicts.json` |
+| §2.3 upper, §S4.2 | Published fusion comparison, *n* = 447 | `aura/artifacts/fusion_headline_n447.json`, `fusion_baselines_n447.json` |
+| §2.3 lower, §S4.2 | **Matched optimiser comparison** | `aura/artifacts/fusion_matched_optimiser.json` |
+| §2.3, §2.5(b), §2.5(c) | Equivalence test (A), patient bootstrap (B), re-splits (C) and re-uploading ablation (D), added in revision | `aura/artifacts/revision_v51.json` |
+| §2.3, §S1 | Trainable parameter counts of every arm | `aura/artifacts/fusion_{classical,quantum,learnable}.npz` |
+| §2.4, Fig. 1B | **Nonlinear positive control** | `aura/artifacts/nonlinear_control.json` |
+| §2.5, §S4.3 | Entanglement ablation, 10 seeds, 8 qubits (confounded) | `aura/artifacts/entanglement_multiseed.json` |
+| §2.5, §S4.3 | Entanglement ablation, 10 seeds, 7 channels (controlled) | `aura/artifacts/entanglement_multiseed_7q.json` |
 | §S4.3 | Murphy decomposition (non-identifiable) | `aura/artifacts/murphy_decomposition.json` |
-| §2.5, §S4.4 | 48-cell design sweep | `aura/artifacts/design_sweep.json` |
-| §2.6, §S4.5 | **Quantum kernel, full coverage, nested CV** | `aura/artifacts/brain/qkl_full_coverage.json` |
+| §2.6, §S4.4 | 48-cell design sweep | `aura/artifacts/design_sweep.json` |
+| §2.7, §S4.5 | **Quantum kernel, official 369 subjects, nested CV** | `aura/artifacts/brain/qkl_brats2020_official.json`, `grade_mapping_check.json` |
+| §2.7 | Pre-registered sensitivity analysis, 111 held-out subjects | `aura/artifacts/brain/qkl_brats2020_official_heldout111.json` |
+| §2.1, §S4.8 | **Field-wide literature audit, 5 medical QML studies** | `bench/field_audit/results/`, `docs/FIELD_AUDIT_PROTOCOL.md` |
 | §S4.5 | Superseded kernel comparison, retained for provenance | `aura/artifacts/brain/qkl_training_report.json` |
-| §2.7, §S4.6 | External validation on CheXpert | `aura/artifacts/chexpert_external.json` |
-| §2.7 | CheXpert evidence tensor, 8,000 studies | `aura/artifacts/chexpert_evidence.npz` |
-| §2.7, §S3 | Pre-registration, deposited before the run | `docs/PREREGISTRATION_CHEXPERT.md` (commit `fa8c2b6`) |
-| §2.8 | Measurement-budget statistics, with the retraction annotated | `aura/artifacts/quantum_study.json`, key `q3_measurement_budget` |
-| §2.8 | The estimation step under audit | `aura/services/fusion/qmba.py`, lines 377–380 |
+| §2.8, §S4.6 | External validation on CheXpert | `aura/artifacts/chexpert_external.json` |
+| §2.8 | CheXpert evidence tensor, 8,000 studies | `aura/artifacts/chexpert_evidence.npz` |
+| §2.8, §2.5(d) | Out-of-sample replication within CheXpert evidence | `aura/artifacts/chexpert_internal.json`, `docs/PREREGISTRATION_ADDENDUM_2026-10b_CHEXPERT_INTERNAL.md` |
+| §2.8, §S3 | Pre-registration, deposited before the run | `docs/PREREGISTRATION_CHEXPERT.md` (commit `fa8c2b6`) |
+| §2.9 | Measurement-budget statistics, with the retraction annotated | `aura/artifacts/quantum_study.json`, key `q3_measurement_budget` |
+| §2.9 | The estimation step under audit | `aura/services/fusion/qmba.py`, lines 377–387 |
 | §S5.1 | Per-finding chest metrics | `aura/artifacts/evaluation_retrain_v2/metrics.json` |
 | §S5.1 | Per-finding Platt calibration | `aura/artifacts/vision_serving_calibration.json` |
 | §S5.2 | Labeller reference standard, 66 reports | `aura/artifacts/labeler_validation.json` |

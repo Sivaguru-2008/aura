@@ -173,6 +173,31 @@ def check_artifacts(skip_brain: bool) -> None:
                 "or build with --build-arg AURA_SKIP_BRAIN=1 for a chest-only image",
             )
 
+    # Licence posture: research-licensed weights serve research and pilots, not a sale.
+    try:
+        from aura.common.config import get_settings
+        from aura.common.data_governance import (
+            CommercialLicenseViolationError,
+            get_governance_manager,
+        )
+
+        commercial = get_settings().commercial_mode
+    except Exception as exc:                      # pragma: no cover - import guarded above
+        _warn("data licence", f"could not check: {type(exc).__name__}: {exc}")
+        return
+    if not commercial:
+        _warn("data licence",
+              "served weights are research-licensed (MIMIC-CXR, BraTS 2020): fine for "
+              "research and pilots, not for sale. See docs/DATA_LICENSES.md")
+        return
+    try:
+        report = get_governance_manager().enforce_commercial_gate(commercial_mode=True)
+        _ok(f"commercial licence recorded for all {len(report.artifacts)} artifacts")
+    except CommercialLicenseViolationError as exc:
+        _fail("data licence", str(exc).splitlines()[0],
+              "retrain on data licensed for commercial use, or unset AURA_COMMERCIAL_MODE "
+              "(docs/DATA_PROVENANCE_REGISTRY.md)")
+
 
 # --------------------------------------------------------------------------- #
 # 3. The real vision model actually loads

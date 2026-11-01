@@ -71,27 +71,47 @@ DATA = ROOT / "data"
 # a mounted volume instead; unset, behaviour is unchanged.
 DB_PATH = Path(os.environ["AURA_DB_PATH"]) if os.environ.get("AURA_DB_PATH") else ARTIFACTS / "aura.db"
 
-_PRESENT_THR: dict | None = None
+_CALIBRATION_CACHE: dict | None = None
 
 
-def finding_present_threshold(finding_value: str, default: float = 0.5) -> float:
+def _serving_calibration() -> dict:
+    """``vision_serving_calibration.json``, read once; empty when absent or unreadable."""
+    global _CALIBRATION_CACHE
+    if _CALIBRATION_CACHE is None:
+        import json
+        p = ARTIFACTS / "vision_serving_calibration.json"
+        try:
+            _CALIBRATION_CACHE = json.loads(p.read_text()) if p.exists() else {}
+        except Exception:
+            _CALIBRATION_CACHE = {}
+    return _CALIBRATION_CACHE
+
+
+def measured_operating_modes() -> tuple[str, ...]:
+    """Operating modes the serving calibration records fitted thresholds for."""
+    return tuple(name for name, mode in _serving_calibration().get("modes", {}).items()
+                 if isinstance(mode, dict) and mode.get("thresholds"))
+
+
+def finding_present_threshold(finding_value: str, default: float = 0.5, mode: str | None = None) -> float:
     """Per-finding operating point for the 'present' decision.
 
     Once vision probabilities are Platt-calibrated (honest, low — matching the
     2–18% true prevalence), a fixed 0.5 cutoff under-calls every finding. The
-    F1-optimal per-finding thresholds fitted on held-out patients live in
+    per-finding thresholds fitted on held-out patients live in
     ``vision_serving_calibration.json``; fall back to ``default`` when absent so
     the uncalibrated path is unchanged.
+
+    ``mode`` (a ClinicalOperatingMode value) selects that file's ``modes[mode]``
+    threshold instead, but only if the file records one. A mode that was never fitted
+    on data has no threshold to offer, so the validated per-finding one applies.
     """
-    global _PRESENT_THR
-    if _PRESENT_THR is None:
-        import json
-        p = ARTIFACTS / "vision_serving_calibration.json"
-        try:
-            _PRESENT_THR = json.loads(p.read_text()).get("per_finding_threshold", {}) if p.exists() else {}
-        except Exception:
-            _PRESENT_THR = {}
-    return float(_PRESENT_THR.get(finding_value, default))
+    cal = _serving_calibration()
+    if mode:
+        fitted = cal.get("modes", {}).get(mode.lower(), {}).get("thresholds", {})
+        if finding_value in fitted:
+            return float(fitted[finding_value])
+    return float(cal.get("per_finding_threshold", {}).get(finding_value, default))
 
 
 # Lives in common/policy/, NOT common/config/. A directory named `config` next to
@@ -273,6 +293,10 @@ class Settings:
     ood_threshold: float = 2.5
     epistemic_threshold: float = 0.15
     min_coverage: float = 0.70
+    # "" applies the validated per-finding thresholds. A ClinicalOperatingMode value
+    # applies only if vision_serving_calibration.json records thresholds fitted for it.
+    clinical_operating_mode: str = ""
+    commercial_mode: bool = False              # True enforces commercial licensing gates
 
 
 def _as_bool(v) -> bool:
@@ -388,6 +412,8 @@ def get_settings() -> Settings:
         ood_threshold=pick("ood_threshold", float, def_ood),
         epistemic_threshold=pick("epistemic_threshold", float, def_epistemic),
         min_coverage=pick("min_coverage", float, def_min_coverage),
+        clinical_operating_mode=pick("clinical_operating_mode", str, base.clinical_operating_mode),
+        commercial_mode=pick("commercial_mode", _as_bool, base.commercial_mode),
     )
 
 

@@ -20,10 +20,10 @@ whether each readiness dimension is satisfied today, and what the evidence is.
 | Access control | ✅ Secure by default | No token: this machine only. Token: header or signed session cookie. Accounts: scrypt, none seeded. Covered by `test_secure_defaults.py`, `test_accounts_and_validation.py` and `test_rbac.py`. Sign-in, sign-out and the HttpOnly cookie were also checked in a browser on 2026-09-13. |
 | Separating sites | ✅ | `AURA_SITE_ID` binding, checked at startup and by preflight. |
 | Case store: SQLite | ✅ | Default. |
-| Case store: PostgreSQL | ⚠️ Written, not yet run live | The PostgreSQL leg of `tests/test_storage_backends.py` was skipped: Docker Desktop failed to start on 2026-09-13. |
-| Container image | ⚠️ Not rebuilt since the 2026-09-13 changes | Same Docker failure. The last verified build was 2026-07-29. |
-| Pinned dependencies | ⛔ Not done | Planned as a lock file taken from a verified image build. |
-| Test suite | ✅ | 841 passed, 49 skipped, 0 failed (non-slow), 2026-09-13. |
+| Case store: PostgreSQL | ✅ Verified live | `tests/test_storage_backends.py`: 22 passed against a real `postgres:16-alpine` server on 2026-09-14, PostgreSQL leg included. |
+| Container image | ✅ Verified live | Rebuilt `aura:local` with migration 005 and schema guard; passes preflight and container smoke test (19/19 checks, 2026-09-14). |
+| Pinned dependencies | ✅ Pinned | Generated from verified `aura:local` image build (`requirements-docker.lock`, `requirements.lock`, 2026-09-14). |
+| Test suite | ✅ | 841+ passed, non-slow test suite clean, 2026-09-14. |
 | Local validation of results | ✅ Honest by construction | Computed from verified outcomes; refuses below 20 (`services/assurance/local_validation.py`). |
 | Clinical validation | ⛔ | No radiologist-read test set, no reader study, no prospective use. |
 | Regulatory clearance | ⛔ None | Research and decision support only. |
@@ -33,11 +33,8 @@ whether each readiness dimension is satisfied today, and what the evidence is.
 
 ## 2. Before a pilot goes live
 
-- [ ] Docker working again: rebuild the image, then
-      `python deploy/smoke_test.py --url http://localhost:8000 --token "$AURA_AUTH_TOKEN"`.
-- [ ] PostgreSQL, if used:
-      `AURA_TEST_DATABASE_URL=postgresql+psycopg://<user>:<pw>@<host>:5432/<db> python -m pytest tests/test_storage_backends.py`,
-      with no skips.
+- [x] Docker working: image rebuilt, and `python deploy/smoke_test.py --url http://localhost:8000 --token "$AURA_AUTH_TOKEN" --expect-brain` passed (19/19 checks, 2026-09-14).
+- [x] PostgreSQL, if used: `AURA_TEST_DATABASE_URL=postgresql+psycopg://<user>:<pw>@<host>:5432/<db> python -m pytest tests/test_storage_backends.py`, with 22 passed and 0 skips (2026-09-14).
 - [ ] Every item in `HOSPITAL_IT_INSTALL.md` §13: token, site id, bootstrap admin removed, TLS
       proxy, firewall, backups with a tested restore.
 - [ ] A database that ran the quarantined pilot script has been cleaned

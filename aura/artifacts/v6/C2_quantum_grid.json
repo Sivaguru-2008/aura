@@ -1,0 +1,506 @@
+[
+  {
+    "config": [
+      1,
+      0.5,
+      0.01,
+      0.01
+    ],
+    "file": "C2_quantum_00.npz",
+    "best_calibration_nll": 1.142192,
+    "best_epoch": 77,
+    "epochs_run": 98,
+    "parameters": 70,
+    "seconds": 251.5
+  },
+  {
+    "config": [
+      1,
+      0.5,
+      0.1,
+      0.1
+    ],
+    "file": "C2_quantum_01.npz",
+    "best_calibration_nll": 1.146814,
+    "best_epoch": 27,
+    "epochs_run": 48,
+    "parameters": 70,
+    "seconds": 114.6
+  },
+  {
+    "config": [
+      1,
+      1.0,
+      0.1,
+      0.1
+    ],
+    "file": "C2_quantum_02.npz",
+    "best_calibration_nll": 1.172775,
+    "best_epoch": 27,
+    "epochs_run": 48,
+    "parameters": 70,
+    "seconds": 129.6
+  },
+  {
+    "config": [
+      1,
+      1.0,
+      1.0,
+      0.01
+    ],
+    "file": "C2_quantum_03.npz",
+    "best_calibration_nll": 1.164218,
+    "best_epoch": 94,
+    "epochs_run": 115,
+    "parameters": 70,
+    "seconds": 284.6
+  },
+  {
+    "config": [
+      1,
+      2.0,
+      1.0,
+      0.01
+    ],
+    "file": "C2_quantum_04.npz",
+    "best_calibration_nll": 1.219112,
+    "best_epoch": 51,
+    "epochs_run": 72,
+    "parameters": 70,
+    "seconds": 213.5
+  },
+  {
+    "config": [
+      2,
+      0.5,
+      0.1,
+      0.05
+    ],
+    "file": "C2_quantum_05.npz",
+    "best_calibration_nll": 1.134018,
+    "best_epoch": 18,
+    "epochs_run": 39,
+    "parameters": 86,
+    "seconds": 217.0
+  },
+  {
+    "config": [
+      2,
+      0.5,
+      0.1,
+      0.1
+    ],
+    "file": "C2_quantum_06.npz",
+    "best_calibration_nll": 1.142788,
+    "best_epoch": 31,
+    "epochs_run": 52,
+    "parameters": 86,
+    "seconds": 258.3
+  },
+  {
+    "config": [
+      2,
+      0.5,
+      1.0,
+      0.05
+    ],
+    "file": "C2_quantum_07.npz",
+    "best_calibration_nll": 1.147137,
+    "best_epoch": 45,
+    "epochs_run": 66,
+    "parameters": 86,
+    "seconds": 370.3
+  },
+  {
+    "config": [
+      2,
+      1.0,
+      0.01,
+      0.01
+    ],
+    "file": "C2_quantum_08.npz",
+    "best_calibration_nll": 1.152775,
+    "best_epoch": 13,
+    "epochs_run": 34,
+    "parameters": 86,
+    "seconds": 190.3
+  },
+  {
+    "config": [
+      2,
+      1.0,
+      0.1,
+      0.1
+    ],
+    "file": "C2_quantum_09.npz",
+    "best_calibration_nll": 1.143171,
+    "best_epoch": 13,
+    "epochs_run": 34,
+    "parameters": 86,
+    "seconds": 195.3
+  },
+  {
+    "config": [
+      3,
+      0.5,
+      0.01,
+      0.05
+    ],
+    "file": "C2_quantum_10.npz",
+    "best_calibration_nll": 1.145489,
+    "best_epoch": 12,
+    "epochs_run": 33,
+    "parameters": 102,
+    "seconds": 248.0
+  },
+  {
+    "config": [
+      3,
+      0.5,
+      0.01,
+      0.1
+    ],
+    "file": "C2_quantum_11.npz",
+    "best_calibration_nll": 1.145443,
+    "best_epoch": 12,
+    "epochs_run": 33,
+    "parameters": 102,
+    "seconds": 181.1
+  },
+  {
+    "config": [
+      3,
+      0.5,
+      1.0,
+      0.01
+    ],
+    "file": "C2_quantum_12.npz",
+    "best_calibration_nll": 1.13599,
+    "best_epoch": 62,
+    "epochs_run": 83,
+    "parameters": 102,
+    "seconds": 439.2
+  },
+  {
+    "config": [
+      3,
+      0.5,
+      1.0,
+      0.05
+    ],
+    "file": "C2_quantum_13.npz",
+    "best_calibration_nll": 1.136456,
+    "best_epoch": 12,
+    "epochs_run": 33,
+    "parameters": 102,
+    "seconds": 220.0
+  },
+  {
+    "config": [
+      3,
+      1.0,
+      0.01,
+      0.01
+    ],
+    "file": "C2_quantum_14.npz",
+    "best_calibration_nll": 1.144561,
+    "best_epoch": 112,
+    "epochs_run": 133,
+    "parameters": 102,
+    "seconds": 931.9
+  },
+  {
+    "config": [
+      3,
+      1.0,
+      0.01,
+      0.1
+    ],
+    "file": "C2_quantum_15.npz",
+    "best_calibration_nll": 1.15482,
+    "best_epoch": 12,
+    "epochs_run": 33,
+    "parameters": 102,
+    "seconds": 174.7
+  },
+  {
+    "config": [
+      3,
+      1.0,
+      0.1,
+      0.05
+    ],
+    "file": "C2_quantum_16.npz",
+    "best_calibration_nll": 1.145432,
+    "best_epoch": 11,
+    "epochs_run": 32,
+    "parameters": 102,
+    "seconds": 148.8
+  },
+  {
+    "config": [
+      3,
+      1.0,
+      1.0,
+      0.01
+    ],
+    "file": "C2_quantum_17.npz",
+    "best_calibration_nll": 1.135073,
+    "best_epoch": 42,
+    "epochs_run": 63,
+    "parameters": 102,
+    "seconds": 296.3
+  },
+  {
+    "config": [
+      3,
+      2.0,
+      0.01,
+      0.01
+    ],
+    "file": "C2_quantum_18.npz",
+    "best_calibration_nll": 1.171916,
+    "best_epoch": 38,
+    "epochs_run": 59,
+    "parameters": 102,
+    "seconds": 290.9
+  },
+  {
+    "config": [
+      3,
+      2.0,
+      0.1,
+      0.01
+    ],
+    "file": "C2_quantum_19.npz",
+    "best_calibration_nll": 1.178421,
+    "best_epoch": 38,
+    "epochs_run": 59,
+    "parameters": 102,
+    "seconds": 341.4
+  },
+  {
+    "config": [
+      4,
+      0.5,
+      0.01,
+      0.01
+    ],
+    "file": "C2_quantum_20.npz",
+    "best_calibration_nll": 1.132646,
+    "best_epoch": 121,
+    "epochs_run": 142,
+    "parameters": 118,
+    "seconds": 961.3
+  },
+  {
+    "config": [
+      4,
+      0.5,
+      1.0,
+      0.05
+    ],
+    "file": "C2_quantum_21.npz",
+    "best_calibration_nll": 1.145862,
+    "best_epoch": 17,
+    "epochs_run": 38,
+    "parameters": 118,
+    "seconds": 264.2
+  },
+  {
+    "config": [
+      4,
+      0.5,
+      1.0,
+      0.1
+    ],
+    "file": "C2_quantum_22.npz",
+    "best_calibration_nll": 1.139988,
+    "best_epoch": 24,
+    "epochs_run": 45,
+    "parameters": 118,
+    "seconds": 365.7
+  },
+  {
+    "config": [
+      4,
+      1.0,
+      0.01,
+      0.1
+    ],
+    "file": "C2_quantum_23.npz",
+    "best_calibration_nll": 1.154245,
+    "best_epoch": 14,
+    "epochs_run": 35,
+    "parameters": 118,
+    "seconds": 216.9
+  },
+  {
+    "config": [
+      4,
+      1.0,
+      0.1,
+      0.01
+    ],
+    "file": "C2_quantum_24.npz",
+    "best_calibration_nll": 1.134006,
+    "best_epoch": 54,
+    "epochs_run": 75,
+    "parameters": 118,
+    "seconds": 488.9
+  },
+  {
+    "config": [
+      4,
+      1.0,
+      0.1,
+      0.05
+    ],
+    "file": "C2_quantum_25.npz",
+    "best_calibration_nll": 1.145287,
+    "best_epoch": 28,
+    "epochs_run": 49,
+    "parameters": 118,
+    "seconds": 423.8
+  },
+  {
+    "config": [
+      4,
+      1.0,
+      1.0,
+      0.01
+    ],
+    "file": "C2_quantum_26.npz",
+    "best_calibration_nll": 1.141972,
+    "best_epoch": 36,
+    "epochs_run": 57,
+    "parameters": 118,
+    "seconds": 467.9
+  },
+  {
+    "config": [
+      4,
+      1.0,
+      1.0,
+      0.05
+    ],
+    "file": "C2_quantum_27.npz",
+    "best_calibration_nll": 1.140424,
+    "best_epoch": 28,
+    "epochs_run": 49,
+    "parameters": 118,
+    "seconds": 401.8
+  },
+  {
+    "config": [
+      4,
+      2.0,
+      0.1,
+      0.01
+    ],
+    "file": "C2_quantum_28.npz",
+    "best_calibration_nll": 1.153158,
+    "best_epoch": 81,
+    "epochs_run": 102,
+    "parameters": 118,
+    "seconds": 862.6
+  },
+  {
+    "config": [
+      4,
+      2.0,
+      1.0,
+      0.1
+    ],
+    "file": "C2_quantum_29.npz",
+    "best_calibration_nll": 1.162502,
+    "best_epoch": 4,
+    "epochs_run": 25,
+    "parameters": 118,
+    "seconds": 258.7
+  },
+  {
+    "config": [
+      6,
+      0.5,
+      0.01,
+      0.01
+    ],
+    "file": "C2_quantum_30.npz",
+    "best_calibration_nll": 1.13344,
+    "best_epoch": 147,
+    "epochs_run": 150,
+    "parameters": 150,
+    "seconds": 1642.6
+  },
+  {
+    "config": [
+      6,
+      0.5,
+      1.0,
+      0.01
+    ],
+    "file": "C2_quantum_31.npz",
+    "best_calibration_nll": 1.134989,
+    "best_epoch": 67,
+    "epochs_run": 88,
+    "parameters": 150,
+    "seconds": 735.7
+  },
+  {
+    "config": [
+      6,
+      1.0,
+      1.0,
+      0.05
+    ],
+    "file": "C2_quantum_32.npz",
+    "best_calibration_nll": 1.148423,
+    "best_epoch": 10,
+    "epochs_run": 31,
+    "parameters": 150,
+    "seconds": 259.9
+  },
+  {
+    "config": [
+      6,
+      1.0,
+      1.0,
+      0.1
+    ],
+    "file": "C2_quantum_33.npz",
+    "best_calibration_nll": 1.158882,
+    "best_epoch": 11,
+    "epochs_run": 32,
+    "parameters": 150,
+    "seconds": 267.9
+  },
+  {
+    "config": [
+      6,
+      2.0,
+      0.01,
+      0.01
+    ],
+    "file": "C2_quantum_34.npz",
+    "best_calibration_nll": 1.152252,
+    "best_epoch": 75,
+    "epochs_run": 96,
+    "parameters": 150,
+    "seconds": 863.0
+  },
+  {
+    "config": [
+      6,
+      2.0,
+      1.0,
+      0.01
+    ],
+    "file": "C2_quantum_35.npz",
+    "best_calibration_nll": 1.14765,
+    "best_epoch": 72,
+    "epochs_run": 93,
+    "parameters": 150,
+    "seconds": 991.2
+  }
+]
