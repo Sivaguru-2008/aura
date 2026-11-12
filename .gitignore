@@ -97,3 +97,6 @@ demo_data/
 # E:\AURA\_archived_change_tree_20260730\ and this rule stops it coming back —
 # permanently untracked, it otherwise just buries the real entries in git status.
 aura/change/
+
+# field-audit raw datasets (public, re-downloadable by bench/field_audit/datasets.py)
+bench/field_audit/data/

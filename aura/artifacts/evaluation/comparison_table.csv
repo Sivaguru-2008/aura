@@ -1,7 +1,5 @@
-Component,Model,Mean Composite Dice,Macro AUROC,Macro F1,ECE,CPU Latency
-Brain,AURA ResU-Net,0.86515,N/A,N/A,N/A,12747.84 ms
-Brain,nnUNet,0.8710,N/A,N/A,N/A,185000 ms
-Brain,SwinUNETR,0.8580,N/A,N/A,N/A,240000 ms
-Brain,MONAI Baseline,0.8350,N/A,N/A,N/A,12500 ms
-Chest,AURA DenseNet-121,N/A,0.8095,0.333,0.2087,47.88 ms
-Chest,Classical Baseline,N/A,0.7650,0.2850,0.2850,25.0 ms
+Component,Model,Mean Composite Dice,Macro AUROC,Macro F1,ECE,CPU Latency,Provenance,Scoring
+Brain,AURA ResU-Net,0.86515,N/A,N/A,N/A,14372.29 ms,measured here,pooled 2-D per-slice
+Brain,nnU-Net,0.8535,N/A,N/A,N/A,not measured,"published: Isensee et al. 2020, arXiv:2011.00848 abstract (BraTS 2020 winning entry)",per-case 3-D
+Brain,SwinUNETR,0.8897,N/A,N/A,N/A,not measured,"published: Hatamizadeh et al. 2021, arXiv:2201.01266 Table 3 (BraTS 2021 validation)",per-case 3-D
+Chest,AURA DenseNet-121,N/A,0.8095,0.333,0.2087,54.00 ms,measured here,MIMIC-CXR held-out

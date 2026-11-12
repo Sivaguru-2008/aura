@@ -61,6 +61,10 @@ def _auth() -> dict[str, str]:
     "/v1/admin/safety",
     "/v1/models",
     "/v1/model-card",
+    # Model-level evidence: no patient data, but it is still /v1 and is gated like
+    # the rest. The /quantum HTML shell that consumes it IS public (see below) —
+    # the shell carries no data, every figure arrives from this fetch.
+    "/v1/quantum/evidence",
 ])
 def test_reads_require_a_token(secured, path):
     """Every GET that can surface case or policy state answers 401 without a token."""
@@ -88,6 +92,16 @@ def test_token_without_principal_is_403(secured):
 def test_health_stays_public(secured):
     """Container/k8s probes run before any credential is injected."""
     assert secured.get("/v1/health").status_code == 200
+
+
+@pytest.mark.parametrize("path", ["/", "/app", "/history", "/quantum"])
+def test_html_shells_stay_public(secured, path):
+    """The view shells load without a token; their data fetches do not.
+
+    /quantum is included deliberately: it is a new top-level view, and a shell that
+    401s renders a blank page for an operator who has auth switched on.
+    """
+    assert secured.get(path).status_code == 200
 
 
 def test_mutations_still_gated(secured):
@@ -118,11 +132,26 @@ def test_every_v1_route_is_gated_unless_explicitly_public():
     is genuinely meant to be public it has to be named in PUBLIC_PATHS, which is a
     deliberate act rather than an oversight.
     """
-    ungated = [
-        r.path for r in app.routes
-        if getattr(r, "path", "").startswith("/v1") and security.is_public_path(r.path)
-    ]
-    assert ungated == ["/v1/health"], f"unexpectedly public /v1 routes: {ungated}"
+    all_paths = set()
+    for r in app.routes:
+        p = getattr(r, "path", None)
+        if p:
+            all_paths.add(p)
+        orig = getattr(r, "original_router", None) or getattr(r, "router", None)
+        if orig and hasattr(orig, "routes"):
+            for sub_r in orig.routes:
+                sub_p = getattr(sub_r, "path", None)
+                if sub_p:
+                    all_paths.add(sub_p)
+
+    ungated = {
+        p for p in all_paths
+        if p.startswith("/v1") and security.is_public_path(p)
+    }
+    # health for probes; auth/status, auth/session, auth/login and auth/logout
+    # are the sign-in handshake and return no case data (see security.PUBLIC_PATHS).
+    expected = {"/v1/health", "/v1/auth/status", "/v1/auth/session", "/v1/auth/login", "/v1/auth/logout"}
+    assert ungated == expected, f"unexpectedly public /v1 routes: {sorted(ungated - expected)}"
 
 
 def test_gate_is_inert_when_no_token_is_configured():

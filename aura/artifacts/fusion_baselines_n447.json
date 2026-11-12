@@ -1,0 +1,284 @@
+{
+  "purpose": "Adds a converged multinomial logistic regression \u2014 the correctly specified model class for this target under Section 5.1.2, fitted to optimality by L-BFGS rather than by 400 steps of fixed-rate gradient descent \u2014 to the Section 8.2 comparison, and reports the trainable parameter count of every arm. Tests whether the product-of-experts' likelihood deficit is a property of linear fusion or of its optimiser.",
+  "data": {
+    "source": "mimic-cxr",
+    "train_studies": 1338,
+    "calibration_studies": 446,
+    "test_studies": 447,
+    "patient_disjoint": true,
+    "evidence_channels": 8,
+    "constant_channels": [
+      7
+    ]
+  },
+  "provenance": {
+    "classical": "served artifact fusion_classical.npz",
+    "quantum": "served artifact fusion_quantum.npz (8 qubits, 3 layers, ring)",
+    "learnable": "served artifact fusion_learnable.npz",
+    "logistic": "fitted here by sklearn LogisticRegression, lbfgs, tol=1e-8",
+    "note": "The three published arms are the served models; this script asserts they reproduce Table 6 exactly."
+  },
+  "reproduction_of_published_table6": {
+    "classical": {
+      "matches_published_table6": true,
+      "published": {
+        "temperature": 0.479,
+        "accuracy": 0.5414,
+        "correct": 242,
+        "nll": 1.3026,
+        "ece": 0.1266
+      },
+      "regenerated": {
+        "temperature": 0.479,
+        "accuracy": 0.5414,
+        "correct": 242,
+        "nll": 1.3026,
+        "ece": 0.1266
+      }
+    },
+    "quantum": {
+      "matches_published_table6": true,
+      "published": {
+        "temperature": 0.9057,
+        "accuracy": 0.5324,
+        "correct": 238,
+        "nll": 1.2853,
+        "ece": 0.0896
+      },
+      "regenerated": {
+        "temperature": 0.9057,
+        "accuracy": 0.5324,
+        "correct": 238,
+        "nll": 1.2853,
+        "ece": 0.0896
+      }
+    },
+    "learnable": {
+      "matches_published_table6": true,
+      "published": {
+        "temperature": 0.8867,
+        "accuracy": 0.5526,
+        "correct": 247,
+        "nll": 1.2663,
+        "ece": 0.0902
+      },
+      "regenerated": {
+        "temperature": 0.8867,
+        "accuracy": 0.5526,
+        "correct": 247,
+        "nll": 1.2663,
+        "ece": 0.0902
+      }
+    }
+  },
+  "trainable_parameters": {
+    "classical": 54,
+    "quantum": 102,
+    "learnable": 126,
+    "logistic": 54
+  },
+  "logistic_selection": {
+    "grid_C": [
+      0.01,
+      0.1,
+      1.0,
+      10.0,
+      100.0,
+      1000.0
+    ],
+    "selected_C": 1000.0,
+    "selected_on": "calibration split, by temperature-scaled NLL",
+    "lbfgs_iterations": 356,
+    "converged": true,
+    "search": [
+      {
+        "C": 0.01,
+        "calibration_nll": 1.6121,
+        "calibration_accuracy": 0.417
+      },
+      {
+        "C": 0.1,
+        "calibration_nll": 1.3945,
+        "calibration_accuracy": 0.4821
+      },
+      {
+        "C": 1.0,
+        "calibration_nll": 1.3065,
+        "calibration_accuracy": 0.5067
+      },
+      {
+        "C": 10.0,
+        "calibration_nll": 1.28,
+        "calibration_accuracy": 0.5157
+      },
+      {
+        "C": 100.0,
+        "calibration_nll": 1.2767,
+        "calibration_accuracy": 0.5202
+      },
+      {
+        "C": 1000.0,
+        "calibration_nll": 1.2766,
+        "calibration_accuracy": 0.5179
+      }
+    ]
+  },
+  "majority_class_floor": {
+    "accuracy": 0.2371,
+    "correct": 106,
+    "n": 447,
+    "accuracy_ci95_jeffreys": [
+      0.1995,
+      0.2782
+    ],
+    "class": "heart_failure",
+    "support": {
+      "normal": 102,
+      "pneumonia": 98,
+      "heart_failure": 106,
+      "copd": 67,
+      "malignancy": 59,
+      "pneumothorax_dx": 15
+    }
+  },
+  "backends": {
+    "classical": {
+      "n": 447,
+      "temperature": 0.479,
+      "accuracy": 0.5414,
+      "correct": 242,
+      "accuracy_ci95_jeffreys": [
+        0.4951,
+        0.5872
+      ],
+      "nll": 1.3026,
+      "ece": 0.1266,
+      "macro_auroc": 0.8045
+    },
+    "quantum": {
+      "n": 447,
+      "temperature": 0.9057,
+      "accuracy": 0.5324,
+      "correct": 238,
+      "accuracy_ci95_jeffreys": [
+        0.4861,
+        0.5784
+      ],
+      "nll": 1.2853,
+      "ece": 0.0896,
+      "macro_auroc": 0.8014
+    },
+    "learnable": {
+      "n": 447,
+      "temperature": 0.8867,
+      "accuracy": 0.5526,
+      "correct": 247,
+      "accuracy_ci95_jeffreys": [
+        0.5063,
+        0.5982
+      ],
+      "nll": 1.2663,
+      "ece": 0.0902,
+      "macro_auroc": 0.8056
+    },
+    "logistic": {
+      "n": 447,
+      "temperature": 1.0717,
+      "accuracy": 0.557,
+      "correct": 249,
+      "accuracy_ci95_jeffreys": [
+        0.5108,
+        0.6026
+      ],
+      "nll": 1.231,
+      "ece": 0.0862,
+      "macro_auroc": 0.8227
+    }
+  },
+  "pairwise": {
+    "classical_vs_quantum": {
+      "delta_accuracy": 0.009,
+      "mcnemar": {
+        "discordant": 50,
+        "a_only": 27,
+        "b_only": 23,
+        "p": 0.671811
+      },
+      "delta_nll": 0.0173,
+      "nll_wilcoxon_p": 0.00596,
+      "nll_diff_normal": false,
+      "mcnemar_p_holm": 1.0,
+      "nll_wilcoxon_p_holm": 0.02384
+    },
+    "classical_vs_learnable": {
+      "delta_accuracy": -0.0112,
+      "mcnemar": {
+        "discordant": 43,
+        "a_only": 19,
+        "b_only": 24,
+        "p": 0.542384
+      },
+      "delta_nll": 0.0363,
+      "nll_wilcoxon_p": 7.296e-06,
+      "nll_diff_normal": false,
+      "mcnemar_p_holm": 1.0,
+      "nll_wilcoxon_p_holm": 3.6e-05
+    },
+    "classical_vs_logistic": {
+      "delta_accuracy": -0.0156,
+      "mcnemar": {
+        "discordant": 45,
+        "a_only": 19,
+        "b_only": 26,
+        "p": 0.371298
+      },
+      "delta_nll": 0.0716,
+      "nll_wilcoxon_p": 1.72e-07,
+      "nll_diff_normal": false,
+      "mcnemar_p_holm": 1.0,
+      "nll_wilcoxon_p_holm": 1e-06
+    },
+    "quantum_vs_learnable": {
+      "delta_accuracy": -0.0202,
+      "mcnemar": {
+        "discordant": 35,
+        "a_only": 13,
+        "b_only": 22,
+        "p": 0.175465
+      },
+      "delta_nll": 0.019,
+      "nll_wilcoxon_p": 0.05218,
+      "nll_diff_normal": false,
+      "mcnemar_p_holm": 0.914448,
+      "nll_wilcoxon_p_holm": 0.1044
+    },
+    "quantum_vs_logistic": {
+      "delta_accuracy": -0.0246,
+      "mcnemar": {
+        "discordant": 49,
+        "a_only": 19,
+        "b_only": 30,
+        "p": 0.152408
+      },
+      "delta_nll": 0.0543,
+      "nll_wilcoxon_p": 0.01208,
+      "nll_diff_normal": false,
+      "mcnemar_p_holm": 0.914448,
+      "nll_wilcoxon_p_holm": 0.03623
+    },
+    "learnable_vs_logistic": {
+      "delta_accuracy": -0.0044,
+      "mcnemar": {
+        "discordant": 34,
+        "a_only": 16,
+        "b_only": 18,
+        "p": 0.864166
+      },
+      "delta_nll": 0.0353,
+      "nll_wilcoxon_p": 0.4151,
+      "nll_diff_normal": false,
+      "mcnemar_p_holm": 1.0,
+      "nll_wilcoxon_p_holm": 0.4151
+    }
+  }
+}

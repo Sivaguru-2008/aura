@@ -225,62 +225,27 @@ def mcnemar_exact(a_correct, b_correct):
 
 
 # ---- DeLong (Sun & Xu 2014 fast algorithm) for two correlated ROC curves --- #
-def _compute_midrank(x):
-    J = np.argsort(x)
-    Z = x[J]
-    N = len(x)
-    T = np.zeros(N, dtype=float)
-    i = 0
-    while i < N:
-        j = i
-        while j < N and Z[j] == Z[i]:
-            j += 1
-        T[i:j] = 0.5 * (i + j - 1) + 1
-        i = j
-    T2 = np.empty(N, dtype=float)
-    T2[J] = T
-    return T2
-
-
-def _fast_delong(predictions_sorted_transposed, label_1_count):
-    m = label_1_count
-    n = predictions_sorted_transposed.shape[1] - m
-    positive = predictions_sorted_transposed[:, :m]
-    negative = predictions_sorted_transposed[:, m:]
-    k = predictions_sorted_transposed.shape[0]
-    tx = np.empty([k, m]); ty = np.empty([k, n]); tz = np.empty([k, m + n])
-    for r in range(k):
-        tx[r, :] = _compute_midrank(positive[r, :])
-        ty[r, :] = _compute_midrank(negative[r, :])
-        tz[r, :] = _compute_midrank(predictions_sorted_transposed[r, :])
-    aucs = tz[:, :m].sum(axis=1) / m / n - float(m + 1.0) / 2.0 / n
-    v01 = (tz[:, :m] - tx[:, :]) / n
-    v10 = 1.0 - (tz[:, m:] - ty[:, :]) / m
-    sx = np.cov(v01)
-    sy = np.cov(v10)
-    delongcov = sx / m + sy / n
-    return aucs, delongcov
-
-
 def delong_test(y_true, prob_a, prob_b):
     """Two-sided DeLong test for AUROC(a) == AUROC(b) on the same binary labels.
 
     Returns (auc_a, auc_b, z, p). NaN if a class is degenerate.
+
+    Delegates to ``aura.ml.evaluation.delong``, which is the single implementation
+    of this statistic in the repository. It used to be implemented twice — once
+    here and once nowhere else, which is how Section 5.3's method statement came to
+    describe a procedure no packaged evaluation script could call. Two
+    implementations of one statistic are a drift risk of exactly the kind P6
+    exists to prevent, so this is a wrapper and not a copy.
     """
-    from scipy.stats import norm
+    from aura.ml.evaluation.delong import delong_test as _packaged
+
     y = np.asarray(y_true, dtype=int)
     if y.sum() == 0 or y.sum() == len(y):
         return float("nan"), float("nan"), float("nan"), float("nan")
-    order = (-y).argsort(kind="mergesort")
-    label_1_count = int(y.sum())
-    preds = np.vstack([np.asarray(prob_a, float)[order], np.asarray(prob_b, float)[order]])
-    aucs, cov = _fast_delong(preds, label_1_count)
-    var = cov[0, 0] + cov[1, 1] - 2 * cov[0, 1]
-    if var <= 0:
-        return float(aucs[0]), float(aucs[1]), float("nan"), float("nan")
-    z = (aucs[0] - aucs[1]) / np.sqrt(var)
-    p = 2 * norm.sf(abs(z))
-    return float(aucs[0]), float(aucs[1]), float(z), float(p)
+    r = _packaged(np.asarray(prob_a, float), np.asarray(prob_b, float), y.astype(bool))
+    if r["z"] is None:
+        return r["auroc_a"], r["auroc_b"], float("nan"), float("nan")
+    return r["auroc_a"], r["auroc_b"], r["z"], r["p"]
 
 
 def permutation_test_diff(a_correct, b_correct, n_perm=10000, rng=None):
@@ -381,12 +346,56 @@ def run_audit() -> Path:
     labels = [d.value for d in DIAGNOSES]
     n_classes = len(labels)
 
-    _, va, te = make_splits(N_SAMPLES, seed=SEED + 101)   # identical recipe to benchmark
-    Xva, yva = build_evidence_dataset(va)
-    Xte, yte = build_evidence_dataset(te)
+    # -- the evaluation split must come from the distribution the served models
+    #    were TRAINED on.
+    #
+    #    This harness originally drew its held-out set from the synthetic evidence
+    #    world (`make_splits` + `build_evidence_dataset`), which was correct while
+    #    the fusion heads were themselves fitted on synthetic evidence. Audit
+    #    finding F1 then retrained them on real MIMIC-CXR evidence (CHANGELOG
+    #    1.1.0, 2026-07-21) and this file was not updated. Every run from that date
+    #    evaluated real-trained models on out-of-distribution synthetic vectors and
+    #    reported *below-chance* accuracy — 0.010 against a 1/6 floor — while the
+    #    verdict logic below still printed "VALIDATED" for one claim. The mismatch
+    #    is silent because both paths return well-formed arrays.
+    #
+    #    So: prefer the same cached real-evidence split the manuscript's experiments
+    #    use, and fall back to synthetic only when the corpus is absent — loudly, and
+    #    recorded in the manifest, because a fallback changes what the run means.
+    data_world = "mimic-cxr"
+    try:
+        from aura.ml.evaluation.quantum_study import load_evidence
+        _Xtr, _ytr, Xva, yva, Xte, yte, _src = load_evidence(n=1338, seed=SEED)
+        if str(_src) != "mimic-cxr":
+            data_world = str(_src)
+    except Exception as e:                                    # pragma: no cover
+        log.warning("real evidence unavailable (%r) — falling back to the synthetic "
+                    "world. The served fusion heads are fitted on real evidence, so "
+                    "these metrics are OUT OF DISTRIBUTION and are not comparable "
+                    "with any figure in the manuscript.", e)
+        data_world = "synthetic-fallback"
+        _, va, te = make_splits(N_SAMPLES, seed=SEED + 101)
+        Xva, yva = build_evidence_dataset(va)
+        Xte, yte = build_evidence_dataset(te)
+
+    Xva = np.asarray(Xva, float); yva = np.asarray(yva, int)
     Xte = np.asarray(Xte, float); yte = np.asarray(yte, int)
-    log.info("held-out: n=%d  classes=%d  class_counts=%s",
-             len(yte), n_classes, np.bincount(yte, minlength=n_classes).tolist())
+    log.info("held-out: n=%d  classes=%d  world=%s  class_counts=%s",
+             len(yte), n_classes, data_world,
+             np.bincount(yte, minlength=n_classes).tolist())
+
+    # A served model scoring below the majority-class floor is a wiring fault, not
+    # a finding. Refusing to proceed is the point: the previous behaviour was to
+    # emit a full report of below-chance numbers with a "VALIDATED" verdict in it.
+    _floor = float(np.bincount(yte, minlength=n_classes).max() / len(yte))
+    _q_acc = float((np.array([q.logits(x) for x in Xte]).argmax(1) == yte).mean())
+    if _q_acc < 1.0 / n_classes:
+        raise RuntimeError(
+            f"served quantum head scores {_q_acc:.3f} on the {data_world} split, "
+            f"below the {1.0 / n_classes:.3f} chance rate (majority floor {_floor:.3f}). "
+            f"That is a distribution or label-alignment fault, not a result. Audit "
+            f"aborted rather than reporting it."
+        )
 
     q_logits = np.array([q.logits(x) for x in Xte])
     c_logits = np.array([c.logits(x) for x in Xte])
@@ -518,6 +527,8 @@ def run_audit() -> Path:
 
     # -- manifest ---------------------------------------------------------- #
     manifest["n_eval"] = int(len(yte))
+    manifest["data_world"] = data_world
+    manifest["majority_class_floor"] = round(_floor, 4)
     manifest["temperatures"] = {"quantum_shipped": T_q, "classical_fair": T_c}
     manifest["backends"] = list(backends.keys())
     manifest["outputs"] = {

@@ -1,0 +1,338 @@
+{
+  "purpose": "External validation of the Section 8.2 fusion comparison on CheXpert (Stanford) with every model frozen and only per-arm temperature refit, under docs/PREREGISTRATION_CHEXPERT.md deposited at commit fa8c2b6.",
+  "preregistration": "docs/PREREGISTRATION_CHEXPERT.md (commit fa8c2b6)",
+  "data": {
+    "corpus": "CheXpert-v1.0-small train split",
+    "patients_requested": 8000,
+    "studies_scored": 8000,
+    "selection": "one study per patient, highest-numbered with a frontal view, file order",
+    "calibration_studies": 3200,
+    "test_studies": 4800,
+    "patient_disjoint": true,
+    "constant_channels": [
+      7
+    ],
+    "copd_derivable": false,
+    "copd_note": "The diagnosis map reaches COPD only through hyperinflation, which CheXpert does not label. Five of six categories are reachable; a COPD prediction can only be an error."
+  },
+  "frozen": [
+    "densenet121 + per-finding platt",
+    "evidence encoder",
+    "all four fusion backends including the logistic regression"
+  ],
+  "refit_on_chexpert": [
+    "one temperature per backend (P1)"
+  ],
+  "primary_uncertain_as_negative": {
+    "majority_class_floor": {
+      "accuracy": 0.3867,
+      "class": "normal",
+      "support": {
+        "normal": 1856,
+        "pneumonia": 1322,
+        "heart_failure": 1196,
+        "copd": 0,
+        "malignancy": 206,
+        "pneumothorax_dx": 220
+      }
+    },
+    "backends": {
+      "classical": {
+        "n": 4800,
+        "trainable_parameters": 54,
+        "temperature": 0.4306,
+        "accuracy": 0.5273,
+        "correct": 2531,
+        "accuracy_ci95_jeffreys": [
+          0.5132,
+          0.5414
+        ],
+        "nll": 1.4193,
+        "ece": 0.1346,
+        "macro_auroc": 0.7366,
+        "copd_predictions": 393
+      },
+      "quantum": {
+        "n": 4800,
+        "trainable_parameters": 102,
+        "temperature": 1.3089,
+        "accuracy": 0.4721,
+        "correct": 2266,
+        "accuracy_ci95_jeffreys": [
+          0.458,
+          0.4862
+        ],
+        "nll": 1.5782,
+        "ece": 0.1586,
+        "macro_auroc": 0.7259,
+        "copd_predictions": 279
+      },
+      "learnable": {
+        "n": 4800,
+        "trainable_parameters": 126,
+        "temperature": 1.2,
+        "accuracy": 0.4829,
+        "correct": 2318,
+        "accuracy_ci95_jeffreys": [
+          0.4688,
+          0.4971
+        ],
+        "nll": 1.5116,
+        "ece": 0.1424,
+        "macro_auroc": 0.7367,
+        "copd_predictions": 216
+      },
+      "logistic": {
+        "n": 4800,
+        "trainable_parameters": 54,
+        "temperature": 1.1091,
+        "accuracy": 0.521,
+        "correct": 2501,
+        "accuracy_ci95_jeffreys": [
+          0.5069,
+          0.5352
+        ],
+        "nll": 1.3815,
+        "ece": 0.1078,
+        "macro_auroc": 0.7298,
+        "copd_predictions": 209
+      }
+    },
+    "pairwise": {
+      "classical_vs_quantum": {
+        "delta_accuracy": 0.0552,
+        "mcnemar": {
+          "discordant": 587,
+          "a_only": 426,
+          "b_only": 161,
+          "p": 0.0
+        },
+        "delta_nll": -0.1589,
+        "nll_wilcoxon_p": 2.578e-153,
+        "mcnemar_p_holm": 0.0,
+        "nll_wilcoxon_p_holm": 0.0
+      },
+      "classical_vs_learnable": {
+        "delta_accuracy": 0.0444,
+        "mcnemar": {
+          "discordant": 615,
+          "a_only": 414,
+          "b_only": 201,
+          "p": 0.0
+        },
+        "delta_nll": -0.0923,
+        "nll_wilcoxon_p": 4.197e-80,
+        "mcnemar_p_holm": 0.0,
+        "nll_wilcoxon_p_holm": 0.0
+      },
+      "classical_vs_logistic": {
+        "delta_accuracy": 0.0063,
+        "mcnemar": {
+          "discordant": 578,
+          "a_only": 304,
+          "b_only": 274,
+          "p": 0.227694
+        },
+        "delta_nll": 0.0378,
+        "nll_wilcoxon_p": 3.407e-35,
+        "mcnemar_p_holm": 0.227694,
+        "nll_wilcoxon_p_holm": 0.0
+      },
+      "quantum_vs_learnable": {
+        "delta_accuracy": -0.0108,
+        "mcnemar": {
+          "discordant": 434,
+          "a_only": 191,
+          "b_only": 243,
+          "p": 0.014268
+        },
+        "delta_nll": 0.0666,
+        "nll_wilcoxon_p": 3.167e-95,
+        "mcnemar_p_holm": 0.028536,
+        "nll_wilcoxon_p_holm": 0.0
+      },
+      "quantum_vs_logistic": {
+        "delta_accuracy": -0.0489,
+        "mcnemar": {
+          "discordant": 671,
+          "a_only": 218,
+          "b_only": 453,
+          "p": 0.0
+        },
+        "delta_nll": 0.1967,
+        "nll_wilcoxon_p": 1.975e-197,
+        "mcnemar_p_holm": 0.0,
+        "nll_wilcoxon_p_holm": 0.0
+      },
+      "learnable_vs_logistic": {
+        "delta_accuracy": -0.0381,
+        "mcnemar": {
+          "discordant": 431,
+          "a_only": 124,
+          "b_only": 307,
+          "p": 0.0
+        },
+        "delta_nll": 0.1301,
+        "nll_wilcoxon_p": 1.909e-196,
+        "mcnemar_p_holm": 0.0,
+        "nll_wilcoxon_p_holm": 0.0
+      }
+    }
+  },
+  "sensitivity_uncertain_as_positive": {
+    "majority_class_floor": {
+      "accuracy": 0.3227,
+      "class": "pneumonia",
+      "support": {
+        "normal": 1497,
+        "pneumonia": 1549,
+        "heart_failure": 1285,
+        "copd": 0,
+        "malignancy": 197,
+        "pneumothorax_dx": 272
+      }
+    },
+    "backends": {
+      "classical": {
+        "n": 4800,
+        "trainable_parameters": 54,
+        "temperature": 0.441,
+        "accuracy": 0.506,
+        "correct": 2429,
+        "accuracy_ci95_jeffreys": [
+          0.4919,
+          0.5202
+        ],
+        "nll": 1.4084,
+        "ece": 0.1197,
+        "macro_auroc": 0.7342,
+        "copd_predictions": 393
+      },
+      "quantum": {
+        "n": 4800,
+        "trainable_parameters": 102,
+        "temperature": 1.2545,
+        "accuracy": 0.4598,
+        "correct": 2207,
+        "accuracy_ci95_jeffreys": [
+          0.4457,
+          0.4739
+        ],
+        "nll": 1.5433,
+        "ece": 0.1412,
+        "macro_auroc": 0.7208,
+        "copd_predictions": 279
+      },
+      "learnable": {
+        "n": 4800,
+        "trainable_parameters": 126,
+        "temperature": 1.1869,
+        "accuracy": 0.4773,
+        "correct": 2291,
+        "accuracy_ci95_jeffreys": [
+          0.4632,
+          0.4914
+        ],
+        "nll": 1.4826,
+        "ece": 0.129,
+        "macro_auroc": 0.7399,
+        "copd_predictions": 216
+      },
+      "logistic": {
+        "n": 4800,
+        "trainable_parameters": 54,
+        "temperature": 1.1714,
+        "accuracy": 0.5056,
+        "correct": 2427,
+        "accuracy_ci95_jeffreys": [
+          0.4915,
+          0.5198
+        ],
+        "nll": 1.3956,
+        "ece": 0.093,
+        "macro_auroc": 0.7332,
+        "copd_predictions": 209
+      }
+    },
+    "pairwise": {
+      "classical_vs_quantum": {
+        "delta_accuracy": 0.0462,
+        "mcnemar": {
+          "discordant": 580,
+          "a_only": 401,
+          "b_only": 179,
+          "p": 0.0
+        },
+        "delta_nll": -0.1349,
+        "nll_wilcoxon_p": 4.174e-114,
+        "mcnemar_p_holm": 0.0,
+        "nll_wilcoxon_p_holm": 0.0
+      },
+      "classical_vs_learnable": {
+        "delta_accuracy": 0.0287,
+        "mcnemar": {
+          "discordant": 600,
+          "a_only": 369,
+          "b_only": 231,
+          "p": 0.0
+        },
+        "delta_nll": -0.0742,
+        "nll_wilcoxon_p": 6.475e-44,
+        "mcnemar_p_holm": 0.0,
+        "nll_wilcoxon_p_holm": 0.0
+      },
+      "classical_vs_logistic": {
+        "delta_accuracy": 0.0004,
+        "mcnemar": {
+          "discordant": 570,
+          "a_only": 286,
+          "b_only": 284,
+          "p": 0.966595
+        },
+        "delta_nll": 0.0128,
+        "nll_wilcoxon_p": 2.779e-18,
+        "mcnemar_p_holm": 0.966595,
+        "nll_wilcoxon_p_holm": 0.0
+      },
+      "quantum_vs_learnable": {
+        "delta_accuracy": -0.0175,
+        "mcnemar": {
+          "discordant": 430,
+          "a_only": 173,
+          "b_only": 257,
+          "p": 6e-05
+        },
+        "delta_nll": 0.0607,
+        "nll_wilcoxon_p": 3.111e-78,
+        "mcnemar_p_holm": 0.00012,
+        "nll_wilcoxon_p_holm": 0.0
+      },
+      "quantum_vs_logistic": {
+        "delta_accuracy": -0.0458,
+        "mcnemar": {
+          "discordant": 664,
+          "a_only": 222,
+          "b_only": 442,
+          "p": 0.0
+        },
+        "delta_nll": 0.1477,
+        "nll_wilcoxon_p": 2.669e-153,
+        "mcnemar_p_holm": 0.0,
+        "nll_wilcoxon_p_holm": 0.0
+      },
+      "learnable_vs_logistic": {
+        "delta_accuracy": -0.0283,
+        "mcnemar": {
+          "discordant": 426,
+          "a_only": 145,
+          "b_only": 281,
+          "p": 0.0
+        },
+        "delta_nll": 0.087,
+        "nll_wilcoxon_p": 1.73e-135,
+        "mcnemar_p_holm": 0.0,
+        "nll_wilcoxon_p_holm": 0.0
+      }
+    }
+  }
+}

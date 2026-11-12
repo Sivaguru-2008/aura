@@ -205,6 +205,16 @@ precision; escalate to a human). Over 447 studies: 86.4% commit, median 128 shot
 fixed 512 budget, and of 61 abstentions **1 was measurement‑limited and 60 model‑limited**.
 That capability is on the serving path, and it is the answer to "what did quantum buy you?"
 
+> **Correction, 2026-09-12 — the paragraph above is superseded.** The typed-abstention
+> capability was **retracted** on source audit (`docs/RESEARCH_PAPER_v5.md` §2.8): the
+> implementation adds closed-form shot noise to the analytic expectation, so the
+> measurement-limited / model-limited split is a threshold on the analytic margin that a
+> classical model can compute too. The shot-efficiency numbers stand as measurements; the
+> "every classical model conflates" reading does not. And it is no longer on the serving
+> path: the product serves the **classical** backend, which generalised better on the
+> preregistered CheXpert external validation (n = 4,800: accuracy 0.5273 vs 0.4721,
+> `aura/artifacts/chexpert_external.json`). QMBA runs only with `AURA_FUSION_BACKEND=quantum`.
+
 **What it does not buy.** A built‑in, reproducible benchmark on real MIMIC‑CXR evidence, with
 **each backend temperature‑scaled on its own calibration split** (a *fair* fight), shows the
 VQC does **not** beat a fairly‑calibrated classical head:

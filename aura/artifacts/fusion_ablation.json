@@ -34,5 +34,11 @@
     "agent_accuracy_at_commit": 0.6951,
     "agent_avg_initial_entropy": 1.6779,
     "agent_avg_final_entropy": 1.4852
+  },
+  "provenance": {
+    "SUPERSEDED": "This artifact must not be cited. It records neither its sample size nor its split identifier, so its numbers cannot be attributed to a cohort (Section 11.7, defect 6). The selective-prediction analysis it was published to support has been redone on the primary 447-study split and withdrawn on the evidence of that redo; see artifacts/risk_coverage_n447.json and Section 9.1. Retained only so that the earlier published numbers remain traceable to a file.",
+    "split": "UNRECORDED \u2014 not reconstructible from this artifact",
+    "n": "UNRECORDED \u2014 not reconstructible from this artifact",
+    "superseded_by": "artifacts/risk_coverage_n447.json"
   }
 }

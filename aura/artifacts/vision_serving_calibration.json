@@ -1,8 +1,7 @@
 {
   "method": "per_finding_platt",
-  "source": "artifacts/calibration/calibration.json (full-val fit, n=2099)",
+  "labeler": "v2",
   "n_images": 2099,
-  "provenance": "Re-wired 2026-07-21 from the validated full-val (n=2099) fit. The prior served file was a degenerate n=16 fit written by run_calibration(limit=3) in tests; that clobbering is now fixed (write gated to canonical runs). Backup: artifacts/vision_serving_calibration.n16.bak.json.",
   "per_finding_platt": {
     "opacity": {
       "a": 1.1748,
@@ -44,12 +43,21 @@
   },
   "per_finding_threshold": {
     "opacity": 0.2743,
-    "consolidation": 0.1985,
-    "pleural_effusion": 0.2854,
-    "cardiomegaly": 0.22,
-    "nodule": 0.1495,
-    "pneumothorax": 0.1692,
+    "consolidation": 0.0596,
+    "pleural_effusion": 0.3847,
+    "cardiomegaly": 0.3057,
+    "nodule": 0.0342,
+    "pneumothorax": 0.0334,
     "hyperinflation": 0.1351
+  },
+  "per_finding_threshold_policy": {
+    "opacity": "f1_optimal",
+    "consolidation": "sensitivity_floor>=0.80",
+    "pleural_effusion": "sensitivity_floor>=0.70",
+    "cardiomegaly": "sensitivity_floor>=0.70",
+    "nodule": "sensitivity_floor>=0.70",
+    "pneumothorax": "sensitivity_floor>=0.80",
+    "hyperinflation": "f1_optimal"
   },
   "mean_ece_before": 0.1808,
   "mean_ece_after": 0.0256

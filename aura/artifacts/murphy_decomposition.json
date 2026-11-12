@@ -1,0 +1,2027 @@
+{
+  "purpose": "Murphy/DeGroot-Fienberg decomposition of the multiclass Brier score for the entanglement ablation. Answers whether the ring trades refinement for calibration, which Section 8.3 previously inferred from the sign of ECE rather than measured. Forecasts are grouped by k-means on the simplex and the reconstruction residual is reported, because the decomposition identity is exact only for identical forecast vectors.",
+  "protocol": {
+    "seeds": [
+      7,
+      11,
+      13,
+      17,
+      19,
+      23,
+      29,
+      31,
+      37,
+      41
+    ],
+    "epochs": 30,
+    "n_layers": 3,
+    "widths": [
+      8,
+      7
+    ],
+    "group_counts": [
+      5,
+      10,
+      20
+    ],
+    "grouping": "k-means on the predicted probability vector",
+    "data": "cached quantum_study_evidence.npz",
+    "n_train": 1338,
+    "n_cal": 446,
+    "n_test": 447,
+    "source": "mimic-cxr",
+    "note": "7-qubit runs drop the constant prior_risk channel (channel 8), which is identically zero across all splits."
+  },
+  "by_width": {
+    "8q": {
+      "per_seed": [
+        {
+          "seed": 7,
+          "temperature_ring": 1.1342,
+          "temperature_product": 1.0901,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.011607,
+                "resolution": 0.155992,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.658232,
+                "actual_brier": 0.614061,
+                "residual": -0.04417,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.013121,
+                "resolution": 0.120509,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.695229,
+                "actual_brier": 0.602302,
+                "residual": -0.092927,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": -0.001514,
+              "delta_resolution": 0.035483,
+              "delta_brier_actual": 0.011759,
+              "delta_residual": 0.048757
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.024742,
+                "resolution": 0.187688,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.63967,
+                "actual_brier": 0.614061,
+                "residual": -0.025609,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.025762,
+                "resolution": 0.196484,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.631895,
+                "actual_brier": 0.602302,
+                "residual": -0.029593,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": -0.00102,
+              "delta_resolution": -0.008796,
+              "delta_brier_actual": 0.011759,
+              "delta_residual": 0.003984
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.042206,
+                "resolution": 0.22106,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.623762,
+                "actual_brier": 0.614061,
+                "residual": -0.009701,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.039164,
+                "resolution": 0.220658,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.621123,
+                "actual_brier": 0.602302,
+                "residual": -0.018821,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": 0.003042,
+              "delta_resolution": 0.000402,
+              "delta_brier_actual": 0.011759,
+              "delta_residual": 0.00912
+            }
+          }
+        },
+        {
+          "seed": 11,
+          "temperature_ring": 1.0137,
+          "temperature_product": 1.0296,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.015899,
+                "resolution": 0.160423,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.658093,
+                "actual_brier": 0.618984,
+                "residual": -0.039109,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.014589,
+                "resolution": 0.117227,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.699978,
+                "actual_brier": 0.601884,
+                "residual": -0.098094,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": 0.00131,
+              "delta_resolution": 0.043196,
+              "delta_brier_actual": 0.0171,
+              "delta_residual": 0.058985
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.019504,
+                "resolution": 0.176379,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.645741,
+                "actual_brier": 0.618984,
+                "residual": -0.026758,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.027753,
+                "resolution": 0.200492,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.629878,
+                "actual_brier": 0.601884,
+                "residual": -0.027994,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": -0.008249,
+              "delta_resolution": -0.024113,
+              "delta_brier_actual": 0.0171,
+              "delta_residual": 0.001236
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.043499,
+                "resolution": 0.219823,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.626293,
+                "actual_brier": 0.618984,
+                "residual": -0.007309,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.03966,
+                "resolution": 0.222869,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.619408,
+                "actual_brier": 0.601884,
+                "residual": -0.017523,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": 0.003839,
+              "delta_resolution": -0.003046,
+              "delta_brier_actual": 0.0171,
+              "delta_residual": 0.010214
+            }
+          }
+        },
+        {
+          "seed": 13,
+          "temperature_ring": 0.8916,
+          "temperature_product": 0.9977,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.017002,
+                "resolution": 0.156624,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.662994,
+                "actual_brier": 0.616921,
+                "residual": -0.046073,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.024184,
+                "resolution": 0.131598,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.695203,
+                "actual_brier": 0.612415,
+                "residual": -0.082788,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": -0.007182,
+              "delta_resolution": 0.025026,
+              "delta_brier_actual": 0.004506,
+              "delta_residual": 0.036715
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.02941,
+                "resolution": 0.186442,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.645585,
+                "actual_brier": 0.616921,
+                "residual": -0.028663,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.037267,
+                "resolution": 0.196422,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.643461,
+                "actual_brier": 0.612415,
+                "residual": -0.031046,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": -0.007857,
+              "delta_resolution": -0.00998,
+              "delta_brier_actual": 0.004506,
+              "delta_residual": 0.002383
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.047264,
+                "resolution": 0.2175,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.63238,
+                "actual_brier": 0.616921,
+                "residual": -0.015459,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.055015,
+                "resolution": 0.234313,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.623319,
+                "actual_brier": 0.612415,
+                "residual": -0.010904,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": -0.007751,
+              "delta_resolution": -0.016813,
+              "delta_brier_actual": 0.004506,
+              "delta_residual": -0.004555
+            }
+          }
+        },
+        {
+          "seed": 17,
+          "temperature_ring": 1.0563,
+          "temperature_product": 1.124,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.01249,
+                "resolution": 0.152095,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.663012,
+                "actual_brier": 0.612904,
+                "residual": -0.050108,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.014989,
+                "resolution": 0.163117,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.654489,
+                "actual_brier": 0.604428,
+                "residual": -0.050061,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": -0.002499,
+              "delta_resolution": -0.011022,
+              "delta_brier_actual": 0.008476,
+              "delta_residual": -4.7e-05
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.025093,
+                "resolution": 0.19175,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.635959,
+                "actual_brier": 0.612904,
+                "residual": -0.023056,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.028367,
+                "resolution": 0.200151,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.630832,
+                "actual_brier": 0.604428,
+                "residual": -0.026404,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": -0.003274,
+              "delta_resolution": -0.008401,
+              "delta_brier_actual": 0.008476,
+              "delta_residual": 0.003348
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.043139,
+                "resolution": 0.222858,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.622897,
+                "actual_brier": 0.612904,
+                "residual": -0.009993,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.044208,
+                "resolution": 0.218368,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.628457,
+                "actual_brier": 0.604428,
+                "residual": -0.024029,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": -0.001069,
+              "delta_resolution": 0.00449,
+              "delta_brier_actual": 0.008476,
+              "delta_residual": 0.014036
+            }
+          }
+        },
+        {
+          "seed": 19,
+          "temperature_ring": 0.9781,
+          "temperature_product": 1.0806,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.008667,
+                "resolution": 0.158724,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.65256,
+                "actual_brier": 0.60368,
+                "residual": -0.04888,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.007652,
+                "resolution": 0.162049,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.64822,
+                "actual_brier": 0.593989,
+                "residual": -0.054231,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": 0.001015,
+              "delta_resolution": -0.003325,
+              "delta_brier_actual": 0.009691,
+              "delta_residual": 0.005351
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.016681,
+                "resolution": 0.189129,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.630168,
+                "actual_brier": 0.60368,
+                "residual": -0.026489,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.018755,
+                "resolution": 0.194929,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.626442,
+                "actual_brier": 0.593989,
+                "residual": -0.032453,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": -0.002074,
+              "delta_resolution": -0.0058,
+              "delta_brier_actual": 0.009691,
+              "delta_residual": 0.005964
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.035937,
+                "resolution": 0.22044,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.618114,
+                "actual_brier": 0.60368,
+                "residual": -0.014434,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.033661,
+                "resolution": 0.224859,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.611419,
+                "actual_brier": 0.593989,
+                "residual": -0.01743,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": 0.002276,
+              "delta_resolution": -0.004419,
+              "delta_brier_actual": 0.009691,
+              "delta_residual": 0.002996
+            }
+          }
+        },
+        {
+          "seed": 23,
+          "temperature_ring": 1.0526,
+          "temperature_product": 1.167,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.009373,
+                "resolution": 0.158018,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.653971,
+                "actual_brier": 0.606508,
+                "residual": -0.047463,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.017765,
+                "resolution": 0.116317,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.704065,
+                "actual_brier": 0.610935,
+                "residual": -0.09313,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": -0.008392,
+              "delta_resolution": 0.041701,
+              "delta_brier_actual": -0.004427,
+              "delta_residual": 0.045667
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.018765,
+                "resolution": 0.187056,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.634326,
+                "actual_brier": 0.606508,
+                "residual": -0.027817,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.02471,
+                "resolution": 0.173571,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.653756,
+                "actual_brier": 0.610935,
+                "residual": -0.042821,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": -0.005945,
+              "delta_resolution": 0.013485,
+              "delta_brier_actual": -0.004427,
+              "delta_residual": 0.015004
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.040407,
+                "resolution": 0.225827,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.617197,
+                "actual_brier": 0.606508,
+                "residual": -0.010689,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.04442,
+                "resolution": 0.2182,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.628836,
+                "actual_brier": 0.610935,
+                "residual": -0.017901,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": -0.004013,
+              "delta_resolution": 0.007627,
+              "delta_brier_actual": -0.004427,
+              "delta_residual": 0.007212
+            }
+          }
+        },
+        {
+          "seed": 29,
+          "temperature_ring": 0.902,
+          "temperature_product": 0.9573,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.014284,
+                "resolution": 0.150334,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.666567,
+                "actual_brier": 0.612938,
+                "residual": -0.053629,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.020666,
+                "resolution": 0.123363,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.699919,
+                "actual_brier": 0.606109,
+                "residual": -0.09381,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": -0.006382,
+              "delta_resolution": 0.026971,
+              "delta_brier_actual": 0.006829,
+              "delta_residual": 0.040181
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.026988,
+                "resolution": 0.192758,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.636846,
+                "actual_brier": 0.612938,
+                "residual": -0.023908,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.028873,
+                "resolution": 0.189839,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.64165,
+                "actual_brier": 0.606109,
+                "residual": -0.035542,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": -0.001885,
+              "delta_resolution": 0.002919,
+              "delta_brier_actual": 0.006829,
+              "delta_residual": 0.011634
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.051904,
+                "resolution": 0.227286,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.627235,
+                "actual_brier": 0.612938,
+                "residual": -0.014296,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.0444,
+                "resolution": 0.225076,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.62194,
+                "actual_brier": 0.606109,
+                "residual": -0.015831,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": 0.007504,
+              "delta_resolution": 0.00221,
+              "delta_brier_actual": 0.006829,
+              "delta_residual": 0.001535
+            }
+          }
+        },
+        {
+          "seed": 31,
+          "temperature_ring": 1.0299,
+          "temperature_product": 1.0496,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.016386,
+                "resolution": 0.159132,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.659871,
+                "actual_brier": 0.615249,
+                "residual": -0.044622,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.013525,
+                "resolution": 0.124058,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.692083,
+                "actual_brier": 0.597601,
+                "residual": -0.094482,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": 0.002861,
+              "delta_resolution": 0.035074,
+              "delta_brier_actual": 0.017648,
+              "delta_residual": 0.04986
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.021967,
+                "resolution": 0.185652,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.638932,
+                "actual_brier": 0.615249,
+                "residual": -0.023683,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.023571,
+                "resolution": 0.200957,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.625231,
+                "actual_brier": 0.597601,
+                "residual": -0.02763,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": -0.001604,
+              "delta_resolution": -0.015305,
+              "delta_brier_actual": 0.017648,
+              "delta_residual": 0.003947
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.047878,
+                "resolution": 0.225054,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.62544,
+                "actual_brier": 0.615249,
+                "residual": -0.010191,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.036795,
+                "resolution": 0.222174,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.617237,
+                "actual_brier": 0.597601,
+                "residual": -0.019636,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": 0.011083,
+              "delta_resolution": 0.00288,
+              "delta_brier_actual": 0.017648,
+              "delta_residual": 0.009445
+            }
+          }
+        },
+        {
+          "seed": 37,
+          "temperature_ring": 1.1602,
+          "temperature_product": 1.1837,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.013857,
+                "resolution": 0.154973,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.661501,
+                "actual_brier": 0.613772,
+                "residual": -0.047729,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.022695,
+                "resolution": 0.125716,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.699596,
+                "actual_brier": 0.616118,
+                "residual": -0.083478,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": -0.008838,
+              "delta_resolution": 0.029257,
+              "delta_brier_actual": -0.002346,
+              "delta_residual": 0.035749
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.027101,
+                "resolution": 0.188162,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.641556,
+                "actual_brier": 0.613772,
+                "residual": -0.027783,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.035594,
+                "resolution": 0.184533,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.653678,
+                "actual_brier": 0.616118,
+                "residual": -0.037559,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": -0.008493,
+              "delta_resolution": 0.003629,
+              "delta_brier_actual": -0.002346,
+              "delta_residual": 0.009776
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.0501,
+                "resolution": 0.229129,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.623587,
+                "actual_brier": 0.613772,
+                "residual": -0.009815,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.058101,
+                "resolution": 0.231023,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.629695,
+                "actual_brier": 0.616118,
+                "residual": -0.013576,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": -0.008001,
+              "delta_resolution": -0.001894,
+              "delta_brier_actual": -0.002346,
+              "delta_residual": 0.003761
+            }
+          }
+        },
+        {
+          "seed": 41,
+          "temperature_ring": 1.1484,
+          "temperature_product": 1.1453,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.01757,
+                "resolution": 0.145845,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.674342,
+                "actual_brier": 0.626088,
+                "residual": -0.048254,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.018837,
+                "resolution": 0.151042,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.670411,
+                "actual_brier": 0.613378,
+                "residual": -0.057033,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": -0.001267,
+              "delta_resolution": -0.005197,
+              "delta_brier_actual": 0.01271,
+              "delta_residual": 0.008779
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.034244,
+                "resolution": 0.190131,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.646729,
+                "actual_brier": 0.626088,
+                "residual": -0.020642,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.035033,
+                "resolution": 0.185203,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.652446,
+                "actual_brier": 0.613378,
+                "residual": -0.039068,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": -0.000789,
+              "delta_resolution": 0.004928,
+              "delta_brier_actual": 0.01271,
+              "delta_residual": 0.018426
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.057171,
+                "resolution": 0.220221,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.639566,
+                "actual_brier": 0.626088,
+                "residual": -0.013478,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.054987,
+                "resolution": 0.226671,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.630932,
+                "actual_brier": 0.613378,
+                "residual": -0.017554,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": 0.002184,
+              "delta_resolution": -0.00645,
+              "delta_brier_actual": 0.01271,
+              "delta_residual": 0.004076
+            }
+          }
+        }
+      ],
+      "across_seeds": {
+        "5": {
+          "delta_reliability": {
+            "mean": -0.003089,
+            "sd_across_seeds": 0.004301,
+            "ci95_mean": [
+              -0.006166,
+              -1.2e-05
+            ],
+            "excludes_zero": true,
+            "t_p_two_sided": 0.049296,
+            "wilcoxon_p": 0.083984,
+            "n_seeds_negative": 7,
+            "n_seeds_positive": 3,
+            "wilcoxon_p_holm": 0.083984
+          },
+          "delta_resolution": {
+            "mean": 0.021716,
+            "sd_across_seeds": 0.020405,
+            "ci95_mean": [
+              0.007119,
+              0.036313
+            ],
+            "excludes_zero": true,
+            "t_p_two_sided": 0.008316,
+            "wilcoxon_p": 0.027344,
+            "n_seeds_negative": 3,
+            "n_seeds_positive": 7,
+            "wilcoxon_p_holm": 0.054688
+          },
+          "delta_brier_actual": {
+            "mean": 0.008195,
+            "sd_across_seeds": 0.007378,
+            "ci95_mean": [
+              0.002916,
+              0.013473
+            ],
+            "excludes_zero": true,
+            "t_p_two_sided": 0.006597,
+            "wilcoxon_p": 0.009766,
+            "n_seeds_negative": 2,
+            "n_seeds_positive": 8,
+            "wilcoxon_p_holm": 0.029298
+          },
+          "mean_abs_residual_ring": 0.047004,
+          "mean_abs_residual_product": 0.080003
+        },
+        "10": {
+          "delta_reliability": {
+            "mean": -0.004119,
+            "sd_across_seeds": 0.003169,
+            "ci95_mean": [
+              -0.006386,
+              -0.001852
+            ],
+            "excludes_zero": true,
+            "t_p_two_sided": 0.002638,
+            "wilcoxon_p": 0.001953,
+            "n_seeds_negative": 10,
+            "n_seeds_positive": 0,
+            "wilcoxon_p_holm": 0.005859
+          },
+          "delta_resolution": {
+            "mean": -0.004743,
+            "sd_across_seeds": 0.011054,
+            "ci95_mean": [
+              -0.012651,
+              0.003164
+            ],
+            "excludes_zero": false,
+            "t_p_two_sided": 0.207839,
+            "wilcoxon_p": 0.193359,
+            "n_seeds_negative": 6,
+            "n_seeds_positive": 4,
+            "wilcoxon_p_holm": 0.193359
+          },
+          "delta_brier_actual": {
+            "mean": 0.008195,
+            "sd_across_seeds": 0.007378,
+            "ci95_mean": [
+              0.002916,
+              0.013473
+            ],
+            "excludes_zero": true,
+            "t_p_two_sided": 0.006597,
+            "wilcoxon_p": 0.009766,
+            "n_seeds_negative": 2,
+            "n_seeds_positive": 8,
+            "wilcoxon_p_holm": 0.019532
+          },
+          "mean_abs_residual_ring": 0.025441,
+          "mean_abs_residual_product": 0.033011
+        },
+        "20": {
+          "delta_reliability": {
+            "mean": 0.000909,
+            "sd_across_seeds": 0.006202,
+            "ci95_mean": [
+              -0.003527,
+              0.005346
+            ],
+            "excludes_zero": false,
+            "t_p_two_sided": 0.65387,
+            "wilcoxon_p": 0.769531,
+            "n_seeds_negative": 4,
+            "n_seeds_positive": 6,
+            "wilcoxon_p_holm": 1.0
+          },
+          "delta_resolution": {
+            "mean": -0.001501,
+            "sd_across_seeds": 0.006878,
+            "ci95_mean": [
+              -0.006422,
+              0.003419
+            ],
+            "excludes_zero": false,
+            "t_p_two_sided": 0.507466,
+            "wilcoxon_p": 0.769531,
+            "n_seeds_negative": 5,
+            "n_seeds_positive": 5,
+            "wilcoxon_p_holm": 1.0
+          },
+          "delta_brier_actual": {
+            "mean": 0.008195,
+            "sd_across_seeds": 0.007378,
+            "ci95_mean": [
+              0.002916,
+              0.013473
+            ],
+            "excludes_zero": true,
+            "t_p_two_sided": 0.006597,
+            "wilcoxon_p": 0.009766,
+            "n_seeds_negative": 2,
+            "n_seeds_positive": 8,
+            "wilcoxon_p_holm": 0.029298
+          },
+          "mean_abs_residual_ring": 0.011537,
+          "mean_abs_residual_product": 0.01732
+        }
+      },
+      "complete": true
+    },
+    "7q": {
+      "per_seed": [
+        {
+          "seed": 7,
+          "temperature_ring": 1.2471,
+          "temperature_product": 1.2072,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.014995,
+                "resolution": 0.148838,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.668773,
+                "actual_brier": 0.622055,
+                "residual": -0.046718,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.028397,
+                "resolution": 0.170668,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.660345,
+                "actual_brier": 0.621978,
+                "residual": -0.038367,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": -0.013402,
+              "delta_resolution": -0.02183,
+              "delta_brier_actual": 7.7e-05,
+              "delta_residual": -0.008351
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.031703,
+                "resolution": 0.199617,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.634702,
+                "actual_brier": 0.622055,
+                "residual": -0.012647,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.037396,
+                "resolution": 0.178055,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.661958,
+                "actual_brier": 0.621978,
+                "residual": -0.03998,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": -0.005693,
+              "delta_resolution": 0.021562,
+              "delta_brier_actual": 7.7e-05,
+              "delta_residual": 0.027333
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.048428,
+                "resolution": 0.22473,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.626315,
+                "actual_brier": 0.622055,
+                "residual": -0.004259,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.06028,
+                "resolution": 0.223267,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.639629,
+                "actual_brier": 0.621978,
+                "residual": -0.017651,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": -0.011852,
+              "delta_resolution": 0.001463,
+              "delta_brier_actual": 7.7e-05,
+              "delta_residual": 0.013392
+            }
+          }
+        },
+        {
+          "seed": 11,
+          "temperature_ring": 0.9091,
+          "temperature_product": 0.9242,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.011788,
+                "resolution": 0.154772,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.659632,
+                "actual_brier": 0.608731,
+                "residual": -0.050902,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.018088,
+                "resolution": 0.125239,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.695466,
+                "actual_brier": 0.601723,
+                "residual": -0.093743,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": -0.0063,
+              "delta_resolution": 0.029533,
+              "delta_brier_actual": 0.007008,
+              "delta_residual": 0.042841
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.017489,
+                "resolution": 0.173682,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.646423,
+                "actual_brier": 0.608731,
+                "residual": -0.037693,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.025972,
+                "resolution": 0.187306,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.641282,
+                "actual_brier": 0.601723,
+                "residual": -0.039559,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": -0.008483,
+              "delta_resolution": -0.013624,
+              "delta_brier_actual": 0.007008,
+              "delta_residual": 0.001866
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.036163,
+                "resolution": 0.214541,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.624238,
+                "actual_brier": 0.608731,
+                "residual": -0.015508,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.042585,
+                "resolution": 0.224188,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.621013,
+                "actual_brier": 0.601723,
+                "residual": -0.01929,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": -0.006422,
+              "delta_resolution": -0.009647,
+              "delta_brier_actual": 0.007008,
+              "delta_residual": 0.003782
+            }
+          }
+        },
+        {
+          "seed": 13,
+          "temperature_ring": 1.0244,
+          "temperature_product": 1.0993,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.014193,
+                "resolution": 0.168187,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.648623,
+                "actual_brier": 0.6093,
+                "residual": -0.039322,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.012129,
+                "resolution": 0.12416,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.690585,
+                "actual_brier": 0.597841,
+                "residual": -0.092745,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": 0.002064,
+              "delta_resolution": 0.044027,
+              "delta_brier_actual": 0.011459,
+              "delta_residual": 0.053423
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.022858,
+                "resolution": 0.184152,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.641322,
+                "actual_brier": 0.6093,
+                "residual": -0.032021,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.027064,
+                "resolution": 0.213094,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.616587,
+                "actual_brier": 0.597841,
+                "residual": -0.018746,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": -0.004206,
+              "delta_resolution": -0.028942,
+              "delta_brier_actual": 0.011459,
+              "delta_residual": -0.013275
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.040224,
+                "resolution": 0.223364,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.619477,
+                "actual_brier": 0.6093,
+                "residual": -0.010177,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.039426,
+                "resolution": 0.222929,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.619114,
+                "actual_brier": 0.597841,
+                "residual": -0.021273,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": 0.000798,
+              "delta_resolution": 0.000435,
+              "delta_brier_actual": 0.011459,
+              "delta_residual": 0.011096
+            }
+          }
+        },
+        {
+          "seed": 17,
+          "temperature_ring": 1.0458,
+          "temperature_product": 1.097,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.016279,
+                "resolution": 0.155466,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.66343,
+                "actual_brier": 0.623668,
+                "residual": -0.039762,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.024386,
+                "resolution": 0.161703,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.665299,
+                "actual_brier": 0.617007,
+                "residual": -0.048292,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": -0.008107,
+              "delta_resolution": -0.006237,
+              "delta_brier_actual": 0.006661,
+              "delta_residual": 0.00853
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.028009,
+                "resolution": 0.188887,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.641738,
+                "actual_brier": 0.623668,
+                "residual": -0.01807,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.035132,
+                "resolution": 0.188287,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.649462,
+                "actual_brier": 0.617007,
+                "residual": -0.032455,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": -0.007123,
+              "delta_resolution": 0.0006,
+              "delta_brier_actual": 0.006661,
+              "delta_residual": 0.014385
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.047944,
+                "resolution": 0.216282,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.634278,
+                "actual_brier": 0.623668,
+                "residual": -0.01061,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.051596,
+                "resolution": 0.216373,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.63784,
+                "actual_brier": 0.617007,
+                "residual": -0.020833,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": -0.003652,
+              "delta_resolution": -9.1e-05,
+              "delta_brier_actual": 0.006661,
+              "delta_residual": 0.010223
+            }
+          }
+        },
+        {
+          "seed": 19,
+          "temperature_ring": 1.0167,
+          "temperature_product": 1.0811,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.013469,
+                "resolution": 0.144789,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.671297,
+                "actual_brier": 0.62526,
+                "residual": -0.046037,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.016471,
+                "resolution": 0.164495,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.654593,
+                "actual_brier": 0.605558,
+                "residual": -0.049034,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": -0.003002,
+              "delta_resolution": -0.019706,
+              "delta_brier_actual": 0.019702,
+              "delta_residual": 0.002997
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.028245,
+                "resolution": 0.191289,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.639573,
+                "actual_brier": 0.62526,
+                "residual": -0.014313,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.028259,
+                "resolution": 0.194641,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.636235,
+                "actual_brier": 0.605558,
+                "residual": -0.030676,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": -1.4e-05,
+              "delta_resolution": -0.003352,
+              "delta_brier_actual": 0.019702,
+              "delta_residual": 0.016363
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.051207,
+                "resolution": 0.222851,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.630972,
+                "actual_brier": 0.62526,
+                "residual": -0.005712,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.044774,
+                "resolution": 0.222418,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.624972,
+                "actual_brier": 0.605558,
+                "residual": -0.019414,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": 0.006433,
+              "delta_resolution": 0.000433,
+              "delta_brier_actual": 0.019702,
+              "delta_residual": 0.013702
+            }
+          }
+        },
+        {
+          "seed": 23,
+          "temperature_ring": 0.9688,
+          "temperature_product": 1.0301,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.012469,
+                "resolution": 0.156698,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.658388,
+                "actual_brier": 0.617402,
+                "residual": -0.040986,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.028438,
+                "resolution": 0.123163,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.707891,
+                "actual_brier": 0.625117,
+                "residual": -0.082774,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": -0.015969,
+              "delta_resolution": 0.033535,
+              "delta_brier_actual": -0.007715,
+              "delta_residual": 0.041788
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.023426,
+                "resolution": 0.185631,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.640411,
+                "actual_brier": 0.617402,
+                "residual": -0.023009,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.043888,
+                "resolution": 0.188536,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.657969,
+                "actual_brier": 0.625117,
+                "residual": -0.032851,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": -0.020462,
+              "delta_resolution": -0.002905,
+              "delta_brier_actual": -0.007715,
+              "delta_residual": 0.009842
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.046004,
+                "resolution": 0.224762,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.623859,
+                "actual_brier": 0.617402,
+                "residual": -0.006457,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.062421,
+                "resolution": 0.228803,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.636235,
+                "actual_brier": 0.625117,
+                "residual": -0.011117,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": -0.016417,
+              "delta_resolution": -0.004041,
+              "delta_brier_actual": -0.007715,
+              "delta_residual": 0.00466
+            }
+          }
+        },
+        {
+          "seed": 29,
+          "temperature_ring": 1.0063,
+          "temperature_product": 1.0304,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.01974,
+                "resolution": 0.16266,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.659696,
+                "actual_brier": 0.609615,
+                "residual": -0.050082,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.015171,
+                "resolution": 0.126898,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.690889,
+                "actual_brier": 0.602307,
+                "residual": -0.088582,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": 0.004569,
+              "delta_resolution": 0.035762,
+              "delta_brier_actual": 0.007308,
+              "delta_residual": 0.0385
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.027703,
+                "resolution": 0.196173,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.634147,
+                "actual_brier": 0.609615,
+                "residual": -0.024532,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.025183,
+                "resolution": 0.186315,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.641485,
+                "actual_brier": 0.602307,
+                "residual": -0.039178,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": 0.00252,
+              "delta_resolution": 0.009858,
+              "delta_brier_actual": 0.007308,
+              "delta_residual": 0.014646
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.042633,
+                "resolution": 0.225856,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.619394,
+                "actual_brier": 0.609615,
+                "residual": -0.009779,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.04191,
+                "resolution": 0.224799,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.619728,
+                "actual_brier": 0.602307,
+                "residual": -0.017421,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": 0.000723,
+              "delta_resolution": 0.001057,
+              "delta_brier_actual": 0.007308,
+              "delta_residual": 0.007642
+            }
+          }
+        },
+        {
+          "seed": 31,
+          "temperature_ring": 1.0249,
+          "temperature_product": 1.0627,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.010273,
+                "resolution": 0.16187,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.651019,
+                "actual_brier": 0.608265,
+                "residual": -0.042754,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.024813,
+                "resolution": 0.164849,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.662581,
+                "actual_brier": 0.609907,
+                "residual": -0.052673,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": -0.01454,
+              "delta_resolution": -0.002979,
+              "delta_brier_actual": -0.001642,
+              "delta_residual": 0.009919
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.016205,
+                "resolution": 0.188383,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.630439,
+                "actual_brier": 0.608265,
+                "residual": -0.022174,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.038146,
+                "resolution": 0.20048,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.640282,
+                "actual_brier": 0.609907,
+                "residual": -0.030375,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": -0.021941,
+              "delta_resolution": -0.012097,
+              "delta_brier_actual": -0.001642,
+              "delta_residual": 0.008201
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.04548,
+                "resolution": 0.22992,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.618177,
+                "actual_brier": 0.608265,
+                "residual": -0.009912,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.05015,
+                "resolution": 0.228865,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.623901,
+                "actual_brier": 0.609907,
+                "residual": -0.013994,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": -0.00467,
+              "delta_resolution": 0.001055,
+              "delta_brier_actual": -0.001642,
+              "delta_residual": 0.004082
+            }
+          }
+        },
+        {
+          "seed": 37,
+          "temperature_ring": 1.0222,
+          "temperature_product": 1.1403,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.018544,
+                "resolution": 0.145229,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.675932,
+                "actual_brier": 0.625745,
+                "residual": -0.050187,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.021938,
+                "resolution": 0.142145,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.68241,
+                "actual_brier": 0.617764,
+                "residual": -0.064646,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": -0.003394,
+              "delta_resolution": 0.003084,
+              "delta_brier_actual": 0.007981,
+              "delta_residual": 0.014459
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.045095,
+                "resolution": 0.209159,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.638552,
+                "actual_brier": 0.625745,
+                "residual": -0.012807,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.033557,
+                "resolution": 0.183929,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.652244,
+                "actual_brier": 0.617764,
+                "residual": -0.03448,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": 0.011538,
+              "delta_resolution": 0.02523,
+              "delta_brier_actual": 0.007981,
+              "delta_residual": 0.021673
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.062622,
+                "resolution": 0.227703,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.637535,
+                "actual_brier": 0.625745,
+                "residual": -0.01179,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.055726,
+                "resolution": 0.223122,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.63522,
+                "actual_brier": 0.617764,
+                "residual": -0.017457,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": 0.006896,
+              "delta_resolution": 0.004581,
+              "delta_brier_actual": 0.007981,
+              "delta_residual": 0.005667
+            }
+          }
+        },
+        {
+          "seed": 41,
+          "temperature_ring": 0.9842,
+          "temperature_product": 1.0227,
+          "by_group_count": {
+            "5": {
+              "ring": {
+                "reliability": 0.015846,
+                "resolution": 0.154558,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.663904,
+                "actual_brier": 0.619405,
+                "residual": -0.044499,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "product": {
+                "reliability": 0.023205,
+                "resolution": 0.124746,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.701075,
+                "actual_brier": 0.616647,
+                "residual": -0.084429,
+                "n_groups_requested": 5,
+                "n_groups_used": 5
+              },
+              "delta_reliability": -0.007359,
+              "delta_resolution": 0.029812,
+              "delta_brier_actual": 0.002758,
+              "delta_residual": 0.03993
+            },
+            "10": {
+              "ring": {
+                "reliability": 0.024408,
+                "resolution": 0.178105,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.648919,
+                "actual_brier": 0.619405,
+                "residual": -0.029515,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "product": {
+                "reliability": 0.038282,
+                "resolution": 0.197889,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.643009,
+                "actual_brier": 0.616647,
+                "residual": -0.026363,
+                "n_groups_requested": 10,
+                "n_groups_used": 10
+              },
+              "delta_reliability": -0.013874,
+              "delta_resolution": -0.019784,
+              "delta_brier_actual": 0.002758,
+              "delta_residual": -0.003152
+            },
+            "20": {
+              "ring": {
+                "reliability": 0.045954,
+                "resolution": 0.216932,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.631638,
+                "actual_brier": 0.619405,
+                "residual": -0.012233,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "product": {
+                "reliability": 0.046404,
+                "resolution": 0.222048,
+                "uncertainty": 0.802616,
+                "reconstructed_brier": 0.626972,
+                "actual_brier": 0.616647,
+                "residual": -0.010325,
+                "n_groups_requested": 20,
+                "n_groups_used": 20
+              },
+              "delta_reliability": -0.00045,
+              "delta_resolution": -0.005116,
+              "delta_brier_actual": 0.002758,
+              "delta_residual": -0.001908
+            }
+          }
+        }
+      ],
+      "across_seeds": {
+        "5": {
+          "delta_reliability": {
+            "mean": -0.006544,
+            "sd_across_seeds": 0.006856,
+            "ci95_mean": [
+              -0.011448,
+              -0.00164
+            ],
+            "excludes_zero": true,
+            "t_p_two_sided": 0.014517,
+            "wilcoxon_p": 0.019531,
+            "n_seeds_negative": 8,
+            "n_seeds_positive": 2,
+            "wilcoxon_p_holm": 0.058593
+          },
+          "delta_resolution": {
+            "mean": 0.0125,
+            "sd_across_seeds": 0.024636,
+            "ci95_mean": [
+              -0.005124,
+              0.030124
+            ],
+            "excludes_zero": false,
+            "t_p_two_sided": 0.143067,
+            "wilcoxon_p": 0.160156,
+            "n_seeds_negative": 4,
+            "n_seeds_positive": 6,
+            "wilcoxon_p_holm": 0.160156
+          },
+          "delta_brier_actual": {
+            "mean": 0.00536,
+            "sd_across_seeds": 0.007547,
+            "ci95_mean": [
+              -3.9e-05,
+              0.010759
+            ],
+            "excludes_zero": false,
+            "t_p_two_sided": 0.051359,
+            "wilcoxon_p": 0.064453,
+            "n_seeds_negative": 2,
+            "n_seeds_positive": 8,
+            "wilcoxon_p_holm": 0.128906
+          },
+          "mean_abs_residual_ring": 0.045125,
+          "mean_abs_residual_product": 0.069529
+        },
+        "10": {
+          "delta_reliability": {
+            "mean": -0.006774,
+            "sd_across_seeds": 0.010252,
+            "ci95_mean": [
+              -0.014108,
+              0.00056
+            ],
+            "excludes_zero": false,
+            "t_p_two_sided": 0.066257,
+            "wilcoxon_p": 0.064453,
+            "n_seeds_negative": 8,
+            "n_seeds_positive": 2,
+            "wilcoxon_p_holm": 0.193359
+          },
+          "delta_resolution": {
+            "mean": -0.002345,
+            "sd_across_seeds": 0.017399,
+            "ci95_mean": [
+              -0.014792,
+              0.010101
+            ],
+            "excludes_zero": false,
+            "t_p_two_sided": 0.679928,
+            "wilcoxon_p": 0.625,
+            "n_seeds_negative": 6,
+            "n_seeds_positive": 4,
+            "wilcoxon_p_holm": 0.625
+          },
+          "delta_brier_actual": {
+            "mean": 0.00536,
+            "sd_across_seeds": 0.007547,
+            "ci95_mean": [
+              -3.9e-05,
+              0.010759
+            ],
+            "excludes_zero": false,
+            "t_p_two_sided": 0.051359,
+            "wilcoxon_p": 0.064453,
+            "n_seeds_negative": 2,
+            "n_seeds_positive": 8,
+            "wilcoxon_p_holm": 0.193359
+          },
+          "mean_abs_residual_ring": 0.022678,
+          "mean_abs_residual_product": 0.032466
+        },
+        "20": {
+          "delta_reliability": {
+            "mean": -0.002861,
+            "sd_across_seeds": 0.007415,
+            "ci95_mean": [
+              -0.008165,
+              0.002443
+            ],
+            "excludes_zero": false,
+            "t_p_two_sided": 0.253359,
+            "wilcoxon_p": 0.492188,
+            "n_seeds_negative": 6,
+            "n_seeds_positive": 4,
+            "wilcoxon_p_holm": 0.984376
+          },
+          "delta_resolution": {
+            "mean": -0.000987,
+            "sd_across_seeds": 0.004104,
+            "ci95_mean": [
+              -0.003923,
+              0.001949
+            ],
+            "excludes_zero": false,
+            "t_p_two_sided": 0.466328,
+            "wilcoxon_p": 1.0,
+            "n_seeds_negative": 4,
+            "n_seeds_positive": 6,
+            "wilcoxon_p_holm": 1.0
+          },
+          "delta_brier_actual": {
+            "mean": 0.00536,
+            "sd_across_seeds": 0.007547,
+            "ci95_mean": [
+              -3.9e-05,
+              0.010759
+            ],
+            "excludes_zero": false,
+            "t_p_two_sided": 0.051359,
+            "wilcoxon_p": 0.064453,
+            "n_seeds_negative": 2,
+            "n_seeds_positive": 8,
+            "wilcoxon_p_holm": 0.193359
+          },
+          "mean_abs_residual_ring": 0.009644,
+          "mean_abs_residual_product": 0.016878
+        }
+      },
+      "complete": true
+    }
+  }
+}

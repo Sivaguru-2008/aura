@@ -1,87 +1,65 @@
 # AURA — Deployment Readiness Assessment
 
-**Assessment date:** 2026-07-24
-**Verdict:** **Conditional GO** for offline demonstration / evaluation deployment. **NOT** for autonomous clinical use.
+**Assessment date:** 2026-09-13
+**Verdict:** **GO** for an offline, single-site research pilot with a clinician reviewing every
+output. **NOT** for autonomous clinical use. **NOT** for sale until the data-licence position is
+resolved (`docs/DATA_LICENSES.md`).
 
-This document is a go/no-go readiness checklist. For installation mechanics see [`DEPLOYMENT.md`](DEPLOYMENT.md); this file records whether each readiness dimension is actually satisfied today.
+For installation see [`HOSPITAL_IT_INSTALL.md`](HOSPITAL_IT_INSTALL.md). This file records
+whether each readiness dimension is satisfied today, and what the evidence is.
 
 ---
 
-## 1. Readiness scorecard
+## 1. Scorecard
 
-| Dimension | Status | Evidence / Note |
+| Dimension | Status | Evidence / note |
 | --- | --- | --- |
-| Core inference path (brain MRI) | ✅ Ready | Serves the real BraTS ResU-Net (epoch 24); output is image-driven and tested. |
-| Chest/CXR path | ✅ Ready | DenseNet-121 served at 224 px, per-finding Platt calibration, grounded reports. |
-| Modality routing & rejection | ✅ Ready | Router rejects unsupported modalities pre-engine; NIfTI/NRRD bypass verified. |
-| Calibration & abstention | ✅ Ready | Presence head Platt-calibrated (ECE 0.018); validity-based abstention wired. |
-| Test suite | ✅ Ready* | `test_mri_foundation.py` 113/113 pass. *See dependency caveat below. |
-| Offline operation | ✅ Ready | No network calls on the inference path; runs on local CPU or GPU. |
-| Reproducible environment | ⚠️ Conditional | Optional imaging deps & `pandas` not pinned; see §3. |
-| Authentication / access control | ⚠️ Off by default | `AURA_SEC_AUTH_ENABLED=false`; enable bearer auth before any shared deployment. |
-| Clinical validation | ⛔ Not for autonomous use | Research/demo grade; boundaries in `KNOWN_LIMITATIONS.md`. |
-| Regulatory clearance | ⛔ None | Not an FDA/CE-cleared device. Decision-support/education only. |
+| Chest inference | ✅ Research-ready | DenseNet-121 (epoch 7), macro AUROC 0.821 on 2,099 MIMIC-CXR validation images. The same images selected the epoch, so there is no untouched test set. |
+| Brain inference | ✅ Research-ready | BraTS 2020 residual U-Net; needs all four sequences. |
+| Served fusion backend | ✅ `classical` | `aura/pyproject.toml`; chosen on the preregistered CheXpert external validation (`docs/MARKET_COMPARISON.md` §3.2). |
+| Access control | ✅ Secure by default | No token: this machine only. Token: header or signed session cookie. Accounts: scrypt, none seeded. Covered by `test_secure_defaults.py`, `test_accounts_and_validation.py` and `test_rbac.py`. Sign-in, sign-out and the HttpOnly cookie were also checked in a browser on 2026-09-13. |
+| Separating sites | ✅ | `AURA_SITE_ID` binding, checked at startup and by preflight. |
+| Case store: SQLite | ✅ | Default. |
+| Case store: PostgreSQL | ⚠️ Written, not yet run live | The PostgreSQL leg of `tests/test_storage_backends.py` was skipped: Docker Desktop failed to start on 2026-09-13. |
+| Container image | ⚠️ Not rebuilt since the 2026-09-13 changes | Same Docker failure. The last verified build was 2026-07-29. |
+| Pinned dependencies | ⛔ Not done | Planned as a lock file taken from a verified image build. |
+| Test suite | ✅ | 841 passed, 49 skipped, 0 failed (non-slow), 2026-09-13. |
+| Local validation of results | ✅ Honest by construction | Computed from verified outcomes; refuses below 20 (`services/assurance/local_validation.py`). |
+| Clinical validation | ⛔ | No radiologist-read test set, no reader study, no prospective use. |
+| Regulatory clearance | ⛔ None | Research and decision support only. |
+| Data licences | ⛔ Unresolved for commercial use | `docs/DATA_LICENSES.md`. |
 
 ---
 
-## 2. Pre-flight checklist
+## 2. Before a pilot goes live
 
-- [x] Trained checkpoints present (`artifacts/best_model.pt`, brain vision v2 @ epoch 24).
-- [x] Config surface resolves (`common/config.py` ← `pyproject.toml` + `AURA_*` env).
-- [x] Served fusion backend is `classical` (fair-benchmark calibration winner) — confirm `fusion_backend = "classical"` in `pyproject.toml`.
-- [x] Abstention thresholds set (`ood_energy_threshold`, `low_confidence_threshold`).
-- [ ] **Enable authentication** (`AURA_SEC_AUTH_ENABLED=true`) before exposing beyond localhost.
-- [ ] **Pin runtime deps** (see §3) so a clean host reproduces the tested environment.
-- [x] Demo dataset staged (`demo_data/`, 9 cases with `expected_output.json`).
-- [x] Export paths verified (PDF / JSON / CSV / NIfTI — see `docs/export_validation.md`).
-
----
-
-## 3. Environment hardening (required before a fresh-host deploy)
-
-The audit found the tested environment depends on packages that are **not pinned** in `requirements.txt`:
-
-- `pydicom`, `nibabel`, `pynrrd` — required for MRI ingest and the foundation/NeuroMind tests (currently `importorskip`-guarded, so their absence silently *skips* rather than fails).
-- `pandas` — required by the MIMIC pipeline and `tests/test_mimic_*.py`.
-
-**Windows note:** on the in-tree venv, `pandas`' compiled extension is blocked by a host *Application Control* policy (`DLL load failed … blocked by Application Control policy`). Deploy on the interpreter where `pandas` loads (the documented global Python 3.14) or on a host without that policy. Validate with:
-
-```bash
-python -c "import pandas, torch, pydicom, nibabel, nrrd; print('deps ok')"
-```
-
-**Recommendation:** add a `requirements-dev.txt` pinning the four packages above and run the full suite on the target host as an acceptance gate.
+- [ ] Docker working again: rebuild the image, then
+      `python deploy/smoke_test.py --url http://localhost:8000 --token "$AURA_AUTH_TOKEN"`.
+- [ ] PostgreSQL, if used:
+      `AURA_TEST_DATABASE_URL=postgresql+psycopg://<user>:<pw>@<host>:5432/<db> python -m pytest tests/test_storage_backends.py`,
+      with no skips.
+- [ ] Every item in `HOSPITAL_IT_INSTALL.md` §13: token, site id, bootstrap admin removed, TLS
+      proxy, firewall, backups with a tested restore.
+- [ ] A database that ran the quarantined pilot script has been cleaned
+      (`E:\AURA\_quarantine_fabricated_pilot_20260913\cleanup_live_db.py`), or replaced.
+- [ ] A research or pilot agreement and ethics approval are in place.
 
 ---
 
-## 4. Smoke test (run on the target host)
+## 3. Do-not-deploy conditions
 
-```bash
-# 1. Dependency check
-python -c "import pandas, torch, pydicom, nibabel, nrrd; print('deps ok')"
-
-# 2. Foundation + NeuroMind integration tests must pass
-python -m pytest tests/test_mri_foundation.py -q
-
-# 3. Bring up the gateway
-python -m aura.aura_cli serve 8000
-#    → open http://127.0.0.1:8000 and confirm the dashboard renders live counts
-
-# 4. End-to-end demo
-python demo.py
-```
-
-A deployment is **GO for demo** when steps 1–4 succeed and authentication is enabled for any non-localhost exposure.
+- Autonomous diagnosis or triage without a clinician in the loop.
+- Capabilities listed in `NeuroMindEngine.PLANNED_CAPABILITIES` (subtype classification,
+  haemorrhage, midline shift, …): roadmap, not shipped.
+- 2D PNG/JPEG exports of MR studies: refused by design.
+- `AURA_ALLOW_OPEN_ACCESS=1` on any network a patient-data workstation can reach.
+- `AURA_FUSION_BACKEND=quantum` as the served model: it was the least accurate of four
+  backends on the external validation.
+- Any figure from `artifacts/brain/qkl_full_coverage.json`: withdrawn; see the provenance
+  audit in `DATA_LICENSES.md`.
 
 ---
 
-## 5. Explicit non-goals / do-not-deploy conditions
-
-- Do **not** deploy for autonomous diagnosis or triage without a clinician in the loop.
-- Do **not** rely on capabilities listed in `NeuroMindEngine.PLANNED_CAPABILITIES` (subtype classification, hemorrhage, midline shift, etc.) — they are roadmap, not shipped.
-- Do **not** feed 2D PNG/JPEG exports of MR studies; they are refused by design.
-- Do **not** treat quantum-fusion accuracy claims as deployment-relevant — the served backend is classical.
-
----
-
-*Cross-references: [`repository_audit.md`](repository_audit.md), [`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md), [`export_validation.md`](export_validation.md), [`DEPLOYMENT.md`](DEPLOYMENT.md).*
+*Cross-references: [`HOSPITAL_IT_INSTALL.md`](HOSPITAL_IT_INSTALL.md), [`SECURITY.md`](SECURITY.md),
+[`THREAT_MODEL.md`](THREAT_MODEL.md), [`KNOWN_LIMITATIONS.md`](KNOWN_LIMITATIONS.md),
+[`DATA_LICENSES.md`](DATA_LICENSES.md).*

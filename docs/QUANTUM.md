@@ -78,7 +78,16 @@ This supersedes the earlier `registry.json` numbers, which were measured on a
 173-study split. Larger split, same protocol, different conclusion — reported here
 rather than quietly replaced.
 
-### Q3 — What does a measurement budget buy? *(the part with no classical analogue)*
+### Q3 — What does a measurement budget buy?
+
+> **Retracted capability claim — read before quoting this section** (`docs/RESEARCH_PAPER_v5.md`
+> §2.8). This section originally presented typed abstention as something classical inference
+> cannot do. A source-level audit found that `services/fusion/qmba.py` adds closed-form shot
+> noise to the *analytic* expectation rather than sampling the circuit, so the
+> model-limited / measurement-limited split below is a threshold on the analytic margin that
+> any classical model can compute. The shot-efficiency numbers stand as measurements; the
+> "no classical analogue" reading does not. Since 2026-09-12 the product serves the classical
+> backend, so QMBA runs only with `AURA_FUSION_BACKEND=quantum`.
 
 On hardware you do not get an expectation value, you get an estimate, and its
 precision is bought with measurements: `Var[<Z_i>] = (1 − <Z_i>²)/n_shots`.
@@ -105,8 +114,9 @@ And the part that matters clinically — abstentions are *typed*:
 | Model-limited | 60 | Escalate. No achievable budget separates these two diagnoses. |
 | Measurement-limited | 1 | Run the circuit longer. ~8,433 shots would resolve it. |
 
-Two different instructions from one system. A classical model cannot make this
-distinction, because classical inference has no measurement budget to vary.
+Two different instructions from one system — but see the retraction note at the top of
+Q3: the implementation computes this split from the analytic margin, which any classical
+model's margin supports equally.
 
 The 60:1 ratio is itself a finding: on this system the bottleneck is the **model**,
 not the quantum hardware.

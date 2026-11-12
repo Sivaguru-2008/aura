@@ -1,0 +1,42 @@
+pmid,s3,reason
+40567645,include,"UCI CKD (400x24); amplitude (RawFeatureVector) VQC, RealAmplitudes reps=3 full, COBYLA; claims 99.2% vs best classical 96.3% (RF 90.7%)"
+40676161,include,"TCGA glioma grading (839x23, UCI 'Glioma Grading Clinical and Mutation Features'); 5-qubit VQC (Rx+CX map; Ry,Rz,CY ansatz); claims CV acc 0.83 > KNN .82/SVC .75/DTC .80/RFC .82; feature selection on full data"
+42286086,include,"UCI Parkinson's, WDBC, Pima; fidelity kernels (angle/amplitude/ZZ) QSVM+QKNN stacked by LR; claims PD specificity .585->.813 and diabetes recall .553->.621 vs untuned RBF-SVM; PCA fitted on full data"
+41513819,include,"UCI heart disease (Cleveland+Hungarian+Swiss+VA+Statlog, 918x11); PennyLane QNN angle+dropout; claims 1-layer QNN > NN at 10-50% training size (82.72 vs 80.51 at 10%); test cost used for stopping"
+38441727,include,"MSU adolescent schizophrenia EEG (84 subjects, public); DWT stats + PCA; Qiskit Pauli X/Z map QSVM; claims 100% 'superior'; 70/30 single split, no CV"
+40865268,include,Heart 918x11 (as 41513819); KACQ-DCNN 4-qubit channel in 3M-param KAN/BiLSTM hybrid; claims 92.03% vs CatBoost 86.43%; SMOTE in preprocessing
+42046760,include,"PROSTATEx (TCIA, public) 299 lesions; radiomics + QSVM amplitude; claims AUC .799 vs SVM-RBF .608±.244"
+41966795,include,"INCOV (Su et al. 2022, public) + Cleveland Clinic omics; QSVM (amplitude/angle/ZZ/PQK) vs CSVM; claims 'comparable or exceeded' (arXiv 2505.00037 read)"
+40389708,exclude,S3(c): quantum component (Q2CNN inside sardine-optimised diffusion attention net) not specified; reports 99.98% on UCI heart-failure records
+38966533,exclude,S3: on full text the 'QNN' is a classical multi-level-sigmoid network; no quantum circuit
+35115630,exclude,"S3(d): on full text, superiority claims are between quantum methods; classical 'competitive or outperform'"
+42115706,exclude,S3(a)/(b): Kaggle data needs an account; ~85 handcrafted image features not fully itemised; authors acknowledge patient overlap across folds
+42156417,exclude,"S3(a): private cohort, Hospital Nový Jičín (200 patients)"
+40646489,exclude,"S3(a): private cohort, Sir Run Run Shaw Hospital (322 pGGNs)"
+37540237,exclude,"S3(a): institutional PET radiomics cohorts, not publicly released"
+40695887,exclude,S3(a)/(c): 39-patient proteomic cohort without public source; quantum annealing + QGAN + qPCA pipeline not implementable as specified
+40496630,exclude,S3(a): data available on request; clinical comparison is 10 vs 10 patients
+38672050,exclude,S3(a): superiority claim is on combined dataset including in-house data
+42414364,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN (LDR-DenseNet features)
+41517992,not assessable,full text behind publisher login; no preprint found
+41728802,not assessable,"publisher and medRxiv full text returned 403; abstract: QC-REUP beat linear classical on low-dim sets, lost to nonlinear"
+41523782,not assessable,full text behind publisher login; datasets unnamed in abstract
+41850494,not assessable,"full text behind publisher login (radiotherapy cohort, likely private)"
+39650428,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN
+39177127,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN
+37710188,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN
+41492535,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN
+39981059,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN
+39202100,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN
+42051325,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN
+41794871,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN
+37504805,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN
+42399301,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN
+38473030,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN
+38902368,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN
+39433779,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN
+41383998,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN
+40535694,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN
+34394762,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN
+42350468,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN
+37399158,exclude,S3(b): hybrid deep network on images/signals; quantum head inside a CNN

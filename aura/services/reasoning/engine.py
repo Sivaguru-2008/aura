@@ -211,6 +211,13 @@ class ClinicalReasoner:
 
         steps: list[ReasoningStep] = []
         citations: list[str] = []
+
+        from aura.common.config import get_settings
+
+        # The guideline rules always run. They are the citation trail and the whole
+        # explainability surface; replacing them with a single opaque "quantum
+        # computed the posterior" step would trade an attributed differential for
+        # an unattributable number.
         for rule in RULES:
             step = rule.fire(ctx)
             if step is None:
@@ -225,6 +232,24 @@ class ClinicalReasoner:
         prior_d = {d: float(p0[i]) for i, d in enumerate(DIAGNOSES)}
         adj_d = {d: float(adjusted[i]) for i, d in enumerate(DIAGNOSES)}
 
+        # Optional quantum refinement layered on top of the rule-adjusted posterior.
+        qbn_enabled = False
+        if get_settings().reasoner_backend == "quantum":
+            refinement = self._qbn_refine(steps, adj_d)
+            if refinement is not None:
+                refined_probs, qbn_step = refinement
+                before = adjusted
+                adjusted = refined_probs
+                adj_d = {d: float(adjusted[i]) for i, d in enumerate(DIAGNOSES)}
+                qbn_step.effect = {
+                    d: round(float(adjusted[i] - before[i]), 6)
+                    for i, d in enumerate(DIAGNOSES)
+                }
+                steps.append(qbn_step)
+                if qbn_step.guideline not in citations:
+                    citations.append(qbn_step.guideline)
+                qbn_enabled = True
+
         differential = self._differential(ctx, adj_d, steps)
         graph = self._build_graph(ctx, steps, adj_d)
 
@@ -235,9 +260,59 @@ class ClinicalReasoner:
             steps=steps,
             differential=differential,
             guideline_citations=citations,
+            qbn_enabled=qbn_enabled,
             model_version=self.model_version,
         )
         return trace, graph
+
+    # ---- optional quantum refinement ------------------------------------ #
+    #: QBN feature channels. Each names the diagnoses whose accumulated guideline
+    #: evidence drives that channel, so the clinical cut-offs (BNP 400, WBC 11,
+    #: procalcitonin 0.5, CRP 50, 20 pack-years …) stay defined once — in RULES —
+    #: instead of being restated here where they would drift out of step.
+    _QBN_CHANNELS: tuple[tuple[str, tuple[Diagnosis, ...]], ...] = (
+        ("cardiac", (D.HEART_FAILURE,)),
+        ("infectious", (D.PNEUMONIA,)),
+        ("malignancy_obstructive", (D.MALIGNANCY, D.COPD)),
+    )
+
+    def _qbn_refine(self, steps: list[ReasoningStep], adj: dict[Diagnosis, float]):
+        """Refine the rule-adjusted posterior with a *trained* QBN.
+
+        Returns None — leaving the classical posterior exactly as it was — when no
+        trained artifact is present. The constructor's default theta is six
+        unfitted constants; serving those as a quantum inference would dress up
+        hardcoded numbers as a learned model.
+        """
+        from aura.services.reasoning.qbn import QuantumBayesianNetwork
+
+        qbn = QuantumBayesianNetwork.load_trained()
+        if qbn is None:
+            return None
+
+        # Channel drive = accumulated positive guideline evidence for that group,
+        # squashed to [0, 1) by tanh. Monotone in the log-likelihood the rules
+        # already produced, and introduces no new threshold of its own.
+        features = [
+            float(np.tanh(sum(max(0.0, s.effect.get(d, 0.0)) for s in steps for d in dxs)))
+            for _, dxs in self._QBN_CHANNELS
+        ]
+
+        refined = qbn.reason(adj, features)
+        detail = ", ".join(
+            f"{name}={value:.2f}" for (name, _), value in zip(self._QBN_CHANNELS, features)
+        )
+        step = ReasoningStep(
+            statement=(
+                f"Quantum Bayesian Network ({qbn.n_qubits} qubits) refined the "
+                f"guideline-adjusted posterior. Evidence channels: {detail}."
+            ),
+            evidence=sorted({e for s in steps for e in s.evidence}),
+            effect={},  # filled by the caller from the realised delta
+            guideline="Quantum Bayesian conditional update (trained)",
+            modality="quantum",
+        )
+        return refined, step
 
     # ---- evidence graph construction ------------------------------------ #
     def _build_graph(self, ctx: Ctx, steps: list[ReasoningStep],

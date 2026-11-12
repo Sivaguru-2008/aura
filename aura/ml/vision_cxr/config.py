@@ -3,6 +3,34 @@ from pathlib import Path
 from aura.common.config import ARTIFACTS
 from aura.mimic.config import get_mimic_paths
 
+#: Input resolution the backbone is trained and served at.
+#:
+#: 224 is the DenseNet-121 native size and what every shipped checkpoint was trained
+#: at. It is also the binding constraint on small-lesion findings: an 8 mm nodule on a
+#: ~2500 px film survives as roughly one pixel at 224, which is the mechanical reason
+#: the nodule head sits near chance. Raising this is the single largest expected AUROC
+#: gain available — but it REQUIRES a full retrain, because a checkpoint trained at one
+#: resolution and fed another produces garbage.
+#:
+#: The value is therefore written into every checkpoint (``checkpoint.py``) and read
+#: back by the serving wrapper (``inference.py``), so training and serving cannot
+#: silently disagree. Override for a new run with AURA_CXR_IMG_SIZE=384.
+DEFAULT_IMG_SIZE = 224
+
+
+def configured_img_size() -> int:
+    raw = os.environ.get("AURA_CXR_IMG_SIZE", "").strip()
+    if not raw:
+        return DEFAULT_IMG_SIZE
+    try:
+        v = int(raw)
+    except ValueError:
+        return DEFAULT_IMG_SIZE
+    # DenseNet downsamples by 32; a non-multiple silently changes the feature-map
+    # geometry Grad-CAM++ and the TV regulariser assume.
+    return v if v >= 64 and v % 32 == 0 else DEFAULT_IMG_SIZE
+
+
 class TrainConfig:
     def __init__(self, **kwargs):
         # Retrieve MIMIC-CXR paths dynamically (respects environment overrides)
@@ -16,6 +44,7 @@ class TrainConfig:
         self.patience = kwargs.get("patience", 4)
         self.seed = kwargs.get("seed", 7)
         self.amp = kwargs.get("amp", True)
+        self.img_size = int(kwargs.get("img_size", configured_img_size()))
         self.grad_clip = kwargs.get("grad_clip", 1.0)
         # Dataloader workers (0 = main thread; >0 overlaps JPEG decode with GPU).
         self.num_workers = kwargs.get("num_workers", 0)

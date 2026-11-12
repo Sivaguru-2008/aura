@@ -1,0 +1,29 @@
+{
+  "analysis": "A \u2014 TOST quantum VQC vs product-of-experts, matched optimiser",
+  "blind": false,
+  "contrast": "NLL_quantum - NLL_poe (positive = PoE better)",
+  "parametric": {
+    "n": 447,
+    "mean_difference": 0.00335,
+    "se": 0.01843,
+    "margin": 0.01,
+    "t_lower": 0.724,
+    "p_lower": 0.23467,
+    "t_upper": 0.361,
+    "p_upper": 0.35921,
+    "p_tost": 0.35921,
+    "ci90": [
+      -0.02704,
+      0.03373
+    ],
+    "equivalent": false
+  },
+  "bootstrap_sensitivity": {
+    "ci90": [
+      -0.02684,
+      0.03358
+    ],
+    "inside_margin": false,
+    "n_resamples": 10000
+  }
+}

@@ -1,0 +1,322 @@
+# AURA — Pitch Strategy & Judge Defence
+
+**Rubric:** methodology mapping 10 · approach 5 · feasibility 5 · quantum utilization 10 ·
+quantum optimization 10 · quantum implementation 10 → **50 total, 30 of it quantum.**
+
+**Snapshot:** 2026-07-31. Every number below was pulled from the committed artifacts
+immediately before writing; the check command is in §7. If you present after a retrain,
+re-run it — the QKL figures already moved once during this work.
+
+> **Superseded in part — read before using this document (2026-09-12).**
+> 1. The §1 thesis, answer A1 and the §8 closing line were built on QMBA's "typed
+>    abstention" being something classical inference structurally cannot do. That claim
+>    was **retracted** on source-level audit (`docs/RESEARCH_PAPER_v5.md` §2.8): the shot
+>    noise is added to an analytic expectation, so the typing reduces to a margin threshold
+>    any classical model can compute. Those passages have been corrected below; do not
+>    restore the original wording.
+> 2. The served fusion backend is now **classical** (`aura/pyproject.toml`), following the
+>    preregistered CheXpert external validation (n = 4,800; accuracy 0.5273 vs 0.4721,
+>    McNemar p < 0.001; `aura/artifacts/chexpert_external.json`). QMBA and the
+>    measurement-budget panel run only with `AURA_FUSION_BACKEND=quantum`, which is how to
+>    reproduce the demo described here.
+
+---
+
+## 1. The thesis
+
+> **Most quantum-health projects claim an advantage they cannot demonstrate. We tested
+> every quantum claim we made under a fair protocol, and we publish every result that
+> does not favour us — including the capability claim we retracted ourselves.**
+
+That sentence fits this rubric, because the rubric asks about *utilization, optimization
+and implementation* — how well you used the quantum resource — **not** "did quantum win."
+A team claiming a fake speed-up scores 0 on credibility the moment a judge probes. A team
+that shows its negatives, including its own retraction, is hard to attack, because there
+is nothing left to expose.
+
+**What survives, in one breath:** quantum precision is bought with measurements
+(`Var[⟨Z⟩] = (1 − ⟨Z⟩²)/n_shots`), so shot count is a well-founded *unit* for a
+decision-margin threshold. That is interpretability, not a new capability. The
+implementation adds closed-form shot noise to an analytic expectation, so its split of
+"unsure" into measurement-limited and model-limited (1 vs 60 over 447 studies) is a
+threshold on the analytic margin that a classical model can compute too. This document
+originally presented it as something classical inference cannot do; that claim is
+**retracted** (`docs/RESEARCH_PAPER_v5.md` §2.8).
+
+**Say this, verbatim, when asked what's quantum about it:**
+> "We don't claim quantum accuracy, and we retracted the one capability claim we made once
+> we audited our own code. What the quantum work produced is a fair-comparison protocol and
+> the negative results it turned up, which we publish. The product serves whichever
+> backend generalises best on an external cohort, and today that is the classical one."
+
+---
+
+## 2. Rubric-by-rubric play
+
+### Methodology mapping — 10 pts · **artifact: `docs/METHODOLOGY_MAPPING.md`**
+
+Open that file on screen. It is a single page: problem → why a VQC → every design decision
+with its justification → what it does not buy → artifact index.
+
+The three sentences that land it:
+- **Qubit count is set by the input, not chosen.** 7 findings + 1 prior = 8 channels ⇒ 8
+  qubits, one channel per qubit. Nothing arbitrary to defend.
+- **Encoding is principled.** Findings are already probabilities in [0,1]; `RY(π·x)` maps
+  that onto a full Bloch meridian (0→|0⟩, 1→|1⟩, 0.5→equator), so a *calibrated
+  probability becomes a calibrated amplitude* with no rescaling.
+- **The mapping is measured, not argued.** If the entangled register did nothing, learned
+  pairwise coupling would be flat. It is not: opacity↔nodule 0.539 vs opacity↔cardiomegaly
+  0.033 — a **16× spread**, shown as a live heatmap at `/quantum` §07.
+
+### Quantum utilization — 10 pts
+
+QMBA runs on the serving path only when the quantum backend is selected
+(`AURA_FUSION_BACKEND=quantum`; see the note at the top). Present it as a measured
+shot-efficiency result, not as a capability classical models lack.
+
+| Measured | Value |
+|---|---|
+| Commit rate | 86.4% |
+| Median shots | 128 (vs a fixed 512 budget) |
+| Measurement-limited abstentions | **1** |
+| Model-limited abstentions | **60** |
+| Median predicted shots to resolve | 8,433 |
+
+Then show it live on an uploaded case: the Assess page renders shots spent, the ±1σ
+shot-noise band, and the verdict. **This is the differentiator. Spend your time here.**
+
+### Quantum optimization — 10 pts
+
+The chain is the point: *measure where the error is → fix that specific thing → prove it.*
+
+1. **Noise attribution** (`artifacts/noise_rung.json`) — three rungs on one circuit:
+   sampling contributes mean |Δ⟨Z⟩| **0.0074**; adding the device noise model takes it to
+   0.0617. **88% of the error is decoherence, not sampling.** So more shots is the wrong
+   lever and a shorter circuit is the right one.
+2. **Therefore** transpiler level 1 → 3, measured on the real `ibm_marrakesh` coupling map:
+   **75 → 60 two-qubit gates (−20%)**, depth 185 → 146. Level 1 is still run on every
+   hardware call so the improvement is a number in the artifact, not a claim.
+3. **Design sweep** — 48 cells (qubits × layers × 4 topologies) with gate count as the cost
+   axis, because two-qubit gates dominate both the error budget and the depth.
+
+Say: *"We didn't guess which lever mattered. We measured that decoherence dominates at 88%,
+which told us to cut two-qubit gates, and we cut them by 20% on the real coupling map."*
+
+### Quantum implementation — 10 pts
+
+- **Ran on a real QPU:** `ibm_marrakesh` (156 qubits), job **`d9js49rjf64c739haeg0`**,
+  retrievable. Mean |Δ⟨Z⟩| 0.1858 vs analytic, **top-1 diagnosis survived**.
+- **Cross-framework verification:** the same circuit built independently in Qiskit and
+  PennyLane agrees to ~1e-15 — the implementation is not framework-dependent.
+- **Error mitigation wired:** TREX readout twirling, ZNE resilience levels.
+- **Backend-agnostic provider layer** with graceful degradation: IBM → Braket → local
+  simulator, `fell_back=True` recorded. Four live endpoints under `/v1/quantum/`.
+- **Barren plateaus addressed with three named levers** and citations (width capped by
+  input; local `⟨Z⟩` cost — Cerezo 2021; data re-uploading available — Pérez-Salinas 2020).
+
+### Approach — 5 pts
+
+The product is **calibrated doubt**, not a diagnosis. Conformal prediction with a 90%
+coverage guarantee, temperature scaling, OOD energy scoring, and an explicit abstention
+policy whose thresholds are pinned to the served config by a test.
+
+### Feasibility — 5 pts
+
+Runs **entirely offline on CPU** on one box — no external identity provider, no network
+call, no GPU required. Docker + compose, `deploy/preflight.py` refuses to boot on a missing
+served artifact, DICOM intake, FHIR/HL7 export, path-gated auth. **755 tests, 0 failures.**
+
+---
+
+## 3. The 7-minute demo
+
+| Time | Screen | Line |
+|---|---|---|
+| 0:00 | `/app`, upload a chest X-ray | "Nothing is pre-baked. This is inference, now." |
+| 1:00 | **Read** page — Grad-CAM overlay, evidence graph | "It reports observations, never conclusions." |
+| 2:00 | **Assess** — differential + conformal set | "The product is the *set*, with a 90% guarantee." |
+| 3:00 | **Assess** — measurement budget panel | **The money moment.** "Shots bought this decision. Had it not resolved, the system would tell you whether more measurement helps or whether you need a human." |
+| 4:00 | `/quantum` §02 | "1 measurement-limited, 60 model-limited, over 447 studies." |
+| 5:00 | `/quantum` §03 | "Real QPU, job ID retrievable. 88% of error is decoherence — which is why we cut gates." |
+| 5:45 | `/quantum` §05 | **"Here is everything that didn't work."** |
+| 6:30 | `/quantum` §06–07 | 48-cell sweep + coupling heatmap. "All of it regenerated, none transcribed." |
+
+**Do not skip §05.** Volunteering the negatives is what converts a sceptical judge. If you
+present them first, no one can "catch" you with them.
+
+---
+
+## 4. Judge attacks, and exactly how to answer
+
+Ordered by likelihood × damage. The rebuttals are short on purpose — **answer, evidence,
+stop.** Do not over-explain; that reads as defensiveness.
+
+### A1 · "Your quantum model loses to classical. Why is this a quantum project?" ★★★★★
+> "It does, and we publish it: 0.6957 vs 0.6377 internally, and 0.5273 vs 0.4721 on 4,800
+> external CheXpert studies, where the gap is significant. So the product serves the
+> classical backend. What the quantum work contributes is the fair-comparison protocol and
+> the negative results it produced, including a capability claim we retracted after
+> auditing our own code. That's §05 of our evidence page."
+
+**Never** get defensive here. Concede instantly, then show the protocol and the
+retraction. This attack is *expected*, and conceding it is what makes everything else
+believable.
+
+### A2 · "8 qubits is classically simulable. There is no advantage available." ★★★★★
+> "Correct, and we say so in our own docs — no speed-up is claimed and none is possible at
+> this width. What's available is the resource model, and that's what we built."
+
+### A3 · "Your own sweep says the *product state* wins. Why entangle at all?" ★★★★★
+**The hardest question. Know the exact numbers.** Best cell is 8q/1L/`none` at 0.5749 with
+**0 two-qubit gates**; four of the top five cells use no entanglement.
+> "That's our finding, and we published it rather than burying it. Two things follow.
+> First, it independently reproduces our entanglement ablation, which bootstraps NLL as
+> **significantly worse** with the ring (Δ +0.056, CI [+0.022, +0.090]). Second, we did
+> *not* re-tune the served model to the winner — one grid search on one split is not
+> grounds to change a served clinical model. So the honest statement is: on an 8-channel
+> evidence vector, the CNOT ring is not earning its 24 gates, and we say so."
+
+If pushed *"then remove it"*:
+> "That's the right next step and it's the recommendation in our own docs. What we won't do
+> is ship a config change we validated on a single split an hour before a demo."
+
+### A4 · "Your sweep says 0.5749, your benchmark says 0.6377. Which is it?" ★★★★
+**Pre-empt this — it looks like a contradiction and isn't.**
+> "Different experiments. The sweep is 48 models trained for 20 epochs on a 900-sample
+> budget, scored on a 447-study test split. The headline benchmark is the fully-trained
+> served model on a 69-case held-out split. Compare cells *within* the sweep, never across."
+
+### A5 · "n=69 is far too small to conclude anything." ★★★★
+> "Agreed, which is why we publish the interval, not just the point estimate. 48 vs 44
+> correct. Jeffreys CIs [0.581, 0.795] and [0.520, 0.744]. McNemar cannot reach
+> significance under *any* pairing of the discordant pairs — best case p = 0.125. Our own
+> docs state the backends are not distinguishable at this sample size."
+
+That answer usually ends the line of questioning, because it's more rigorous than the
+question.
+
+### A6 · "Did you really run on hardware, or just simulate?" ★★★★
+> "Real. `ibm_marrakesh`, 156 qubits, job `d9js49rjf64c739haeg0` — retrievable. Top-1
+> survived device noise. And we built the same circuit independently in Qiskit and
+> PennyLane; they agree to 1e-15."
+
+### A7 · "One case on hardware isn't a benchmark." ★★★★
+> "Correct, n=1, and we don't present it as a benchmark. It demonstrates the pipeline
+> executes end-to-end on a QPU and that top-1 survives device noise. The statistical work
+> is on the simulator, where we can afford the sample size. Scaling that run is queue time,
+> not engineering."
+
+**Do not overclaim here.** This is the single easiest place to get caught inflating.
+
+### A8 · "QAE and QBN are dead code padding your repo." ★★★
+> "Both are wired into their engine, and both are inert because no trained artifact ships —
+> our evidence page says exactly that. The QBN specifically returns `None` when untrained,
+> because its constructor default is six unfitted constants and serving those as a quantum
+> inference would be dressing up hardcoded numbers as a learned model."
+
+That last clause usually earns credit rather than losing it.
+
+### A9 · "Is the quantum part even load-bearing, or is it decoration on a CNN?" ★★★
+> "Vision is a classical DenseNet-121 — we're explicit about that boundary. The quantum
+> layer is the *fusion* stage: it takes the 8-channel evidence vector to a posterior over
+> six diagnoses. It was the served backend through the hackathon; since the external
+> validation the product serves classical fusion and the VQC is selectable. Selecting it
+> turns the measurement budget and the entanglement telemetry back on."
+
+### A10 · "Why should I believe any of these numbers?" ★★★
+> "Because none of them are typed by hand. Every figure on `/quantum` is fetched from
+> `/v1/quantum/evidence`, which reads the artifact each generating script wrote. If an
+> artifact is missing, the page says 'not measured' — it never shows a default. And a test
+> fails the build if the published tables drift from `benchmark.json`."
+
+Then show `test_doc_numbers.py`. Its docstring says *"the fix is to re-copy the numbers out
+of benchmark.json, never to loosen this test."*
+
+### A11 · "Your QKL quantum kernel loses too." ★★
+
+> **Do not use the answer below (2026-09-13).** The 185-subject result it quotes is withdrawn:
+> the grade labels do not trace to BraTS 2020 (`docs/DATA_LICENSES.md`). Say instead: "On the
+> 55 BraTS 2020 subjects we can trace, the quantum kernel shows no significant difference from
+> a classical RBF kernel. A larger analysis is withdrawn until its labels are fixed."
+> "It doesn't differ, and we now have the power to say so. Nested cross-validation over
+> all 185 subjects with symmetric hyperparameter grids gives ΔAUROC −0.0026, 95% CI
+> [−0.044, +0.039], DeLong p = 0.90. The interval excludes anything beyond about 0.045 in
+> either direction, so this is an informative null and not an absence of evidence. Two
+> earlier figures are superseded — −0.016 at p = 0.002 on 669 slices, and +0.0446 at
+> p = 0.55 on 11 subjects — and we publish the history rather than the best of them. The
+> ECE difference is likewise not resolvable, which is the metric that would have flattered
+> us."
+
+### A12 · "What's your actual clinical validation?" ★★
+Answer honestly: MIMIC-CXR labels from a **rule-based labeler**, validated against 66
+hand-read reports (macro F1 0.89, κ 0.86), cross-checked against torchxrayvision — with
+**nodule agreement below chance and flagged unreliable** in the model card. No prospective
+clinical trial. Say that plainly.
+
+---
+
+## 5. Landmines — never say these
+
+| ✗ Never say | ✓ Say instead |
+|---|---|
+| "quantum advantage" / "quantum speed-up" | "a fair comparison, and the negative results it produced" |
+| "classical models can't tell measurement-limited from model-limited" | "retracted — `docs/RESEARCH_PAPER_v5.md` §2.8" |
+| "our quantum model outperforms classical" | "they're statistically indistinguishable at n=69" |
+| "entanglement improves our results" | "the ablation says the ring isn't earning its gates" |
+| "validated on patients" | "validated against a rule-based labeler + 66 hand-read reports" |
+| "we benchmarked against nnU-Net" | "we cite published nnU-Net values; we did not run it" |
+| "production-ready" / "clinical-grade" | "runs offline on one box; not a cleared device" |
+| "99% accurate" (any inflated figure) | quote the artifact |
+
+**The brain Dice trap:** AURA's Dice is **pooled 2-D per-slice**; BraTS literature values are
+**per-case 3-D**. Pooled-2-D flatters. If a judge compares them, correct it *yourself* —
+`docs/benchmark_report.md` carries the warning, so pointing at it converts a catch into a
+credibility win.
+
+---
+
+## 6. If you have time before the demo
+
+Highest value first:
+
+1. **Do not quote `qkl_full_coverage.json` (withdrawn 2026-09-13).** Its 185-subject grade
+   labels do not trace to BraTS 2020 (`docs/DATA_LICENSES.md`). The QKL figure had already
+   moved twice (ΔAUROC −0.0156 p=0.002 on 669 slices → −0.0051 p=0.27 → +0.0446 p=0.55 on
+   11 subjects). The defensible statement today is the 55-subject run
+   (`qkl_training_report.json`): no significant difference. Present a withdrawn number and
+   A10 collapses.
+2. **More hardware cases.** n=1 → n=20 turns A7 from a concession into a result. Queue time,
+   not engineering.
+3. **Train the QBN, or delete it.** Inert-but-wired is defensible; trained is better.
+4. **Widen the fusion split beyond n=69.** Nothing short of a ~15-point gap is detectable
+   at that size, so the benchmark can only ever say "comparable."
+
+---
+
+## 7. Pre-demo check (run this the morning of)
+
+```bash
+E:\AURA\venv\Scripts\python.exe -m deploy.preflight --skip-brain
+```
+
+Expect: every served artifact PASS, and a WARN on authentication (correct for a local demo).
+Then start the server and open `/app` and `/quantum`:
+
+```bash
+E:\AURA\venv\Scripts\python.exe -m uvicorn aura.gateway.app:app --host 127.0.0.1 --port 8000 --app-dir E:\AURA\aura-main
+```
+
+Hard-refresh once (`Ctrl+Shift+R`) so no stale JS is cached, upload a chest X-ray, and
+confirm the measurement-budget panel renders on **Assess**. If it doesn't, the fusion
+backend fell back to classical — check `preflight` output before presenting.
+
+---
+
+## 8. The closing line
+
+> "We could have claimed a quantum advantage. The measurements didn't support one, so we
+> published the measurements instead — including the ablation that says our own entangler
+> isn't earning its gates, and a capability claim we retracted after auditing our own code.
+> What we built is a system that says when it doesn't know, proves its coverage on real
+> data, and serves the model that generalised best on an external cohort. Every number
+> behind it regenerates from an artifact you can open."

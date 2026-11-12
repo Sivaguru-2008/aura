@@ -1,0 +1,35 @@
+[
+  {
+    "claim": "Quantum fusion accuracy exceeds classical (0.96 vs 0.93 claimed)",
+    "regenerated": {
+      "quantum": 0.01,
+      "classical_fair": 0.04
+    },
+    "accuracy_diff_ci95": [
+      -0.08,
+      0.01
+    ],
+    "mcnemar_p": 0.375,
+    "verdict": "NOT VALIDATED",
+    "evidence": "csv/predictions.csv, metrics/statistics.json",
+    "note": "difference not statistically significant at n=100"
+  },
+  {
+    "claim": "Quantum is far better calibrated (ECE 0.020 vs 0.276)",
+    "regenerated_ece": {
+      "quantum": 0.3838,
+      "classical_fair": 0.1314,
+      "classical_raw": 0.2283
+    },
+    "verdict": "CONFOUNDED",
+    "evidence": "plots/reliability_diagram.*, metrics/metrics.json",
+    "note": "The 0.276 figure is the UNCALIBRATED classical (raw). With classical given its own temperature the ECE gap shrinks from -0.155 (raw) to -0.252 (fair). The prior benchmark scaled only the quantum logits."
+  },
+  {
+    "claim": "Quantum ranking (AUROC) beats classical",
+    "delong_significant_classes": 2,
+    "verdict": "VALIDATED",
+    "evidence": "plots/roc_curves.*, metrics/statistics.json (delong_per_class)",
+    "note": "2 of 6 classes show a significant DeLong AUROC advantage for quantum."
+  }
+]

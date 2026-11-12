@@ -32,12 +32,13 @@ import os
 import sys
 from pathlib import Path
 
-# The app is rooted at aura/ (pyproject sets pythonpath = ["."] relative to it).
-AURA_ROOT = Path(__file__).resolve().parent.parent / "aura"
+REPO_ROOT = Path(__file__).resolve().parent.parent
+AURA_ROOT = REPO_ROOT / "aura"
 ARTIFACTS = AURA_ROOT / "artifacts"
 
-if str(AURA_ROOT) not in sys.path:
-    sys.path.insert(0, str(AURA_ROOT))
+for p in (str(REPO_ROOT), str(AURA_ROOT)):
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 GREEN, RED, YELLOW, DIM, RESET = "\033[32m", "\033[31m", "\033[33m", "\033[2m", "\033[0m"
 if os.environ.get("NO_COLOR") or not sys.stdout.isatty():
@@ -91,7 +92,7 @@ REQUIRED_IMPORTS = [
 
 
 def check_imports() -> None:
-    print("\n[1/6] Python dependencies")
+    print("\n[1/7] Python dependencies")
     for mod, why in REQUIRED_IMPORTS:
         try:
             __import__(mod)
@@ -135,7 +136,7 @@ BRAIN_ARTIFACTS = [
 
 
 def check_artifacts(skip_brain: bool) -> None:
-    print("\n[2/6] Served artifacts")
+    print("\n[2/7] Served artifacts")
     if not ARTIFACTS.is_dir():
         _fail(
             "artifacts/ directory",
@@ -177,7 +178,7 @@ def check_artifacts(skip_brain: bool) -> None:
 # 3. The real vision model actually loads
 # --------------------------------------------------------------------------- #
 def check_vision_engine() -> None:
-    print("\n[3/6] Vision engine (real weights, not fallback)")
+    print("\n[3/7] Vision engine (real weights, not fallback)")
     fallback = os.environ.get("AURA_ALLOW_FALLBACK_VISION", "0")
     if fallback == "1":
         _warn(
@@ -223,7 +224,7 @@ def check_vision_engine() -> None:
 # 4. Modality router installs (gateway swallows this failure)
 # --------------------------------------------------------------------------- #
 def check_router() -> None:
-    print("\n[4/6] Modality router")
+    print("\n[4/7] Modality router")
     try:
         from aura.backend.bootstrap import install_router  # noqa: F401
 
@@ -241,7 +242,7 @@ def check_router() -> None:
 # 5. The ASGI app imports and the fusion model is trained
 # --------------------------------------------------------------------------- #
 def check_app() -> None:
-    print("\n[5/6] Gateway application")
+    print("\n[5/7] Gateway application")
     try:
         from aura.gateway.app import app
 
@@ -260,16 +261,17 @@ def check_app() -> None:
 
 
 def check_access_control() -> None:
-    """Warn when the box will serve patient data with no authentication.
+    """Say out loud who this box will serve.
 
-    Not a hard failure: the offline single-box demo is a real, supported mode and
-    it runs without a token by design. But an unauthenticated AURA exposes reads
-    that emit patient data to anything that can reach the port — GET /v1/cases
-    enumerates case ids, /v1/cases/{id} returns the full bundle, and the FHIR/HL7
-    exporters emit records built for another system to ingest. A preflight that
-    already refuses to boot on a missing artifact should at least say so out loud.
+    With a token set, every /v1 data route needs it. With no token, the gateway serves
+    direct connections from this machine only: right for the offline single-box demo,
+    and it means a container with no token is reachable by nothing but its own
+    healthcheck, which the WARN below spells out. ``AURA_ALLOW_OPEN_ACCESS=1`` with no
+    token restores the old wide-open behaviour (GET /v1/cases enumerates case ids; the
+    FHIR/HL7 exporters emit records built for another system to ingest), so it gets the
+    loudest warning this script has.
     """
-    print("\n[6/6] Access control")
+    print("\n[6/7] Access control")
     try:
         from aura.common.config import get_settings
 
@@ -279,13 +281,23 @@ def check_access_control() -> None:
         return
 
     if s.auth_token:
-        _ok(f"API token set {DIM}(header: {s.auth_header}){RESET}")
+        _ok(f"API token set {DIM}(header: {s.auth_header}; browsers sign in at "
+            f"/v1/auth/session){RESET}")
+    elif s.allow_open_access:
+        _warn(
+            "authentication",
+            "AURA_ALLOW_OPEN_ACCESS=1 with no AURA_AUTH_TOKEN - EVERY endpoint is open to "
+            "the network, including GET /v1/cases, /v1/cases/{id} and the FHIR/HL7 "
+            "exports. Only acceptable on an isolated demo network. Fix: set a token "
+            '(python -c "import secrets;print(secrets.token_urlsafe(32))") and unset '
+            "AURA_ALLOW_OPEN_ACCESS.",
+        )
     else:
         _warn(
             "authentication",
-            "no AURA_AUTH_TOKEN - every endpoint is open, including GET /v1/cases, "
-            "/v1/cases/{id} and the FHIR/HL7 exports. Correct for an offline demo; "
-            "set a token before anything else can reach this port. Generate one: "
+            "no AURA_AUTH_TOKEN - the API answers only direct requests from this machine; "
+            "network clients (including a browser reaching a container) get 403. Right "
+            "for a single-box demo. To serve a network, set a token: "
             'python -c "import secrets;print(secrets.token_urlsafe(32))"',
         )
 
@@ -313,6 +325,78 @@ def check_access_control() -> None:
         )
 
 
+def check_database() -> None:
+    """The case store and audit ledger must be reachable, and must be this site's.
+
+    SQLite needs only a writable directory; PostgreSQL needs the server up and the
+    credentials right. Failing here stops the container at boot rather than on the
+    first upload. The site check catches a server pointed at another hospital's
+    database before it serves a request (the gateway refuses too; this says so earlier
+    and more plainly). Read-only: never creates a table or a file.
+    """
+    print("\n[7/7] Case store")
+    try:
+        from sqlalchemy import inspect, select
+
+        from aura.common.config import DB_PATH, get_settings
+        from aura.gateway.storage import SiteBindingRow, engine_for
+
+        s = get_settings()
+    except Exception as exc:                      # pragma: no cover - import guarded above
+        _fail("case store", f"{type(exc).__name__}: {exc}", "see the import check above")
+        return
+
+    if s.database_url:
+        url = s.database_url
+    else:
+        target = Path(DB_PATH)
+        if not target.exists():
+            parent = target.parent
+            if parent.is_dir() and os.access(parent, os.W_OK):
+                _ok(f"SQLite {DIM}{target} (created on first start){RESET}")
+            else:
+                _fail("case store", f"{parent} does not exist or is not writable",
+                      "mount a writable volume there, or set AURA_DB_PATH")
+            _site_report(s.site_id, bound=None)
+            return
+        url = f"sqlite:///{target}"
+
+    try:
+        engine = engine_for(url)
+        with engine.connect() as conn:
+            conn.exec_driver_sql("SELECT 1")
+            bound = None
+            if inspect(conn).has_table("site_binding"):
+                bound = conn.execute(select(SiteBindingRow.site_id)).scalar()
+        shown = engine.url.render_as_string(hide_password=True)
+        dialect = engine.dialect.name
+        engine.dispose()
+    except Exception as exc:
+        _fail("case store", f"cannot connect: {type(exc).__name__}: {exc}",
+              "check AURA_DATABASE_URL (host, credentials, database) or AURA_DB_PATH; "
+              "with docker compose, start the database with --profile postgres")
+        return
+    _ok(f"{dialect} reachable {DIM}({shown}){RESET}")
+    _site_report(s.site_id, bound=bound)
+
+
+def _site_report(configured: str, bound: str | None) -> None:
+    if bound and configured and bound != configured:
+        _fail("site identity",
+              f"the database belongs to site '{bound}' but AURA_SITE_ID='{configured}'",
+              "point this server at its own site's database, or correct AURA_SITE_ID")
+    elif bound and not configured:
+        _fail("site identity",
+              f"the database belongs to site '{bound}' but AURA_SITE_ID is not set",
+              f"set AURA_SITE_ID={bound} if this server is that site")
+    elif configured:
+        _ok(f"site {configured} {DIM}({'bound' if bound else 'binds on first start'}){RESET}")
+    else:
+        _warn("site identity",
+              "AURA_SITE_ID is not set - fine for one box; set it before a second site "
+              "exists, so no server can open another site's database")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="AURA deployment preflight")
     ap.add_argument("--warn-only", action="store_true",
@@ -335,6 +419,7 @@ def main() -> int:
     check_router()
     check_app()
     check_access_control()
+    check_database()
 
     print("\n" + "=" * 74)
     if _failures:

@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "timestamp": "2026-07-24T04:59:52Z",
+    "timestamp": "2026-09-12T07:34:57Z",
     "platform": "Windows-11-10.0.26200-SP0",
     "torch_version": "2.11.0+cu128",
     "cuda_available": true
@@ -20,8 +20,8 @@
       "brier_score": 0.1556
     },
     "performance": {
-      "cpu_latency_ms": 47.88,
-      "cpu_throughput_img_s": 20.88
+      "cpu_latency_ms": 54.0,
+      "cpu_throughput_img_s": 18.52
     }
   },
   "brain_model": {
@@ -39,8 +39,8 @@
       "presence_auroc": 0.97743
     },
     "performance": {
-      "cpu_slice_throughput_s": 12.16,
-      "cpu_study_latency_ms": 12747.84
+      "cpu_slice_throughput_s": 10.78,
+      "cpu_study_latency_ms": 14372.29
     }
   },
   "evidence_fusion": {
@@ -50,7 +50,7 @@
     "classical_conformal_set_size": 3.261,
     "ood_detection": {
       "method": "energy_score_zscore",
-      "ood_energy_threshold": 3.0,
+      "ood_energy_threshold": 2.5,
       "ood_fpr_95_tpr": 0.045
     }
   }

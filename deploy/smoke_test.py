@@ -2,12 +2,17 @@
 
 Preflight proves the process *can* load its models. This proves it actually
 serves a diagnosis: health -> modality router -> upload -> case detail ->
-model card.
+model card -> access control.
 
 Two modes, one set of assertions:
 
     python deploy/smoke_test.py                     # in-process, via TestClient
     python deploy/smoke_test.py --url http://localhost:8000   # against a container
+
+Against a server with ``AURA_AUTH_TOKEN`` set, pass the same token (``--token``, or
+export ``AURA_AUTH_TOKEN`` in the shell running this script). Every request then
+carries it, and step 6 also checks that a request *without* it is refused, so the
+smoke test proves the gate is closed as well as that the service is up.
 
 The in-process mode boots the ASGI app through its lifespan, which is where
 ``install_router()`` runs. That matters: ``gateway/app.py`` catches a router
@@ -39,8 +44,10 @@ def check(name: str, passed: bool, detail: str = "") -> None:
 class _Client:
     """Thin shim so the same assertions run in-process or over HTTP."""
 
-    def __init__(self, base: str | None, db_path: str | None = None):
+    def __init__(self, base: str | None, db_path: str | None = None,
+                 token: str = "", user: str = "smoke-test"):
         self.base = base.rstrip("/") if base else None
+        self.headers = {"x-aura-token": token, "x-aura-user": user} if token else {}
         self._tc = None
         if self.base is None:
             # Point the case store at a throwaway DB before importing anything:
@@ -48,37 +55,47 @@ class _Client:
             # this the smoke run appends cases to the developer's real worklist.
             if db_path:
                 os.environ["AURA_DB_PATH"] = db_path
-            sys.path.insert(0, str(AURA_ROOT))
+            if token:
+                os.environ["AURA_AUTH_TOKEN"] = token
+            for p in (str(REPO_ROOT), str(AURA_ROOT)):
+                if p not in sys.path:
+                    sys.path.insert(0, p)
             from fastapi.testclient import TestClient
             from aura.gateway.app import app
 
-            self._ctx = TestClient(app)
+            # The in-process client genuinely is this machine, so it says so: with no
+            # token configured the gateway serves loopback callers only, and
+            # TestClient's default peer name ("testclient") is not a loopback address.
+            self._ctx = TestClient(app, client=("127.0.0.1", 50000))
             self._tc = self._ctx.__enter__()
 
     def close(self) -> None:
         if self._tc is not None:
             self._ctx.__exit__(None, None, None)
 
-    def get(self, path: str):
+    def get(self, path: str, authenticated: bool = True):
+        headers = self.headers if authenticated else {}
         if self._tc is not None:
-            r = self._tc.get(path)
-            return r.status_code, (r.json() if r.content else None), r.text
+            r = self._tc.get(path, headers=headers)
+            return r.status_code, _json_or_none(r.text), r.text
         import urllib.error
         import urllib.request
 
+        req = urllib.request.Request(f"{self.base}{path}", headers=headers)  # noqa: S310
         try:
-            with urllib.request.urlopen(f"{self.base}{path}", timeout=120) as resp:  # noqa: S310
+            with urllib.request.urlopen(req, timeout=120) as resp:  # noqa: S310
                 raw = resp.read().decode()
-                return resp.status, (json.loads(raw) if raw else None), raw
+                return resp.status, _json_or_none(raw), raw
         except urllib.error.HTTPError as exc:
             raw = exc.read().decode()
-            return exc.code, None, raw
+            return exc.code, _json_or_none(raw), raw
 
     def post_file(self, path: str, file_path: Path):
         if self._tc is not None:
             with file_path.open("rb") as fh:
-                r = self._tc.post(path, files={"file": (file_path.name, fh, "image/jpeg")})
-            return r.status_code, (r.json() if r.content else None), r.text
+                r = self._tc.post(path, headers=self.headers,
+                                  files={"file": (file_path.name, fh, "image/jpeg")})
+            return r.status_code, _json_or_none(r.text), r.text
 
         import urllib.error
         import urllib.request
@@ -94,16 +111,24 @@ class _Client:
         req = urllib.request.Request(  # noqa: S310
             f"{self.base}{path}",
             data=body,
-            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}",
+                     **self.headers},
             method="POST",
         )
         try:
             with urllib.request.urlopen(req, timeout=300) as resp:  # noqa: S310
                 raw = resp.read().decode()
-                return resp.status, (json.loads(raw) if raw else None), raw
+                return resp.status, _json_or_none(raw), raw
         except urllib.error.HTTPError as exc:
             raw = exc.read().decode()
-            return exc.code, None, raw
+            return exc.code, _json_or_none(raw), raw
+
+
+def _json_or_none(raw: str):
+    try:
+        return json.loads(raw) if raw else None
+    except ValueError:
+        return None
 
 
 def wait_for_health(base: str, timeout: int) -> bool:
@@ -126,7 +151,7 @@ def wait_for_health(base: str, timeout: int) -> bool:
 
 
 def run(client: _Client, expect_brain: bool) -> int:
-    print("\n[1/5] Health")
+    print("\n[1/6] Health")
     code, body, text = client.get("/v1/health")
     check("GET /v1/health -> 200", code == 200, text[:200] if code != 200 else "")
     if code == 200:
@@ -135,19 +160,20 @@ def run(client: _Client, expect_brain: bool) -> int:
               "artifacts/fusion_*.npz missing or unreadable"
               if body.get("trained") is not True else f"backend={body.get('backend')}")
 
-    print("\n[2/5] Modality router")
+    print("\n[2/6] Modality router")
     # gateway/app.py installs this inside a try/except that only warns, so a
     # failure here is otherwise invisible until a request 404s.
     code, body, text = client.get("/v1/engines")
     check("GET /v1/engines -> 200", code == 200,
-          "router failed to install (gateway only logs a WARNING)" if code != 200 else "")
+          "router failed to install (gateway only logs a WARNING)" if code != 200
+          else "")
     if code == 200:
         names = json.dumps(body)
         check("thorax engine registered", "thorax" in names, names[:200])
         if expect_brain:
             check("neuromind engine registered", "neuromind" in names, names[:200])
 
-    print("\n[3/5] Live inference on a real radiograph")
+    print("\n[3/6] Live inference on a real radiograph")
     check("sample.jpg present", SAMPLE.is_file(), str(SAMPLE))
     case_id = None
     if SAMPLE.is_file():
@@ -160,7 +186,7 @@ def run(client: _Client, expect_brain: bool) -> int:
             case_id = body.get("case_id")
             check("case_id returned", bool(case_id), str(body)[:200])
 
-    print("\n[4/5] Case detail")
+    print("\n[4/6] Case detail")
     if case_id:
         code, body, text = client.get(f"/v1/cases/{case_id}")
         check(f"GET /v1/cases/{case_id} -> 200", code == 200, text[:200] if code != 200 else "")
@@ -184,7 +210,7 @@ def run(client: _Client, expect_brain: bool) -> int:
     else:
         check("case detail", False, "skipped - no case_id from upload")
 
-    print("\n[5/5] Model card")
+    print("\n[5/6] Model card")
     code, body, text = client.get("/v1/model-card")
     check("GET /v1/model-card -> 200", code == 200, text[:200] if code != 200 else "")
     if code == 200:
@@ -192,6 +218,21 @@ def run(client: _Client, expect_brain: bool) -> int:
         # this doubles as a "the real DenseNet answered" assertion.
         check("model_version populated (real backbone served)",
               bool(body.get("model_version")), str(body.get("model_version")))
+
+    print("\n[6/6] Access control")
+    code, body, text = client.get("/v1/auth/status", authenticated=False)
+    check("GET /v1/auth/status -> 200 without credentials", code == 200, text[:200])
+    if client.headers:
+        # A token was supplied, so the server should demand one: prove a request
+        # without it is refused rather than assuming it.
+        check("server requires a token", bool(body and body.get("auth_required")), str(body))
+        code, _, text = client.get("/v1/cases", authenticated=False)
+        check("GET /v1/cases without a token -> 401", code == 401, f"got {code}")
+    elif body and body.get("auth_required"):
+        check("no token supplied, but the server requires one", False,
+              "pass --token or export AURA_AUTH_TOKEN")
+    else:
+        print("  SKIP  no token supplied; the gate is only exercised with --token")
 
     failed = [n for n, ok, _ in _checks if not ok]
     print("\n" + "=" * 74)
@@ -212,6 +253,11 @@ def main() -> int:
                     help="seconds to wait for --url to become healthy (default 180)")
     ap.add_argument("--expect-brain", action="store_true",
                     help="also require the neuromind engine to be registered")
+    ap.add_argument("--token", default=os.environ.get("AURA_AUTH_TOKEN", ""),
+                    help="API token for a server with AURA_AUTH_TOKEN set "
+                         "(default: $AURA_AUTH_TOKEN)")
+    ap.add_argument("--user", default="smoke-test",
+                    help="principal recorded in the audit log (default: smoke-test)")
     ap.add_argument("--use-real-db", action="store_true",
                     help="in-process mode: write to the real case store instead "
                          "of a temporary one")
@@ -230,7 +276,7 @@ def main() -> int:
     with tempfile.TemporaryDirectory(prefix="aura-smoke-",
                                      ignore_cleanup_errors=True) as td:
         db = None if (args.url or args.use_real_db) else str(Path(td) / "smoke.db")
-        client = _Client(args.url, db)
+        client = _Client(args.url, db, token=args.token, user=args.user)
         try:
             return run(client, args.expect_brain)
         finally:

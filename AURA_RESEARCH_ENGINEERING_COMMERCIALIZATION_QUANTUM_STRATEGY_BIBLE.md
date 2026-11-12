@@ -4,6 +4,22 @@
 **Authors**: AURA Core AI & Quantum Engineering Team  
 **System Version**: Unified Clinical Platform (v2.0 - v5.0)
 
+> **Status, 2026-09-12 — superseded in part. Read these corrections before quoting any of
+> this document outside the team.** It was written as a planning document before most of its
+> projections were tested. The repo's own measured results now contradict these sections:
+>
+> | Section | What this document says | What the measured evidence says |
+> |---|---|---|
+> | §3.2 QKL | Brain-tumour *subtype* F1 ~0.85 vs ~0.79 for an SVM | Subtype is untrainable here: the corpus has no meningioma or metastasis imaging. QKL was trained on glioma grade instead, on 55 BraTS 2020 subjects, with no significant difference from an RBF kernel (`aura/artifacts/brain/qkl_training_report.json`). The later 185-subject "full coverage" comparison is **withdrawn**: its grade labels come from a folder whose subject IDs do not exist in BraTS 2020 (`docs/DATA_LICENSES.md`, provenance audit) |
+> | §2, §9.1 QMBA | Top-scored method; "Very High" patent value | The typed-abstention capability was **retracted** on source audit (`docs/RESEARCH_PAPER_v5.md` §2.8) |
+> | §9.2 | "FTO Status: Clear" | No freedom-to-operate search is on record. Treat freedom to operate as unknown until a patent attorney runs one |
+> | §11.1 | De Novo "because no predicate incorporates quantum algorithms" | FDA classifies a device by intended use and technological characteristics, and chest-X-ray AI already has cleared 510(k) predicates. A quantum component in the decision path makes clearance harder, not newly possible. The product now serves classical fusion |
+> | §12.2 | The quantum layer "boosting F1-scores and calibration" | Not supported. On the preregistered CheXpert external validation (n = 4,800) classical fusion beats the VQC: accuracy 0.5273 vs 0.4721, McNemar p < 0.001 (`aura/artifacts/chexpert_external.json`) |
+> | §7.1, §14.2 | +2.8% AUROC (QAE + VQC); 78% ECE reduction (QBN) | Projections, never measured. QAE and QBN ship untrained |
+> | §10 | Commercial products trained on the current models | Every served model is trained on research-use data. See `docs/DATA_LICENSES.md` before any commercial use |
+>
+> A copy of this file also sits one directory up, at `E:\AURA\`; keep the two identical.
+
 ---
 
 ## Table of Contents

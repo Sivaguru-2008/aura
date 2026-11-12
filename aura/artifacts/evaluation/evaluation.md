@@ -2,7 +2,7 @@
 
 This report summarizes the measured clinical diagnostic performance and computational efficiency of AURA's vision backbones, evidence fusion networks, and safety engines.
 
-- **Generated at:** 2026-07-24T04:59:52Z
+- **Generated at:** 2026-09-12T07:34:57Z
 - **Environment:** Windows-11-10.0.26200-SP0
 - **Framework:** PyTorch 2.11.0+cu128 (CUDA: True)
 
@@ -26,8 +26,8 @@ Evaluated on **602** validation images from the MIMIC-CXR dataset.
 
 ### Computational Performance (CPU)
 - **Model Size:** 27.12 MB
-- **Inference Latency:** 47.88 ms
-- **Throughput:** 20.88 images/sec
+- **Inference Latency:** 54.0 ms
+- **Throughput:** 18.52 images/sec
 
 ---
 
@@ -41,14 +41,14 @@ Evaluated on **7531** volumetric slices from the BraTS2020 dataset.
 | **Whole Tumor (WT)** | 0.91498 | 7.08 |
 | **Tumor Core (TC)** | 0.84561 | 6.15 |
 | **Enhancing Tumor (ET)** | 0.83486 | 4.53 |
-| **Composite Mean** | 0.86515 | — |
+| **Composite Mean** | 0.86515 | â€” |
 
 - **Tumor Presence AUROC:** 0.97743 (tumor presence classification head)
 
 ### Computational Performance (CPU)
 - **Model Size:** 86.25 MB
-- **Throughput:** 12.16 slices/sec
-- **Study-Level Latency (155 slices):** 12747.84 ms (~12.75 sec)
+- **Throughput:** 10.78 slices/sec
+- **Study-Level Latency (155 slices):** 14372.29 ms (~14.37 sec)
 
 ---
 

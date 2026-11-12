@@ -3,13 +3,16 @@ from datetime import datetime, timezone
 from aura.schemas.contracts import CaseBundle
 from aura.schemas.clinical import DIAGNOSIS_LABELS
 
-def export_hl7_oru_r01(b: CaseBundle) -> str:
+def export_hl7_oru_r01(b: CaseBundle, tenant_id: str | None = None) -> str:
+    from aura.gateway.storage import compute_provenance_hash
     now_str = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+    p_hash = compute_provenance_hash(b)
+    tenant = tenant_id or "default"
     top_dx = b.safety.top.value if (b.safety and b.safety.top) else "unknown"
     top_dx_label = DIAGNOSIS_LABELS.get(b.safety.top, top_dx) if (b.safety and b.safety.top) else top_dx
     
     # MSH (Message Header)
-    msh = f"MSH|^~\\&|AURA|HOSPITAL|EPIC|HOSPITAL|{now_str}||ORU^R01^ORU_R01|MSG{b.case_id}|P|2.5"
+    msh = f"MSH|^~\\&|AURA^{tenant}|HOSPITAL|EPIC|HOSPITAL|{now_str}||ORU^R01^ORU_R01|MSG{b.case_id}|P|2.5"
     
     # PID (Patient Identification)
     sex_char = "U"
@@ -24,6 +27,25 @@ def export_hl7_oru_r01(b: CaseBundle) -> str:
     obx_segments = []
     idx = 1
     
+    # Decision Assurance Verdict (if available)
+    da = getattr(b, "decision_assurance", None)
+    if da is not None:
+        flag = "A" if da.verdict.value != "ACCEPT" else "N"
+        obx_segments.append(
+            f"OBX|{idx}|TX|DECISION_VERDICT^Decision Verdict^AURA|1|{da.verdict.value} (limiting: {da.limiting_factor})|||{flag}|||F"
+        )
+        idx += 1
+        obx_segments.append(
+            f"OBX|{idx}|TX|CONFORMAL_SET^Conformal Prediction Set (Coverage {da.conformal_coverage:.0%})^AURA|1|{', '.join(da.conformal_set)}|||N|||F"
+        )
+        idx += 1
+
+    # Cryptographic Provenance Hash
+    obx_segments.append(
+        f"OBX|{idx}|ST|PROVENANCE_HASH^Tamper-Evident SHA256^AURA|1|{p_hash}|||N|||F"
+    )
+    idx += 1
+
     # Diagnostic Impression
     obx_segments.append(
         f"OBX|{idx}|TX|DX^Primary Diagnosis^AURA|1|{top_dx_label} (probability: {b.safety.top_probability:.4f})|||N|||F"

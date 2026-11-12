@@ -1,0 +1,321 @@
+{
+ "purpose": "Across-seed replication of the entanglement ablation. Data held fixed; only the training seed varies. The published single-seed bootstrap quantifies test-set sampling variability; this quantifies training variability, which is the source the original interval omits.",
+ "protocol": {
+  "seeds": [
+   7,
+   11,
+   13,
+   17,
+   19,
+   23,
+   29,
+   31,
+   37,
+   41
+  ],
+  "epochs": 30,
+  "n_qubits": 8,
+  "n_layers": 3,
+  "data": "cached quantum_study_evidence.npz, identical for every run",
+  "n_train": 1338,
+  "n_cal": 446,
+  "n_test": 447
+ },
+ "per_seed": [
+  {
+   "seed": 7,
+   "entangled": {
+    "accuracy": 0.5414,
+    "nll": 1.2682,
+    "ece": 0.0464,
+    "temperature": 1.1342,
+    "mean_confidence": 0.5142,
+    "train_seconds": 83.6
+   },
+   "product": {
+    "accuracy": 0.5705,
+    "nll": 1.212,
+    "ece": 0.0831,
+    "temperature": 1.0901,
+    "mean_confidence": 0.5226,
+    "train_seconds": 66.85
+   },
+   "delta_nll": 0.0562,
+   "delta_accuracy": -0.0291,
+   "delta_ece": -0.0367
+  },
+  {
+   "seed": 11,
+   "entangled": {
+    "accuracy": 0.5503,
+    "nll": 1.276,
+    "ece": 0.0724,
+    "temperature": 1.0137,
+    "mean_confidence": 0.5016,
+    "train_seconds": 64.24
+   },
+   "product": {
+    "accuracy": 0.5638,
+    "nll": 1.2082,
+    "ece": 0.0757,
+    "temperature": 1.0296,
+    "mean_confidence": 0.5171,
+    "train_seconds": 62.62
+   },
+   "delta_nll": 0.0678,
+   "delta_accuracy": -0.0135,
+   "delta_ece": -0.0033
+  },
+  {
+   "seed": 13,
+   "entangled": {
+    "accuracy": 0.5481,
+    "nll": 1.2669,
+    "ece": 0.0612,
+    "temperature": 0.8916,
+    "mean_confidence": 0.5012,
+    "train_seconds": 71.35
+   },
+   "product": {
+    "accuracy": 0.5593,
+    "nll": 1.2406,
+    "ece": 0.0853,
+    "temperature": 0.9977,
+    "mean_confidence": 0.5057,
+    "train_seconds": 67.14
+   },
+   "delta_nll": 0.0263,
+   "delta_accuracy": -0.0112,
+   "delta_ece": -0.0241
+  },
+  {
+   "seed": 17,
+   "entangled": {
+    "accuracy": 0.5503,
+    "nll": 1.2672,
+    "ece": 0.0656,
+    "temperature": 1.0563,
+    "mean_confidence": 0.5106,
+    "train_seconds": 73.52
+   },
+   "product": {
+    "accuracy": 0.5593,
+    "nll": 1.217,
+    "ece": 0.0634,
+    "temperature": 1.124,
+    "mean_confidence": 0.5171,
+    "train_seconds": 62.15
+   },
+   "delta_nll": 0.0502,
+   "delta_accuracy": -0.009,
+   "delta_ece": 0.0022
+  },
+  {
+   "seed": 19,
+   "entangled": {
+    "accuracy": 0.5414,
+    "nll": 1.2546,
+    "ece": 0.0419,
+    "temperature": 0.9781,
+    "mean_confidence": 0.5224,
+    "train_seconds": 74.05
+   },
+   "product": {
+    "accuracy": 0.5615,
+    "nll": 1.1951,
+    "ece": 0.0621,
+    "temperature": 1.0806,
+    "mean_confidence": 0.5253,
+    "train_seconds": 63.65
+   },
+   "delta_nll": 0.0595,
+   "delta_accuracy": -0.0201,
+   "delta_ece": -0.0202
+  },
+  {
+   "seed": 23,
+   "entangled": {
+    "accuracy": 0.5481,
+    "nll": 1.2574,
+    "ece": 0.0588,
+    "temperature": 1.0526,
+    "mean_confidence": 0.5189,
+    "train_seconds": 73.79
+   },
+   "product": {
+    "accuracy": 0.5459,
+    "nll": 1.2244,
+    "ece": 0.0906,
+    "temperature": 1.167,
+    "mean_confidence": 0.5006,
+    "train_seconds": 64.46
+   },
+   "delta_nll": 0.033,
+   "delta_accuracy": 0.0022,
+   "delta_ece": -0.0318
+  },
+  {
+   "seed": 29,
+   "entangled": {
+    "accuracy": 0.5481,
+    "nll": 1.2678,
+    "ece": 0.0589,
+    "temperature": 0.902,
+    "mean_confidence": 0.5043,
+    "train_seconds": 72.53
+   },
+   "product": {
+    "accuracy": 0.5593,
+    "nll": 1.2181,
+    "ece": 0.0883,
+    "temperature": 0.9573,
+    "mean_confidence": 0.5054,
+    "train_seconds": 445.62
+   },
+   "delta_nll": 0.0497,
+   "delta_accuracy": -0.0112,
+   "delta_ece": -0.0294
+  },
+  {
+   "seed": 31,
+   "entangled": {
+    "accuracy": 0.5503,
+    "nll": 1.2658,
+    "ece": 0.0673,
+    "temperature": 1.0299,
+    "mean_confidence": 0.4954,
+    "train_seconds": 70.15
+   },
+   "product": {
+    "accuracy": 0.5593,
+    "nll": 1.1971,
+    "ece": 0.0722,
+    "temperature": 1.0496,
+    "mean_confidence": 0.515,
+    "train_seconds": 58.16
+   },
+   "delta_nll": 0.0687,
+   "delta_accuracy": -0.009,
+   "delta_ece": -0.0049
+  },
+  {
+   "seed": 37,
+   "entangled": {
+    "accuracy": 0.5503,
+    "nll": 1.2691,
+    "ece": 0.0507,
+    "temperature": 1.1602,
+    "mean_confidence": 0.5099,
+    "train_seconds": 66.82
+   },
+   "product": {
+    "accuracy": 0.5749,
+    "nll": 1.2465,
+    "ece": 0.086,
+    "temperature": 1.1837,
+    "mean_confidence": 0.5054,
+    "train_seconds": 52.11
+   },
+   "delta_nll": 0.0226,
+   "delta_accuracy": -0.0246,
+   "delta_ece": -0.0353
+  },
+  {
+   "seed": 41,
+   "entangled": {
+    "accuracy": 0.5391,
+    "nll": 1.2925,
+    "ece": 0.053,
+    "temperature": 1.1484,
+    "mean_confidence": 0.4978,
+    "train_seconds": 49.53
+   },
+   "product": {
+    "accuracy": 0.5414,
+    "nll": 1.2369,
+    "ece": 0.0474,
+    "temperature": 1.1453,
+    "mean_confidence": 0.4942,
+    "train_seconds": 42.41
+   },
+   "delta_nll": 0.0556,
+   "delta_accuracy": -0.0023,
+   "delta_ece": 0.0056
+  }
+ ],
+ "delta_nll": {
+  "per_seed": [
+   0.0562,
+   0.0678,
+   0.0263,
+   0.0502,
+   0.0595,
+   0.033,
+   0.0497,
+   0.0687,
+   0.0226,
+   0.0556
+  ],
+  "mean": 0.049,
+  "sd_across_seeds": 0.0164,
+  "ci95_mean": [
+   0.0372,
+   0.0607
+  ],
+  "excludes_zero": true,
+  "t_p_two_sided": 0.0,
+  "wilcoxon_p": 0.002,
+  "n_seeds_favouring_entanglement": 0,
+  "single_seed_published_value": 0.056
+ },
+ "delta_accuracy": {
+  "per_seed": [
+   -0.0291,
+   -0.0135,
+   -0.0112,
+   -0.009,
+   -0.0201,
+   0.0022,
+   -0.0112,
+   -0.009,
+   -0.0246,
+   -0.0023
+  ],
+  "mean": -0.0128,
+  "sd_across_seeds": 0.0096,
+  "ci95_mean": [
+   -0.0196,
+   -0.0059
+  ],
+  "excludes_zero": true,
+  "t_p_two_sided": 0.0023,
+  "wilcoxon_p": 0.0039,
+  "n_seeds_favouring_entanglement": 1,
+  "single_seed_published_value": -0.0288
+ },
+ "delta_ece": {
+  "per_seed": [
+   -0.0367,
+   -0.0033,
+   -0.0241,
+   0.0022,
+   -0.0202,
+   -0.0318,
+   -0.0294,
+   -0.0049,
+   -0.0353,
+   0.0056
+  ],
+  "mean": -0.0178,
+  "sd_across_seeds": 0.0162,
+  "ci95_mean": [
+   -0.0294,
+   -0.0062
+  ],
+  "excludes_zero": true,
+  "t_p_two_sided": 0.007,
+  "wilcoxon_p": 0.0195,
+  "n_seeds_favouring_entanglement": 8,
+  "single_seed_published_value": -0.0273
+ }
+}

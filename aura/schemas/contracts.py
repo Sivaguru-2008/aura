@@ -99,6 +99,8 @@ class StudyInput(BaseModel):
     multimodal: Optional[MultimodalContext] = None
     # Optional ground-truth diagnosis — present only for synthetic/seed data.
     ground_truth: Optional[Diagnosis] = None
+    # Optional patient ID to link to the EHR database
+    patient_id: Optional[str] = None
 
 
 # --------------------------------------------------------------------------- #
@@ -301,6 +303,26 @@ class FusionResult(BaseModel):
     conflict_distance: float = 0.0             # EMD(VQC, PoE) on the severity axis
     conflict_threshold: float = 0.0            # dynamic τ used for the decision
     fallback_triggered: bool = False           # True when the PoE fallback fired
+    #: Entanglement telemetry from services/fusion/qmeasure.measure_entanglement:
+    #: measurement entropy, entropy shift vs the product-state baseline, total and
+    #: differential channel coupling, the top coupled pairs, and the correlation /
+    #: differential matrices. None on classical backends, which have no register to
+    #: measure. FusionEngine computed this on every quantum study and passed it here
+    #: while the field did not exist — pydantic's default extra='ignore' dropped it
+    #: silently, so 31 ms/study of real work was discarded and the console's
+    #: entanglement panel (gated on this key) could never render.
+    quantum_entanglement: Optional[dict] = None
+    #: Did the quantum autoencoder ACTUALLY compress the vision embedding for this
+    #: study? Not the `qae_enabled` setting. The compression path additionally needs
+    #: a vision embedding and loaded QAE weights, and `QuantumAutoencoder.load()`
+    #: returns None when the weights are absent — which is the shipped state. A flag
+    #: reporting configuration intent would tell the console a quantum autoencoder
+    #: ran when the engine had silently taken the plain-encoding branch.
+    # No qbn_enabled here. The QBN runs in ClinicalReasoner, not in fusion, so a
+    # flag on FusionResult could only ever be derived from `reasoner_backend` —
+    # i.e. it would report configuration intent, not a component that ran. The
+    # honest flag lives on ReasoningTrace and is set by the code that executes it.
+    qae_applied: bool = False
     created_at: datetime = Field(default_factory=_now)
 
 
@@ -410,6 +432,38 @@ class SafetyAssessment(BaseModel):
 
 
 # --------------------------------------------------------------------------- #
+# Decision Assurance
+# --------------------------------------------------------------------------- #
+class DecisionVerdict(str, Enum):
+    ACCEPT = "ACCEPT"
+    REVIEW_REQUIRED = "REVIEW_REQUIRED"
+    ABSTAIN = "ABSTAIN"
+
+
+class DecisionAssurance(BaseModel):
+    verdict: DecisionVerdict = DecisionVerdict.ACCEPT
+    primary_diagnosis: str = ""
+    confidence: float = 0.0
+    conformal_set: list[str] = Field(default_factory=list)
+    conformal_coverage: float = 0.90
+    conformal_method: str = "marginal"
+    ood_zscore: float = 0.0
+    is_ood: bool = False
+    epistemic_uncertainty: float = 0.0
+    limiting_factor: str = ""
+    reasons: list[str] = Field(default_factory=list)
+    mitigations: list[str] = Field(default_factory=list)
+    requires_human_review: bool = False
+    model_version: str = "decision-assurance-v1"
+    created_at: datetime = Field(default_factory=_now)
+
+    def summary_reason(self) -> str:
+        if not self.reasons:
+            return "Decision criteria satisfied."
+        return "; ".join(self.reasons)
+
+
+# --------------------------------------------------------------------------- #
 # Explainability
 # --------------------------------------------------------------------------- #
 class Explanation(BaseModel):
@@ -422,6 +476,15 @@ class Explanation(BaseModel):
     # integrated_gradients, smoothgrad, occlusion) — each flattened to saliency_shape.
     saliency_methods: dict[str, list[float]] = Field(default_factory=dict)
     saliency_target: str = ""                  # finding the maps localize
+    #: Drawable geometry for the primary saliency map — simplified region polygons,
+    #: bounding boxes, intensity-weighted centroids, iso-level contours and an RGBA
+    #: overlay PNG data URI (services/explain/geometry.heatmap_geometry). This is the
+    #: default view; GET /v1/cases/{id}/geometry recomputes it when the frontend wants
+    #: a different threshold, method or overlay size. ExplainEngine computed it on
+    #: every study and passed it here while the field did not exist, so pydantic
+    #: dropped it — 74 ms/study discarded, and the console's polygon overlay
+    #: (console.js reads explanation.geometry) had nothing to draw.
+    geometry: dict = Field(default_factory=dict)
     # Shapley-style contribution of each evidence node to the top diagnosis.
     evidence_attribution: dict[str, float] = Field(default_factory=dict)
     # Counterfactual: "if this evidence were removed, top prob changes by ..."
@@ -477,6 +540,10 @@ class ReasoningTrace(BaseModel):
     steps: list[ReasoningStep] = Field(default_factory=list)
     differential: list[DifferentialItem] = Field(default_factory=list)
     guideline_citations: list[str] = Field(default_factory=list)
+    #: True only when a *trained* QuantumBayesianNetwork actually refined the
+    #: posterior on this trace. Selecting `reasoner_backend="quantum"` without a
+    #: trained artifact leaves this False — the setting is not the component.
+    qbn_enabled: bool = False
     model_version: str = "reasoning-v1"
 
 
@@ -518,6 +585,10 @@ class CaseBundle(BaseModel):
     """Everything the dashboard renders for one case."""
     case_id: str
     study_id: str
+    #: Patient identifier as supplied by the caller. Empty when the study arrived
+    #: without one — never synthesised, because a derived identifier would let
+    #: C-FIND and the EHR lookup resolve to a different patient's record.
+    patient_id: str = ""
     state: CaseState
     priority_score: float = 0.0
     priors: StructuredPriors = Field(default_factory=StructuredPriors)
@@ -543,6 +614,7 @@ class CaseBundle(BaseModel):
     decision_readiness: Optional[DecisionReadinessProfile] = None
     drp: Optional[DecisionReadinessProfile] = None
     consensus_result: Optional[dict] = None               # multi-agent panel consensus
+    decision_assurance: Optional[DecisionAssurance] = None
     created_at: datetime = Field(default_factory=_now)
     dx_labels: dict[str, str] = Field(default_factory=dict)
     ev_labels: dict[str, str] = Field(default_factory=dict)

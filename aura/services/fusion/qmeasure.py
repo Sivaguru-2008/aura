@@ -1,9 +1,13 @@
 """Quantum measurement observables: what the circuit reveals beyond its prediction.
 
-The serving path reads eight single-qubit expectations ``<Z_i>`` and maps them to
-diagnosis logits. That throws away almost everything the quantum state knows. This
-module measures the rest of it, and turns it into two clinically meaningful signals
-that a classical fusion model structurally cannot produce.
+When the quantum backend is selected (``AURA_FUSION_BACKEND=quantum``; the product has
+served classical fusion since 2026-09-12), the serving path reads eight single-qubit
+expectations ``<Z_i>`` and maps them to diagnosis logits. That throws away almost
+everything the quantum state knows. This module measures the rest of it and turns it
+into two model-level signals. Neither is claimed as something classical inference
+cannot produce: a classical fusion head exposes interaction structure too, by other
+means, and the one capability claim this project made on the circuit's behalf (typed
+abstention, ``qmba.py``) was retracted on source audit — docs/RESEARCH_PAPER_v5.md §2.8.
 
 1. Evidence-entanglement map
 ----------------------------

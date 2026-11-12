@@ -11,6 +11,9 @@ def save_model_checkpoint(config, model, optimizer, scheduler, scaler, epoch, be
         "epoch": epoch,
         "best_metric": best_metric,
         "arch": "densenet121",
+        # Resolution this checkpoint was trained at. Serving reads it back so a model
+        # trained at one size is never fed another (which produces garbage silently).
+        "img_size": int(getattr(config, "img_size", 224)),
     }
     
     # Save last checkpoint
@@ -27,6 +30,9 @@ def save_best_model(config, model, epoch, best_metric):
         "epoch": epoch,
         "best_metric": best_metric,
         "arch": "densenet121",
+        # Resolution this checkpoint was trained at. Serving reads it back so a model
+        # trained at one size is never fed another (which produces garbage silently).
+        "img_size": int(getattr(config, "img_size", 224)),
     }
     torch.save(checkpoint_state, config.best_model_path)
     print(f"[Checkpoint] Saved new best model to {config.best_model_path.name} (Macro-AUROC: {best_metric:.4f})")

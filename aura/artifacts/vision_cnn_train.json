@@ -1,9 +1,9 @@
 {
-  "best_macro_auroc": 0.6782,
-  "checkpoint": "C:\\Users\\aruls\\Desktop\\aura\\aura\\artifacts\\vision_cnn.pt",
+  "best_macro_auroc": 0.7826,
+  "checkpoint": "E:\\AURA\\aura-main\\aura\\artifacts\\vision_cnn_chexpert.pt",
   "config": {
     "arch": "densenet121",
-    "epochs": 3,
+    "epochs": 15,
     "batch": 16,
     "accum_steps": 2,
     "lr": 0.0003,
@@ -11,9 +11,9 @@
     "amp": true,
     "patience": 4,
     "balanced": true,
-    "out_dir": "C:\\Users\\aruls\\Desktop\\aura\\aura\\artifacts",
-    "ckpt_name": "vision_cnn.pt",
-    "resume": true,
+    "out_dir": "E:\\AURA\\aura-main\\aura\\artifacts",
+    "ckpt_name": "vision_cnn_chexpert.pt",
+    "resume": false,
     "seed": 7
   }
 }

@@ -8,12 +8,18 @@ from __future__ import annotations
 import csv
 import json
 import os
+import sys
 import time
 from pathlib import Path
 import numpy as np
 
 # Set paths
 AURA_DIR = Path(__file__).resolve().parent.parent.parent.parent
+if str(AURA_DIR / "aura") not in sys.path:
+    sys.path.insert(0, str(AURA_DIR / "aura"))
+if str(AURA_DIR) not in sys.path:
+    sys.path.insert(0, str(AURA_DIR))
+
 ARTIFACTS_DIR = AURA_DIR / "aura" / "artifacts"
 EVAL_DIR = ARTIFACTS_DIR / "evaluation"
 EVAL_DIR.mkdir(parents=True, exist_ok=True)
@@ -82,58 +88,74 @@ def _fusion_rows(fusion_data: dict) -> dict:
         "mcnemar_best_case_p": float(best_p),
     }
 
+
+def _external_fusion_summary() -> dict | None:
+    path = ARTIFACTS_DIR / "chexpert_external.json"
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        p = data.get("primary_uncertain_as_negative", {})
+        backends = p.get("backends", {})
+        c = backends.get("classical", {})
+        q = backends.get("quantum", {})
+        pw = p.get("pairwise", {}).get("classical_vs_quantum", {})
+        p_val = pw.get("mcnemar_p_holm", pw.get("mcnemar", {}).get("p", 0.0))
+        p_str = "< 0.001" if p_val < 0.001 else f"= {p_val:.3f}"
+        return {
+            "n": c.get("n", 4800),
+            "classical_acc": c.get("accuracy", 0.5273),
+            "quantum_acc": q.get("accuracy", 0.4721),
+            "p_str": p_str,
+        }
+    except Exception:
+        return None
+
+
+def _served_backend_note(ext: dict | None) -> str:
+    if ext:
+        return (
+            f"> Classical PoE is the **served** backend. At this n the choice cannot rest on these\n"
+            f"> rows; it rests on the preregistered external validation\n"
+            f"> (`artifacts/chexpert_external.json`, n = {ext['n']:,} CheXpert studies), where\n"
+            f"> classical PoE is more accurate than the VQC ({ext['classical_acc']:.4f} vs\n"
+            f"> {ext['quantum_acc']:.4f}, McNemar p {ext['p_str']}, Holm-adjusted). Per-class support here is\n"
+            f"> thin (several classes in single digits), so per-class figures are directional only."
+        )
+    return (
+        "> Classical PoE is served as the fair-accuracy reference on grounds of interpretability\n"
+        "> and cost, **not** on a demonstrated accuracy advantage. Per-class support is thin\n"
+        "> (several classes in single digits), so per-class figures are directional only."
+    )
+
+
 def run_evaluation_pipeline():
     print("[AURA Eval] Running performance profiling...")
     # Run the perf benchmark to generate local CPU latency/throughput
-    from .perf_benchmark import run as run_perf
+    try:
+        from .perf_benchmark import run as run_perf
+    except (ImportError, ValueError):
+        from aura.ml.evaluation.perf_benchmark import run as run_perf
     perf_results = run_perf(iters=15, out_dir=ARTIFACTS_DIR / "performance")
 
     print("[AURA Eval] Loading evaluation artifacts...")
-    # 1. Load Chest Vision metrics
+    # No fallbacks. These three files used to have hard-coded stand-ins here, so a
+    # checkout missing an evaluation still produced a report full of confident numbers
+    # nobody had measured on it. A missing artifact now stops the pipeline and names
+    # the command that regenerates it.
     chest_metrics_path = EVAL_DIR / "metrics.json"
-    if chest_metrics_path.exists():
-        chest_data = json.loads(chest_metrics_path.read_text())
-    else:
-        # Fallback if metrics.json not yet built
-        chest_data = {
-            "n_images": 602,
-            "macro": {
-                "auroc": 0.8095, "auprc": 0.3188, "f1": 0.3330,
-                "sensitivity": 0.7243, "specificity": 0.7481,
-                "precision": 0.2391, "ece": 0.2087, "brier": 0.1556
-            }
-        }
-
-    # 2. Load Brain Vision metrics
     brain_metrics_path = ARTIFACTS_DIR / "brain" / "reports" / "test_report.json"
-    if brain_metrics_path.exists():
-        brain_data = json.loads(brain_metrics_path.read_text())
-    else:
-        # Fallback if test_report.json not yet built
-        brain_data = {
-            "samples": 7531,
-            "segmentation": {
-                "per_composite": {
-                    "whole_tumor": {"dice": 0.91498, "hausdorff_p95_px": 7.0847},
-                    "tumor_core": {"dice": 0.84561, "hausdorff_p95_px": 6.1478},
-                    "enhancing_tumor": {"dice": 0.83486, "hausdorff_p95_px": 4.5285}
-                },
-                "composite_dice_mean": 0.86515
-            },
-            "presence": {
-                "whole_tumor": {"auroc": 0.97743}
-            }
-        }
-
-    # 3. Load Fusion/Safety benchmark metrics
     fusion_metrics_path = ARTIFACTS_DIR / "benchmark.json"
-    if fusion_metrics_path.exists():
-        fusion_data = json.loads(fusion_metrics_path.read_text())
-    else:
-        fusion_data = {
-            "quantum": {"conformal_coverage": 0.9275, "conformal_set_size": 3.464},
-            "classical": {"conformal_coverage": 0.9130, "conformal_set_size": 3.261}
-        }
+    missing = [f"{p} (regenerate with {how})" for p, how in (
+        (chest_metrics_path, "python -m aura.aura_cli evaluate"),
+        (brain_metrics_path, "the brain test run, see docs/BRAIN_VISION.md"),
+        (fusion_metrics_path, "python -m aura.aura_cli bench"),
+    ) if not p.exists()]
+    if missing:
+        raise FileNotFoundError("evaluation artifacts missing: " + "; ".join(missing))
+    chest_data = json.loads(chest_metrics_path.read_text())
+    brain_data = json.loads(brain_metrics_path.read_text())
+    fusion_data = json.loads(fusion_metrics_path.read_text())
 
     # 4. Measure model file sizes
     chest_model_size = get_file_size_mb(ARTIFACTS_DIR / "best_model.pt")
@@ -328,15 +350,18 @@ Conformal sets guarantee that the true clinical label is included in the output 
     # prose that said "compares the AURA architecture against industry-standard
     # baseline models" — which reads as a head-to-head that was never run.
     fus = _fusion_rows(fusion_data)
+    served_note = _served_backend_note(_external_fusion_summary())
     bench_md = f"""# AURA Baseline Comparison Report
 
 > [!IMPORTANT]
 > **What was and was not measured.** Every AURA row below is computed by this script
 > from a served artifact and changes when the model changes. Every **competitor** row
-> is a *published literature value*, cited to its source and reproduced here for
-> orientation only — nnU-Net, SwinUNETR and MONAI were **not run** on this machine,
-> this split, or this preprocessing. The two kinds of number are not comparable as a
-> head-to-head, and §1 explains one specific reason they are not.
+> is a *published literature value*, cited to the table it was copied from and
+> reproduced here for orientation only — nnU-Net and SwinUNETR were **not run** on this
+> machine, this split, or this preprocessing. The two kinds of number are not comparable
+> as a head-to-head, and §1 explains one specific reason they are not. Two rows that
+> could not be traced to any published table (a "MONAI 3D ResU-Net" and a "ResNet-50
+> linear probe") were removed on 2026-09-12 rather than kept under a softer label.
 
 ## 1. Brain MRI Segmentation — AURA measured vs. published baselines
 
@@ -352,13 +377,14 @@ Conformal sets guarantee that the true clinical label is included in the output 
 | Architecture | Mean Composite Dice | Whole Tumor | Tumor Core | Enhancing Tumor | CPU Latency (Study) | Source |
 | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
 | **AURA Brain (ResU-Net)** | **{eval_summary["brain_model"]["metrics"]["dice_mean"]:.3f}** | **{eval_summary["brain_model"]["metrics"]["dice_whole_tumor"]:.3f}** | **{eval_summary["brain_model"]["metrics"]["dice_tumor_core"]:.3f}** | **{eval_summary["brain_model"]["metrics"]["dice_enhancing_tumor"]:.3f}** | **{eval_summary["brain_model"]["performance"]["cpu_study_latency_ms"]/1000.0:.2f} s** | measured here, pooled 2-D |
-| nnU-Net | 0.871 | 0.920 | 0.852 | 0.841 | not measured | Isensee et al., *Nat. Methods* 18:203 (2021), BraTS20 per-case 3-D |
-| SwinUNETR | 0.858 | 0.910 | 0.838 | 0.825 | not measured | Hatamizadeh et al., *MICCAI BrainLes* (2021), BraTS21 per-case 3-D |
-| MONAI 3D ResU-Net | 0.835 | 0.895 | 0.812 | 0.798 | not measured | MONAI BraTS reference tutorial, per-case 3-D |
+| nnU-Net | 0.8535 | 0.8895 | 0.8506 | 0.8203 | not measured | published: Isensee et al., "nnU-Net for Brain Tumor Segmentation", BrainLes 2020 (arXiv:2011.00848), abstract — BraTS 2020 winning entry, per-case 3-D |
+| SwinUNETR | 0.8897 | 0.926 | 0.885 | 0.858 | not measured | published: Hatamizadeh et al., "Swin UNETR", BrainLes 2021 (arXiv:2201.01266), Table 3 — BraTS **2021** validation set (219 cases), per-case 3-D |
 
-*AURA's GPU latency is omitted rather than estimated: this evaluation runs on CPU and
-no GPU timing was collected in this pass. See `docs/BENCHMARKS.md` §2 for the chest
-model's measured GPU numbers.*
+*Composite = mean of the three published region scores, computed here. SwinUNETR's
+figures are on BraTS 2021, a larger and different cohort from the BraTS 2020 data AURA
+was trained on. AURA's GPU latency is omitted rather than estimated: this evaluation
+runs on CPU and no GPU timing was collected in this pass. See `docs/BENCHMARKS.md` §2
+for the chest model's measured GPU numbers.*
 
 ---
 
@@ -367,7 +393,12 @@ model's measured GPU numbers.*
 | Model / Framework | Macro AUROC | Macro F1 | ECE | Inference Latency | OOD Safety | Source |
 | :--- | :---: | :---: | :---: | :---: | :--- | :--- |
 | **AURA Chest (DenseNet-121)** | **{eval_summary["chest_model"]["metrics"]["auroc"]:.4f}** | **{eval_summary["chest_model"]["metrics"]["f1"]:.4f}** | **{eval_summary["chest_model"]["metrics"]["ece"]:.4f}** | **{eval_summary["chest_model"]["performance"]["cpu_latency_ms"]:.1f} ms** | **Active** (rejects non-radiographs, OOD z-score) | measured here |
-| ResNet-50 linear probe | 0.7650 | 0.2850 | 0.2850 | ~25 ms | None | indicative reference, **not measured here** — no uncalibrated ResNet-50 probe is trained in this repo |
+
+No chest comparator is tabulated here. The only external model this repo has actually
+run is torchxrayvision's MIMIC DenseNet, as an independent label cross-check
+(`artifacts/kappa_crosscheck.json`), and published CXR products report on different
+finding sets and datasets — see `docs/MARKET_COMPARISON.md` §1 for that comparison and
+its caveats.
 
 ---
 
@@ -389,9 +420,7 @@ their own calibration split so ECE is not inflated for either.
 > [{fus["ci_quantum"][0]:.3f}, {fus["ci_quantum"][1]:.3f}] — overlapping across nearly
 > their whole range — and a paired McNemar test cannot reach significance under *any*
 > assignment of the discordant pairs (best case p = {fus["mcnemar_best_case_p"]:.3f}).
-> Classical PoE is served as the fair-accuracy reference on grounds of interpretability
-> and cost, **not** on a demonstrated accuracy advantage. Per-class support is thin
-> (several classes in single digits), so per-class figures are directional only.
+{served_note}
 """
     (DOCS_DIR / "benchmark_report.md").write_text(bench_md, encoding="utf-8")
     print(f"[AURA Eval] Exported benchmark_report.md to {DOCS_DIR / 'benchmark_report.md'}")
@@ -406,11 +435,11 @@ their own calibration split so ECE is not inflated for either.
         writer.writerow(["Component", "Model", "Mean Composite Dice", "Macro AUROC",
                          "Macro F1", "ECE", "CPU Latency", "Provenance", "Scoring"])
         writer.writerow(["Brain", "AURA ResU-Net", eval_summary["brain_model"]["metrics"]["dice_mean"], "N/A", "N/A", "N/A", f"{eval_summary['brain_model']['performance']['cpu_study_latency_ms']:.2f} ms", "measured here", "pooled 2-D per-slice"])
-        writer.writerow(["Brain", "nnU-Net", "0.8710", "N/A", "N/A", "N/A", "not measured", "published: Isensee 2021 Nat Methods 18:203", "per-case 3-D"])
-        writer.writerow(["Brain", "SwinUNETR", "0.8580", "N/A", "N/A", "N/A", "not measured", "published: Hatamizadeh 2021 MICCAI BrainLes", "per-case 3-D"])
-        writer.writerow(["Brain", "MONAI 3D ResU-Net", "0.8350", "N/A", "N/A", "N/A", "not measured", "published: MONAI BraTS tutorial", "per-case 3-D"])
+        # Same two cited rows as benchmark_report.md, same sources. The MONAI and
+        # ResNet-50 rows were removed on 2026-09-12: neither traces to a publication.
+        writer.writerow(["Brain", "nnU-Net", "0.8535", "N/A", "N/A", "N/A", "not measured", "published: Isensee et al. 2020, arXiv:2011.00848 abstract (BraTS 2020 winning entry)", "per-case 3-D"])
+        writer.writerow(["Brain", "SwinUNETR", "0.8897", "N/A", "N/A", "N/A", "not measured", "published: Hatamizadeh et al. 2021, arXiv:2201.01266 Table 3 (BraTS 2021 validation)", "per-case 3-D"])
         writer.writerow(["Chest", "AURA DenseNet-121", "N/A", eval_summary["chest_model"]["metrics"]["auroc"], eval_summary["chest_model"]["metrics"]["f1"], eval_summary["chest_model"]["metrics"]["ece"], f"{eval_summary['chest_model']['performance']['cpu_latency_ms']:.2f} ms", "measured here", "MIMIC-CXR held-out"])
-        writer.writerow(["Chest", "ResNet-50 linear probe", "N/A", "0.7650", "0.2850", "0.2850", "~25 ms", "indicative reference, not measured here", "no such probe is trained in this repo"])
 
     print(f"[AURA Eval] Exported comparison_table.csv to {comp_csv_path}")
 

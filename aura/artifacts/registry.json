@@ -14,7 +14,7 @@
     "version": "1.0",
     "status": "active",
     "backend": "quantum",
-    "role": "served",
+    "role": "selectable (AURA_FUSION_BACKEND=quantum)",
     "metrics": {
       "accuracy": 0.5324,
       "nll": 1.2853,
@@ -22,7 +22,7 @@
       "temperature": 0.9057
     },
     "train_data": "mimic-cxr",
-    "note": "8-qubit angle-encoded VQC, CNOT ring. Served backend (AURA_FUSION_BACKEND default in pyproject). Native shot-noise uncertainty + QMBA. See docs/QUANTUM.md."
+    "note": "8-qubit angle-encoded VQC, CNOT ring. Research backend. Served until 2026-09-12, when the preregistered CheXpert external validation (artifacts/chexpert_external.json, n=4800) put it last of four arms on accuracy (0.4721 vs 0.5273 classical, McNemar p<0.001). Native shot-noise uncertainty + QMBA when selected. See docs/QUANTUM.md."
   },
   {
     "service": "fusion",
@@ -30,7 +30,7 @@
     "version": "1.0",
     "status": "active",
     "backend": "classical",
-    "role": "selectable fallback (AURA_FUSION_BACKEND=classical)",
+    "role": "served",
     "metrics": {
       "accuracy": 0.5414,
       "nll": 1.3026,
@@ -38,7 +38,7 @@
       "temperature": 0.479
     },
     "train_data": "mimic-cxr",
-    "note": "Bayesian product-of-experts. Fair-benchmark accuracy winner; retained as interpretable fallback and as the conflict-guard reference the VQC defers to."
+    "note": "Bayesian product-of-experts. Served backend since 2026-09-12: fair-benchmark accuracy winner internally, and significantly more accurate than the VQC on the preregistered external CheXpert cohort."
   },
   {
     "service": "safety",
@@ -46,13 +46,14 @@
     "version": "1.0",
     "status": "active",
     "calibration": {
-      "temperature": 0.9057,
-      "conformal_qhat": 0.9144,
+      "temperature": 0.479,
+      "conformal_qhat": 0.9098,
       "coverage": 0.9,
-      "ece": 0.0896,
-      "fit_on_backend": "quantum",
+      "ece": 0.1266,
+      "fit_on_backend": "classical",
+      "file": "safety_classical.npz",
       "train_data": "mimic-cxr",
-      "note": "Shared safety.npz mirrors the served (quantum) backend; per-backend fits live in safety_{backend}.npz and are preferred by Calibration.load(backend=...)."
+      "note": "The served calibration is safety_classical.npz, loaded by Calibration.load(backend='classical') and verified on 2026-09-12 to match a fresh fit on the current weights exactly. The shared safety.npz still holds the quantum fit (T=0.9057, qhat=0.9144): research harnesses that call Calibration.load() with no backend (audit_all.py, ml/evaluation/benchmark.py) reproduce published tables against it, so it is deliberately left unchanged."
     }
   }
 ]

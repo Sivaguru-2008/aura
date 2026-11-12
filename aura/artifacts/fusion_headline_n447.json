@@ -1,0 +1,158 @@
+{
+  "purpose": "Fusion backend comparison on the 447-study patient-disjoint split, replacing the n=69 deployment benchmark as the paper's primary comparison. Each arm is temperature-scaled on its own 446-study calibration split (P1); every ordering claim carries a test (P4).",
+  "data": {
+    "calibration_studies": 446,
+    "test_studies": 447,
+    "patient_disjoint": true,
+    "source": "mimic-cxr"
+  },
+  "backends": {
+    "classical": {
+      "n": 447,
+      "temperature": 0.479,
+      "accuracy": 0.5414,
+      "correct": 242,
+      "accuracy_ci95_jeffreys": [
+        0.4951,
+        0.5872
+      ],
+      "nll": 1.3026,
+      "ece": 0.1266,
+      "macro_auroc": 0.8045,
+      "per_class_auroc": {
+        "normal": 0.883,
+        "pneumonia": 0.7697,
+        "heart_failure": 0.8234,
+        "copd": 0.8738,
+        "malignancy": 0.6415,
+        "pneumothorax_dx": 0.8353
+      },
+      "support": {
+        "normal": 102,
+        "pneumonia": 98,
+        "heart_failure": 106,
+        "copd": 67,
+        "malignancy": 59,
+        "pneumothorax_dx": 15
+      }
+    },
+    "quantum": {
+      "n": 447,
+      "temperature": 0.9057,
+      "accuracy": 0.5324,
+      "correct": 238,
+      "accuracy_ci95_jeffreys": [
+        0.4861,
+        0.5784
+      ],
+      "nll": 1.2853,
+      "ece": 0.0896,
+      "macro_auroc": 0.8014,
+      "per_class_auroc": {
+        "normal": 0.8789,
+        "pneumonia": 0.776,
+        "heart_failure": 0.8167,
+        "copd": 0.8977,
+        "malignancy": 0.5696,
+        "pneumothorax_dx": 0.8696
+      },
+      "support": {
+        "normal": 102,
+        "pneumonia": 98,
+        "heart_failure": 106,
+        "copd": 67,
+        "malignancy": 59,
+        "pneumothorax_dx": 15
+      }
+    },
+    "learnable": {
+      "n": 447,
+      "temperature": 0.8867,
+      "accuracy": 0.5526,
+      "correct": 247,
+      "accuracy_ci95_jeffreys": [
+        0.5063,
+        0.5982
+      ],
+      "nll": 1.2663,
+      "ece": 0.0902,
+      "macro_auroc": 0.8056,
+      "per_class_auroc": {
+        "normal": 0.8831,
+        "pneumonia": 0.7832,
+        "heart_failure": 0.8326,
+        "copd": 0.9042,
+        "malignancy": 0.5951,
+        "pneumothorax_dx": 0.8352
+      },
+      "support": {
+        "normal": 102,
+        "pneumonia": 98,
+        "heart_failure": 106,
+        "copd": 67,
+        "malignancy": 59,
+        "pneumothorax_dx": 15
+      }
+    }
+  },
+  "pairwise": {
+    "classical_vs_quantum": {
+      "delta_accuracy": 0.009,
+      "mcnemar": {
+        "a_only_correct": 27,
+        "b_only_correct": 23,
+        "discordant": 50,
+        "p_exact": 0.6718
+      },
+      "significant_accuracy_at_95": false,
+      "delta_nll": 0.0173,
+      "nll_wilcoxon_p": 0.006,
+      "nll_diff_normal": false
+    },
+    "classical_vs_learnable": {
+      "delta_accuracy": -0.0112,
+      "mcnemar": {
+        "a_only_correct": 19,
+        "b_only_correct": 24,
+        "discordant": 43,
+        "p_exact": 0.5424
+      },
+      "significant_accuracy_at_95": false,
+      "delta_nll": 0.0363,
+      "nll_wilcoxon_p": 0.0,
+      "nll_diff_normal": false
+    },
+    "quantum_vs_learnable": {
+      "delta_accuracy": -0.0202,
+      "mcnemar": {
+        "a_only_correct": 13,
+        "b_only_correct": 22,
+        "discordant": 35,
+        "p_exact": 0.1755
+      },
+      "significant_accuracy_at_95": false,
+      "delta_nll": 0.019,
+      "nll_wilcoxon_p": 0.0522,
+      "nll_diff_normal": false
+    }
+  },
+  "minimum_detectable_accuracy_difference_80pct_power": 0.0934,
+  "served_model_training": {
+    "classical": {
+      "epochs": 400,
+      "optimiser": "full-batch gradient descent, fixed lr=0.3, l2=1e-3",
+      "source": "ml/training/train_fusion.py::train_classical defaults"
+    },
+    "learnable": {
+      "epochs": 300,
+      "optimiser": "Adam, lr=0.05, weight_decay=1e-4, full batch",
+      "source": "services/fusion/learnable.py::train_learnable defaults"
+    },
+    "quantum": {
+      "epochs": 30,
+      "optimiser": "Adam, lr=0.05, batch=50",
+      "source": "ml/training/train_fusion.py::train_quantum defaults"
+    },
+    "_note": "Recorded retrospectively from the trainer defaults that train_fusion.run() invokes; it overrides none of them. The arms differ in optimiser as well as in model class, which is the confound Section 11.5 reports and artifacts/fusion_matched_optimiser.json removes."
+  }
+}

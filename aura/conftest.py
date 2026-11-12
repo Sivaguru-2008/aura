@@ -40,6 +40,12 @@ if not os.environ.get("AURA_KEEP_TEST_DB"):
     _tmp_db = Path(tempfile.mkdtemp(prefix="aura-test-db-")) / "aura.db"
     os.environ["AURA_DB_PATH"] = str(_tmp_db)
 
+# The gateway refuses non-local requests when no API token is configured. Starlette's
+# TestClient reports its peer as "testclient", which is not a loopback address, so the
+# suite opts into open access explicitly. tests/test_secure_defaults.py switches it back
+# off per test to exercise the secure default itself.
+os.environ.setdefault("AURA_ALLOW_OPEN_ACCESS", "1")
+
 
 # ---------------------------------------------------------------------------- #
 # 2. Fail the session if a test mutated a served artifact.

@@ -55,6 +55,14 @@ aura/artifacts/aura.db
 aura/artifacts/inference_log.jsonl
 aura/artifacts/eval_watch*.log
 
+# --- artifacts: licence-restricted, never served ---------------------------- #
+# CheXpert is released under a research-use agreement that excludes commercial use
+# (docs/DATA_LICENSES.md). These files were trained or computed on CheXpert images,
+# nothing on the serving path loads them, and a shipped image must not carry them.
+# chexpert_external.json stays: it is aggregate evaluation metrics, not data.
+aura/artifacts/vision_cnn_chexpert*.pt
+aura/artifacts/chexpert_evidence.npz
+
 # --- artifacts: training-only state (never read while serving) ------------- #
 aura/artifacts/optimizer.pt
 aura/artifacts/last_checkpoint.pt

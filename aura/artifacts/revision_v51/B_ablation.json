@@ -1,0 +1,199 @@
+{
+  "analysis": "B \u2014 7q ablation re-run with per-study predictions",
+  "blind": false,
+  "all_reproduced": true,
+  "per_seed": [
+    {
+      "seed": 7,
+      "entangled": {
+        "accuracy": 0.5347,
+        "nll": 1.2824,
+        "ece": 0.0488,
+        "temperature": 1.2471
+      },
+      "product": {
+        "accuracy": 0.5257,
+        "nll": 1.2785,
+        "ece": 0.042,
+        "temperature": 1.2072
+      },
+      "delta_nll": 0.0039,
+      "published_delta_nll": 0.0039,
+      "reproduced": true
+    },
+    {
+      "seed": 11,
+      "entangled": {
+        "accuracy": 0.5436,
+        "nll": 1.2522,
+        "ece": 0.0622,
+        "temperature": 0.9091
+      },
+      "product": {
+        "accuracy": 0.5615,
+        "nll": 1.2171,
+        "ece": 0.0917,
+        "temperature": 0.9242
+      },
+      "delta_nll": 0.0351,
+      "published_delta_nll": 0.0351,
+      "reproduced": true
+    },
+    {
+      "seed": 13,
+      "entangled": {
+        "accuracy": 0.5615,
+        "nll": 1.2416,
+        "ece": 0.0831,
+        "temperature": 1.0244
+      },
+      "product": {
+        "accuracy": 0.566,
+        "nll": 1.2069,
+        "ece": 0.0741,
+        "temperature": 1.0993
+      },
+      "delta_nll": 0.0347,
+      "published_delta_nll": 0.0347,
+      "reproduced": true
+    },
+    {
+      "seed": 17,
+      "entangled": {
+        "accuracy": 0.5369,
+        "nll": 1.2719,
+        "ece": 0.0549,
+        "temperature": 1.0458
+      },
+      "product": {
+        "accuracy": 0.5503,
+        "nll": 1.2455,
+        "ece": 0.0591,
+        "temperature": 1.097
+      },
+      "delta_nll": 0.0264,
+      "published_delta_nll": 0.0264,
+      "reproduced": true
+    },
+    {
+      "seed": 19,
+      "entangled": {
+        "accuracy": 0.5347,
+        "nll": 1.2883,
+        "ece": 0.0659,
+        "temperature": 1.0167
+      },
+      "product": {
+        "accuracy": 0.5503,
+        "nll": 1.2253,
+        "ece": 0.0543,
+        "temperature": 1.0811
+      },
+      "delta_nll": 0.063,
+      "published_delta_nll": 0.063,
+      "reproduced": true
+    },
+    {
+      "seed": 23,
+      "entangled": {
+        "accuracy": 0.5459,
+        "nll": 1.2653,
+        "ece": 0.0594,
+        "temperature": 0.9688
+      },
+      "product": {
+        "accuracy": 0.5503,
+        "nll": 1.2612,
+        "ece": 0.0834,
+        "temperature": 1.0301
+      },
+      "delta_nll": 0.0041,
+      "published_delta_nll": 0.0041,
+      "reproduced": true
+    },
+    {
+      "seed": 29,
+      "entangled": {
+        "accuracy": 0.5526,
+        "nll": 1.233,
+        "ece": 0.075,
+        "temperature": 1.0063
+      },
+      "product": {
+        "accuracy": 0.5615,
+        "nll": 1.2128,
+        "ece": 0.0646,
+        "temperature": 1.0304
+      },
+      "delta_nll": 0.0202,
+      "published_delta_nll": 0.0202,
+      "reproduced": true
+    },
+    {
+      "seed": 31,
+      "entangled": {
+        "accuracy": 0.557,
+        "nll": 1.2349,
+        "ece": 0.0668,
+        "temperature": 1.0249
+      },
+      "product": {
+        "accuracy": 0.5414,
+        "nll": 1.2195,
+        "ece": 0.0831,
+        "temperature": 1.0627
+      },
+      "delta_nll": 0.0154,
+      "published_delta_nll": 0.0154,
+      "reproduced": true
+    },
+    {
+      "seed": 37,
+      "entangled": {
+        "accuracy": 0.5459,
+        "nll": 1.2782,
+        "ece": 0.0698,
+        "temperature": 1.0222
+      },
+      "product": {
+        "accuracy": 0.5369,
+        "nll": 1.2562,
+        "ece": 0.0892,
+        "temperature": 1.1403
+      },
+      "delta_nll": 0.022,
+      "published_delta_nll": 0.022,
+      "reproduced": true
+    },
+    {
+      "seed": 41,
+      "entangled": {
+        "accuracy": 0.5414,
+        "nll": 1.2702,
+        "ece": 0.0845,
+        "temperature": 0.9842
+      },
+      "product": {
+        "accuracy": 0.566,
+        "nll": 1.245,
+        "ece": 0.0839,
+        "temperature": 1.0227
+      },
+      "delta_nll": 0.0252,
+      "published_delta_nll": 0.0252,
+      "reproduced": true
+    }
+  ],
+  "seed_level": {
+    "mean": 0.025,
+    "sd": 0.01715,
+    "ci95_t": [
+      0.01273,
+      0.03727
+    ],
+    "t_p": 0.00127,
+    "wilcoxon_p": 0.00195,
+    "n_positive": 10,
+    "n": 10
+  }
+}

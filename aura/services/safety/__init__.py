@@ -10,6 +10,12 @@ Layer 2: ClinicalDecisionReadinessEngine — multi-dimensional readiness profile
 from aura.services.safety.engine import SafetyEngine
 from aura.services.safety.controller import ClinicalSafetyController, ClinicalSafetyException
 from aura.services.safety.readiness import ClinicalDecisionReadinessEngine
+from aura.services.safety.decision import DecisionAssuranceEngine
 
-__all__ = ["SafetyEngine", "ClinicalSafetyController", "ClinicalSafetyException",
-           "ClinicalDecisionReadinessEngine"]
+__all__ = [
+    "SafetyEngine",
+    "ClinicalSafetyController",
+    "ClinicalSafetyException",
+    "ClinicalDecisionReadinessEngine",
+    "DecisionAssuranceEngine",
+]

@@ -1,0 +1,587 @@
+{
+  "quantum": {
+    "n": 447,
+    "accuracy": 0.5324,
+    "nll": 1.2853,
+    "brier": 0.617,
+    "ece": 0.0896,
+    "macro_auroc": 0.8014,
+    "macro_auprc": 0.531,
+    "macro_sensitivity": 0.4877,
+    "macro_specificity": 0.9018,
+    "macro_ppv": 0.4892,
+    "macro_npv": 0.9043,
+    "macro_f1": 0.4814,
+    "per_class": {
+      "normal": {
+        "sensitivity": 0.7353,
+        "specificity": 0.8667,
+        "ppv": 0.6198,
+        "npv": 0.9172,
+        "f1": 0.6726,
+        "support": 102,
+        "auroc": 0.8789,
+        "auprc": 0.7355
+      },
+      "pneumonia": {
+        "sensitivity": 0.398,
+        "specificity": 0.8653,
+        "ppv": 0.4535,
+        "npv": 0.8366,
+        "f1": 0.4239,
+        "support": 98,
+        "auroc": 0.776,
+        "auprc": 0.5081
+      },
+      "heart_failure": {
+        "sensitivity": 0.6604,
+        "specificity": 0.8123,
+        "ppv": 0.5224,
+        "npv": 0.885,
+        "f1": 0.5833,
+        "support": 106,
+        "auroc": 0.8167,
+        "auprc": 0.6049
+      },
+      "copd": {
+        "sensitivity": 0.597,
+        "specificity": 0.9368,
+        "ppv": 0.625,
+        "npv": 0.9295,
+        "f1": 0.6107,
+        "support": 67,
+        "auroc": 0.8977,
+        "auprc": 0.6833
+      },
+      "malignancy": {
+        "sensitivity": 0.1356,
+        "specificity": 0.9485,
+        "ppv": 0.2857,
+        "npv": 0.8783,
+        "f1": 0.1839,
+        "support": 59,
+        "auroc": 0.5696,
+        "auprc": 0.1981
+      },
+      "pneumothorax_dx": {
+        "sensitivity": 0.4,
+        "specificity": 0.9815,
+        "ppv": 0.4286,
+        "npv": 0.9792,
+        "f1": 0.4138,
+        "support": 15,
+        "auroc": 0.8696,
+        "auprc": 0.4558
+      }
+    },
+    "reliability_curve": {
+      "bin_confidence": [
+        0.0,
+        0.0,
+        0.2685,
+        0.3544,
+        0.4513,
+        0.546,
+        0.6504,
+        0.7375,
+        0.8461,
+        0.938
+      ],
+      "bin_accuracy": [
+        0.0,
+        0.0,
+        0.2449,
+        0.3238,
+        0.5149,
+        0.7018,
+        0.8696,
+        0.6,
+        0.6957,
+        0.8824
+      ],
+      "bin_weight": [
+        0.0,
+        0.0,
+        0.1096,
+        0.2349,
+        0.226,
+        0.255,
+        0.0515,
+        0.0336,
+        0.0515,
+        0.038
+      ]
+    },
+    "conformal_coverage": 0.906,
+    "conformal_set_size": 3.3669,
+    "ece_recomputed": 0.0896
+  },
+  "classical_raw": {
+    "n": 447,
+    "accuracy": 0.5414,
+    "nll": 1.4357,
+    "brier": 0.6957,
+    "ece": 0.2289,
+    "macro_auroc": 0.8102,
+    "macro_auprc": 0.4979,
+    "macro_sensitivity": 0.4443,
+    "macro_specificity": 0.9019,
+    "macro_ppv": 0.6476,
+    "macro_npv": 0.908,
+    "macro_f1": 0.4276,
+    "per_class": {
+      "normal": {
+        "sensitivity": 0.8333,
+        "specificity": 0.8058,
+        "ppv": 0.5592,
+        "npv": 0.9424,
+        "f1": 0.6693,
+        "support": 102,
+        "auroc": 0.8814,
+        "auprc": 0.7366
+      },
+      "pneumonia": {
+        "sensitivity": 0.3469,
+        "specificity": 0.8911,
+        "ppv": 0.4722,
+        "npv": 0.8293,
+        "f1": 0.4,
+        "support": 98,
+        "auroc": 0.789,
+        "auprc": 0.4823
+      },
+      "heart_failure": {
+        "sensitivity": 0.7075,
+        "specificity": 0.783,
+        "ppv": 0.5034,
+        "npv": 0.896,
+        "f1": 0.5882,
+        "support": 106,
+        "auroc": 0.8199,
+        "auprc": 0.5413
+      },
+      "copd": {
+        "sensitivity": 0.6269,
+        "specificity": 0.9368,
+        "ppv": 0.6364,
+        "npv": 0.9344,
+        "f1": 0.6316,
+        "support": 67,
+        "auroc": 0.8769,
+        "auprc": 0.6263
+      },
+      "malignancy": {
+        "sensitivity": 0.0847,
+        "specificity": 0.9948,
+        "ppv": 0.7143,
+        "npv": 0.8773,
+        "f1": 0.1515,
+        "support": 59,
+        "auroc": 0.6341,
+        "auprc": 0.2706
+      },
+      "pneumothorax_dx": {
+        "sensitivity": 0.0667,
+        "specificity": 1.0,
+        "ppv": 1.0,
+        "npv": 0.9686,
+        "f1": 0.125,
+        "support": 15,
+        "auroc": 0.8597,
+        "auprc": 0.3305
+      }
+    },
+    "reliability_curve": {
+      "bin_confidence": [
+        0.0,
+        0.1959,
+        0.2529,
+        0.3348,
+        0.4436,
+        0.5587,
+        0.6337,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bin_accuracy": [
+        0.0,
+        0.2857,
+        0.4681,
+        0.6406,
+        0.6415,
+        0.5,
+        0.7,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bin_weight": [
+        0.0,
+        0.0157,
+        0.5257,
+        0.2864,
+        0.1186,
+        0.0313,
+        0.0224,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "conformal_coverage": 0.9038,
+    "conformal_set_size": 3.3736,
+    "ece_recomputed": 0.2289
+  },
+  "classical_fair": {
+    "n": 447,
+    "accuracy": 0.5414,
+    "nll": 1.3026,
+    "brier": 0.6374,
+    "ece": 0.1266,
+    "macro_auroc": 0.8045,
+    "macro_auprc": 0.5007,
+    "macro_sensitivity": 0.4443,
+    "macro_specificity": 0.9019,
+    "macro_ppv": 0.6476,
+    "macro_npv": 0.908,
+    "macro_f1": 0.4276,
+    "per_class": {
+      "normal": {
+        "sensitivity": 0.8333,
+        "specificity": 0.8058,
+        "ppv": 0.5592,
+        "npv": 0.9424,
+        "f1": 0.6693,
+        "support": 102,
+        "auroc": 0.883,
+        "auprc": 0.7378
+      },
+      "pneumonia": {
+        "sensitivity": 0.3469,
+        "specificity": 0.8911,
+        "ppv": 0.4722,
+        "npv": 0.8293,
+        "f1": 0.4,
+        "support": 98,
+        "auroc": 0.7697,
+        "auprc": 0.4825
+      },
+      "heart_failure": {
+        "sensitivity": 0.7075,
+        "specificity": 0.783,
+        "ppv": 0.5034,
+        "npv": 0.896,
+        "f1": 0.5882,
+        "support": 106,
+        "auroc": 0.8234,
+        "auprc": 0.5492
+      },
+      "copd": {
+        "sensitivity": 0.6269,
+        "specificity": 0.9368,
+        "ppv": 0.6364,
+        "npv": 0.9344,
+        "f1": 0.6316,
+        "support": 67,
+        "auroc": 0.8738,
+        "auprc": 0.6279
+      },
+      "malignancy": {
+        "sensitivity": 0.0847,
+        "specificity": 0.9948,
+        "ppv": 0.7143,
+        "npv": 0.8773,
+        "f1": 0.1515,
+        "support": 59,
+        "auroc": 0.6415,
+        "auprc": 0.2831
+      },
+      "pneumothorax_dx": {
+        "sensitivity": 0.0667,
+        "specificity": 1.0,
+        "ppv": 1.0,
+        "npv": 0.9686,
+        "f1": 0.125,
+        "support": 15,
+        "auroc": 0.8353,
+        "auprc": 0.3236
+      }
+    },
+    "reliability_curve": {
+      "bin_confidence": [
+        0.0,
+        0.0,
+        0.2622,
+        0.3445,
+        0.4488,
+        0.5336,
+        0.649,
+        0.7541,
+        0.8495,
+        0.927
+      ],
+      "bin_accuracy": [
+        0.0,
+        0.0,
+        0.3833,
+        0.4057,
+        0.5446,
+        0.7595,
+        0.5143,
+        0.6486,
+        0.6667,
+        0.6429
+      ],
+      "bin_weight": [
+        0.0,
+        0.0,
+        0.1342,
+        0.2371,
+        0.226,
+        0.1767,
+        0.0783,
+        0.0828,
+        0.0336,
+        0.0313
+      ]
+    },
+    "conformal_coverage": 0.9038,
+    "conformal_set_size": 3.5391,
+    "ece_recomputed": 0.1266
+  },
+  "ensemble": {
+    "n": 447,
+    "accuracy": 0.5414,
+    "nll": 1.4186,
+    "brier": 0.6873,
+    "ece": 0.2097,
+    "macro_auroc": 0.8102,
+    "macro_auprc": 0.4932,
+    "macro_sensitivity": 0.4435,
+    "macro_specificity": 0.9021,
+    "macro_ppv": 0.5242,
+    "macro_npv": 0.9089,
+    "macro_f1": 0.4264,
+    "per_class": {
+      "normal": {
+        "sensitivity": 0.8529,
+        "specificity": 0.7884,
+        "ppv": 0.5437,
+        "npv": 0.9477,
+        "f1": 0.6641,
+        "support": 102,
+        "auroc": 0.8819,
+        "auprc": 0.7376
+      },
+      "pneumonia": {
+        "sensitivity": 0.3163,
+        "specificity": 0.9169,
+        "ppv": 0.5167,
+        "npv": 0.8269,
+        "f1": 0.3924,
+        "support": 98,
+        "auroc": 0.7881,
+        "auprc": 0.4893
+      },
+      "heart_failure": {
+        "sensitivity": 0.7264,
+        "specificity": 0.7801,
+        "ppv": 0.5066,
+        "npv": 0.9017,
+        "f1": 0.5969,
+        "support": 106,
+        "auroc": 0.8217,
+        "auprc": 0.5499
+      },
+      "copd": {
+        "sensitivity": 0.597,
+        "specificity": 0.9421,
+        "ppv": 0.6452,
+        "npv": 0.9299,
+        "f1": 0.6202,
+        "support": 67,
+        "auroc": 0.8816,
+        "auprc": 0.6197
+      },
+      "malignancy": {
+        "sensitivity": 0.1017,
+        "specificity": 0.9897,
+        "ppv": 0.6,
+        "npv": 0.8787,
+        "f1": 0.1739,
+        "support": 59,
+        "auroc": 0.6399,
+        "auprc": 0.2686
+      },
+      "pneumothorax_dx": {
+        "sensitivity": 0.0667,
+        "specificity": 0.9954,
+        "ppv": 0.3333,
+        "npv": 0.9685,
+        "f1": 0.1111,
+        "support": 15,
+        "auroc": 0.8477,
+        "auprc": 0.2943
+      }
+    },
+    "reliability_curve": {
+      "bin_confidence": [
+        0.0,
+        0.1947,
+        0.2535,
+        0.3415,
+        0.4507,
+        0.5473,
+        0.6416,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bin_accuracy": [
+        0.0,
+        0.5714,
+        0.4127,
+        0.6548,
+        0.566,
+        0.6875,
+        0.6429,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bin_weight": [
+        0.0,
+        0.0157,
+        0.4228,
+        0.3758,
+        0.1186,
+        0.0358,
+        0.0313,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "conformal_coverage": 0.906,
+    "conformal_set_size": 3.34,
+    "ece_recomputed": 0.2097
+  },
+  "learnable": {
+    "n": 447,
+    "accuracy": 0.5526,
+    "nll": 1.2667,
+    "brier": 0.6105,
+    "ece": 0.0799,
+    "macro_auroc": 0.8058,
+    "macro_auprc": 0.5464,
+    "macro_sensitivity": 0.5046,
+    "macro_specificity": 0.9053,
+    "macro_ppv": 0.5377,
+    "macro_npv": 0.9084,
+    "macro_f1": 0.5051,
+    "per_class": {
+      "normal": {
+        "sensitivity": 0.7647,
+        "specificity": 0.8464,
+        "ppv": 0.5954,
+        "npv": 0.9241,
+        "f1": 0.6695,
+        "support": 102,
+        "auroc": 0.8832,
+        "auprc": 0.7433
+      },
+      "pneumonia": {
+        "sensitivity": 0.4286,
+        "specificity": 0.8682,
+        "ppv": 0.4773,
+        "npv": 0.844,
+        "f1": 0.4516,
+        "support": 98,
+        "auroc": 0.7836,
+        "auprc": 0.4968
+      },
+      "heart_failure": {
+        "sensitivity": 0.6698,
+        "specificity": 0.8065,
+        "ppv": 0.5182,
+        "npv": 0.8871,
+        "f1": 0.5844,
+        "support": 106,
+        "auroc": 0.8325,
+        "auprc": 0.6094
+      },
+      "copd": {
+        "sensitivity": 0.6119,
+        "specificity": 0.9553,
+        "ppv": 0.7069,
+        "npv": 0.9332,
+        "f1": 0.656,
+        "support": 67,
+        "auroc": 0.9041,
+        "auprc": 0.6505
+      },
+      "malignancy": {
+        "sensitivity": 0.1525,
+        "specificity": 0.9691,
+        "ppv": 0.4286,
+        "npv": 0.8826,
+        "f1": 0.225,
+        "support": 59,
+        "auroc": 0.5957,
+        "auprc": 0.2456
+      },
+      "pneumothorax_dx": {
+        "sensitivity": 0.4,
+        "specificity": 0.9861,
+        "ppv": 0.5,
+        "npv": 0.9793,
+        "f1": 0.4444,
+        "support": 15,
+        "auroc": 0.8356,
+        "auprc": 0.5326
+      }
+    },
+    "reliability_curve": {
+      "bin_confidence": [
+        0.0,
+        0.0,
+        0.2729,
+        0.3489,
+        0.4489,
+        0.5506,
+        0.6414,
+        0.7565,
+        0.851,
+        0.942
+      ],
+      "bin_accuracy": [
+        0.0,
+        0.0,
+        0.5,
+        0.3486,
+        0.5312,
+        0.6373,
+        0.7143,
+        0.6471,
+        0.75,
+        0.7368
+      ],
+      "bin_weight": [
+        0.0,
+        0.0,
+        0.0626,
+        0.2438,
+        0.2148,
+        0.2282,
+        0.0783,
+        0.0761,
+        0.0537,
+        0.0425
+      ]
+    },
+    "conformal_coverage": 0.9038,
+    "conformal_set_size": 3.4072,
+    "ece_recomputed": 0.0799
+  }
+}

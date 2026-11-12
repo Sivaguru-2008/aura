@@ -7,6 +7,7 @@ sections 13 & 15.
 from __future__ import annotations
 
 import json
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -18,9 +19,12 @@ from sqlalchemy.exc import IntegrityError
 
 from aura.common.config import DB_PATH, ensure_dirs, get_settings
 from aura.ml.data import IMG, make_multimodal, make_sample
-from aura.schemas.clinical import DIAGNOSES, Diagnosis
-from aura.schemas.contracts import ClinicalChatRequest, ClinicalChatResponse, StudyInput, StructuredPriors
+from aura.schemas.clinical import DIAGNOSES, Diagnosis, Modality
+from aura.schemas.contracts import (
+    CaseState, ClinicalChatRequest, ClinicalChatResponse, StudyInput, StructuredPriors,
+)
 from aura.services.models import ModelRegistry
+from .intake import IntakeRequest, symptoms_text, triage_priority
 from .pipeline import Pipeline
 from .seed import seed
 from .storage import Store
@@ -32,6 +36,11 @@ from aura.services.agent.discussion import SpecialistDiscussionEngine
 
 WEB_DIR = Path(__file__).resolve().parent.parent / "apps" / "web"
 
+#: Local hour at which the nightly recalibration runs. Deployments in other
+#: timezones (or with a different maintenance window) override it rather than
+#: patching the scheduler.
+RECALIBRATION_HOUR = max(0, min(23, int(os.environ.get("AURA_RECALIBRATION_HOUR", "2"))))
+
 state: dict = {}
 session_case_ids: list[str] = []
 
@@ -39,7 +48,12 @@ session_case_ids: list[str] = []
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     ensure_dirs()
-    store = Store(DB_PATH)
+    settings = get_settings()
+    # AURA_DATABASE_URL moves the case store to PostgreSQL; AURA_SITE_ID binds it to
+    # this hospital. A site mismatch raises here and the server refuses to start,
+    # which is the point: see storage.SiteBindingRow.
+    store = Store(DB_PATH, url=settings.database_url or None,
+                  site_id=settings.site_id or None)
     pipeline = Pipeline(store=store)          # store handle enables online ACI (F9)
     state["store"] = store
     state["pipeline"] = pipeline
@@ -73,6 +87,38 @@ async def lifespan(app: FastAPI):
 
     if not pipeline.fusion.is_trained():
         print("[gateway] WARNING: fusion model not trained; run `aura_cli train`.")
+
+    # Nightly recalibration. It must land at a real off-hours time, not 30s after
+    # every boot: the run rewrites safety_<backend>.npz, which carries the
+    # temperature and conformal threshold the abstention gate depends on. A
+    # restart-triggered rewrite would silently move the safety envelope, and a
+    # development restart loop would do it repeatedly.
+    import asyncio
+    from datetime import datetime, timedelta
+
+    async def _sleep_until_next_run() -> None:
+        now = datetime.now()
+        target = now.replace(hour=RECALIBRATION_HOUR, minute=0, second=0, microsecond=0)
+        if target <= now:
+            target += timedelta(days=1)
+        await asyncio.sleep((target - now).total_seconds())
+
+    async def _nightly_recalibrate_loop():
+        while True:
+            await _sleep_until_next_run()
+            try:
+                from aura.services.training.recalibrate import recalibrate_from_feedback
+                print(f"[recalibrate] Nightly recalibration starting ({datetime.now():%Y-%m-%d %H:%M}).")
+                res = recalibrate_from_feedback(store)
+                print(f"[recalibrate] Nightly recalibration finished: {res}")
+            except asyncio.CancelledError:
+                raise
+            except Exception as ree:
+                print(f"[recalibrate] Scheduled recalibration failed: {ree!r}")
+
+    state["recalibrate_task"] = asyncio.create_task(_nightly_recalibrate_loop())
+    print(f"[recalibrate] Nightly recalibration scheduled for {RECALIBRATION_HOUR:02d}:00 local.")
+
     # PRODUCTION: Seeding has been disabled. The worklist starts empty.
     # Only newly uploaded images appear in the active session.
     import os
@@ -80,7 +126,14 @@ async def lifespan(app: FastAPI):
     print(f"[gateway] ready — 0 cases in active session (worklist empty on startup, fusion backend: {pipeline.fusion.backend}).")
     yield
     
-    # Lifespan shutdown: stop the DICOM listener
+    # Lifespan shutdown: stop the DICOM listener & recalibrate task
+    if "recalibrate_task" in state and state["recalibrate_task"]:
+        try:
+            state["recalibrate_task"].cancel()
+            print("[recalibrate] Nightly recalibration background task stopped")
+        except Exception:
+            pass
+
     if "dicom_listener" in state and state["dicom_listener"]:
         try:
             state["dicom_listener"].stop()
@@ -90,6 +143,15 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="AURA Clinical Intelligence Copilot", version="0.1.0",
               lifespan=lifespan)
+
+# Sign-in endpoints (/v1/auth/status, /v1/auth/session). Registered on the app rather
+# than in lifespan, so they exist even when model loading fails and an operator has to
+# sign in to find out why.
+from .security import router as _auth_router  # noqa: E402
+from .enterprise import router as _enterprise_router  # noqa: E402
+
+app.include_router(_auth_router)
+app.include_router(_enterprise_router)
 
 
 @app.middleware("http")
@@ -107,7 +169,7 @@ async def audit_mw(request: Request, call_next):
     # enforce() decides what is public via security.is_public_path.
     from .security import enforce
     try:
-        enforce(request)
+        principal = enforce(request)
     except HTTPException as exc:
         _safe_audit(action=f"blocked {request.method} {request.url.path}",
                     actor=request.headers.get("x-aura-user", "anonymous"),
@@ -121,9 +183,9 @@ async def audit_mw(request: Request, call_next):
     if request.url.path == "/" or request.url.path.startswith(("/app", "/static")):
         resp.headers["Cache-Control"] = "no-cache"
     if request.method in ("POST", "PUT", "DELETE") and "store" in state:
+        tenant_id = getattr(request.state, "tenant_id", "default")
         _safe_audit(action=f"{request.method} {request.url.path}",
-                    actor=request.headers.get("x-aura-user", "anonymous"),
-                    entity_type="http")
+                    actor=principal, entity_type="http", tenant_id=tenant_id)
     return resp
 
 
@@ -156,9 +218,12 @@ def pipeline() -> Pipeline:
 # --------------------------------------------------------------------------- #
 @app.get("/v1/health")
 def health():
+    # Public (probes run before any credential), so operational facts only. site_id
+    # says which hospital's database this server has open.
     return {"status": "ok", "backend": pipeline().fusion.backend,
             "trained": pipeline().fusion.is_trained(),
-            "cases": store().count()}
+            "cases": store().count(),
+            "site_id": getattr(store(), "site_id", "") or None}
 
 
 @app.get("/v1/studies")
@@ -199,20 +264,152 @@ def list_studies():
 
 
 @app.get("/v1/cases")
-def list_cases(state_filter: str | None = None):
+def list_cases(request: Request, state_filter: str | None = None):
     from aura.schemas.clinical import DIAGNOSIS_LABELS, FINDING_LABELS
+    from .security import get_tenant_id
+    tenant_id = get_tenant_id(request)
     dx_lbls = {d.value: l for d, l in DIAGNOSIS_LABELS.items()}
     ev_lbls = {f.value: l for f, l in FINDING_LABELS.items()}
     return {
-        "cases": store().list_cases(state=state_filter),
+        "cases": store().list_cases(state=state_filter, tenant_id=tenant_id),
         "dx_labels": dx_lbls,
         "ev_labels": ev_lbls
     }
 
 
-@app.get("/v1/cases/{case_id}")
-def get_case(case_id: str):
+@app.post("/v1/cases", status_code=201)
+def create_intake_case(payload: IntakeRequest = Body(...)):
+    """Record a clinical intake taken *before* the study arrives.
+
+    The dashboard's clinical-first flow files the history, labs and symptoms
+    first, then uploads the scan; ``POST /v1/cases/{case_id}/attach`` merges the
+    two once the study has been analysed. The baseline is deliberately not
+    written to the ``cases`` table — see ``storage.IntakeBaselineRow`` for why an
+    imaging-less record must stay out of the worklist and out of ``count()``.
+    """
+    priority, drivers = triage_priority(payload)
+    record = {
+        "request": json.loads(payload.model_dump_json()),
+        "priors": json.loads(payload.priors().model_dump_json()),
+        "multimodal": json.loads(payload.multimodal().model_dump_json()),
+        "clinical_context": json.loads(payload.clinical_context().model_dump_json()),
+        "symptoms_text": symptoms_text(payload.symptoms),
+        "clinical_notes": payload.clinical_notes or "",
+        "priority_score": priority,
+        "priority_drivers": drivers,
+    }
+    case_id = store().next_intake_id()
+    store().save_intake(case_id, record, priority)
+    store().audit("intake.created", "intake", case_id,
+                  detail={"priority_score": priority, "drivers": drivers})
+    return {"case_id": case_id, "state": "awaiting_imaging", **record}
+
+
+@app.post("/v1/cases/{case_id}/attach")
+async def attach_intake_case(case_id: str, payload: dict = Body(...)):
+    """Merge a pre-imaging intake baseline into the case that was just analysed.
+
+    The analyse call already carries sex/symptoms/notes as query parameters, but
+    not the labs, the symptom flags or the structured history — those arrive
+    here. Because those facts are exactly what the reasoning rules fire on (BNP,
+    procalcitonin, SpO2 ...), the merge is followed by a re-run of the reasoning
+    chain so the posterior reflects them. A re-run failure is reported, not
+    swallowed: the merged context is persisted either way.
+    """
     b = store().get_case(case_id)
+    if b is None:
+        raise HTTPException(404, "case not found")
+    baseline_id = str(payload.get("baseline_case_id") or "").strip()
+    if not baseline_id:
+        raise HTTPException(422, {"error": "invalid_request",
+                                  "reason": "baseline_case_id is required"})
+    record = store().get_intake(baseline_id)
+    if record is None:
+        raise HTTPException(404, "intake baseline not found")
+
+    req = IntakeRequest.model_validate(record.get("request") or {})
+    b.priors = req.priors()
+
+    intake_mm = req.multimodal()
+    if b.multimodal is None:
+        b.multimodal = intake_mm
+    else:
+        # The intake is the only source of these fields, but merge rather than
+        # replace so anything an EHR lookup already resolved is not dropped.
+        for name in type(intake_mm.labs).model_fields:
+            v = getattr(intake_mm.labs, name)
+            if v is not None:
+                setattr(b.multimodal.labs, name, v)
+        for name in type(intake_mm.symptoms).model_fields:
+            if getattr(intake_mm.symptoms, name):
+                setattr(b.multimodal.symptoms, name, True)
+        for name in type(intake_mm.history).model_fields:
+            v = getattr(intake_mm.history, name)
+            if name == "smoking_pack_years":
+                b.multimodal.history.smoking_pack_years = max(
+                    float(b.multimodal.history.smoking_pack_years or 0.0), float(v or 0.0))
+            elif v:
+                setattr(b.multimodal.history, name, True)
+
+    intake_ctx = req.clinical_context()
+    if b.clinical_context is None:
+        b.clinical_context = intake_ctx
+    else:
+        for name in type(intake_ctx).model_fields:
+            v = getattr(intake_ctx, name)
+            if v is not None and getattr(b.clinical_context, name) in (None, ""):
+                setattr(b.clinical_context, name, v)
+
+    store().save_case(b)
+    store().mark_intake_attached(baseline_id, case_id)
+    store().audit("intake.attached", "case", case_id,
+                  detail={"baseline_case_id": baseline_id})
+
+    reasoning_refreshed, reason = True, ""
+    try:
+        b = await recompute_case(case_id, {"priors": {}, "clinical_context": {}})
+    except Exception as exc:                      # pragma: no cover - defensive
+        reasoning_refreshed, reason = False, f"{type(exc).__name__}: {exc}"
+        print(f"[intake] attach {baseline_id} -> {case_id}: re-run failed: {reason}")
+
+    return {
+        "case_id": case_id,
+        "baseline_case_id": baseline_id,
+        "priors": json.loads(b.priors.model_dump_json()),
+        "multimodal": json.loads(b.multimodal.model_dump_json()) if b.multimodal else None,
+        "priority_score": b.priority_score,
+        "reasoning_refreshed": reasoning_refreshed,
+        "reason": reason,
+    }
+
+
+@app.delete("/v1/cases/{case_id}")
+def discard_intake_case(case_id: str):
+    """Discard a pre-imaging intake baseline that never received a study.
+
+    Scoped to baselines on purpose. An analysed case is a clinical record with an
+    audit trail behind it, and its id feeds ``CASE-UPLOAD-{count()+1}``, so
+    deleting one would both destroy evidence and let the next upload reuse the
+    id — this endpoint refuses rather than doing that.
+    """
+    if store().delete_intake(case_id):
+        store().audit("intake.discarded", "intake", case_id)
+        return {"deleted": case_id}
+    if store().get_case(case_id) is not None:
+        raise HTTPException(409, {"error": "not_deletable",
+                                  "reason": "analysed cases are immutable clinical records"})
+    raise HTTPException(404, "intake baseline not found")
+
+
+@app.get("/v1/cases/{case_id}")
+def get_case(request: Request, case_id: str):
+    from .security import get_tenant_id
+    from .storage import CrossTenantAccessError
+    tenant_id = get_tenant_id(request)
+    try:
+        b = store().get_case(case_id, tenant_id=tenant_id)
+    except CrossTenantAccessError as exc:
+        raise HTTPException(403, {"error": "cross_tenant_access_denied", "reason": str(exc)})
     if b is None:
         raise HTTPException(404, "case not found")
     d = json.loads(b.model_dump_json())
@@ -348,6 +545,17 @@ def feedback(case_id: str, payload: dict = Body(...)):
                   detail={"verdict": verdict, "correction": correction})
 
     return {"ok": True, "stats": store().feedback_stats()}
+
+
+@app.post("/v1/recalibrate")
+def trigger_recalibration():
+    """Trigger automated calibration update based on clinician feedback."""
+    from aura.services.training.recalibrate import recalibrate_from_feedback
+    try:
+        res = recalibrate_from_feedback(store())
+        return res
+    except Exception as e:
+        raise HTTPException(500, f"Recalibration failed: {e}")
 
 
 VALID_OUTCOME_SOURCES = {"pcr", "expert_consensus", "biopsy", "pathology", "clinical_course"}
@@ -516,8 +724,10 @@ async def recompute_case(case_id: str, payload: dict = Body(...)):
         m.symptoms.fever = b.priors.fever
         if b.priors.smoker:
             m.history.smoking_pack_years = max(m.history.smoking_pack_years or 0.0, 20.0)
-        else:
-            m.history.smoking_pack_years = 0.0
+        # An unticked "smoker" box means *not currently smoking*, not "never
+        # smoked": zeroing the count here erased a pack-year history the intake
+        # form had actually recorded for an ex-smoker, and with it the exposure
+        # the malignancy rules read.
         m.history.prior_cancer = b.priors.prior_cancer
         m.history.immunosuppression = b.priors.immunocompromised
         
@@ -575,10 +785,13 @@ async def recompute_case(case_id: str, payload: dict = Body(...)):
         imaging_probs = pipeline().safety.calibrated_posterior(resolved_logits)
         imaging_prior = {d: float(imaging_probs[i]) for i, d in enumerate(DIAGNOSES)}
         findings_map = {fs.finding: fs.probability for fs in b.vision.findings}
-        b.reasoning = pipeline().reasoner.reason(
+        # reason() returns (trace, graph) — see Pipeline.run step 3. Assigning the
+        # tuple straight to b.reasoning made every chest recompute die on
+        # `.steps` one line later, so this branch had never completed.
+        b.reasoning, b.evidence_graph = pipeline().reasoner.reason(
             b.study_id, findings_map, imaging_prior, b.priors, b.multimodal
         )
-        
+
         final_posterior = None
         if b.reasoning.steps:
             final_posterior = np.array(
@@ -600,30 +813,49 @@ async def recompute_case(case_id: str, payload: dict = Body(...)):
         # Recommendations
         b.recommendations = pipeline().recommend.recommend(pipeline().fusion.model, x)
         
-        # CDRE
-        from aura.schemas.contracts import StudyInput
-        study_in = StudyInput(
-            study_id=b.study_id,
-            image=b.image,
-            image_shape=b.image_shape,
-            priors=b.priors,
-            multimodal=b.multimodal,
-            ground_truth=b.ground_truth
+        # Multi-agent consensus panel — re-run rather than reused, because the
+        # specialists read the labs and symptoms that just changed.
+        mm = b.multimodal
+        agent_evidence = {
+            "findings": findings_map,
+            "embedding": (b.vision.embedding.tolist()
+                          if hasattr(b.vision.embedding, "tolist") else list(b.vision.embedding or [])),
+            "labs": mm.labs.model_dump() if mm and mm.labs else {},
+            "symptoms": mm.symptoms.model_dump() if mm and mm.symptoms else {},
+        }
+        consensus_result = await pipeline().consensus.evaluate(
+            evidence=agent_evidence,
+            priors=b.priors.model_dump(),
+            modality=Modality.CXR,
         )
-        b.drp = pipeline().cdre.assess(
-            study=study_in,
-            img=img,
-            x=x,
-            fusion_engine=pipeline().fusion,
+        b.consensus_result = consensus_result.to_dict() if consensus_result else None
+
+        # CDRE. The engine's entry point is evaluate(); the assess() called here
+        # does not exist on ClinicalDecisionReadinessEngine, and the report was
+        # handed b.fusion where compose() expects the ConsensusResult it reads
+        # `.verdicts` off — both raised on every chest recompute.
+        classical_logits = pipeline().fusion.model.logits(x) if hasattr(pipeline().fusion, "model") else None
+        quantum_logits = None
+        if getattr(pipeline().fusion, "_quantum_model", None) is not None:
+            quantum_logits = pipeline().fusion._quantum_model.logits(x)
+        b.decision_readiness = pipeline().cdre.evaluate(
             reasoning=b.reasoning,
-            findings_map=findings_map,
-            safety_assessment=b.safety,
-            vision_engine=pipeline().vision
+            evidence_graph=b.evidence_graph,
+            recommendations=b.recommendations,
+            vision_quality=None,
+            fusion_model=pipeline().fusion.model,
+            evidence_vector=x,
+            classical_logits=classical_logits,
+            quantum_logits=quantum_logits,
+            consensus_result=consensus_result,
         )
-        
+        b.drp = b.decision_readiness
+
         # Report
-        b.report = pipeline().report.compose(b.vision, b.safety, b.recommendations, b.reasoning, b.fusion)
+        b.report = pipeline().report.compose(b.vision, b.safety, b.recommendations,
+                                             b.reasoning, consensus_result)
         b.priority_score = pipeline()._priority(b.safety.top, b.safety)
+        b.state = CaseState.ABSTAINED if b.safety.abstained else CaseState.READY
         
     store().save_case(b)
     store().audit("case.recomputed", "case", case_id, detail={"priors": priors_payload})
@@ -675,7 +907,7 @@ async def simulate_study(payload: dict = Body(default={})):
 
 
 @app.post("/v1/studies/upload")
-async def upload_study(file: UploadFile = File(...)):
+async def upload_study(request: Request, file: UploadFile = File(...)):
     """Upload a chest radiograph (PNG/JPG/DICOM) and analyze it live.
 
     The X-ray intake gate runs first: anything that is not a chest radiograph is
@@ -685,7 +917,7 @@ async def upload_study(file: UploadFile = File(...)):
     """
     import tempfile
     import os
-    from .security import validate_upload_name, read_capped, validate_mri_content
+    from .security import validate_upload_name, read_capped, validate_mri_content, get_tenant_id
 
     # Type allowlist (extension + declared MIME) and a hard size cap enforced while
     # streaming, so a hostile upload can neither smuggle a non-image type nor
@@ -728,9 +960,12 @@ async def upload_study(file: UploadFile = File(...)):
                           detail={"reason": exc.reason})
             raise HTTPException(422, exc.to_payload())
         infer_s = _time.perf_counter() - _t0
-        store().save_case(bundle)
+        tenant_id = get_tenant_id(request)
+        store().save_case(bundle, tenant_id=tenant_id)
         session_case_ids.append(case_id)
         store().audit("case.uploaded", "case", case_id,
+                      actor=getattr(request.state, "principal", "system"),
+                      tenant_id=tenant_id,
                       detail={"top": bundle.safety.top.value,
                               "abstained": bundle.safety.abstained,
                               "gate_checks": gate.checks})
@@ -1074,3 +1309,21 @@ def history_route():
     if idx.exists():
         return FileResponse(str(idx))
     return JSONResponse({"message": "History page not found."}, status_code=404)
+
+
+@app.get("/quantum")
+def quantum_route():
+    """Quantum evidence view.
+
+    System-level, not per-case: it renders what the quantum layer is, what it costs
+    on real hardware, and what it does not buy. Deliberately a separate view rather
+    than a fourth console tab, because the console pager is three views over *one
+    case* and this data belongs to the model, not to a study.
+
+    The shell carries no patient data — every figure comes from a subsequent fetch of
+    /v1/quantum/evidence, which is gated like every other /v1 route.
+    """
+    idx = WEB_DIR / "quantum.html"
+    if idx.exists():
+        return FileResponse(str(idx))
+    return JSONResponse({"message": "Quantum evidence page not found."}, status_code=404)

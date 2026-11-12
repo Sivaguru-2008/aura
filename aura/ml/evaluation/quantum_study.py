@@ -23,7 +23,9 @@ inflated quantum win (audit F6), so that mistake is not repeated here.
 Runs :class:`~aura.services.fusion.qmba.QuantumMeasurementBudget` over the whole test set:
 commit rate, accuracy at commit, shots spent, and the split between decisions that
 were measurement-limited (more shots would settle it) and model-limited (nothing
-would). This is the number with no classical analogue.
+would). That split was once presented as having no classical analogue; the claim was
+retracted on source audit (docs/RESEARCH_PAPER_v5.md §2.8) — the shot noise is added
+to the analytic expectation, so the split is a threshold on the analytic margin.
 
 **Q4 — What does the entanglement encode?**
 Aggregates the per-patient evidence-coupling differentials over the test set to find
@@ -58,6 +60,48 @@ N_DX = len(DIAGNOSES)
 EVIDENCE_CACHE = ARTIFACTS / "quantum_study_evidence.npz"
 OUTPUT = ARTIFACTS / "quantum_study.json"
 
+# --------------------------------------------------------------------------- #
+# Disclosures carried by the artifact.
+#
+# These live at module scope rather than inline because the published artifact is
+# patched to carry them by ``ml/evaluation/patch_disclosures.py`` without a full
+# regeneration (regenerating would retrain the ablation and change the numbers the
+# manuscript cites), and ``tests/test_doc_numbers.py`` asserts that the artifact on
+# disk carries exactly these strings. One definition, three consumers, no drift.
+# --------------------------------------------------------------------------- #
+BUDGET_RETRACTION = (
+    "The capability claim this result was published to support is retracted; "
+    "see Section 10.6 of docs/RESEARCH_PAPER_v4.md. The shot-budget loop "
+    "perturbs an analytically computed expectation with synthetic Gaussian "
+    "noise rather than executing the circuit at finite shots "
+    "(services/fusion/qmba.py, lines 377-380), so the typing of an abstention "
+    "as measurement-limited or model-limited reduces to a threshold on the "
+    "analytic margin. A classical model with an analytic margin can apply the "
+    "same threshold. The numbers below are retained as a record of what was "
+    "computed; the interpretation below is withdrawn."
+)
+
+BUDGET_NOTE_WITHDRAWN = (
+    "WITHDRAWN — retained verbatim for provenance, not as a claim. Original "
+    "text: 'Measurement-limited abstentions would be resolved by running the "
+    "same circuit longer. Model-limited abstentions would not — the top two "
+    "diagnoses are tied at infinite measurement precision, so the case needs "
+    "a human. No classical fusion model can make this distinction, because "
+    "classical inference has no measurement budget to vary.' The final "
+    "sentence is false for the implementation that produced these numbers."
+)
+
+HARDWARE_DISCLOSURE = (
+    "The results in THIS artifact are simulated: every circuit here was "
+    "executed on PennyLane default.qubit and no result in this file came "
+    "from a quantum processor. This is not a statement about the project. "
+    "One fusion circuit was later executed on IBM ibm_marrakesh (job "
+    "d9js49rjf64c739haeg0); see artifacts/ibm_hardware_run.json and "
+    "Section 9.5 of docs/RESEARCH_PAPER_v4.md. An earlier version of this "
+    "field read 'simulated; no quantum hardware was used', which was true "
+    "when written and became misleading once that run existed."
+)
+
 
 # --------------------------------------------------------------------------- #
 # Data
@@ -70,7 +114,11 @@ def load_evidence(n: int, seed: int, refresh: bool = False):
     resample patients and silently confound the comparison.
     """
     if EVIDENCE_CACHE.exists() and not refresh:
+        from .provenance import assert_npz, assert_real_source
+
+        assert_npz(EVIDENCE_CACHE)                   # D14: pinned bytes, or refuse
         d = np.load(EVIDENCE_CACHE)
+        assert_real_source(str(d["source"]))
         print(f"[data] reusing cached evidence set from {EVIDENCE_CACHE.name} "
               f"(train={len(d['ytr'])} cal={len(d['ycal'])} test={len(d['yte'])})")
         return (d["Xtr"], d["ytr"], d["Xcal"], d["ycal"], d["Xte"], d["yte"],
@@ -269,13 +317,8 @@ def run_budget_study(model: QuantumFusion, Xte, yte, seed: int) -> dict:
         },
         "median_predicted_shots_to_resolve": (int(np.median(predicted))
                                               if predicted else None),
-        "note": (
-            "Measurement-limited abstentions would be resolved by running the same "
-            "circuit longer. Model-limited abstentions would not — the top two "
-            "diagnoses are tied at infinite measurement precision, so the case needs "
-            "a human. No classical fusion model can make this distinction, because "
-            "classical inference has no measurement budget to vary."
-        ),
+        "RETRACTED": BUDGET_RETRACTION,
+        "note_withdrawn": BUDGET_NOTE_WITHDRAWN,
     }
 
 
@@ -368,7 +411,7 @@ def run(n: int = 900, epochs: int = 30, refresh: bool = False,
         "q3_measurement_budget": budget,
         "q4_evidence_coupling": coupling,
         "honesty": {
-            "hardware": "simulated; no quantum hardware was used",
+            "hardware": HARDWARE_DISCLOSURE,
             "shot_noise": (
                 "Shot noise is aleatoric readout noise. More shots converge to the "
                 "analytic expectation, not to the truth — a confident wrong answer "

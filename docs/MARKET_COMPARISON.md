@@ -13,7 +13,7 @@
 | Brain MRI tumour segmentation | Dice WT **0.915** / TC **0.846** / ET **0.835** (n=56 subjects) | nnU-Net BraTS2020 winner **0.8895 / 0.8506 / 0.8203** | Brainlab / icobrain (regulatory-cleared) | **Not comparable — different metric. See §2.3. The apparent win is a metric artifact.** |
 | Cross-modal fusion diagnosis | accuracy **0.6957** classical / **0.6377** quantum (n=69) | — | — | **Barely above the majority-class baseline (0.6377). No external comparator exists at this n.** |
 
-**The single most important finding of this exercise is not an accuracy number.** It is that the repo's existing `docs/benchmark_report.md` compares AURA against nnUNet, SwinUNETR and MONAI using numbers that were **never measured** — they are hardcoded string literals in the generator script. See §4. That table must not be shown to a judge, reviewer, or customer in its current form.
+**The single most important finding of this exercise is not an accuracy number.** It is that the repo's existing `docs/benchmark_report.md` compares AURA against nnUNet, SwinUNETR and MONAI using numbers that were **never measured** — they are hardcoded string literals in the generator script. See §4. That table must not be shown to a judge, reviewer, or customer in its current form. *(Fixed 2026-09-12; see the status note in §4.)*
 
 ---
 
@@ -134,8 +134,8 @@ Source: `aura/artifacts/benchmark.json`, n=69 MIMIC-CXR studies, 6 diagnosis cla
 
 | Backend | Accuracy | NLL | ECE | Brier | Macro AUROC | Macro F1 |
 |---|---|---|---|---|---|---|
-| Quantum (served) | 0.6377 | 1.2123 | 0.2381 | 0.5699 | 0.7696 | 0.3321 |
-| Classical | **0.6957** | **1.0577** | 0.2194 | 0.4857 | **0.7875** | **0.4241** |
+| Quantum (served until 2026-09-12) | 0.6377 | 1.2123 | 0.2381 | 0.5699 | 0.7696 | 0.3321 |
+| Classical (served since 2026-09-12) | **0.6957** | **1.0577** | 0.2194 | 0.4857 | **0.7875** | **0.4241** |
 | Ensemble | 0.6957 | 1.0213 | 0.2267 | 0.4656 | 0.7798 | 0.4241 |
 | Learnable | 0.6232 | 1.1306 | **0.1879** | 0.5273 | 0.7306 | 0.3803 |
 
@@ -155,13 +155,33 @@ Three observations that any external reviewer will make immediately:
 | "Quantum is far better calibrated (ECE 0.020 vs 0.276)" | **CONFOUNDED** — 0.276 was the *uncalibrated* classical; given its own temperature the gap shrinks from 0.256 to 0.007 |
 | "Quantum ranking (AUROC) beats classical" | **NOT VALIDATED** — 0 of 6 classes significant by DeLong |
 
-On the served benchmark the classical backend is **ahead on every accuracy metric** (accuracy +0.058, NLL −0.155, macro AUROC +0.018, macro F1 +0.092). The honest positioning of the quantum layer is the measurement-efficiency and typed-abstention result, not accuracy.
+On the served benchmark the classical backend is **ahead on every accuracy metric** (accuracy +0.058, NLL −0.155, macro AUROC +0.018, macro F1 +0.092). The quantum layer's accuracy position is now settled externally (§3.2), and its "typed abstention" result was retracted on source audit (`docs/RESEARCH_PAPER_v5.md` §2.8), so neither is a positioning point.
+
+### 3.2 External validation — preregistered, CheXpert, n = 4,800 (added 2026-09-12)
+
+Source: `aura/artifacts/chexpert_external.json`, run under `docs/PREREGISTRATION_CHEXPERT.md` with every model frozen and only a per-arm temperature refit on a CheXpert calibration split.
+
+| Backend | Accuracy [95% CI] | NLL | ECE | Macro AUROC |
+|---|---|---|---|---|
+| Classical PoE (served since 2026-09-12) | **0.5273** [0.513, 0.541] | 1.4193 | 0.1346 | 0.7366 |
+| Logistic regression | 0.5210 [0.507, 0.535] | **1.3815** | **0.1078** | 0.7298 |
+| Learnable head | 0.4829 [0.469, 0.497] | 1.5116 | 0.1424 | **0.7367** |
+| Quantum VQC | 0.4721 [0.458, 0.486] | 1.5782 | 0.1586 | 0.7259 |
+
+The majority-class floor is 0.3867. Classical beats the VQC by 5.5 points (McNemar p < 0.001, Holm-adjusted) and is statistically tied with logistic regression on accuracy. COPD is not derivable on CheXpert, so these accuracies are not comparable with the MIMIC figures above. This result is why the product switched its served backend to classical on 2026-09-12.
 
 ---
 
 ## 4. Red flags in the repo's existing comparison table
 
-`docs/benchmark_report.md` currently publishes this:
+> **Status, 2026-09-12: fixed.** The comparator rows have been replaced, in both
+> `docs/benchmark_report.md` and its generator, with values traced to the published tables
+> (nnU-Net: arXiv:2011.00848; SwinUNETR: arXiv:2201.01266 Table 3). The MONAI and ResNet-50
+> rows, which trace to no publication, were removed. The composites that had survived an
+> earlier relabelling were still the original invented literals, and the "nnU-Net"
+> sub-scores matched no nnU-Net paper. This section is kept as the record of what was wrong.
+
+`docs/benchmark_report.md` used to publish this:
 
 | Architecture | Mean Composite Dice | CPU latency |
 |---|---|---|
@@ -193,7 +213,7 @@ Two further issues in the same file:
 - **Chest CXR:** genuinely at the level of a solid published DenseNet-121 MIMIC baseline (0.821 vs 0.8335). The honest gap to market is precision (0.264) and nodule detection (0.729 vs 0.93), not AUROC.
 - **Brain MRI:** the numbers look competitive with the BraTS2020 winner only because the metric is different. On a like-for-like per-case 3D protocol, expect materially lower. The four-sequence requirement is a harder limit than any accuracy number.
 - **Fusion:** at n=69 with a 0.6377 majority baseline, this is a demo, not a benchmark. The quantum-beats-classical claim is refuted by the repo's own audit; classical currently wins.
-- **What is actually differentiating** and does not appear in any competitor's spec sheet: conformal coverage guarantees (measured 91.3–92.8% at a 90% target), typed abstention, the OOD/non-radiograph gate, and the label-provenance chain (66-report hand-read gold, independent torchxrayvision corroboration with a disclosed nodule failure). Lead with those; do not lead with accuracy.
+- **What is actually differentiating** and does not appear in any competitor's spec sheet: conformal coverage guarantees (measured 91.3–92.8% at a 90% target), abstention with a stated reason, the OOD/non-radiograph gate, and the label-provenance chain (66-report hand-read gold, independent torchxrayvision corroboration with a disclosed nodule failure). Lead with those; do not lead with accuracy.
 
 ### Sources
 

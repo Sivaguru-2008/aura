@@ -22,14 +22,22 @@ _MEAN, _STD = 0.5, 0.5
 
 
 def build_transforms(train: bool):
-    """Albumentations pipeline. Photometric+geometric aug for train, resize-only for val."""
+    """Albumentations pipeline. Photometric+geometric aug for train, resize-only for val.
+
+    No HorizontalFlip, and rotation capped at ±8°, matching the production pipeline in
+    ``ml.vision_cxr.dataset.get_transforms``. A chest radiograph has a fixed situs
+    (heart and aortic arch left, three-lobed right lung, gastric bubble left); mirroring
+    it teaches an anatomically impossible layout and harms laterality-dependent findings
+    such as cardiomegaly and effusion side. Films are also acquired upright, so large
+    rotations are unrealistic. Kept in sync deliberately — this harness and the
+    production one must not disagree about what a valid radiograph looks like.
+    """
     import albumentations as A
 
     if train:
         return A.Compose([
             A.Resize(IMG_SIZE, IMG_SIZE),
-            A.HorizontalFlip(p=0.5),
-            A.Rotate(limit=12, border_mode=0, p=0.5),
+            A.Rotate(limit=8, border_mode=0, p=0.5),
             A.RandomBrightnessContrast(0.15, 0.15, p=0.5),
             A.GaussNoise(p=0.2),
         ])

@@ -57,7 +57,14 @@ class FusionEngine:
     def is_trained(self) -> bool:
         return self.model is not None
 
-    def fuse_vector(self, x: np.ndarray, study_id: str = "") -> FusionResult:
+    def fuse_vector(self, x: np.ndarray, study_id: str = "",
+                    qae_applied: bool = False) -> FusionResult:
+        """Fuse one evidence vector.
+
+        ``qae_applied`` is passed down by :meth:`fuse` and records whether the
+        quantum autoencoder actually produced ``x``. It is a fact about this call,
+        not a copy of the setting — see FusionResult.qae_applied.
+        """
         s = get_settings()
         model = self.model
         if model is None:
@@ -114,13 +121,22 @@ class FusionEngine:
             conflict_threshold=conflict_threshold,
             fallback_triggered=fallback_triggered,
             quantum_entanglement=quantum_entanglement,
-            qae_enabled=bool(getattr(s, "qae_enabled", False)),
-            qbn_enabled=bool(getattr(s, "reasoner_backend", "classical") == "quantum"),
+            qae_applied=bool(qae_applied),
+            # No qbn_enabled. The QBN runs in ClinicalReasoner, so the only thing
+            # fusion could report is `reasoner_backend == "quantum"` — a setting,
+            # not a component that ran. ReasoningTrace.qbn_enabled carries the
+            # real answer, set by the code path that actually executes the circuit.
         )
 
     def fuse(self, vision: VisionResult, priors: StructuredPriors) -> FusionResult:
         s = get_settings()
-        if getattr(s, "qae_enabled", False) and vision.embedding and self.qae is not None:
+        # All three conditions matter: the setting alone does not mean the quantum
+        # autoencoder ran. QuantumAutoencoder.load() returns None when the weights
+        # are absent (the shipped state), and a vision backend may emit no embedding.
+        qae_applied = bool(
+            getattr(s, "qae_enabled", False) and vision.embedding and self.qae is not None
+        )
+        if qae_applied:
             from .evidence import prior_risk_score
             img_feat = self.qae.compress(np.array(vision.embedding, dtype=float))
             x = np.zeros(8, dtype=float)
@@ -128,7 +144,7 @@ class FusionEngine:
             x[7] = prior_risk_score(priors)
         else:
             x = encode(vision, priors)
-        return self.fuse_vector(x, study_id=vision.study_id)
+        return self.fuse_vector(x, study_id=vision.study_id, qae_applied=qae_applied)
 
     def logits(self, x: np.ndarray) -> np.ndarray:
         return self.model.logits(x)

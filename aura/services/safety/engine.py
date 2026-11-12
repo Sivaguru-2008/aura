@@ -188,7 +188,7 @@ class SafetyEngine:
             abstained, reason = True, AbstentionReason.LOW_CONFIDENCE
         elif len(conformal_set) > self.settings.abstention_conformal_size:
             abstained, reason = True, AbstentionReason.LARGE_CONFORMAL_SET
-        elif epistemic > 0.20:
+        elif epistemic > self.settings.epistemic_abstention_threshold:
             abstained, reason = True, AbstentionReason.HIGH_EPISTEMIC
 
         return SafetyAssessment(

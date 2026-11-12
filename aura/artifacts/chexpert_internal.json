@@ -1,0 +1,575 @@
+{
+  "preregistration": "docs/PREREGISTRATION_ADDENDUM_2026-10b_CHEXPERT_INTERNAL.md",
+  "data": {
+    "source": "chexpert_evidence.npz, y_u0",
+    "split_seed": 7,
+    "train/cal/test": [
+      4800,
+      1600,
+      1600
+    ]
+  },
+  "E1": {
+    "purpose": "Refits every fusion arm under one optimiser protocol \u2014 same optimiser, batch size, epoch cap, learning-rate grid, early-stopping rule, seed and weight decay \u2014 so that any ordering between arms is attributable to model class rather than to optimisation. Addresses Section 11.5.",
+    "protocol": {
+      "optimiser": "Adam",
+      "learning_rate_grid": [
+        0.01,
+        0.05,
+        0.1
+      ],
+      "learning_rate_selected_per_arm_on": "calibration split, by cross-entropy",
+      "batch_size": 50,
+      "max_epochs": 150,
+      "early_stopping": "calibration cross-entropy, patience 20 epochs, best-epoch weights restored",
+      "weight_decay": 0.0,
+      "seed": 7,
+      "temperature": "one per arm, fitted on the calibration split (P1)",
+      "note": "The learning rate is searched per arm rather than fixed across arms. A single shared rate is not symmetry; it is a choice that suits whichever arm it was tuned on. Symmetry is the same grid, the same split and the same criterion for every arm."
+    },
+    "data": {
+      "source": "chexpert-internal",
+      "train_studies": 4800,
+      "calibration_studies": 1600,
+      "test_studies": 1600,
+      "patient_disjoint": true,
+      "evidence_channels": 8,
+      "constant_channels": [
+        7
+      ]
+    },
+    "trainable_parameters": {
+      "classical": 54,
+      "learnable": 126,
+      "quantum": 102,
+      "logistic": 45
+    },
+    "fitting": {
+      "classical": {
+        "selected_lr": 0.05,
+        "selected_on": "calibration split, by cross-entropy",
+        "best_epoch": 11,
+        "epochs_run": 32,
+        "converged_by_early_stopping": true,
+        "final_train_nll": 1.045815,
+        "grid": [
+          {
+            "lr": 0.01,
+            "best_calibration_nll": 1.044504,
+            "best_epoch": 73,
+            "epochs_run": 94,
+            "stopped_early": true,
+            "final_train_nll": 1.045312,
+            "seconds": 11.1
+          },
+          {
+            "lr": 0.05,
+            "best_calibration_nll": 1.043759,
+            "best_epoch": 11,
+            "epochs_run": 32,
+            "stopped_early": true,
+            "final_train_nll": 1.045815,
+            "seconds": 2.7
+          },
+          {
+            "lr": 0.1,
+            "best_calibration_nll": 1.045046,
+            "best_epoch": 11,
+            "epochs_run": 32,
+            "stopped_early": true,
+            "final_train_nll": 1.061857,
+            "seconds": 2.8
+          }
+        ]
+      },
+      "learnable": {
+        "selected_lr": 0.05,
+        "selected_on": "calibration split, by cross-entropy",
+        "best_epoch": 19,
+        "epochs_run": 40,
+        "converged_by_early_stopping": true,
+        "final_train_nll": 1.042156,
+        "grid": [
+          {
+            "lr": 0.01,
+            "best_calibration_nll": 1.045075,
+            "best_epoch": 32,
+            "epochs_run": 53,
+            "stopped_early": true,
+            "final_train_nll": 1.045228,
+            "seconds": 6.2
+          },
+          {
+            "lr": 0.05,
+            "best_calibration_nll": 1.044435,
+            "best_epoch": 19,
+            "epochs_run": 40,
+            "stopped_early": true,
+            "final_train_nll": 1.042156,
+            "seconds": 4.9
+          },
+          {
+            "lr": 0.1,
+            "best_calibration_nll": 1.04629,
+            "best_epoch": 24,
+            "epochs_run": 45,
+            "stopped_early": true,
+            "final_train_nll": 1.041985,
+            "seconds": 6.1
+          }
+        ]
+      },
+      "quantum": {
+        "selected_lr": 0.01,
+        "selected_on": "calibration split, by cross-entropy",
+        "best_epoch": 76,
+        "epochs_run": 97,
+        "converged_by_early_stopping": true,
+        "final_train_nll": 1.044243,
+        "grid": [
+          {
+            "lr": 0.01,
+            "best_calibration_nll": 1.05585,
+            "best_epoch": 76,
+            "epochs_run": 97,
+            "stopped_early": true,
+            "final_train_nll": 1.044243,
+            "seconds": 824.4
+          },
+          {
+            "lr": 0.05,
+            "best_calibration_nll": 1.06079,
+            "best_epoch": 60,
+            "epochs_run": 81,
+            "stopped_early": true,
+            "final_train_nll": 1.056747,
+            "seconds": 584.1
+          },
+          {
+            "lr": 0.1,
+            "best_calibration_nll": 1.061944,
+            "best_epoch": 23,
+            "epochs_run": 44,
+            "stopped_early": true,
+            "final_train_nll": 1.095586,
+            "seconds": 655.2
+          }
+        ]
+      },
+      "logistic": {
+        "selected_C": 10.0,
+        "lbfgs_iterations": 235,
+        "converged": true,
+        "classes_fitted": [
+          0,
+          1,
+          2,
+          4,
+          5
+        ],
+        "grid": [
+          {
+            "C": 0.01,
+            "calibration_nll": 1.1269
+          },
+          {
+            "C": 0.1,
+            "calibration_nll": 1.056
+          },
+          {
+            "C": 1.0,
+            "calibration_nll": 1.0446
+          },
+          {
+            "C": 10.0,
+            "calibration_nll": 1.0444
+          },
+          {
+            "C": 100.0,
+            "calibration_nll": 1.0449
+          },
+          {
+            "C": 1000.0,
+            "calibration_nll": 1.045
+          }
+        ]
+      }
+    },
+    "budget_adequacy": {
+      "question": "Is the shared budget sufficient? Measured on the one arm whose optimum is knowable \u2014 the linear model, fitted both under the shared Adam protocol and to optimality by L-BFGS.",
+      "adam_linear_nll": 1.1406,
+      "lbfgs_optimum_nll": 1.1401,
+      "gap_nll": 0.0005,
+      "adam_linear_accuracy": 0.5481,
+      "lbfgs_optimum_accuracy": 0.5494,
+      "gap_accuracy": -0.0013
+    },
+    "majority_class_floor": {
+      "accuracy": 0.3762,
+      "class": "normal",
+      "support": {
+        "normal": 602,
+        "pneumonia": 433,
+        "heart_failure": 402,
+        "copd": 0,
+        "malignancy": 82,
+        "pneumothorax_dx": 81
+      }
+    },
+    "backends": {
+      "classical": {
+        "n": 1600,
+        "temperature": 1.0185,
+        "accuracy": 0.5481,
+        "correct": 877,
+        "accuracy_ci95_jeffreys": [
+          0.5237,
+          0.5724
+        ],
+        "nll": 1.1406,
+        "ece": 0.0584,
+        "macro_auroc": 0.7465
+      },
+      "learnable": {
+        "n": 1600,
+        "temperature": 1.0033,
+        "accuracy": 0.5475,
+        "correct": 876,
+        "accuracy_ci95_jeffreys": [
+          0.523,
+          0.5718
+        ],
+        "nll": 1.1394,
+        "ece": 0.0554,
+        "macro_auroc": 0.7469
+      },
+      "quantum": {
+        "n": 1600,
+        "temperature": 0.9623,
+        "accuracy": 0.545,
+        "correct": 872,
+        "accuracy_ci95_jeffreys": [
+          0.5205,
+          0.5693
+        ],
+        "nll": 1.1482,
+        "ece": 0.0471,
+        "macro_auroc": 0.7407
+      },
+      "logistic": {
+        "n": 1600,
+        "temperature": 0.9991,
+        "accuracy": 0.5494,
+        "correct": 879,
+        "accuracy_ci95_jeffreys": [
+          0.5249,
+          0.5736
+        ],
+        "nll": 1.1401,
+        "ece": 0.0541,
+        "macro_auroc": 0.7489
+      }
+    },
+    "pairwise": {
+      "classical_vs_quantum": {
+        "delta_accuracy": 0.0031,
+        "mcnemar": {
+          "discordant": 109,
+          "a_only": 57,
+          "b_only": 52,
+          "p": 0.701811
+        },
+        "delta_nll": -0.0076,
+        "nll_wilcoxon_p": 0.01037,
+        "mcnemar_p_holm": 1.0,
+        "nll_wilcoxon_p_holm": 0.0415
+      },
+      "classical_vs_learnable": {
+        "delta_accuracy": 0.0006,
+        "mcnemar": {
+          "discordant": 27,
+          "a_only": 14,
+          "b_only": 13,
+          "p": 1.0
+        },
+        "delta_nll": 0.0012,
+        "nll_wilcoxon_p": 0.0008546,
+        "mcnemar_p_holm": 1.0,
+        "nll_wilcoxon_p_holm": 0.004273
+      },
+      "classical_vs_logistic": {
+        "delta_accuracy": -0.0013,
+        "mcnemar": {
+          "discordant": 32,
+          "a_only": 15,
+          "b_only": 17,
+          "p": 0.86005
+        },
+        "delta_nll": 0.0005,
+        "nll_wilcoxon_p": 6.318e-06,
+        "mcnemar_p_holm": 1.0,
+        "nll_wilcoxon_p_holm": 3.8e-05
+      },
+      "quantum_vs_learnable": {
+        "delta_accuracy": -0.0025,
+        "mcnemar": {
+          "discordant": 108,
+          "a_only": 52,
+          "b_only": 56,
+          "p": 0.772989
+        },
+        "delta_nll": 0.0088,
+        "nll_wilcoxon_p": 0.2163,
+        "mcnemar_p_holm": 1.0,
+        "nll_wilcoxon_p_holm": 0.4326
+      },
+      "quantum_vs_logistic": {
+        "delta_accuracy": -0.0044,
+        "mcnemar": {
+          "discordant": 111,
+          "a_only": 52,
+          "b_only": 59,
+          "p": 0.56922
+        },
+        "delta_nll": 0.0081,
+        "nll_wilcoxon_p": 0.02894,
+        "mcnemar_p_holm": 1.0,
+        "nll_wilcoxon_p_holm": 0.08682
+      },
+      "learnable_vs_logistic": {
+        "delta_accuracy": -0.0019,
+        "mcnemar": {
+          "discordant": 23,
+          "a_only": 10,
+          "b_only": 13,
+          "p": 0.677639
+        },
+        "delta_nll": -0.0007,
+        "nll_wilcoxon_p": 0.3676,
+        "mcnemar_p_holm": 1.0,
+        "nll_wilcoxon_p_holm": 0.4326
+      }
+    },
+    "runtime_seconds": 2116.3,
+    "tost_quantum_vs_poe": {
+      "n": 1600,
+      "mean_difference": 0.00762,
+      "se": 0.00536,
+      "margin": 0.01,
+      "t_lower": 3.285,
+      "p_lower": 0.00052,
+      "t_upper": 0.443,
+      "p_upper": 0.32887,
+      "p_tost": 0.32887,
+      "ci90": [
+        -0.00121,
+        0.01645
+      ],
+      "equivalent": false
+    }
+  },
+  "E2": {
+    "per_seed": [
+      {
+        "seed": 7,
+        "entangled": {
+          "accuracy": 0.5456,
+          "nll": 1.1599,
+          "ece": 0.0541,
+          "temperature": 1.026
+        },
+        "product": {
+          "accuracy": 0.5456,
+          "nll": 1.149,
+          "ece": 0.0494,
+          "temperature": 1.0459
+        },
+        "delta_nll": 0.0109
+      },
+      {
+        "seed": 11,
+        "entangled": {
+          "accuracy": 0.5381,
+          "nll": 1.1606,
+          "ece": 0.0603,
+          "temperature": 1.0693
+        },
+        "product": {
+          "accuracy": 0.5425,
+          "nll": 1.1542,
+          "ece": 0.0665,
+          "temperature": 1.0692
+        },
+        "delta_nll": 0.0064
+      },
+      {
+        "seed": 13,
+        "entangled": {
+          "accuracy": 0.5425,
+          "nll": 1.159,
+          "ece": 0.0483,
+          "temperature": 1.0946
+        },
+        "product": {
+          "accuracy": 0.5437,
+          "nll": 1.1601,
+          "ece": 0.0522,
+          "temperature": 1.1124
+        },
+        "delta_nll": -0.0011
+      },
+      {
+        "seed": 17,
+        "entangled": {
+          "accuracy": 0.5437,
+          "nll": 1.1538,
+          "ece": 0.0591,
+          "temperature": 1.0112
+        },
+        "product": {
+          "accuracy": 0.5419,
+          "nll": 1.1438,
+          "ece": 0.067,
+          "temperature": 1.091
+        },
+        "delta_nll": 0.01
+      },
+      {
+        "seed": 19,
+        "entangled": {
+          "accuracy": 0.5463,
+          "nll": 1.1454,
+          "ece": 0.0605,
+          "temperature": 0.8714
+        },
+        "product": {
+          "accuracy": 0.5425,
+          "nll": 1.1543,
+          "ece": 0.063,
+          "temperature": 0.9925
+        },
+        "delta_nll": -0.0089
+      },
+      {
+        "seed": 23,
+        "entangled": {
+          "accuracy": 0.5406,
+          "nll": 1.1559,
+          "ece": 0.0577,
+          "temperature": 1.0347
+        },
+        "product": {
+          "accuracy": 0.5437,
+          "nll": 1.1528,
+          "ece": 0.0695,
+          "temperature": 1.1449
+        },
+        "delta_nll": 0.0031
+      },
+      {
+        "seed": 29,
+        "entangled": {
+          "accuracy": 0.545,
+          "nll": 1.1541,
+          "ece": 0.0491,
+          "temperature": 0.9665
+        },
+        "product": {
+          "accuracy": 0.5494,
+          "nll": 1.1536,
+          "ece": 0.0589,
+          "temperature": 0.9374
+        },
+        "delta_nll": 0.0005
+      },
+      {
+        "seed": 31,
+        "entangled": {
+          "accuracy": 0.5469,
+          "nll": 1.1586,
+          "ece": 0.0445,
+          "temperature": 0.9864
+        },
+        "product": {
+          "accuracy": 0.5494,
+          "nll": 1.1509,
+          "ece": 0.0556,
+          "temperature": 1.004
+        },
+        "delta_nll": 0.0077
+      },
+      {
+        "seed": 37,
+        "entangled": {
+          "accuracy": 0.5387,
+          "nll": 1.1568,
+          "ece": 0.0683,
+          "temperature": 1.0769
+        },
+        "product": {
+          "accuracy": 0.5456,
+          "nll": 1.1522,
+          "ece": 0.0686,
+          "temperature": 1.04
+        },
+        "delta_nll": 0.0046
+      },
+      {
+        "seed": 41,
+        "entangled": {
+          "accuracy": 0.5431,
+          "nll": 1.1463,
+          "ece": 0.0636,
+          "temperature": 1.1258
+        },
+        "product": {
+          "accuracy": 0.5381,
+          "nll": 1.1445,
+          "ece": 0.0638,
+          "temperature": 1.0844
+        },
+        "delta_nll": 0.0018
+      }
+    ],
+    "seed_level": {
+      "mean": 0.0035,
+      "sd": 0.00588,
+      "ci95_t": [
+        -0.00071,
+        0.00771
+      ],
+      "t_p": 0.0925,
+      "wilcoxon_p": 0.08398,
+      "n_positive": 8,
+      "n": 10
+    },
+    "study_bootstrap": {
+      "n_studies": 1600,
+      "n_seeds": 10,
+      "primary_study_bootstrap": {
+        "point": 0.00349,
+        "bootstrap_se": 0.00433,
+        "ci95": [
+          -0.00506,
+          0.01188
+        ],
+        "bootstrap_p_two_sided": 0.4102,
+        "n_resamples": 10000
+      },
+      "hierarchical_seed_x_study_bootstrap": {
+        "point": 0.00349,
+        "bootstrap_se": 0.00487,
+        "ci95": [
+          -0.00619,
+          0.01293
+        ],
+        "bootstrap_p_two_sided": 0.4684,
+        "n_resamples": 10000
+      },
+      "seed_ensemble_mean_nll": {
+        "entangled": 1.15505,
+        "product": 1.15156
+      }
+    }
+  }
+}

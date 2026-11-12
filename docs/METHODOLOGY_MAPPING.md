@@ -4,6 +4,14 @@ One page. What the clinical problem is, why a variational quantum circuit is the
 method chosen for it, and what justifies each design decision. Every claim here points
 at a committed artifact you can open.
 
+> **Status update, 2026-09-12.** This page maps the problem to the quantum method as
+> submitted to the hackathon. Two things have changed since. The product now **serves the
+> classical fusion backend** (preregistered CheXpert external validation, n = 4,800:
+> accuracy 0.5273 classical vs 0.4721 quantum, `aura/artifacts/chexpert_external.json`), so
+> "on the serving path" below means *when `AURA_FUSION_BACKEND=quantum` is selected*. And the
+> typed-abstention capability claim for QMBA was **retracted** on source audit
+> (`docs/RESEARCH_PAPER_v5.md` §2.8).
+
 ---
 
 ## 1. The problem, stated precisely
@@ -149,10 +157,16 @@ flatters you is not a benchmark.
   published unchanged rather than re-tuned to the winner, because a single grid search on
   this split is not grounds to alter a served clinical model — but the honest statement
   is that if the ring is kept, it is kept for representational reasons, not measured ones.
-* **The quantum kernel.** QKL loses to a classical RBF on glioma grading by ΔAUROC
-  −0.016 (p = 0.002, significant). Its ECE *looks* better (0.028 vs 0.041) but the
-  paired subject-level bootstrap puts that at Δ −0.0009 (CI [−0.029, +0.015],
-  p = 0.88) — **not significant**, and not claimed.
+* **The quantum kernel.** *(Withdrawn 2026-09-13: the 185-subject grade labels below do not
+  trace to BraTS 2020; see `docs/DATA_LICENSES.md`, provenance audit.)* Under nested
+  cross-validation over all 185 subjects with
+  symmetric hyperparameter grids, QKL does **not differ** from a classical RBF on
+  glioma grading: ΔAUROC −0.0026 (95% CI [−0.044, +0.039], DeLong p = 0.90). The
+  interval excludes any difference beyond about 0.045 in either direction, so this
+  is an informative null rather than an absence of evidence. Its ECE difference is
+  likewise not resolvable (Δ −0.0009, CI [−0.029, +0.015], p = 0.88) — **not
+  claimed**. Two earlier figures are superseded and should not be cited: −0.016
+  (p = 0.002, 669 slices) and +0.0446 (p = 0.55, 11 subjects).
 
 ## 7. Hardware, and where the error comes from
 

@@ -1,0 +1,103 @@
+{
+  "analysis": "C \u2014 K=5 patient-disjoint 60/20/20 re-splits, training seed 7",
+  "blind": true,
+  "per_split": [
+    {
+      "split_seed": 101,
+      "n_test": 447,
+      "entangled": {
+        "accuracy": 0.5011,
+        "nll": 1.3593,
+        "ece": 0.0455,
+        "temperature": 1.3166
+      },
+      "product": {
+        "accuracy": 0.5168,
+        "nll": 1.3221,
+        "ece": 0.0839,
+        "temperature": 1.2111
+      },
+      "delta_nll": 0.0372
+    },
+    {
+      "split_seed": 102,
+      "n_test": 447,
+      "entangled": {
+        "accuracy": 0.5436,
+        "nll": 1.2341,
+        "ece": 0.0451,
+        "temperature": 0.8646
+      },
+      "product": {
+        "accuracy": 0.5414,
+        "nll": 1.2125,
+        "ece": 0.0304,
+        "temperature": 0.9665
+      },
+      "delta_nll": 0.0216
+    },
+    {
+      "split_seed": 103,
+      "n_test": 447,
+      "entangled": {
+        "accuracy": 0.5078,
+        "nll": 1.2577,
+        "ece": 0.0435,
+        "temperature": 0.9898
+      },
+      "product": {
+        "accuracy": 0.5078,
+        "nll": 1.2323,
+        "ece": 0.0224,
+        "temperature": 1.0249
+      },
+      "delta_nll": 0.0254
+    },
+    {
+      "split_seed": 104,
+      "n_test": 447,
+      "entangled": {
+        "accuracy": 0.5526,
+        "nll": 1.2444,
+        "ece": 0.1053,
+        "temperature": 1.0446
+      },
+      "product": {
+        "accuracy": 0.5861,
+        "nll": 1.1983,
+        "ece": 0.0852,
+        "temperature": 1.067
+      },
+      "delta_nll": 0.0461
+    },
+    {
+      "split_seed": 105,
+      "n_test": 447,
+      "entangled": {
+        "accuracy": 0.5369,
+        "nll": 1.2646,
+        "ece": 0.055,
+        "temperature": 1.0079
+      },
+      "product": {
+        "accuracy": 0.5548,
+        "nll": 1.2325,
+        "ece": 0.0523,
+        "temperature": 1.0836
+      },
+      "delta_nll": 0.0321
+    }
+  ],
+  "split_level": {
+    "mean": 0.03248,
+    "sd": 0.0097,
+    "ci95_t": [
+      0.02043,
+      0.04453
+    ],
+    "t_p": 0.0017,
+    "wilcoxon_p": 0.0625,
+    "n_positive": 5,
+    "n": 5
+  }
+}

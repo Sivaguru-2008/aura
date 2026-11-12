@@ -1,64 +1,54 @@
 """MemoryEngine — associative retrieval over evidence embeddings."""
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 import numpy as np
 
-
-@dataclass
-class MemoryRecord:
-    case_id: str
-    embedding: np.ndarray
-    diagnosis: str
+from aura.services.memory.vectorstore import get_vector_store, VectorRecord
 
 
 class MemoryEngine:
     def __init__(self, store=None):
-        self.store = store
-        self._store: list[MemoryRecord] = []
-        self.model_version = "memory-v1"
+        # We allow wrapping a custom store object if provided, otherwise we resolve
+        # to the process-wide persistent vector store.
+        self.store = store if (store is not None and hasattr(store, "upsert")) else get_vector_store()
+        self.model_version = "memory-v2"
 
-    def index(self, case_id: str, embedding: list[float] | np.ndarray, diagnosis: str) -> None:
-        emb_arr = np.asarray(embedding, dtype=float)
-        self._store.append(
-            MemoryRecord(case_id=case_id, embedding=emb_arr, diagnosis=diagnosis)
+    def index(self, case_id: str, embedding: list[float] | np.ndarray, diagnosis: str,
+              patient_id: str = "", modality: str = "", study_id: str = "") -> None:
+        emb_arr = np.asarray(embedding, dtype=np.float32)
+        # Create a VectorRecord and upsert it into the vector store
+        record = VectorRecord(
+            case_id=case_id,
+            embedding=emb_arr,
+            diagnosis=diagnosis,
+            patient_id=patient_id,
+            modality=modality,
+            study_id=study_id,
         )
-        if self.store is not None:
-            try:
-                self.store.add_memory_record(case_id, emb_arr, diagnosis)
-            except Exception as e:
-                print(f"[MemoryEngine] failed to write persistent memory record: {e}")
-
-    @staticmethod
-    def _cosine(a: np.ndarray, b: np.ndarray) -> float:
-        na, nb = np.linalg.norm(a), np.linalg.norm(b)
-        if na < 1e-9 or nb < 1e-9:
-            return 0.0
-        return float(np.dot(a, b) / (na * nb))
+        self.store.upsert(record)
 
     def similar(self, embedding: list[float] | np.ndarray, k: int = 3,
-                 exclude: str | None = None) -> list[dict]:
-        # Sync from persistent store if local cache is empty
-        if not self._store and self.store is not None:
-            try:
-                records = self.store.list_memory_records()
-                for r in records:
-                    self._store.append(
-                        MemoryRecord(case_id=r["case_id"], embedding=np.asarray(r["embedding"], dtype=float),
-                                     diagnosis=r["diagnosis"])
-                    )
-            except Exception as e:
-                print(f"[MemoryEngine] failed to load persistent memory records: {e}")
-
-        q = np.asarray(embedding, dtype=float)
-        scored = [
-            {"case_id": r.case_id, "diagnosis": r.diagnosis,
-             "similarity": round(self._cosine(q, r.embedding), 4)}
-            for r in self._store if r.case_id != exclude
+                 exclude: str | None = None, patient_id: str | None = None,
+                 modality: str | None = None, diagnosis: str | None = None,
+                 exclude_patient: str | None = None) -> list[dict]:
+        emb_arr = np.asarray(embedding, dtype=np.float32)
+        hits = self.store.search(
+            emb_arr,
+            k=k,
+            exclude=exclude,
+            patient_id=patient_id,
+            modality=modality,
+            diagnosis=diagnosis,
+            exclude_patient=exclude_patient
+        )
+        return [
+            {
+                "case_id": hit.case_id,
+                "diagnosis": hit.diagnosis,
+                "similarity": round(float(hit.similarity), 4),
+            }
+            for hit in hits
         ]
-        scored.sort(key=lambda d: -d["similarity"])
-        return scored[:k]
 
     def prior_delta(self, current: list[float], prior: list[float]) -> dict:
         """Element-wise evidence delta vs a prior study (registration assumed done)."""
@@ -69,3 +59,4 @@ class MemoryEngine:
             "max_increase": round(float(delta.max()), 4),
             "max_decrease": round(float(delta.min()), 4),
         }
+

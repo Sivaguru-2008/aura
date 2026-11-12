@@ -1,0 +1,960 @@
+{
+  "purpose": "Positive control for the comparison protocol. Holds the evidence vectors, splits, arms, optimiser protocol and tests fixed, and varies only whether the target carries higher-order structure among the evidence channels. Establishes whether the null of Sections 8.2 to 8.4 is a property of the task or a limit of the measurement. Addresses Section 11.2.",
+  "scope_limitation": "T2a and T2b are semi-synthetic: real evidence vectors, constructed labels. They characterise the sensitivity of the comparison and carry no clinical interpretation whatsoever.",
+  "protocol": {
+    "optimiser": "Adam",
+    "learning_rate_grid": [
+      0.01,
+      0.05,
+      0.1
+    ],
+    "batch_size": 50,
+    "max_epochs": 150,
+    "early_stopping_patience": 20,
+    "weight_decay": 0.0,
+    "seed": 7,
+    "identical_to": "aura/ml/evaluation/matched_optimiser.py"
+  },
+  "data": {
+    "source": "mimic-cxr",
+    "train_studies": 1338,
+    "calibration_studies": 446,
+    "test_studies": 447,
+    "evidence_channels": 8,
+    "channel_names": [
+      "opacity",
+      "consolidation",
+      "effusion",
+      "cardiomegaly",
+      "nodule",
+      "hyperinflation",
+      "pneumothorax",
+      "prior_risk"
+    ]
+  },
+  "summary": {
+    "question": "Does the comparison apparatus detect a nonlinear advantage when the target contains one?",
+    "by_target": {
+      "T1_clinical_linear": {
+        "linear_ceiling": 0.9991,
+        "interaction_ceiling": 1.0,
+        "nonlinear_arms_lead": false,
+        "accuracy_margin": -0.0022,
+        "quantum_beats_logistic_holm": false,
+        "gated_beats_logistic_holm": false
+      },
+      "T2a_conjunctive": {
+        "linear_ceiling": 0.874,
+        "interaction_ceiling": 0.9301,
+        "nonlinear_arms_lead": false,
+        "accuracy_margin": -0.0156,
+        "quantum_beats_logistic_holm": false,
+        "gated_beats_logistic_holm": false
+      },
+      "T2b_pairwise": {
+        "linear_ceiling": 0.9081,
+        "interaction_ceiling": 0.9821,
+        "nonlinear_arms_lead": true,
+        "accuracy_margin": 0.0224,
+        "quantum_beats_logistic_holm": false,
+        "gated_beats_logistic_holm": false
+      }
+    }
+  },
+  "targets": {
+    "T1_clinical_linear": {
+      "description": "The clinical target's generating rule (Section 5.1.2): argmax over a weighted sum of evidence channels. Included to measure the linear ceiling that Section 5.1.2 asserts is 1.0.",
+      "ceilings": {
+        "linear_ceiling": 0.9991,
+        "interaction_ceiling": 1.0,
+        "gap": 0.0009,
+        "majority_class": 0.407,
+        "class_support": {
+          "normal": 31,
+          "pneumonia": 91,
+          "heart_failure": 657,
+          "copd": 231,
+          "malignancy": 313,
+          "pneumothorax_dx": 908
+        },
+        "note": "Fitted on the noise-free target over the whole corpus. This measures representability, not generalisation: a linear ceiling below the interaction ceiling is higher-order structure the linear model provably cannot express."
+      },
+      "trainable_parameters": {
+        "classical": 54,
+        "learnable": 126,
+        "quantum": 102,
+        "logistic": 54
+      },
+      "fitting": {
+        "classical": {
+          "selected_lr": 0.1,
+          "selected_on": "calibration split, by cross-entropy",
+          "best_epoch": 147,
+          "epochs_run": 150,
+          "converged_by_early_stopping": false,
+          "final_train_nll": 0.048622,
+          "grid": [
+            {
+              "lr": 0.01,
+              "best_calibration_nll": 0.146078,
+              "best_epoch": 149,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.153523,
+              "seconds": 3.7
+            },
+            {
+              "lr": 0.05,
+              "best_calibration_nll": 0.064038,
+              "best_epoch": 149,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.068169,
+              "seconds": 1.9
+            },
+            {
+              "lr": 0.1,
+              "best_calibration_nll": 0.047953,
+              "best_epoch": 147,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.048622,
+              "seconds": 2.0
+            }
+          ]
+        },
+        "learnable": {
+          "selected_lr": 0.1,
+          "selected_on": "calibration split, by cross-entropy",
+          "best_epoch": 144,
+          "epochs_run": 150,
+          "converged_by_early_stopping": false,
+          "final_train_nll": 0.033876,
+          "grid": [
+            {
+              "lr": 0.01,
+              "best_calibration_nll": 0.125378,
+              "best_epoch": 149,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.125679,
+              "seconds": 2.6
+            },
+            {
+              "lr": 0.05,
+              "best_calibration_nll": 0.05335,
+              "best_epoch": 145,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.047421,
+              "seconds": 2.7
+            },
+            {
+              "lr": 0.1,
+              "best_calibration_nll": 0.043704,
+              "best_epoch": 144,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.033876,
+              "seconds": 2.8
+            }
+          ]
+        },
+        "quantum": {
+          "selected_lr": 0.05,
+          "selected_on": "calibration split, by cross-entropy",
+          "best_epoch": 81,
+          "epochs_run": 102,
+          "converged_by_early_stopping": true,
+          "final_train_nll": 0.115481,
+          "grid": [
+            {
+              "lr": 0.01,
+              "best_calibration_nll": 0.129846,
+              "best_epoch": 148,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.141405,
+              "seconds": 1163.8
+            },
+            {
+              "lr": 0.05,
+              "best_calibration_nll": 0.104966,
+              "best_epoch": 81,
+              "epochs_run": 102,
+              "stopped_early": true,
+              "final_train_nll": 0.115481,
+              "seconds": 1188.9
+            },
+            {
+              "lr": 0.1,
+              "best_calibration_nll": 0.136013,
+              "best_epoch": 29,
+              "epochs_run": 50,
+              "stopped_early": true,
+              "final_train_nll": 0.177192,
+              "seconds": 161.8
+            }
+          ]
+        },
+        "logistic": {
+          "selected_C": 100.0,
+          "lbfgs_iterations": 291,
+          "converged": true,
+          "classes_fitted": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "grid": [
+            {
+              "C": 0.01,
+              "calibration_nll": 1.1193
+            },
+            {
+              "C": 0.1,
+              "calibration_nll": 0.53
+            },
+            {
+              "C": 1.0,
+              "calibration_nll": 0.2212
+            },
+            {
+              "C": 10.0,
+              "calibration_nll": 0.0747
+            },
+            {
+              "C": 100.0,
+              "calibration_nll": 0.0152
+            },
+            {
+              "C": 1000.0,
+              "calibration_nll": 0.0158
+            }
+          ]
+        }
+      },
+      "backends": {
+        "classical": {
+          "n": 447,
+          "temperature": 0.2486,
+          "accuracy": 0.9843,
+          "correct": 440,
+          "nll": 0.0382,
+          "ece": 0.0052
+        },
+        "learnable": {
+          "n": 447,
+          "temperature": 0.4235,
+          "accuracy": 0.9821,
+          "correct": 439,
+          "nll": 0.0636,
+          "ece": 0.0113
+        },
+        "quantum": {
+          "n": 447,
+          "temperature": 0.5915,
+          "accuracy": 0.9441,
+          "correct": 422,
+          "nll": 0.1651,
+          "ece": 0.0389
+        },
+        "logistic": {
+          "n": 447,
+          "temperature": 0.1325,
+          "accuracy": 0.9799,
+          "correct": 438,
+          "nll": 0.0736,
+          "ece": 0.0113
+        }
+      },
+      "pairwise": {
+        "classical_vs_quantum": {
+          "delta_accuracy": 0.0402,
+          "mcnemar": {
+            "discordant": 18,
+            "a_only": 18,
+            "b_only": 0,
+            "p": 8e-06
+          },
+          "delta_nll": -0.1269,
+          "nll_wilcoxon_p": 2.571e-62,
+          "mcnemar_p_holm": 4.8e-05,
+          "nll_wilcoxon_p_holm": 0.0
+        },
+        "classical_vs_learnable": {
+          "delta_accuracy": 0.0022,
+          "mcnemar": {
+            "discordant": 9,
+            "a_only": 5,
+            "b_only": 4,
+            "p": 1.0
+          },
+          "delta_nll": -0.0254,
+          "nll_wilcoxon_p": 2.061e-27,
+          "mcnemar_p_holm": 1.0,
+          "nll_wilcoxon_p_holm": 0.0
+        },
+        "classical_vs_logistic": {
+          "delta_accuracy": 0.0044,
+          "mcnemar": {
+            "discordant": 8,
+            "a_only": 5,
+            "b_only": 3,
+            "p": 0.726562
+          },
+          "delta_nll": -0.0354,
+          "nll_wilcoxon_p": 3.522e-23,
+          "mcnemar_p_holm": 1.0,
+          "nll_wilcoxon_p_holm": 0.0
+        },
+        "quantum_vs_learnable": {
+          "delta_accuracy": -0.038,
+          "mcnemar": {
+            "discordant": 21,
+            "a_only": 2,
+            "b_only": 19,
+            "p": 0.000221
+          },
+          "delta_nll": 0.1015,
+          "nll_wilcoxon_p": 7.521e-55,
+          "mcnemar_p_holm": 0.000884,
+          "nll_wilcoxon_p_holm": 0.0
+        },
+        "quantum_vs_logistic": {
+          "delta_accuracy": -0.0358,
+          "mcnemar": {
+            "discordant": 18,
+            "a_only": 1,
+            "b_only": 17,
+            "p": 0.000145
+          },
+          "delta_nll": 0.0915,
+          "nll_wilcoxon_p": 1.071e-64,
+          "mcnemar_p_holm": 0.000725,
+          "nll_wilcoxon_p_holm": 0.0
+        },
+        "learnable_vs_logistic": {
+          "delta_accuracy": 0.0022,
+          "mcnemar": {
+            "discordant": 9,
+            "a_only": 5,
+            "b_only": 4,
+            "p": 1.0
+          },
+          "delta_nll": -0.01,
+          "nll_wilcoxon_p": 5.078e-40,
+          "mcnemar_p_holm": 1.0,
+          "nll_wilcoxon_p_holm": 0.0
+        }
+      },
+      "verdict": {
+        "nonlinear_arms_lead_on_accuracy": false,
+        "accuracy_margin": -0.0022,
+        "quantum_beats_logistic_accuracy_holm": false,
+        "gated_beats_logistic_accuracy_holm": false
+      },
+      "classes_absent_from_a_split": []
+    },
+    "T2a_conjunctive": {
+      "description": "Categories requiring a combination of findings \u2014 conjunction and negated conjunction \u2014 which a weighted sum cannot represent. Channels are binarised at their corpus median (quantile 0.5).",
+      "ceilings": {
+        "linear_ceiling": 0.874,
+        "interaction_ceiling": 0.9301,
+        "gap": 0.056,
+        "majority_class": 0.502,
+        "class_support": {
+          "normal": 1120,
+          "pneumonia": 319,
+          "heart_failure": 228,
+          "copd": 73,
+          "malignancy": 80,
+          "pneumothorax_dx": 411
+        },
+        "note": "Fitted on the noise-free target over the whole corpus. This measures representability, not generalisation: a linear ceiling below the interaction ceiling is higher-order structure the linear model provably cannot express."
+      },
+      "trainable_parameters": {
+        "classical": 54,
+        "learnable": 126,
+        "quantum": 102,
+        "logistic": 54
+      },
+      "fitting": {
+        "classical": {
+          "selected_lr": 0.1,
+          "selected_on": "calibration split, by cross-entropy",
+          "best_epoch": 148,
+          "epochs_run": 150,
+          "converged_by_early_stopping": false,
+          "final_train_nll": 0.458282,
+          "grid": [
+            {
+              "lr": 0.01,
+              "best_calibration_nll": 0.787451,
+              "best_epoch": 149,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.705007,
+              "seconds": 3.0
+            },
+            {
+              "lr": 0.05,
+              "best_calibration_nll": 0.654113,
+              "best_epoch": 148,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.51765,
+              "seconds": 2.9
+            },
+            {
+              "lr": 0.1,
+              "best_calibration_nll": 0.599812,
+              "best_epoch": 148,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.458282,
+              "seconds": 3.2
+            }
+          ]
+        },
+        "learnable": {
+          "selected_lr": 0.1,
+          "selected_on": "calibration split, by cross-entropy",
+          "best_epoch": 145,
+          "epochs_run": 150,
+          "converged_by_early_stopping": false,
+          "final_train_nll": 0.407469,
+          "grid": [
+            {
+              "lr": 0.01,
+              "best_calibration_nll": 0.780904,
+              "best_epoch": 149,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.692927,
+              "seconds": 3.8
+            },
+            {
+              "lr": 0.05,
+              "best_calibration_nll": 0.645314,
+              "best_epoch": 149,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.500194,
+              "seconds": 4.8
+            },
+            {
+              "lr": 0.1,
+              "best_calibration_nll": 0.533279,
+              "best_epoch": 145,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.407469,
+              "seconds": 4.8
+            }
+          ]
+        },
+        "quantum": {
+          "selected_lr": 0.1,
+          "selected_on": "calibration split, by cross-entropy",
+          "best_epoch": 148,
+          "epochs_run": 150,
+          "converged_by_early_stopping": false,
+          "final_train_nll": 0.672799,
+          "grid": [
+            {
+              "lr": 0.01,
+              "best_calibration_nll": 0.795336,
+              "best_epoch": 146,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.732531,
+              "seconds": 406.3
+            },
+            {
+              "lr": 0.05,
+              "best_calibration_nll": 0.781523,
+              "best_epoch": 129,
+              "epochs_run": 150,
+              "stopped_early": true,
+              "final_train_nll": 0.73075,
+              "seconds": 7044.1
+            },
+            {
+              "lr": 0.1,
+              "best_calibration_nll": 0.660143,
+              "best_epoch": 148,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.672799,
+              "seconds": 305.8
+            }
+          ]
+        },
+        "logistic": {
+          "selected_C": 1000.0,
+          "lbfgs_iterations": 1609,
+          "converged": true,
+          "classes_fitted": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "grid": [
+            {
+              "C": 0.01,
+              "calibration_nll": 1.2807
+            },
+            {
+              "C": 0.1,
+              "calibration_nll": 1.0598
+            },
+            {
+              "C": 1.0,
+              "calibration_nll": 0.9142
+            },
+            {
+              "C": 10.0,
+              "calibration_nll": 0.8153
+            },
+            {
+              "C": 100.0,
+              "calibration_nll": 0.6973
+            },
+            {
+              "C": 1000.0,
+              "calibration_nll": 0.5811
+            }
+          ]
+        }
+      },
+      "backends": {
+        "classical": {
+          "n": 447,
+          "temperature": 1.0977,
+          "accuracy": 0.8345,
+          "correct": 373,
+          "nll": 0.5911,
+          "ece": 0.0676
+        },
+        "learnable": {
+          "n": 447,
+          "temperature": 0.9541,
+          "accuracy": 0.8345,
+          "correct": 373,
+          "nll": 0.5075,
+          "ece": 0.0341
+        },
+        "quantum": {
+          "n": 447,
+          "temperature": 0.99,
+          "accuracy": 0.7539,
+          "correct": 337,
+          "nll": 0.798,
+          "ece": 0.0708
+        },
+        "logistic": {
+          "n": 447,
+          "temperature": 1.0694,
+          "accuracy": 0.8501,
+          "correct": 380,
+          "nll": 0.5646,
+          "ece": 0.0756
+        }
+      },
+      "pairwise": {
+        "classical_vs_quantum": {
+          "delta_accuracy": 0.0806,
+          "mcnemar": {
+            "discordant": 54,
+            "a_only": 45,
+            "b_only": 9,
+            "p": 1e-06
+          },
+          "delta_nll": -0.2069,
+          "nll_wilcoxon_p": 2.196e-09,
+          "mcnemar_p_holm": 5e-06,
+          "nll_wilcoxon_p_holm": 0.0
+        },
+        "classical_vs_learnable": {
+          "delta_accuracy": 0.0,
+          "mcnemar": {
+            "discordant": 24,
+            "a_only": 12,
+            "b_only": 12,
+            "p": 1.0
+          },
+          "delta_nll": 0.0836,
+          "nll_wilcoxon_p": 7.436e-15,
+          "mcnemar_p_holm": 1.0,
+          "nll_wilcoxon_p_holm": 0.0
+        },
+        "classical_vs_logistic": {
+          "delta_accuracy": -0.0156,
+          "mcnemar": {
+            "discordant": 15,
+            "a_only": 4,
+            "b_only": 11,
+            "p": 0.118469
+          },
+          "delta_nll": 0.0265,
+          "nll_wilcoxon_p": 2.641e-10,
+          "mcnemar_p_holm": 0.355407,
+          "nll_wilcoxon_p_holm": 0.0
+        },
+        "quantum_vs_learnable": {
+          "delta_accuracy": -0.0806,
+          "mcnemar": {
+            "discordant": 62,
+            "a_only": 13,
+            "b_only": 49,
+            "p": 5e-06
+          },
+          "delta_nll": 0.2905,
+          "nll_wilcoxon_p": 1.151e-18,
+          "mcnemar_p_holm": 2e-05,
+          "nll_wilcoxon_p_holm": 0.0
+        },
+        "quantum_vs_logistic": {
+          "delta_accuracy": -0.0962,
+          "mcnemar": {
+            "discordant": 59,
+            "a_only": 8,
+            "b_only": 51,
+            "p": 0.0
+          },
+          "delta_nll": 0.2334,
+          "nll_wilcoxon_p": 4.976e-12,
+          "mcnemar_p_holm": 0.0,
+          "nll_wilcoxon_p_holm": 0.0
+        },
+        "learnable_vs_logistic": {
+          "delta_accuracy": -0.0156,
+          "mcnemar": {
+            "discordant": 19,
+            "a_only": 6,
+            "b_only": 13,
+            "p": 0.167068
+          },
+          "delta_nll": -0.0571,
+          "nll_wilcoxon_p": 0.0007452,
+          "mcnemar_p_holm": 0.355407,
+          "nll_wilcoxon_p_holm": 0.000745
+        }
+      },
+      "verdict": {
+        "nonlinear_arms_lead_on_accuracy": false,
+        "accuracy_margin": -0.0156,
+        "quantum_beats_logistic_accuracy_holm": false,
+        "gated_beats_logistic_accuracy_holm": false
+      },
+      "classes_absent_from_a_split": []
+    },
+    "T2b_pairwise": {
+      "description": "Generic pairwise interaction target: a_k.x + x' M_k x with fixed random symmetric M_k, zero diagonal.",
+      "ceilings": {
+        "linear_ceiling": 0.9081,
+        "interaction_ceiling": 0.9821,
+        "gap": 0.074,
+        "majority_class": 0.4594,
+        "class_support": {
+          "normal": 605,
+          "pneumonia": 1025,
+          "heart_failure": 463,
+          "copd": 3,
+          "malignancy": 99,
+          "pneumothorax_dx": 36
+        },
+        "note": "Fitted on the noise-free target over the whole corpus. This measures representability, not generalisation: a linear ceiling below the interaction ceiling is higher-order structure the linear model provably cannot express."
+      },
+      "trainable_parameters": {
+        "classical": 54,
+        "learnable": 126,
+        "quantum": 102,
+        "logistic": 54
+      },
+      "fitting": {
+        "classical": {
+          "selected_lr": 0.1,
+          "selected_on": "calibration split, by cross-entropy",
+          "best_epoch": 127,
+          "epochs_run": 148,
+          "converged_by_early_stopping": true,
+          "final_train_nll": 0.261774,
+          "grid": [
+            {
+              "lr": 0.01,
+              "best_calibration_nll": 0.413938,
+              "best_epoch": 149,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.32567,
+              "seconds": 1.6
+            },
+            {
+              "lr": 0.05,
+              "best_calibration_nll": 0.333454,
+              "best_epoch": 149,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.268324,
+              "seconds": 1.6
+            },
+            {
+              "lr": 0.1,
+              "best_calibration_nll": 0.32102,
+              "best_epoch": 127,
+              "epochs_run": 148,
+              "stopped_early": true,
+              "final_train_nll": 0.261774,
+              "seconds": 1.5
+            }
+          ]
+        },
+        "learnable": {
+          "selected_lr": 0.1,
+          "selected_on": "calibration split, by cross-entropy",
+          "best_epoch": 146,
+          "epochs_run": 150,
+          "converged_by_early_stopping": false,
+          "final_train_nll": 0.135938,
+          "grid": [
+            {
+              "lr": 0.01,
+              "best_calibration_nll": 0.333328,
+              "best_epoch": 149,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.274431,
+              "seconds": 2.2
+            },
+            {
+              "lr": 0.05,
+              "best_calibration_nll": 0.214023,
+              "best_epoch": 146,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.158103,
+              "seconds": 2.1
+            },
+            {
+              "lr": 0.1,
+              "best_calibration_nll": 0.192584,
+              "best_epoch": 146,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.135938,
+              "seconds": 2.2
+            }
+          ]
+        },
+        "quantum": {
+          "selected_lr": 0.1,
+          "selected_on": "calibration split, by cross-entropy",
+          "best_epoch": 121,
+          "epochs_run": 142,
+          "converged_by_early_stopping": true,
+          "final_train_nll": 0.256164,
+          "grid": [
+            {
+              "lr": 0.01,
+              "best_calibration_nll": 0.373927,
+              "best_epoch": 143,
+              "epochs_run": 150,
+              "stopped_early": false,
+              "final_train_nll": 0.314437,
+              "seconds": 334.5
+            },
+            {
+              "lr": 0.05,
+              "best_calibration_nll": 0.370229,
+              "best_epoch": 60,
+              "epochs_run": 81,
+              "stopped_early": true,
+              "final_train_nll": 0.321889,
+              "seconds": 266.2
+            },
+            {
+              "lr": 0.1,
+              "best_calibration_nll": 0.300127,
+              "best_epoch": 121,
+              "epochs_run": 142,
+              "stopped_early": true,
+              "final_train_nll": 0.256164,
+              "seconds": 410.0
+            }
+          ]
+        },
+        "logistic": {
+          "selected_C": 1000.0,
+          "lbfgs_iterations": 1010,
+          "converged": true,
+          "classes_fitted": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "grid": [
+            {
+              "C": 0.01,
+              "calibration_nll": 1.1022
+            },
+            {
+              "C": 0.1,
+              "calibration_nll": 0.8009
+            },
+            {
+              "C": 1.0,
+              "calibration_nll": 0.5908
+            },
+            {
+              "C": 10.0,
+              "calibration_nll": 0.4321
+            },
+            {
+              "C": 100.0,
+              "calibration_nll": 0.3489
+            },
+            {
+              "C": 1000.0,
+              "calibration_nll": 0.3271
+            }
+          ]
+        }
+      },
+      "backends": {
+        "classical": {
+          "n": 447,
+          "temperature": 0.9708,
+          "accuracy": 0.8971,
+          "correct": 401,
+          "nll": 0.3238,
+          "ece": 0.0345
+        },
+        "learnable": {
+          "n": 447,
+          "temperature": 0.8621,
+          "accuracy": 0.9195,
+          "correct": 411,
+          "nll": 0.256,
+          "ece": 0.0272
+        },
+        "quantum": {
+          "n": 447,
+          "temperature": 0.9427,
+          "accuracy": 0.8971,
+          "correct": 401,
+          "nll": 0.2515,
+          "ece": 0.021
+        },
+        "logistic": {
+          "n": 447,
+          "temperature": 1.0922,
+          "accuracy": 0.8971,
+          "correct": 401,
+          "nll": 0.3155,
+          "ece": 0.0335
+        }
+      },
+      "pairwise": {
+        "classical_vs_quantum": {
+          "delta_accuracy": 0.0,
+          "mcnemar": {
+            "discordant": 40,
+            "a_only": 20,
+            "b_only": 20,
+            "p": 1.0
+          },
+          "delta_nll": 0.0723,
+          "nll_wilcoxon_p": 0.004712,
+          "mcnemar_p_holm": 1.0,
+          "nll_wilcoxon_p_holm": 0.009424
+        },
+        "classical_vs_learnable": {
+          "delta_accuracy": -0.0224,
+          "mcnemar": {
+            "discordant": 26,
+            "a_only": 8,
+            "b_only": 18,
+            "p": 0.075519
+          },
+          "delta_nll": 0.0678,
+          "nll_wilcoxon_p": 2.807e-39,
+          "mcnemar_p_holm": 0.453114,
+          "nll_wilcoxon_p_holm": 0.0
+        },
+        "classical_vs_logistic": {
+          "delta_accuracy": 0.0,
+          "mcnemar": {
+            "discordant": 8,
+            "a_only": 4,
+            "b_only": 4,
+            "p": 1.0
+          },
+          "delta_nll": 0.0083,
+          "nll_wilcoxon_p": 0.2197,
+          "mcnemar_p_holm": 1.0,
+          "nll_wilcoxon_p_holm": 0.2197
+        },
+        "quantum_vs_learnable": {
+          "delta_accuracy": -0.0224,
+          "mcnemar": {
+            "discordant": 34,
+            "a_only": 12,
+            "b_only": 22,
+            "p": 0.121449
+          },
+          "delta_nll": -0.0045,
+          "nll_wilcoxon_p": 9.402e-13,
+          "mcnemar_p_holm": 0.485796,
+          "nll_wilcoxon_p_holm": 0.0
+        },
+        "quantum_vs_logistic": {
+          "delta_accuracy": 0.0,
+          "mcnemar": {
+            "discordant": 38,
+            "a_only": 19,
+            "b_only": 19,
+            "p": 1.0
+          },
+          "delta_nll": -0.064,
+          "nll_wilcoxon_p": 8.9e-05,
+          "mcnemar_p_holm": 1.0,
+          "nll_wilcoxon_p_holm": 0.000267
+        },
+        "learnable_vs_logistic": {
+          "delta_accuracy": 0.0224,
+          "mcnemar": {
+            "discordant": 28,
+            "a_only": 19,
+            "b_only": 9,
+            "p": 0.087159
+          },
+          "delta_nll": -0.0595,
+          "nll_wilcoxon_p": 9.994e-38,
+          "mcnemar_p_holm": 0.453114,
+          "nll_wilcoxon_p_holm": 0.0
+        }
+      },
+      "verdict": {
+        "nonlinear_arms_lead_on_accuracy": true,
+        "accuracy_margin": 0.0224,
+        "quantum_beats_logistic_accuracy_holm": false,
+        "gated_beats_logistic_accuracy_holm": false
+      },
+      "classes_absent_from_a_split": [
+        "copd"
+      ]
+    }
+  },
+  "runtime_seconds": 11349.7
+}

@@ -1,0 +1,193 @@
+{
+  "quantum_vs_classical_fair": {
+    "n": 100,
+    "accuracy_diff": -0.03,
+    "accuracy_diff_ci95": [
+      -0.08,
+      0.01
+    ],
+    "mcnemar": {
+      "b_ref_only_right": 1,
+      "b_quantum_only_right": 4,
+      "p_value": 0.375,
+      "chi2_cc": 0.8
+    },
+    "permutation_acc_diff": {
+      "observed": -0.03,
+      "p_value": 0.3766
+    },
+    "nll_wilcoxon": {
+      "stat": 837.0,
+      "p_value": 6.479288991357657e-09
+    },
+    "nll_paired_t": {
+      "stat": 7.385693171182444,
+      "p_value": 4.8424013432006406e-11
+    },
+    "nll_shapiro_on_diff": {
+      "stat": 0.8958221615470568,
+      "p_value": 9.041035076009643e-07,
+      "normal": false
+    },
+    "nll_cohens_d": 0.7385693171182444,
+    "authoritative_nll_test": "wilcoxon (non-normal diff)",
+    "delong_per_class": {
+      "normal": {
+        "auc_quantum": 0.1569230769230769,
+        "auc_ref": 0.36263736263736257,
+        "z": -3.8813893137864537,
+        "p": 0.00010386142114870876,
+        "n_pos": 35
+      },
+      "pneumonia": {
+        "auc_quantum": 0.4073426573426573,
+        "auc_ref": 0.5064102564102564,
+        "z": -1.1593903770998053,
+        "p": 0.24629709742838146,
+        "n_pos": 22
+      },
+      "heart_failure": {
+        "auc_quantum": 0.14132104454685102,
+        "auc_ref": 0.06758832565284179,
+        "z": 2.8104176554097404,
+        "p": 0.004947724792270572,
+        "n_pos": 7
+      },
+      "copd": {
+        "auc_quantum": 0.48688873139617295,
+        "auc_ref": 0.058823529411764705,
+        "z": 6.054198795337349,
+        "p": 1.4111825248802866e-09,
+        "n_pos": 17
+      },
+      "malignancy": {
+        "auc_quantum": 0.4185606060606061,
+        "auc_ref": 0.32575757575757575,
+        "z": 1.3222614972825348,
+        "p": 0.1860810891627056,
+        "n_pos": 12
+      },
+      "pneumothorax_dx": {
+        "auc_quantum": 0.27649769585253453,
+        "auc_ref": 0.8218125960061444,
+        "z": -6.2794202911312125,
+        "p": 3.398377685852605e-10,
+        "n_pos": 7
+      }
+    }
+  },
+  "quantum_vs_classical_raw": {
+    "n": 100,
+    "accuracy_diff": -0.03,
+    "accuracy_diff_ci95": [
+      -0.08,
+      0.01
+    ],
+    "mcnemar": {
+      "b_ref_only_right": 1,
+      "b_quantum_only_right": 4,
+      "p_value": 0.375,
+      "chi2_cc": 0.8
+    },
+    "permutation_acc_diff": {
+      "observed": -0.03,
+      "p_value": 0.3766
+    },
+    "nll_wilcoxon": {
+      "stat": 913.0,
+      "p_value": 2.9804775851484396e-08
+    },
+    "nll_paired_t": {
+      "stat": 7.772890835336084,
+      "p_value": 7.333161449828205e-12
+    },
+    "nll_shapiro_on_diff": {
+      "stat": 0.8565047928946352,
+      "p_value": 2.078079372340581e-08,
+      "normal": false
+    },
+    "nll_cohens_d": 0.7772890835336084,
+    "authoritative_nll_test": "wilcoxon (non-normal diff)",
+    "delong_per_class": {
+      "normal": {
+        "auc_quantum": 0.1569230769230769,
+        "auc_ref": 0.39208791208791205,
+        "z": -4.2834899463121054,
+        "p": 1.839844158529126e-05,
+        "n_pos": 35
+      },
+      "pneumonia": {
+        "auc_quantum": 0.4073426573426573,
+        "auc_ref": 0.4283216783216782,
+        "z": -0.25870381182609015,
+        "p": 0.7958637782563074,
+        "n_pos": 22
+      },
+      "heart_failure": {
+        "auc_quantum": 0.14132104454685102,
+        "auc_ref": 0.07987711213517665,
+        "z": 2.447030648663433,
+        "p": 0.014403859008963975,
+        "n_pos": 7
+      },
+      "copd": {
+        "auc_quantum": 0.48688873139617295,
+        "auc_ref": 0.08362863217576187,
+        "z": 5.775445722973449,
+        "p": 7.674963868158325e-09,
+        "n_pos": 17
+      },
+      "malignancy": {
+        "auc_quantum": 0.4185606060606061,
+        "auc_ref": 0.36647727272727276,
+        "z": 0.8231036918698458,
+        "p": 0.4104490295377834,
+        "n_pos": 12
+      },
+      "pneumothorax_dx": {
+        "auc_quantum": 0.27649769585253453,
+        "auc_ref": 0.9600614439324118,
+        "z": -8.18533659737613,
+        "p": 2.7154360208249173e-16,
+        "n_pos": 7
+      }
+    }
+  },
+  "bootstrap_accuracy": {
+    "quantum": {
+      "accuracy": 0.01,
+      "accuracy_ci95": [
+        0.0,
+        0.03
+      ]
+    },
+    "classical_raw": {
+      "accuracy": 0.04,
+      "accuracy_ci95": [
+        0.01,
+        0.08
+      ]
+    },
+    "classical_fair": {
+      "accuracy": 0.04,
+      "accuracy_ci95": [
+        0.01,
+        0.08
+      ]
+    },
+    "ensemble": {
+      "accuracy": 0.04,
+      "accuracy_ci95": [
+        0.01,
+        0.08
+      ]
+    },
+    "learnable": {
+      "accuracy": 0.19,
+      "accuracy_ci95": [
+        0.12,
+        0.27
+      ]
+    }
+  }
+}

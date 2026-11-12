@@ -122,7 +122,22 @@ def _policy_warn(msg: str) -> None:
 
 @dataclass(frozen=True)
 class SafetyPolicyThresholds:
-    """Threshold profile loaded from safety_policy.yaml."""
+    """Threshold profile loaded from safety_policy.yaml.
+
+    **These are not the abstention thresholds.** This profile is read by
+    ``services/safety/controller.py`` — the clinical decision-review controller —
+    which runs *gate checks* and reports pass/fail severities. The decision to
+    abstain is made earlier and elsewhere, in ``services/safety/engine.py``, from
+    ``Settings.ood_energy_threshold`` (1.5), ``Settings.low_confidence_threshold``
+    (0.30), ``Settings.abstention_conformal_size`` (4) and
+    ``Settings.epistemic_abstention_threshold`` (0.20).
+
+    Two subsystems, two thresholds each, similar names. Documentation and one build
+    test previously published *this* profile's values as the served abstention
+    envelope, so the test passed while the published envelope was wrong on two of
+    the four criteria. If you are looking for the numbers that decide whether AURA
+    defers a study to a human, they are in ``Settings``, not here.
+    """
     ood_threshold: float = 2.5
     epistemic_threshold: float = 0.15
     min_coverage: float = 0.70
@@ -175,16 +190,15 @@ def get_safety_policy() -> SafetyPolicyThresholds:
 
 @dataclass(frozen=True)
 class Settings:
-    # Served fusion backend. Default "classical" (product-of-experts): the fair,
-    # per-backend-temperature benchmark (artifacts/benchmark.json, EVIDENCE_DRIVEN_AUDIT.md
-    # H2) has it winning every metric over the VQC (accuracy 0.696 vs 0.638, better ECE /
-    # Brier / NLL). "quantum" remains a selectable research backend (env AURA_FUSION_BACKEND
-    # =quantum), still trained + benchmarked. NOTE: safety.npz calibration is fit on whichever
-    # backend is served (ml/training/train_fusion.py), so change this only alongside a
-    # recalibration, never the flag alone.
-    fusion_backend: str = "classical"        # dataclass fallback; pyproject [tool.aura] sets the
-                                             # served default to "quantum". "classical" = selectable
-                                             # interpretable fallback. See registry.json / docs/QUANTUM.md.
+    # Served fusion backend: "classical" (Bayesian product-of-experts), both here and in
+    # [tool.aura] in pyproject.toml. It wins the fair, per-backend-temperature benchmark
+    # (artifacts/benchmark.json) and, decisively, the preregistered external validation on
+    # CheXpert (artifacts/chexpert_external.json, n=4800: accuracy 0.5273 vs the VQC's
+    # 0.4721, McNemar p<0.001). "quantum" and "learnable" remain selectable research
+    # backends (AURA_FUSION_BACKEND). Calibration is per backend: SafetyEngine loads
+    # artifacts/safety_<backend>.npz, so switching needs no refit. After any fusion
+    # retrain, refit all three: `python -m aura.ml.training.recalibrate_backend`.
+    fusion_backend: str = "classical"
     # Vision backbone: "features" (numpy fallback), "densenet_mimic" (real
     # MIMIC-CXR DenseNet-121), or "timm" (fine-tuned EfficientNetV2/ConvNeXt/Swin).
     vision_backend: str = "features"
@@ -207,6 +221,13 @@ class Settings:
     abstention_conformal_size: int = 4
     ood_energy_threshold: float = 1.5
     low_confidence_threshold: float = 0.30   # abstain if top calibrated prob below
+    # The fourth abstention criterion. Previously hardcoded as a literal 0.20 in
+    # services/safety/engine.py while the documentation published the CDRE policy's
+    # `epistemic_threshold` (0.15) as though it governed abstention. Those are two
+    # different gates in two different subsystems — see the note on
+    # SafetyPolicyThresholds — and conflating them meant the published safety
+    # envelope was wrong on this criterion and unchangeable in configuration.
+    epistemic_abstention_threshold: float = 0.20
     seed: int = 7
     # --- Module 5: quantum-classical conflict guard (Wasserstein tie-breaker) --- #
     fusion_conflict_guard: bool = True       # defer to PoE when VQC diverges
@@ -222,11 +243,26 @@ class Settings:
     fusion_train_n: int = 900                # target #real studies for the fusion set
     # --- Module 2: vision conditioning ----------------------------------------- #
     vision_tv_weight: float = 1e-4           # total-variation reg weight on latent maps
-    # --- Security (all opt-in; defaults preserve the offline P0 demo) ----------- #
+    # --- Security (secure by default since 2026-09-12) ------------------------- #
     max_upload_mb: float = 25.0              # reject uploads larger than this (DoS guard)
-    auth_token: str = ""                     # when set, mutating endpoints require it
+    # Shared API token. When set, every non-public request needs it: in auth_header or
+    # "Authorization: Bearer" (scripts, integrations), or as the signed session cookie
+    # that POST /v1/auth/session issues (browsers). When empty, the gateway answers
+    # only direct connections from this machine; see allow_open_access.
+    auth_token: str = ""
     auth_header: str = "x-aura-token"        # header carrying the shared token
     rate_limit_rpm: int = 0                  # >0 enables a per-client request/minute cap
+    # With no auth_token, serve network clients anyway. Restores the pre-2026-09-12
+    # wide-open behaviour for an isolated demo network; never set it on a hospital LAN.
+    allow_open_access: bool = False
+    session_ttl_hours: float = 12.0          # browser sign-in lifetime (one clinical shift)
+    # --- Deployment identity and storage ---------------------------------------- #
+    # SQLAlchemy URL for the case store and audit ledger. Empty = SQLite at DB_PATH.
+    # PostgreSQL: postgresql+psycopg://aura:<password>@<host>:5432/aura
+    database_url: str = ""
+    # The hospital/site this server belongs to. The first start binds the database to
+    # it; a server configured for a different site refuses to open that database.
+    site_id: str = ""
     # --- Part 3: Progression thresholds ---------------------------------------- #
     progression_growth_threshold: float = 0.20
     progression_regression_threshold: float = -0.20
@@ -321,6 +357,8 @@ def get_settings() -> Settings:
             "abstention_conformal_size", int, base.abstention_conformal_size
         ),
         ood_energy_threshold=pick("ood_energy_threshold", float, base.ood_energy_threshold),
+        epistemic_abstention_threshold=pick(
+            "epistemic_abstention_threshold", float, base.epistemic_abstention_threshold),
         low_confidence_threshold=pick(
             "low_confidence_threshold", float, base.low_confidence_threshold
         ),
@@ -335,6 +373,10 @@ def get_settings() -> Settings:
         auth_token=pick("auth_token", str, base.auth_token),
         auth_header=pick("auth_header", str, base.auth_header),
         rate_limit_rpm=pick("rate_limit_rpm", int, base.rate_limit_rpm),
+        allow_open_access=pick("allow_open_access", _as_bool, base.allow_open_access),
+        session_ttl_hours=pick("session_ttl_hours", float, base.session_ttl_hours),
+        database_url=pick("database_url", str, base.database_url),
+        site_id=pick("site_id", str, base.site_id),
         fusion_train_source=pick("fusion_train_source", str, base.fusion_train_source),
         fusion_train_n=pick("fusion_train_n", int, base.fusion_train_n),
         progression_growth_threshold=pick("progression_growth_threshold", float, base.progression_growth_threshold),

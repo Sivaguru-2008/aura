@@ -53,7 +53,9 @@ def run_inference(image_paths, labels, model_path: Optional[str] = None,
 
     model_path = model_path or str(ARTIFACTS / "best_model.pt")
     vm = VisionModel(model_path)
-    ds = ChestXrayDataset(image_paths, labels, transform=get_transforms(train=False))
+    # Score at the resolution these weights were trained at, not a hardcoded default.
+    ds = ChestXrayDataset(image_paths, labels,
+                          transform=get_transforms(train=False, img_size=vm.img_size))
     loader = DataLoader(ds, batch_size=batch_size, shuffle=False, num_workers=0,
                         pin_memory=(vm.device == "cuda"))
     probs, ys = [], []

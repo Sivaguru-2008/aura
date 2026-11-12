@@ -1,5 +1,21 @@
 """Quantum Bayesian Network (QBN) for clinical reasoning.
 
+.. admonition:: STATUS — REACHABLE, BUT ONLY WHEN TRAINED
+
+   ``ClinicalReasoner`` calls :meth:`QuantumBayesianNetwork.load_trained` when
+   ``reasoner_backend == "quantum"`` (it defaults to ``"classical"``). That
+   returns ``None`` unless ``artifacts/reasoning_qbn.npz`` exists, and the
+   reasoner then leaves the classical posterior untouched — so selecting the
+   quantum backend without training changes no behaviour and lights no flag.
+
+   The refinement is layered *on top of* the guideline rules, never in place of
+   them: the rules remain the citation trail and the differential.
+
+   ``FusionResult`` deliberately carries no ``qbn_enabled``. Fusion could only
+   derive it from the setting, and a flag that reports configuration as a running
+   component is the failure mode ``AURA_ALLOW_FALLBACK_VISION`` exists to prevent.
+   ``ReasoningTrace.qbn_enabled`` is set by the code that actually runs the circuit.
+
 Models diagnostic joint probabilities and guideline conditions natively
 using complex probability amplitudes and quantum entanglement.
 """
@@ -17,9 +33,12 @@ class QuantumBayesianNetwork:
     def __init__(self, theta: np.ndarray | None = None, n_qubits: int = 6):
         self.n_qubits = n_qubits
 
-        # Variational conditional transition parameters
+        # Variational conditional transition parameters. These defaults are a
+        # *training initialisation* only — they are not fitted to anything. Serving
+        # never reaches them: the reasoner loads via `load_trained()`, which
+        # refuses to return an instance unless a fitted artifact exists.
+        self.trained = theta is not None
         if theta is None:
-            # 6 parameters representing guideline likelihood rotation strengths
             self.theta = np.array([1.2, 1.5, 1.8, 1.2, 0.9, 1.3], dtype=float)
         else:
             self.theta = np.asarray(theta, dtype=float)
@@ -94,11 +113,21 @@ class QuantumBayesianNetwork:
 
     @classmethod
     def load(cls, path: Path | None = None) -> QuantumBayesianNetwork:
+        """Always returns an instance, falling back to the untrained defaults.
+
+        For training and tests. Serving must use :meth:`load_trained`, which
+        distinguishes "trained model" from "six constants".
+        """
+        return cls.load_trained(path) or cls()
+
+    @classmethod
+    def load_trained(cls, path: Path | None = None) -> QuantumBayesianNetwork | None:
+        """The fitted network, or None when no fitted artifact exists."""
         path = path or (ARTIFACTS / "reasoning_qbn.npz")
         if not path.exists():
-            return cls()
+            return None
         try:
             d = np.load(path)
             return cls(d["theta"])
         except Exception:
-            return cls()
+            return None
