@@ -49,6 +49,11 @@ session_case_ids: list[str] = []
 async def lifespan(app: FastAPI):
     ensure_dirs()
     settings = get_settings()
+    # A commercial deployment must not serve research-licensed weights, so it refuses to
+    # start (aura/common/data_governance.py). Research and pilot deployments skip this.
+    if settings.commercial_mode:
+        from aura.common.data_governance import get_governance_manager
+        get_governance_manager().enforce_commercial_gate(commercial_mode=True)
     # AURA_DATABASE_URL moves the case store to PostgreSQL; AURA_SITE_ID binds it to
     # this hospital. A site mismatch raises here and the server refuses to start,
     # which is the point: see storage.SiteBindingRow.

@@ -1,0 +1,4824 @@
+{
+  "purpose": "Encoder embeddings for every official BraTS 2020 subject, graded from the release's name_mapping.csv. Replaces epoch_001.npz (datasets/brats2021_hdf5, untraceable IDs and grades) as the input to the full-coverage kernel comparison.",
+  "corpus": "E:\\AURA\\datasets\\brats2020\\BraTS2020_training_data\\content\\data",
+  "grade_source": "E:\\AURA\\datasets\\brats2020\\BraTS2020_training_data\\content\\data\\name_mapping.csv",
+  "checkpoint": "E:\\AURA\\aura-main\\aura\\artifacts\\brain\\checkpoints\\best_brain_model.pt",
+  "checkpoint_epoch": 24,
+  "preprocessing": "ingest._ingest_subject -> normalize_slice -> centred fit_to_grid; no augmentation, no synthetic degradation",
+  "grade_coding": {
+    "HGG": 0,
+    "LGG": 1
+  },
+  "count": 49581,
+  "n_subjects": 369,
+  "grades": {
+    "HGG": 0,
+    "LGG": 0
+  },
+  "splits_as_trained": {
+    "train": 258,
+    "test": 56,
+    "val": 55
+  },
+  "encoder_training_note": "The encoder was trained (segmentation, presence, size, quality, morphology-contrastive) on the 258 'train' subjects. Grade was never a training target. Val and test subjects (111) never influenced weights.",
+  "subjects": [
+    {
+      "subject_index": 0,
+      "subject_id": "BraTS20_Training_001",
+      "volume_id": 1,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 129,
+      "voxels": {
+        "ncr_net": 15443,
+        "edema": 168794,
+        "enhancing": 27742
+      }
+    },
+    {
+      "subject_index": 1,
+      "subject_id": "BraTS20_Training_002",
+      "volume_id": 2,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 9160,
+        "edema": 51299,
+        "enhancing": 6549
+      }
+    },
+    {
+      "subject_index": 2,
+      "subject_id": "BraTS20_Training_003",
+      "volume_id": 3,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 131,
+      "voxels": {
+        "ncr_net": 733,
+        "edema": 26076,
+        "enhancing": 2998
+      }
+    },
+    {
+      "subject_index": 3,
+      "subject_id": "BraTS20_Training_004",
+      "volume_id": 4,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 10902,
+        "edema": 77096,
+        "enhancing": 15498
+      }
+    },
+    {
+      "subject_index": 4,
+      "subject_id": "BraTS20_Training_005",
+      "volume_id": 5,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 3624,
+        "edema": 7553,
+        "enhancing": 10786
+      }
+    },
+    {
+      "subject_index": 5,
+      "subject_id": "BraTS20_Training_006",
+      "volume_id": 6,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 19827,
+        "edema": 94456,
+        "enhancing": 24947
+      }
+    },
+    {
+      "subject_index": 6,
+      "subject_id": "BraTS20_Training_007",
+      "volume_id": 7,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 3398,
+        "edema": 30215,
+        "enhancing": 6159
+      }
+    },
+    {
+      "subject_index": 7,
+      "subject_id": "BraTS20_Training_008",
+      "volume_id": 8,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 157,
+        "edema": 32078,
+        "enhancing": 1211
+      }
+    },
+    {
+      "subject_index": 8,
+      "subject_id": "BraTS20_Training_009",
+      "volume_id": 9,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 25359,
+        "edema": 106834,
+        "enhancing": 50901
+      }
+    },
+    {
+      "subject_index": 9,
+      "subject_id": "BraTS20_Training_010",
+      "volume_id": 10,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 521,
+        "edema": 37588,
+        "enhancing": 6473
+      }
+    },
+    {
+      "subject_index": 10,
+      "subject_id": "BraTS20_Training_011",
+      "volume_id": 11,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 4603,
+        "edema": 44753,
+        "enhancing": 5774
+      }
+    },
+    {
+      "subject_index": 11,
+      "subject_id": "BraTS20_Training_012",
+      "volume_id": 12,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 141,
+      "voxels": {
+        "ncr_net": 2307,
+        "edema": 23771,
+        "enhancing": 5973
+      }
+    },
+    {
+      "subject_index": 12,
+      "subject_id": "BraTS20_Training_013",
+      "volume_id": 13,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 10496,
+        "edema": 31804,
+        "enhancing": 4039
+      }
+    },
+    {
+      "subject_index": 13,
+      "subject_id": "BraTS20_Training_014",
+      "volume_id": 14,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 141,
+      "voxels": {
+        "ncr_net": 9313,
+        "edema": 52828,
+        "enhancing": 18255
+      }
+    },
+    {
+      "subject_index": 14,
+      "subject_id": "BraTS20_Training_015",
+      "volume_id": 15,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 8675,
+        "edema": 107610,
+        "enhancing": 9002
+      }
+    },
+    {
+      "subject_index": 15,
+      "subject_id": "BraTS20_Training_016",
+      "volume_id": 16,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 28051,
+        "edema": 86107,
+        "enhancing": 13031
+      }
+    },
+    {
+      "subject_index": 16,
+      "subject_id": "BraTS20_Training_017",
+      "volume_id": 17,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 7491,
+        "edema": 86045,
+        "enhancing": 7222
+      }
+    },
+    {
+      "subject_index": 17,
+      "subject_id": "BraTS20_Training_018",
+      "volume_id": 18,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 130,
+      "voxels": {
+        "ncr_net": 341,
+        "edema": 43082,
+        "enhancing": 1695
+      }
+    },
+    {
+      "subject_index": 18,
+      "subject_id": "BraTS20_Training_019",
+      "volume_id": 19,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 130,
+      "voxels": {
+        "ncr_net": 10734,
+        "edema": 23250,
+        "enhancing": 9813
+      }
+    },
+    {
+      "subject_index": 19,
+      "subject_id": "BraTS20_Training_020",
+      "volume_id": 20,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 91299,
+        "edema": 56966,
+        "enhancing": 27410
+      }
+    },
+    {
+      "subject_index": 20,
+      "subject_id": "BraTS20_Training_021",
+      "volume_id": 21,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 130,
+      "voxels": {
+        "ncr_net": 2666,
+        "edema": 31189,
+        "enhancing": 3003
+      }
+    },
+    {
+      "subject_index": 21,
+      "subject_id": "BraTS20_Training_022",
+      "volume_id": 22,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 12416,
+        "edema": 37481,
+        "enhancing": 18221
+      }
+    },
+    {
+      "subject_index": 22,
+      "subject_id": "BraTS20_Training_023",
+      "volume_id": 23,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 133,
+      "voxels": {
+        "ncr_net": 6589,
+        "edema": 23598,
+        "enhancing": 10937
+      }
+    },
+    {
+      "subject_index": 23,
+      "subject_id": "BraTS20_Training_024",
+      "volume_id": 24,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 142,
+      "voxels": {
+        "ncr_net": 5200,
+        "edema": 67155,
+        "enhancing": 23272
+      }
+    },
+    {
+      "subject_index": 24,
+      "subject_id": "BraTS20_Training_025",
+      "volume_id": 25,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 19476,
+        "edema": 36528,
+        "enhancing": 17433
+      }
+    },
+    {
+      "subject_index": 25,
+      "subject_id": "BraTS20_Training_026",
+      "volume_id": 26,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 142,
+      "voxels": {
+        "ncr_net": 11237,
+        "edema": 145705,
+        "enhancing": 23676
+      }
+    },
+    {
+      "subject_index": 26,
+      "subject_id": "BraTS20_Training_027",
+      "volume_id": 27,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 8653,
+        "edema": 41235,
+        "enhancing": 16760
+      }
+    },
+    {
+      "subject_index": 27,
+      "subject_id": "BraTS20_Training_028",
+      "volume_id": 28,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 5746,
+        "edema": 5908,
+        "enhancing": 9281
+      }
+    },
+    {
+      "subject_index": 28,
+      "subject_id": "BraTS20_Training_029",
+      "volume_id": 29,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 1693,
+        "edema": 54960,
+        "enhancing": 5701
+      }
+    },
+    {
+      "subject_index": 29,
+      "subject_id": "BraTS20_Training_030",
+      "volume_id": 30,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 1748,
+        "edema": 92012,
+        "enhancing": 6149
+      }
+    },
+    {
+      "subject_index": 30,
+      "subject_id": "BraTS20_Training_031",
+      "volume_id": 31,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 144,
+      "voxels": {
+        "ncr_net": 6619,
+        "edema": 58882,
+        "enhancing": 22108
+      }
+    },
+    {
+      "subject_index": 31,
+      "subject_id": "BraTS20_Training_032",
+      "volume_id": 32,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 7867,
+        "edema": 9070,
+        "enhancing": 9563
+      }
+    },
+    {
+      "subject_index": 32,
+      "subject_id": "BraTS20_Training_033",
+      "volume_id": 33,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 8346,
+        "edema": 98301,
+        "enhancing": 16009
+      }
+    },
+    {
+      "subject_index": 33,
+      "subject_id": "BraTS20_Training_034",
+      "volume_id": 34,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 20555,
+        "edema": 46588,
+        "enhancing": 24430
+      }
+    },
+    {
+      "subject_index": 34,
+      "subject_id": "BraTS20_Training_035",
+      "volume_id": 35,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 125,
+      "voxels": {
+        "ncr_net": 23946,
+        "edema": 30607,
+        "enhancing": 24262
+      }
+    },
+    {
+      "subject_index": 35,
+      "subject_id": "BraTS20_Training_036",
+      "volume_id": 36,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 585,
+        "edema": 9079,
+        "enhancing": 5166
+      }
+    },
+    {
+      "subject_index": 36,
+      "subject_id": "BraTS20_Training_037",
+      "volume_id": 37,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 130,
+      "voxels": {
+        "ncr_net": 9752,
+        "edema": 164048,
+        "enhancing": 15211
+      }
+    },
+    {
+      "subject_index": 37,
+      "subject_id": "BraTS20_Training_038",
+      "volume_id": 38,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 10976,
+        "edema": 63649,
+        "enhancing": 26254
+      }
+    },
+    {
+      "subject_index": 38,
+      "subject_id": "BraTS20_Training_039",
+      "volume_id": 39,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 6192,
+        "edema": 32835,
+        "enhancing": 12826
+      }
+    },
+    {
+      "subject_index": 39,
+      "subject_id": "BraTS20_Training_040",
+      "volume_id": 40,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 20192,
+        "edema": 123059,
+        "enhancing": 28203
+      }
+    },
+    {
+      "subject_index": 40,
+      "subject_id": "BraTS20_Training_041",
+      "volume_id": 41,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 19169,
+        "edema": 67089,
+        "enhancing": 15158
+      }
+    },
+    {
+      "subject_index": 41,
+      "subject_id": "BraTS20_Training_042",
+      "volume_id": 42,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 131,
+      "voxels": {
+        "ncr_net": 19887,
+        "edema": 35154,
+        "enhancing": 20908
+      }
+    },
+    {
+      "subject_index": 42,
+      "subject_id": "BraTS20_Training_043",
+      "volume_id": 43,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 5082,
+        "edema": 29723,
+        "enhancing": 2624
+      }
+    },
+    {
+      "subject_index": 43,
+      "subject_id": "BraTS20_Training_044",
+      "volume_id": 44,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 402,
+        "edema": 17336,
+        "enhancing": 1412
+      }
+    },
+    {
+      "subject_index": 44,
+      "subject_id": "BraTS20_Training_045",
+      "volume_id": 45,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 128,
+      "voxels": {
+        "ncr_net": 16558,
+        "edema": 40539,
+        "enhancing": 40108
+      }
+    },
+    {
+      "subject_index": 45,
+      "subject_id": "BraTS20_Training_046",
+      "volume_id": 46,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 141,
+      "voxels": {
+        "ncr_net": 163,
+        "edema": 34822,
+        "enhancing": 1357
+      }
+    },
+    {
+      "subject_index": 46,
+      "subject_id": "BraTS20_Training_047",
+      "volume_id": 47,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 143,
+      "voxels": {
+        "ncr_net": 30245,
+        "edema": 70436,
+        "enhancing": 32001
+      }
+    },
+    {
+      "subject_index": 47,
+      "subject_id": "BraTS20_Training_048",
+      "volume_id": 48,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 1420,
+        "edema": 25778,
+        "enhancing": 2041
+      }
+    },
+    {
+      "subject_index": 48,
+      "subject_id": "BraTS20_Training_049",
+      "volume_id": 49,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 1588,
+        "edema": 75783,
+        "enhancing": 6047
+      }
+    },
+    {
+      "subject_index": 49,
+      "subject_id": "BraTS20_Training_050",
+      "volume_id": 50,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 142,
+      "voxels": {
+        "ncr_net": 35661,
+        "edema": 14747,
+        "enhancing": 32372
+      }
+    },
+    {
+      "subject_index": 50,
+      "subject_id": "BraTS20_Training_051",
+      "volume_id": 51,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 4449,
+        "edema": 104016,
+        "enhancing": 13105
+      }
+    },
+    {
+      "subject_index": 51,
+      "subject_id": "BraTS20_Training_052",
+      "volume_id": 52,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 128,
+      "voxels": {
+        "ncr_net": 5989,
+        "edema": 29065,
+        "enhancing": 10897
+      }
+    },
+    {
+      "subject_index": 52,
+      "subject_id": "BraTS20_Training_053",
+      "volume_id": 53,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 12395,
+        "edema": 128427,
+        "enhancing": 9075
+      }
+    },
+    {
+      "subject_index": 53,
+      "subject_id": "BraTS20_Training_054",
+      "volume_id": 54,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 6651,
+        "edema": 42928,
+        "enhancing": 30995
+      }
+    },
+    {
+      "subject_index": 54,
+      "subject_id": "BraTS20_Training_055",
+      "volume_id": 55,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 144,
+      "voxels": {
+        "ncr_net": 6590,
+        "edema": 103227,
+        "enhancing": 8577
+      }
+    },
+    {
+      "subject_index": 55,
+      "subject_id": "BraTS20_Training_056",
+      "volume_id": 56,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 131,
+      "voxels": {
+        "ncr_net": 8872,
+        "edema": 21364,
+        "enhancing": 25128
+      }
+    },
+    {
+      "subject_index": 56,
+      "subject_id": "BraTS20_Training_057",
+      "volume_id": 57,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 125,
+      "voxels": {
+        "ncr_net": 3149,
+        "edema": 79367,
+        "enhancing": 8613
+      }
+    },
+    {
+      "subject_index": 57,
+      "subject_id": "BraTS20_Training_058",
+      "volume_id": 58,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 10482,
+        "edema": 74456,
+        "enhancing": 6708
+      }
+    },
+    {
+      "subject_index": 58,
+      "subject_id": "BraTS20_Training_059",
+      "volume_id": 59,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 129,
+      "voxels": {
+        "ncr_net": 901,
+        "edema": 23845,
+        "enhancing": 1172
+      }
+    },
+    {
+      "subject_index": 59,
+      "subject_id": "BraTS20_Training_060",
+      "volume_id": 60,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 18358,
+        "edema": 52794,
+        "enhancing": 16172
+      }
+    },
+    {
+      "subject_index": 60,
+      "subject_id": "BraTS20_Training_061",
+      "volume_id": 61,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 6878,
+        "edema": 7466,
+        "enhancing": 6532
+      }
+    },
+    {
+      "subject_index": 61,
+      "subject_id": "BraTS20_Training_062",
+      "volume_id": 62,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 145,
+      "voxels": {
+        "ncr_net": 20008,
+        "edema": 91981,
+        "enhancing": 30143
+      }
+    },
+    {
+      "subject_index": 62,
+      "subject_id": "BraTS20_Training_063",
+      "volume_id": 63,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 782,
+        "edema": 10390,
+        "enhancing": 2287
+      }
+    },
+    {
+      "subject_index": 63,
+      "subject_id": "BraTS20_Training_064",
+      "volume_id": 64,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 133,
+      "voxels": {
+        "ncr_net": 44601,
+        "edema": 15904,
+        "enhancing": 35310
+      }
+    },
+    {
+      "subject_index": 64,
+      "subject_id": "BraTS20_Training_065",
+      "volume_id": 65,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 1034,
+        "edema": 21091,
+        "enhancing": 2830
+      }
+    },
+    {
+      "subject_index": 65,
+      "subject_id": "BraTS20_Training_066",
+      "volume_id": 66,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 129,
+      "voxels": {
+        "ncr_net": 6796,
+        "edema": 43785,
+        "enhancing": 8665
+      }
+    },
+    {
+      "subject_index": 66,
+      "subject_id": "BraTS20_Training_067",
+      "volume_id": 67,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 143,
+      "voxels": {
+        "ncr_net": 13856,
+        "edema": 85940,
+        "enhancing": 30709
+      }
+    },
+    {
+      "subject_index": 67,
+      "subject_id": "BraTS20_Training_068",
+      "volume_id": 68,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 19830,
+        "edema": 29143,
+        "enhancing": 14186
+      }
+    },
+    {
+      "subject_index": 68,
+      "subject_id": "BraTS20_Training_069",
+      "volume_id": 69,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 122,
+      "voxels": {
+        "ncr_net": 19298,
+        "edema": 125081,
+        "enhancing": 15631
+      }
+    },
+    {
+      "subject_index": 69,
+      "subject_id": "BraTS20_Training_070",
+      "volume_id": 70,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 22543,
+        "edema": 22544,
+        "enhancing": 12743
+      }
+    },
+    {
+      "subject_index": 70,
+      "subject_id": "BraTS20_Training_071",
+      "volume_id": 71,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 5976,
+        "edema": 135262,
+        "enhancing": 13041
+      }
+    },
+    {
+      "subject_index": 71,
+      "subject_id": "BraTS20_Training_072",
+      "volume_id": 72,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 125,
+      "voxels": {
+        "ncr_net": 10817,
+        "edema": 40774,
+        "enhancing": 37598
+      }
+    },
+    {
+      "subject_index": 72,
+      "subject_id": "BraTS20_Training_073",
+      "volume_id": 73,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 7469,
+        "edema": 27590,
+        "enhancing": 9460
+      }
+    },
+    {
+      "subject_index": 73,
+      "subject_id": "BraTS20_Training_074",
+      "volume_id": 74,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 15955,
+        "edema": 38338,
+        "enhancing": 22496
+      }
+    },
+    {
+      "subject_index": 74,
+      "subject_id": "BraTS20_Training_075",
+      "volume_id": 75,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 80489,
+        "edema": 69261,
+        "enhancing": 35387
+      }
+    },
+    {
+      "subject_index": 75,
+      "subject_id": "BraTS20_Training_076",
+      "volume_id": 76,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 129,
+      "voxels": {
+        "ncr_net": 8432,
+        "edema": 23177,
+        "enhancing": 10595
+      }
+    },
+    {
+      "subject_index": 76,
+      "subject_id": "BraTS20_Training_077",
+      "volume_id": 77,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 130,
+      "voxels": {
+        "ncr_net": 3736,
+        "edema": 38488,
+        "enhancing": 7959
+      }
+    },
+    {
+      "subject_index": 77,
+      "subject_id": "BraTS20_Training_078",
+      "volume_id": 78,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 2853,
+        "edema": 32237,
+        "enhancing": 4321
+      }
+    },
+    {
+      "subject_index": 78,
+      "subject_id": "BraTS20_Training_079",
+      "volume_id": 79,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 2139,
+        "edema": 3676,
+        "enhancing": 1470
+      }
+    },
+    {
+      "subject_index": 79,
+      "subject_id": "BraTS20_Training_080",
+      "volume_id": 80,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 3872,
+        "edema": 32904,
+        "enhancing": 6688
+      }
+    },
+    {
+      "subject_index": 80,
+      "subject_id": "BraTS20_Training_081",
+      "volume_id": 81,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 131,
+      "voxels": {
+        "ncr_net": 9230,
+        "edema": 13852,
+        "enhancing": 8450
+      }
+    },
+    {
+      "subject_index": 81,
+      "subject_id": "BraTS20_Training_082",
+      "volume_id": 82,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 1777,
+        "edema": 3806,
+        "enhancing": 4518
+      }
+    },
+    {
+      "subject_index": 82,
+      "subject_id": "BraTS20_Training_083",
+      "volume_id": 83,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 3391,
+        "edema": 63100,
+        "enhancing": 7167
+      }
+    },
+    {
+      "subject_index": 83,
+      "subject_id": "BraTS20_Training_084",
+      "volume_id": 84,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 10055,
+        "edema": 29514,
+        "enhancing": 17506
+      }
+    },
+    {
+      "subject_index": 84,
+      "subject_id": "BraTS20_Training_085",
+      "volume_id": 85,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 4122,
+        "edema": 28408,
+        "enhancing": 3691
+      }
+    },
+    {
+      "subject_index": 85,
+      "subject_id": "BraTS20_Training_086",
+      "volume_id": 86,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 455,
+        "edema": 20191,
+        "enhancing": 106
+      }
+    },
+    {
+      "subject_index": 86,
+      "subject_id": "BraTS20_Training_087",
+      "volume_id": 87,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 7110,
+        "edema": 19290,
+        "enhancing": 406
+      }
+    },
+    {
+      "subject_index": 87,
+      "subject_id": "BraTS20_Training_088",
+      "volume_id": 88,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 2310,
+        "edema": 18725,
+        "enhancing": 9619
+      }
+    },
+    {
+      "subject_index": 88,
+      "subject_id": "BraTS20_Training_089",
+      "volume_id": 89,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 142,
+      "voxels": {
+        "ncr_net": 109,
+        "edema": 111653,
+        "enhancing": 18581
+      }
+    },
+    {
+      "subject_index": 89,
+      "subject_id": "BraTS20_Training_090",
+      "volume_id": 90,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 10067,
+        "edema": 11028,
+        "enhancing": 10964
+      }
+    },
+    {
+      "subject_index": 90,
+      "subject_id": "BraTS20_Training_091",
+      "volume_id": 91,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 129,
+      "voxels": {
+        "ncr_net": 5112,
+        "edema": 120006,
+        "enhancing": 24472
+      }
+    },
+    {
+      "subject_index": 91,
+      "subject_id": "BraTS20_Training_092",
+      "volume_id": 92,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 10225,
+        "edema": 15560,
+        "enhancing": 32673
+      }
+    },
+    {
+      "subject_index": 92,
+      "subject_id": "BraTS20_Training_093",
+      "volume_id": 93,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 7262,
+        "edema": 67091,
+        "enhancing": 24337
+      }
+    },
+    {
+      "subject_index": 93,
+      "subject_id": "BraTS20_Training_094",
+      "volume_id": 94,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 160,
+        "edema": 20734,
+        "enhancing": 1035
+      }
+    },
+    {
+      "subject_index": 94,
+      "subject_id": "BraTS20_Training_095",
+      "volume_id": 95,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 141,
+      "voxels": {
+        "ncr_net": 14829,
+        "edema": 70390,
+        "enhancing": 18549
+      }
+    },
+    {
+      "subject_index": 95,
+      "subject_id": "BraTS20_Training_096",
+      "volume_id": 96,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 126,
+      "voxels": {
+        "ncr_net": 9263,
+        "edema": 35628,
+        "enhancing": 21102
+      }
+    },
+    {
+      "subject_index": 96,
+      "subject_id": "BraTS20_Training_097",
+      "volume_id": 97,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 130,
+      "voxels": {
+        "ncr_net": 24770,
+        "edema": 17568,
+        "enhancing": 37193
+      }
+    },
+    {
+      "subject_index": 97,
+      "subject_id": "BraTS20_Training_098",
+      "volume_id": 98,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 133,
+      "voxels": {
+        "ncr_net": 15191,
+        "edema": 106783,
+        "enhancing": 22052
+      }
+    },
+    {
+      "subject_index": 98,
+      "subject_id": "BraTS20_Training_099",
+      "volume_id": 99,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 0,
+        "edema": 6275,
+        "enhancing": 1238
+      }
+    },
+    {
+      "subject_index": 99,
+      "subject_id": "BraTS20_Training_100",
+      "volume_id": 100,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 47184,
+        "edema": 58053,
+        "enhancing": 30015
+      }
+    },
+    {
+      "subject_index": 100,
+      "subject_id": "BraTS20_Training_101",
+      "volume_id": 101,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 4996,
+        "edema": 52828,
+        "enhancing": 13927
+      }
+    },
+    {
+      "subject_index": 101,
+      "subject_id": "BraTS20_Training_102",
+      "volume_id": 102,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 7362,
+        "edema": 9348,
+        "enhancing": 7433
+      }
+    },
+    {
+      "subject_index": 102,
+      "subject_id": "BraTS20_Training_103",
+      "volume_id": 103,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 13957,
+        "edema": 6980,
+        "enhancing": 37271
+      }
+    },
+    {
+      "subject_index": 103,
+      "subject_id": "BraTS20_Training_104",
+      "volume_id": 104,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 22889,
+        "edema": 110884,
+        "enhancing": 35912
+      }
+    },
+    {
+      "subject_index": 104,
+      "subject_id": "BraTS20_Training_105",
+      "volume_id": 105,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 130,
+      "voxels": {
+        "ncr_net": 2073,
+        "edema": 17075,
+        "enhancing": 5844
+      }
+    },
+    {
+      "subject_index": 105,
+      "subject_id": "BraTS20_Training_106",
+      "volume_id": 106,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 15768,
+        "edema": 50631,
+        "enhancing": 41960
+      }
+    },
+    {
+      "subject_index": 106,
+      "subject_id": "BraTS20_Training_107",
+      "volume_id": 107,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 595,
+        "edema": 24175,
+        "enhancing": 9541
+      }
+    },
+    {
+      "subject_index": 107,
+      "subject_id": "BraTS20_Training_108",
+      "volume_id": 108,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 103,
+        "edema": 9591,
+        "enhancing": 8198
+      }
+    },
+    {
+      "subject_index": 108,
+      "subject_id": "BraTS20_Training_109",
+      "volume_id": 109,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 6272,
+        "edema": 72599,
+        "enhancing": 21853
+      }
+    },
+    {
+      "subject_index": 109,
+      "subject_id": "BraTS20_Training_110",
+      "volume_id": 110,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 86,
+        "edema": 12846,
+        "enhancing": 2767
+      }
+    },
+    {
+      "subject_index": 110,
+      "subject_id": "BraTS20_Training_111",
+      "volume_id": 111,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 8380,
+        "edema": 17392,
+        "enhancing": 17570
+      }
+    },
+    {
+      "subject_index": 111,
+      "subject_id": "BraTS20_Training_112",
+      "volume_id": 112,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 20290,
+        "edema": 101897,
+        "enhancing": 48172
+      }
+    },
+    {
+      "subject_index": 112,
+      "subject_id": "BraTS20_Training_113",
+      "volume_id": 113,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 2346,
+        "edema": 119083,
+        "enhancing": 4251
+      }
+    },
+    {
+      "subject_index": 113,
+      "subject_id": "BraTS20_Training_114",
+      "volume_id": 114,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 143,
+      "voxels": {
+        "ncr_net": 27812,
+        "edema": 51348,
+        "enhancing": 24144
+      }
+    },
+    {
+      "subject_index": 114,
+      "subject_id": "BraTS20_Training_115",
+      "volume_id": 115,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 131,
+      "voxels": {
+        "ncr_net": 5570,
+        "edema": 70876,
+        "enhancing": 14162
+      }
+    },
+    {
+      "subject_index": 115,
+      "subject_id": "BraTS20_Training_116",
+      "volume_id": 116,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 16504,
+        "edema": 50391,
+        "enhancing": 20640
+      }
+    },
+    {
+      "subject_index": 116,
+      "subject_id": "BraTS20_Training_117",
+      "volume_id": 117,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 2881,
+        "edema": 65434,
+        "enhancing": 9819
+      }
+    },
+    {
+      "subject_index": 117,
+      "subject_id": "BraTS20_Training_118",
+      "volume_id": 118,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 2182,
+        "edema": 42224,
+        "enhancing": 8079
+      }
+    },
+    {
+      "subject_index": 118,
+      "subject_id": "BraTS20_Training_119",
+      "volume_id": 119,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 3279,
+        "edema": 24445,
+        "enhancing": 4466
+      }
+    },
+    {
+      "subject_index": 119,
+      "subject_id": "BraTS20_Training_120",
+      "volume_id": 120,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 32906,
+        "edema": 71184,
+        "enhancing": 19542
+      }
+    },
+    {
+      "subject_index": 120,
+      "subject_id": "BraTS20_Training_121",
+      "volume_id": 121,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 141,
+      "voxels": {
+        "ncr_net": 15527,
+        "edema": 112429,
+        "enhancing": 17168
+      }
+    },
+    {
+      "subject_index": 121,
+      "subject_id": "BraTS20_Training_122",
+      "volume_id": 122,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 2063,
+        "edema": 10911,
+        "enhancing": 3611
+      }
+    },
+    {
+      "subject_index": 122,
+      "subject_id": "BraTS20_Training_123",
+      "volume_id": 123,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 142,
+      "voxels": {
+        "ncr_net": 11539,
+        "edema": 100479,
+        "enhancing": 25719
+      }
+    },
+    {
+      "subject_index": 123,
+      "subject_id": "BraTS20_Training_124",
+      "volume_id": 124,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 133,
+      "voxels": {
+        "ncr_net": 37835,
+        "edema": 94789,
+        "enhancing": 42739
+      }
+    },
+    {
+      "subject_index": 124,
+      "subject_id": "BraTS20_Training_125",
+      "volume_id": 125,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 4073,
+        "edema": 115349,
+        "enhancing": 31863
+      }
+    },
+    {
+      "subject_index": 125,
+      "subject_id": "BraTS20_Training_126",
+      "volume_id": 126,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 130,
+      "voxels": {
+        "ncr_net": 3560,
+        "edema": 18288,
+        "enhancing": 16152
+      }
+    },
+    {
+      "subject_index": 126,
+      "subject_id": "BraTS20_Training_127",
+      "volume_id": 127,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 156,
+        "edema": 37208,
+        "enhancing": 6204
+      }
+    },
+    {
+      "subject_index": 127,
+      "subject_id": "BraTS20_Training_128",
+      "volume_id": 128,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 115,
+        "edema": 33068,
+        "enhancing": 1276
+      }
+    },
+    {
+      "subject_index": 128,
+      "subject_id": "BraTS20_Training_129",
+      "volume_id": 129,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 141,
+      "voxels": {
+        "ncr_net": 1405,
+        "edema": 50797,
+        "enhancing": 7133
+      }
+    },
+    {
+      "subject_index": 129,
+      "subject_id": "BraTS20_Training_130",
+      "volume_id": 130,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 130,
+      "voxels": {
+        "ncr_net": 27189,
+        "edema": 53050,
+        "enhancing": 31485
+      }
+    },
+    {
+      "subject_index": 130,
+      "subject_id": "BraTS20_Training_131",
+      "volume_id": 131,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 1106,
+        "edema": 53736,
+        "enhancing": 8219
+      }
+    },
+    {
+      "subject_index": 131,
+      "subject_id": "BraTS20_Training_132",
+      "volume_id": 132,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 4414,
+        "edema": 148264,
+        "enhancing": 21250
+      }
+    },
+    {
+      "subject_index": 132,
+      "subject_id": "BraTS20_Training_133",
+      "volume_id": 133,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 128,
+      "voxels": {
+        "ncr_net": 57655,
+        "edema": 45203,
+        "enhancing": 17816
+      }
+    },
+    {
+      "subject_index": 133,
+      "subject_id": "BraTS20_Training_134",
+      "volume_id": 134,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 26912,
+        "edema": 35416,
+        "enhancing": 18354
+      }
+    },
+    {
+      "subject_index": 134,
+      "subject_id": "BraTS20_Training_135",
+      "volume_id": 135,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 64066,
+        "edema": 109935,
+        "enhancing": 43379
+      }
+    },
+    {
+      "subject_index": 135,
+      "subject_id": "BraTS20_Training_136",
+      "volume_id": 136,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 127,
+      "voxels": {
+        "ncr_net": 4514,
+        "edema": 34894,
+        "enhancing": 21677
+      }
+    },
+    {
+      "subject_index": 136,
+      "subject_id": "BraTS20_Training_137",
+      "volume_id": 137,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 21122,
+        "edema": 129871,
+        "enhancing": 36577
+      }
+    },
+    {
+      "subject_index": 137,
+      "subject_id": "BraTS20_Training_138",
+      "volume_id": 138,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 127,
+      "voxels": {
+        "ncr_net": 34343,
+        "edema": 133618,
+        "enhancing": 42366
+      }
+    },
+    {
+      "subject_index": 138,
+      "subject_id": "BraTS20_Training_139",
+      "volume_id": 139,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 413,
+        "edema": 15607,
+        "enhancing": 4467
+      }
+    },
+    {
+      "subject_index": 139,
+      "subject_id": "BraTS20_Training_140",
+      "volume_id": 140,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 130,
+      "voxels": {
+        "ncr_net": 20231,
+        "edema": 90806,
+        "enhancing": 26264
+      }
+    },
+    {
+      "subject_index": 140,
+      "subject_id": "BraTS20_Training_141",
+      "volume_id": 141,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 133,
+      "voxels": {
+        "ncr_net": 8413,
+        "edema": 12494,
+        "enhancing": 708
+      }
+    },
+    {
+      "subject_index": 141,
+      "subject_id": "BraTS20_Training_142",
+      "volume_id": 142,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 123,
+      "voxels": {
+        "ncr_net": 310,
+        "edema": 7981,
+        "enhancing": 4678
+      }
+    },
+    {
+      "subject_index": 142,
+      "subject_id": "BraTS20_Training_143",
+      "volume_id": 143,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 51737,
+        "edema": 23689,
+        "enhancing": 72360
+      }
+    },
+    {
+      "subject_index": 143,
+      "subject_id": "BraTS20_Training_144",
+      "volume_id": 144,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 11698,
+        "edema": 126003,
+        "enhancing": 60991
+      }
+    },
+    {
+      "subject_index": 144,
+      "subject_id": "BraTS20_Training_145",
+      "volume_id": 145,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 11727,
+        "edema": 50571,
+        "enhancing": 20437
+      }
+    },
+    {
+      "subject_index": 145,
+      "subject_id": "BraTS20_Training_146",
+      "volume_id": 146,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 133,
+      "voxels": {
+        "ncr_net": 10430,
+        "edema": 67269,
+        "enhancing": 23187
+      }
+    },
+    {
+      "subject_index": 146,
+      "subject_id": "BraTS20_Training_147",
+      "volume_id": 147,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 45839,
+        "edema": 73741,
+        "enhancing": 19677
+      }
+    },
+    {
+      "subject_index": 147,
+      "subject_id": "BraTS20_Training_148",
+      "volume_id": 148,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 16412,
+        "edema": 113095,
+        "enhancing": 19840
+      }
+    },
+    {
+      "subject_index": 148,
+      "subject_id": "BraTS20_Training_149",
+      "volume_id": 149,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 48805,
+        "edema": 140935,
+        "enhancing": 67135
+      }
+    },
+    {
+      "subject_index": 149,
+      "subject_id": "BraTS20_Training_150",
+      "volume_id": 150,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 114,
+      "voxels": {
+        "ncr_net": 5549,
+        "edema": 97158,
+        "enhancing": 46595
+      }
+    },
+    {
+      "subject_index": 150,
+      "subject_id": "BraTS20_Training_151",
+      "volume_id": 151,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 126,
+      "voxels": {
+        "ncr_net": 25285,
+        "edema": 86078,
+        "enhancing": 38103
+      }
+    },
+    {
+      "subject_index": 151,
+      "subject_id": "BraTS20_Training_152",
+      "volume_id": 152,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 15877,
+        "edema": 140402,
+        "enhancing": 31036
+      }
+    },
+    {
+      "subject_index": 152,
+      "subject_id": "BraTS20_Training_153",
+      "volume_id": 153,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 141,
+      "voxels": {
+        "ncr_net": 857,
+        "edema": 113723,
+        "enhancing": 12637
+      }
+    },
+    {
+      "subject_index": 153,
+      "subject_id": "BraTS20_Training_154",
+      "volume_id": 154,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 29848,
+        "edema": 31875,
+        "enhancing": 32363
+      }
+    },
+    {
+      "subject_index": 154,
+      "subject_id": "BraTS20_Training_155",
+      "volume_id": 155,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 11829,
+        "edema": 103461,
+        "enhancing": 29312
+      }
+    },
+    {
+      "subject_index": 155,
+      "subject_id": "BraTS20_Training_156",
+      "volume_id": 156,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 20043,
+        "edema": 73565,
+        "enhancing": 27542
+      }
+    },
+    {
+      "subject_index": 156,
+      "subject_id": "BraTS20_Training_157",
+      "volume_id": 157,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 142,
+      "voxels": {
+        "ncr_net": 7519,
+        "edema": 42498,
+        "enhancing": 42558
+      }
+    },
+    {
+      "subject_index": 157,
+      "subject_id": "BraTS20_Training_158",
+      "volume_id": 158,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 384,
+        "edema": 36268,
+        "enhancing": 1662
+      }
+    },
+    {
+      "subject_index": 158,
+      "subject_id": "BraTS20_Training_159",
+      "volume_id": 159,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 4349,
+        "edema": 15723,
+        "enhancing": 4362
+      }
+    },
+    {
+      "subject_index": 159,
+      "subject_id": "BraTS20_Training_160",
+      "volume_id": 160,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 142,
+      "voxels": {
+        "ncr_net": 48610,
+        "edema": 45798,
+        "enhancing": 33404
+      }
+    },
+    {
+      "subject_index": 160,
+      "subject_id": "BraTS20_Training_161",
+      "volume_id": 161,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 7587,
+        "edema": 34086,
+        "enhancing": 12114
+      }
+    },
+    {
+      "subject_index": 161,
+      "subject_id": "BraTS20_Training_162",
+      "volume_id": 162,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 128,
+      "voxels": {
+        "ncr_net": 7137,
+        "edema": 65653,
+        "enhancing": 34538
+      }
+    },
+    {
+      "subject_index": 162,
+      "subject_id": "BraTS20_Training_163",
+      "volume_id": 163,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 131,
+      "voxels": {
+        "ncr_net": 25394,
+        "edema": 83988,
+        "enhancing": 45111
+      }
+    },
+    {
+      "subject_index": 163,
+      "subject_id": "BraTS20_Training_164",
+      "volume_id": 164,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 13188,
+        "edema": 68807,
+        "enhancing": 43375
+      }
+    },
+    {
+      "subject_index": 164,
+      "subject_id": "BraTS20_Training_165",
+      "volume_id": 165,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 4212,
+        "edema": 103826,
+        "enhancing": 35721
+      }
+    },
+    {
+      "subject_index": 165,
+      "subject_id": "BraTS20_Training_166",
+      "volume_id": 166,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 11908,
+        "edema": 160681,
+        "enhancing": 50410
+      }
+    },
+    {
+      "subject_index": 166,
+      "subject_id": "BraTS20_Training_167",
+      "volume_id": 167,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 8969,
+        "edema": 54524,
+        "enhancing": 17276
+      }
+    },
+    {
+      "subject_index": 167,
+      "subject_id": "BraTS20_Training_168",
+      "volume_id": 168,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 27014,
+        "edema": 61825,
+        "enhancing": 74539
+      }
+    },
+    {
+      "subject_index": 168,
+      "subject_id": "BraTS20_Training_169",
+      "volume_id": 169,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 9905,
+        "edema": 19635,
+        "enhancing": 26241
+      }
+    },
+    {
+      "subject_index": 169,
+      "subject_id": "BraTS20_Training_170",
+      "volume_id": 170,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 11978,
+        "edema": 74657,
+        "enhancing": 13224
+      }
+    },
+    {
+      "subject_index": 170,
+      "subject_id": "BraTS20_Training_171",
+      "volume_id": 171,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 53224,
+        "edema": 76326,
+        "enhancing": 16944
+      }
+    },
+    {
+      "subject_index": 171,
+      "subject_id": "BraTS20_Training_172",
+      "volume_id": 172,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 130,
+      "voxels": {
+        "ncr_net": 3169,
+        "edema": 25665,
+        "enhancing": 8994
+      }
+    },
+    {
+      "subject_index": 172,
+      "subject_id": "BraTS20_Training_173",
+      "volume_id": 173,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 142,
+      "voxels": {
+        "ncr_net": 25826,
+        "edema": 94553,
+        "enhancing": 13892
+      }
+    },
+    {
+      "subject_index": 173,
+      "subject_id": "BraTS20_Training_174",
+      "volume_id": 174,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 3277,
+        "edema": 66878,
+        "enhancing": 25236
+      }
+    },
+    {
+      "subject_index": 174,
+      "subject_id": "BraTS20_Training_175",
+      "volume_id": 175,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 16013,
+        "edema": 91667,
+        "enhancing": 79009
+      }
+    },
+    {
+      "subject_index": 175,
+      "subject_id": "BraTS20_Training_176",
+      "volume_id": 176,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 42876,
+        "edema": 59124,
+        "enhancing": 3852
+      }
+    },
+    {
+      "subject_index": 176,
+      "subject_id": "BraTS20_Training_177",
+      "volume_id": 177,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 204,
+        "edema": 11711,
+        "enhancing": 1037
+      }
+    },
+    {
+      "subject_index": 177,
+      "subject_id": "BraTS20_Training_178",
+      "volume_id": 178,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 12627,
+        "edema": 33130,
+        "enhancing": 46904
+      }
+    },
+    {
+      "subject_index": 178,
+      "subject_id": "BraTS20_Training_179",
+      "volume_id": 179,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 1665,
+        "edema": 30118,
+        "enhancing": 35019
+      }
+    },
+    {
+      "subject_index": 179,
+      "subject_id": "BraTS20_Training_180",
+      "volume_id": 180,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 15826,
+        "edema": 83088,
+        "enhancing": 63709
+      }
+    },
+    {
+      "subject_index": 180,
+      "subject_id": "BraTS20_Training_181",
+      "volume_id": 181,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 125,
+      "voxels": {
+        "ncr_net": 736,
+        "edema": 48139,
+        "enhancing": 17941
+      }
+    },
+    {
+      "subject_index": 181,
+      "subject_id": "BraTS20_Training_182",
+      "volume_id": 182,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 2147,
+        "edema": 30952,
+        "enhancing": 9134
+      }
+    },
+    {
+      "subject_index": 182,
+      "subject_id": "BraTS20_Training_183",
+      "volume_id": 183,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 127,
+      "voxels": {
+        "ncr_net": 7195,
+        "edema": 129318,
+        "enhancing": 49748
+      }
+    },
+    {
+      "subject_index": 183,
+      "subject_id": "BraTS20_Training_184",
+      "volume_id": 184,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 133,
+      "voxels": {
+        "ncr_net": 15565,
+        "edema": 80426,
+        "enhancing": 26938
+      }
+    },
+    {
+      "subject_index": 184,
+      "subject_id": "BraTS20_Training_185",
+      "volume_id": 185,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 18787,
+        "edema": 38607,
+        "enhancing": 31255
+      }
+    },
+    {
+      "subject_index": 185,
+      "subject_id": "BraTS20_Training_186",
+      "volume_id": 186,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 128,
+      "voxels": {
+        "ncr_net": 8759,
+        "edema": 70998,
+        "enhancing": 50084
+      }
+    },
+    {
+      "subject_index": 186,
+      "subject_id": "BraTS20_Training_187",
+      "volume_id": 187,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 17111,
+        "edema": 34935,
+        "enhancing": 39514
+      }
+    },
+    {
+      "subject_index": 187,
+      "subject_id": "BraTS20_Training_188",
+      "volume_id": 188,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 126,
+      "voxels": {
+        "ncr_net": 1719,
+        "edema": 59056,
+        "enhancing": 6929
+      }
+    },
+    {
+      "subject_index": 188,
+      "subject_id": "BraTS20_Training_189",
+      "volume_id": 189,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 6401,
+        "edema": 68609,
+        "enhancing": 22125
+      }
+    },
+    {
+      "subject_index": 189,
+      "subject_id": "BraTS20_Training_190",
+      "volume_id": 190,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 143,
+      "voxels": {
+        "ncr_net": 326,
+        "edema": 35186,
+        "enhancing": 9769
+      }
+    },
+    {
+      "subject_index": 190,
+      "subject_id": "BraTS20_Training_191",
+      "volume_id": 191,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 15951,
+        "edema": 47101,
+        "enhancing": 87753
+      }
+    },
+    {
+      "subject_index": 191,
+      "subject_id": "BraTS20_Training_192",
+      "volume_id": 192,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 17388,
+        "edema": 72888,
+        "enhancing": 19875
+      }
+    },
+    {
+      "subject_index": 192,
+      "subject_id": "BraTS20_Training_193",
+      "volume_id": 193,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 145,
+      "voxels": {
+        "ncr_net": 23875,
+        "edema": 76498,
+        "enhancing": 29915
+      }
+    },
+    {
+      "subject_index": 193,
+      "subject_id": "BraTS20_Training_194",
+      "volume_id": 194,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 133,
+      "voxels": {
+        "ncr_net": 39266,
+        "edema": 21634,
+        "enhancing": 38724
+      }
+    },
+    {
+      "subject_index": 194,
+      "subject_id": "BraTS20_Training_195",
+      "volume_id": 195,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 11141,
+        "edema": 18410,
+        "enhancing": 21184
+      }
+    },
+    {
+      "subject_index": 195,
+      "subject_id": "BraTS20_Training_196",
+      "volume_id": 196,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 6284,
+        "edema": 123063,
+        "enhancing": 38840
+      }
+    },
+    {
+      "subject_index": 196,
+      "subject_id": "BraTS20_Training_197",
+      "volume_id": 197,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 18042,
+        "edema": 59483,
+        "enhancing": 54064
+      }
+    },
+    {
+      "subject_index": 197,
+      "subject_id": "BraTS20_Training_198",
+      "volume_id": 198,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 24961,
+        "edema": 51852,
+        "enhancing": 30381
+      }
+    },
+    {
+      "subject_index": 198,
+      "subject_id": "BraTS20_Training_199",
+      "volume_id": 199,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 3614,
+        "edema": 44701,
+        "enhancing": 33532
+      }
+    },
+    {
+      "subject_index": 199,
+      "subject_id": "BraTS20_Training_200",
+      "volume_id": 200,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 131,
+      "voxels": {
+        "ncr_net": 125,
+        "edema": 40134,
+        "enhancing": 4539
+      }
+    },
+    {
+      "subject_index": 200,
+      "subject_id": "BraTS20_Training_201",
+      "volume_id": 201,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 5991,
+        "edema": 133063,
+        "enhancing": 36248
+      }
+    },
+    {
+      "subject_index": 201,
+      "subject_id": "BraTS20_Training_202",
+      "volume_id": 202,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 18024,
+        "edema": 50981,
+        "enhancing": 28207
+      }
+    },
+    {
+      "subject_index": 202,
+      "subject_id": "BraTS20_Training_203",
+      "volume_id": 203,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 3940,
+        "edema": 76205,
+        "enhancing": 9371
+      }
+    },
+    {
+      "subject_index": 203,
+      "subject_id": "BraTS20_Training_204",
+      "volume_id": 204,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 460,
+        "edema": 9757,
+        "enhancing": 8858
+      }
+    },
+    {
+      "subject_index": 204,
+      "subject_id": "BraTS20_Training_205",
+      "volume_id": 205,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 343,
+        "edema": 26327,
+        "enhancing": 4439
+      }
+    },
+    {
+      "subject_index": 205,
+      "subject_id": "BraTS20_Training_206",
+      "volume_id": 206,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 113,
+      "voxels": {
+        "ncr_net": 319,
+        "edema": 18041,
+        "enhancing": 5096
+      }
+    },
+    {
+      "subject_index": 206,
+      "subject_id": "BraTS20_Training_207",
+      "volume_id": 207,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 2030,
+        "edema": 31713,
+        "enhancing": 25463
+      }
+    },
+    {
+      "subject_index": 207,
+      "subject_id": "BraTS20_Training_208",
+      "volume_id": 208,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 30888,
+        "edema": 98746,
+        "enhancing": 36506
+      }
+    },
+    {
+      "subject_index": 208,
+      "subject_id": "BraTS20_Training_209",
+      "volume_id": 209,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 24733,
+        "edema": 20156,
+        "enhancing": 19458
+      }
+    },
+    {
+      "subject_index": 209,
+      "subject_id": "BraTS20_Training_210",
+      "volume_id": 210,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 131,
+      "voxels": {
+        "ncr_net": 15982,
+        "edema": 112303,
+        "enhancing": 47361
+      }
+    },
+    {
+      "subject_index": 210,
+      "subject_id": "BraTS20_Training_211",
+      "volume_id": 211,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 11782,
+        "edema": 49555,
+        "enhancing": 18881
+      }
+    },
+    {
+      "subject_index": 211,
+      "subject_id": "BraTS20_Training_212",
+      "volume_id": 212,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 72190,
+        "edema": 84679,
+        "enhancing": 27851
+      }
+    },
+    {
+      "subject_index": 212,
+      "subject_id": "BraTS20_Training_213",
+      "volume_id": 213,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 4159,
+        "edema": 37895,
+        "enhancing": 15114
+      }
+    },
+    {
+      "subject_index": 213,
+      "subject_id": "BraTS20_Training_214",
+      "volume_id": 214,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 130,
+      "voxels": {
+        "ncr_net": 4749,
+        "edema": 76402,
+        "enhancing": 29059
+      }
+    },
+    {
+      "subject_index": 214,
+      "subject_id": "BraTS20_Training_215",
+      "volume_id": 215,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 130,
+      "voxels": {
+        "ncr_net": 10058,
+        "edema": 30670,
+        "enhancing": 25944
+      }
+    },
+    {
+      "subject_index": 215,
+      "subject_id": "BraTS20_Training_216",
+      "volume_id": 216,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 123,
+      "voxels": {
+        "ncr_net": 21996,
+        "edema": 21263,
+        "enhancing": 17097
+      }
+    },
+    {
+      "subject_index": 216,
+      "subject_id": "BraTS20_Training_217",
+      "volume_id": 217,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 3066,
+        "edema": 10105,
+        "enhancing": 8813
+      }
+    },
+    {
+      "subject_index": 217,
+      "subject_id": "BraTS20_Training_218",
+      "volume_id": 218,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 21404,
+        "edema": 28795,
+        "enhancing": 61113
+      }
+    },
+    {
+      "subject_index": 218,
+      "subject_id": "BraTS20_Training_219",
+      "volume_id": 219,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 7328,
+        "edema": 55793,
+        "enhancing": 14157
+      }
+    },
+    {
+      "subject_index": 219,
+      "subject_id": "BraTS20_Training_220",
+      "volume_id": 220,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 8884,
+        "edema": 90387,
+        "enhancing": 18666
+      }
+    },
+    {
+      "subject_index": 220,
+      "subject_id": "BraTS20_Training_221",
+      "volume_id": 221,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 17679,
+        "edema": 75286,
+        "enhancing": 68592
+      }
+    },
+    {
+      "subject_index": 221,
+      "subject_id": "BraTS20_Training_222",
+      "volume_id": 222,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 2287,
+        "edema": 19594,
+        "enhancing": 8609
+      }
+    },
+    {
+      "subject_index": 222,
+      "subject_id": "BraTS20_Training_223",
+      "volume_id": 223,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 2506,
+        "edema": 126649,
+        "enhancing": 30477
+      }
+    },
+    {
+      "subject_index": 223,
+      "subject_id": "BraTS20_Training_224",
+      "volume_id": 224,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 35326,
+        "edema": 54288,
+        "enhancing": 58416
+      }
+    },
+    {
+      "subject_index": 224,
+      "subject_id": "BraTS20_Training_225",
+      "volume_id": 225,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 133,
+      "voxels": {
+        "ncr_net": 8971,
+        "edema": 85913,
+        "enhancing": 111250
+      }
+    },
+    {
+      "subject_index": 225,
+      "subject_id": "BraTS20_Training_226",
+      "volume_id": 226,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 141,
+      "voxels": {
+        "ncr_net": 7774,
+        "edema": 21238,
+        "enhancing": 40616
+      }
+    },
+    {
+      "subject_index": 226,
+      "subject_id": "BraTS20_Training_227",
+      "volume_id": 227,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 133,
+      "voxels": {
+        "ncr_net": 1167,
+        "edema": 46780,
+        "enhancing": 4951
+      }
+    },
+    {
+      "subject_index": 227,
+      "subject_id": "BraTS20_Training_228",
+      "volume_id": 228,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 128,
+      "voxels": {
+        "ncr_net": 3342,
+        "edema": 59575,
+        "enhancing": 10910
+      }
+    },
+    {
+      "subject_index": 228,
+      "subject_id": "BraTS20_Training_229",
+      "volume_id": 229,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 6323,
+        "edema": 39147,
+        "enhancing": 29516
+      }
+    },
+    {
+      "subject_index": 229,
+      "subject_id": "BraTS20_Training_230",
+      "volume_id": 230,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 123,
+      "voxels": {
+        "ncr_net": 574,
+        "edema": 75076,
+        "enhancing": 15090
+      }
+    },
+    {
+      "subject_index": 230,
+      "subject_id": "BraTS20_Training_231",
+      "volume_id": 231,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 4556,
+        "edema": 87165,
+        "enhancing": 40450
+      }
+    },
+    {
+      "subject_index": 231,
+      "subject_id": "BraTS20_Training_232",
+      "volume_id": 232,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 7311,
+        "edema": 74917,
+        "enhancing": 9523
+      }
+    },
+    {
+      "subject_index": 232,
+      "subject_id": "BraTS20_Training_233",
+      "volume_id": 233,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 60,
+        "edema": 14046,
+        "enhancing": 2642
+      }
+    },
+    {
+      "subject_index": 233,
+      "subject_id": "BraTS20_Training_234",
+      "volume_id": 234,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 97830,
+        "edema": 47925,
+        "enhancing": 11994
+      }
+    },
+    {
+      "subject_index": 234,
+      "subject_id": "BraTS20_Training_235",
+      "volume_id": 235,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 129,
+      "voxels": {
+        "ncr_net": 52012,
+        "edema": 83495,
+        "enhancing": 65092
+      }
+    },
+    {
+      "subject_index": 235,
+      "subject_id": "BraTS20_Training_236",
+      "volume_id": 236,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 10326,
+        "edema": 112410,
+        "enhancing": 47182
+      }
+    },
+    {
+      "subject_index": 236,
+      "subject_id": "BraTS20_Training_237",
+      "volume_id": 237,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 126,
+      "voxels": {
+        "ncr_net": 9487,
+        "edema": 135912,
+        "enhancing": 16998
+      }
+    },
+    {
+      "subject_index": 237,
+      "subject_id": "BraTS20_Training_238",
+      "volume_id": 238,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 76834,
+        "edema": 60217,
+        "enhancing": 39005
+      }
+    },
+    {
+      "subject_index": 238,
+      "subject_id": "BraTS20_Training_239",
+      "volume_id": 239,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 10590,
+        "edema": 57158,
+        "enhancing": 7337
+      }
+    },
+    {
+      "subject_index": 239,
+      "subject_id": "BraTS20_Training_240",
+      "volume_id": 240,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 31605,
+        "edema": 131242,
+        "enhancing": 5899
+      }
+    },
+    {
+      "subject_index": 240,
+      "subject_id": "BraTS20_Training_241",
+      "volume_id": 241,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 23009,
+        "edema": 156055,
+        "enhancing": 48062
+      }
+    },
+    {
+      "subject_index": 241,
+      "subject_id": "BraTS20_Training_242",
+      "volume_id": 242,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 130,
+      "voxels": {
+        "ncr_net": 8769,
+        "edema": 18711,
+        "enhancing": 27478
+      }
+    },
+    {
+      "subject_index": 242,
+      "subject_id": "BraTS20_Training_243",
+      "volume_id": 243,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 5985,
+        "edema": 133610,
+        "enhancing": 14523
+      }
+    },
+    {
+      "subject_index": 243,
+      "subject_id": "BraTS20_Training_244",
+      "volume_id": 244,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 142,
+      "voxels": {
+        "ncr_net": 35617,
+        "edema": 87050,
+        "enhancing": 26937
+      }
+    },
+    {
+      "subject_index": 244,
+      "subject_id": "BraTS20_Training_245",
+      "volume_id": 245,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 8116,
+        "edema": 79512,
+        "enhancing": 69134
+      }
+    },
+    {
+      "subject_index": 245,
+      "subject_id": "BraTS20_Training_246",
+      "volume_id": 246,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 22932,
+        "edema": 21432,
+        "enhancing": 26417
+      }
+    },
+    {
+      "subject_index": 246,
+      "subject_id": "BraTS20_Training_247",
+      "volume_id": 247,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 32228,
+        "edema": 53697,
+        "enhancing": 52126
+      }
+    },
+    {
+      "subject_index": 247,
+      "subject_id": "BraTS20_Training_248",
+      "volume_id": 248,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 29581,
+        "edema": 21267,
+        "enhancing": 36345
+      }
+    },
+    {
+      "subject_index": 248,
+      "subject_id": "BraTS20_Training_249",
+      "volume_id": 249,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 1590,
+        "edema": 37067,
+        "enhancing": 20160
+      }
+    },
+    {
+      "subject_index": 249,
+      "subject_id": "BraTS20_Training_250",
+      "volume_id": 250,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 47,
+        "edema": 70526,
+        "enhancing": 3218
+      }
+    },
+    {
+      "subject_index": 250,
+      "subject_id": "BraTS20_Training_251",
+      "volume_id": 251,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 3274,
+        "edema": 62021,
+        "enhancing": 17626
+      }
+    },
+    {
+      "subject_index": 251,
+      "subject_id": "BraTS20_Training_252",
+      "volume_id": 252,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 28927,
+        "edema": 130784,
+        "enhancing": 44531
+      }
+    },
+    {
+      "subject_index": 252,
+      "subject_id": "BraTS20_Training_253",
+      "volume_id": 253,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 11694,
+        "edema": 17488,
+        "enhancing": 14699
+      }
+    },
+    {
+      "subject_index": 253,
+      "subject_id": "BraTS20_Training_254",
+      "volume_id": 254,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 131,
+      "voxels": {
+        "ncr_net": 9087,
+        "edema": 88963,
+        "enhancing": 58556
+      }
+    },
+    {
+      "subject_index": 254,
+      "subject_id": "BraTS20_Training_255",
+      "volume_id": 255,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 133,
+      "voxels": {
+        "ncr_net": 26654,
+        "edema": 57398,
+        "enhancing": 79560
+      }
+    },
+    {
+      "subject_index": 255,
+      "subject_id": "BraTS20_Training_256",
+      "volume_id": 256,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 141,
+      "voxels": {
+        "ncr_net": 48940,
+        "edema": 45957,
+        "enhancing": 77776
+      }
+    },
+    {
+      "subject_index": 256,
+      "subject_id": "BraTS20_Training_257",
+      "volume_id": 257,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 133,
+      "voxels": {
+        "ncr_net": 1523,
+        "edema": 69570,
+        "enhancing": 10930
+      }
+    },
+    {
+      "subject_index": 257,
+      "subject_id": "BraTS20_Training_258",
+      "volume_id": 258,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 37590,
+        "edema": 58885,
+        "enhancing": 26259
+      }
+    },
+    {
+      "subject_index": 258,
+      "subject_id": "BraTS20_Training_259",
+      "volume_id": 259,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 127,
+      "voxels": {
+        "ncr_net": 2593,
+        "edema": 105764,
+        "enhancing": 10957
+      }
+    },
+    {
+      "subject_index": 259,
+      "subject_id": "BraTS20_Training_260",
+      "volume_id": 260,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 130,
+      "voxels": {
+        "ncr_net": 21279,
+        "edema": 10787,
+        "enhancing": 17858
+      }
+    },
+    {
+      "subject_index": 260,
+      "subject_id": "BraTS20_Training_261",
+      "volume_id": 261,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 131,
+      "voxels": {
+        "ncr_net": 91102,
+        "edema": 147619,
+        "enhancing": 9546
+      }
+    },
+    {
+      "subject_index": 261,
+      "subject_id": "BraTS20_Training_262",
+      "volume_id": 262,
+      "grade": "lgg",
+      "split": "val",
+      "slices": 133,
+      "voxels": {
+        "ncr_net": 5522,
+        "edema": 58585,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 262,
+      "subject_id": "BraTS20_Training_263",
+      "volume_id": 263,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 129,
+      "voxels": {
+        "ncr_net": 4487,
+        "edema": 25954,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 263,
+      "subject_id": "BraTS20_Training_264",
+      "volume_id": 264,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 16887,
+        "edema": 8737,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 264,
+      "subject_id": "BraTS20_Training_265",
+      "volume_id": 265,
+      "grade": "lgg",
+      "split": "val",
+      "slices": 127,
+      "voxels": {
+        "ncr_net": 43406,
+        "edema": 18340,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 265,
+      "subject_id": "BraTS20_Training_266",
+      "volume_id": 266,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 28736,
+        "edema": 24538,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 266,
+      "subject_id": "BraTS20_Training_267",
+      "volume_id": 267,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 131,
+      "voxels": {
+        "ncr_net": 50041,
+        "edema": 24328,
+        "enhancing": 5256
+      }
+    },
+    {
+      "subject_index": 267,
+      "subject_id": "BraTS20_Training_268",
+      "volume_id": 268,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 129,
+      "voxels": {
+        "ncr_net": 9329,
+        "edema": 9561,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 268,
+      "subject_id": "BraTS20_Training_269",
+      "volume_id": 269,
+      "grade": "lgg",
+      "split": "val",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 20173,
+        "edema": 15266,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 269,
+      "subject_id": "BraTS20_Training_270",
+      "volume_id": 270,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 121,
+      "voxels": {
+        "ncr_net": 7965,
+        "edema": 80130,
+        "enhancing": 60285
+      }
+    },
+    {
+      "subject_index": 270,
+      "subject_id": "BraTS20_Training_271",
+      "volume_id": 271,
+      "grade": "lgg",
+      "split": "val",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 23189,
+        "edema": 27760,
+        "enhancing": 224
+      }
+    },
+    {
+      "subject_index": 271,
+      "subject_id": "BraTS20_Training_272",
+      "volume_id": 272,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 77985,
+        "edema": 117448,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 272,
+      "subject_id": "BraTS20_Training_273",
+      "volume_id": 273,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 110787,
+        "edema": 118819,
+        "enhancing": 1276
+      }
+    },
+    {
+      "subject_index": 273,
+      "subject_id": "BraTS20_Training_274",
+      "volume_id": 274,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 93298,
+        "edema": 7407,
+        "enhancing": 89546
+      }
+    },
+    {
+      "subject_index": 274,
+      "subject_id": "BraTS20_Training_275",
+      "volume_id": 275,
+      "grade": "lgg",
+      "split": "test",
+      "slices": 125,
+      "voxels": {
+        "ncr_net": 10557,
+        "edema": 24143,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 275,
+      "subject_id": "BraTS20_Training_276",
+      "volume_id": 276,
+      "grade": "lgg",
+      "split": "test",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 1501,
+        "edema": 52436,
+        "enhancing": 2575
+      }
+    },
+    {
+      "subject_index": 276,
+      "subject_id": "BraTS20_Training_277",
+      "volume_id": 277,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 1441,
+        "edema": 27169,
+        "enhancing": 1463
+      }
+    },
+    {
+      "subject_index": 277,
+      "subject_id": "BraTS20_Training_278",
+      "volume_id": 278,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 59424,
+        "edema": 48440,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 278,
+      "subject_id": "BraTS20_Training_279",
+      "volume_id": 279,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 135025,
+        "edema": 27678,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 279,
+      "subject_id": "BraTS20_Training_280",
+      "volume_id": 280,
+      "grade": "lgg",
+      "split": "test",
+      "slices": 131,
+      "voxels": {
+        "ncr_net": 135,
+        "edema": 38411,
+        "enhancing": 691
+      }
+    },
+    {
+      "subject_index": 280,
+      "subject_id": "BraTS20_Training_281",
+      "volume_id": 281,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 21802,
+        "edema": 121265,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 281,
+      "subject_id": "BraTS20_Training_282",
+      "volume_id": 282,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 5967,
+        "edema": 72512,
+        "enhancing": 6642
+      }
+    },
+    {
+      "subject_index": 282,
+      "subject_id": "BraTS20_Training_283",
+      "volume_id": 283,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 148,
+        "edema": 35008,
+        "enhancing": 11280
+      }
+    },
+    {
+      "subject_index": 283,
+      "subject_id": "BraTS20_Training_284",
+      "volume_id": 284,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 138162,
+        "edema": 54457,
+        "enhancing": 3562
+      }
+    },
+    {
+      "subject_index": 284,
+      "subject_id": "BraTS20_Training_285",
+      "volume_id": 285,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 74556,
+        "edema": 31120,
+        "enhancing": 7613
+      }
+    },
+    {
+      "subject_index": 285,
+      "subject_id": "BraTS20_Training_286",
+      "volume_id": 286,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 21004,
+        "edema": 2840,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 286,
+      "subject_id": "BraTS20_Training_287",
+      "volume_id": 287,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 130,
+      "voxels": {
+        "ncr_net": 2247,
+        "edema": 19499,
+        "enhancing": 27264
+      }
+    },
+    {
+      "subject_index": 287,
+      "subject_id": "BraTS20_Training_288",
+      "volume_id": 288,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 18873,
+        "edema": 39845,
+        "enhancing": 18283
+      }
+    },
+    {
+      "subject_index": 288,
+      "subject_id": "BraTS20_Training_289",
+      "volume_id": 289,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 42264,
+        "edema": 149283,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 289,
+      "subject_id": "BraTS20_Training_290",
+      "volume_id": 290,
+      "grade": "lgg",
+      "split": "val",
+      "slices": 133,
+      "voxels": {
+        "ncr_net": 2236,
+        "edema": 213963,
+        "enhancing": 4085
+      }
+    },
+    {
+      "subject_index": 290,
+      "subject_id": "BraTS20_Training_291",
+      "volume_id": 291,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 57156,
+        "edema": 160981,
+        "enhancing": 126
+      }
+    },
+    {
+      "subject_index": 291,
+      "subject_id": "BraTS20_Training_292",
+      "volume_id": 292,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 50014,
+        "edema": 23191,
+        "enhancing": 3815
+      }
+    },
+    {
+      "subject_index": 292,
+      "subject_id": "BraTS20_Training_293",
+      "volume_id": 293,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 131,
+      "voxels": {
+        "ncr_net": 80122,
+        "edema": 178652,
+        "enhancing": 39301
+      }
+    },
+    {
+      "subject_index": 293,
+      "subject_id": "BraTS20_Training_294",
+      "volume_id": 294,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 36124,
+        "edema": 46690,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 294,
+      "subject_id": "BraTS20_Training_295",
+      "volume_id": 295,
+      "grade": "lgg",
+      "split": "test",
+      "slices": 133,
+      "voxels": {
+        "ncr_net": 10250,
+        "edema": 14525,
+        "enhancing": 518
+      }
+    },
+    {
+      "subject_index": 295,
+      "subject_id": "BraTS20_Training_296",
+      "volume_id": 296,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 128,
+      "voxels": {
+        "ncr_net": 72158,
+        "edema": 72771,
+        "enhancing": 17176
+      }
+    },
+    {
+      "subject_index": 296,
+      "subject_id": "BraTS20_Training_297",
+      "volume_id": 297,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 24514,
+        "edema": 50352,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 297,
+      "subject_id": "BraTS20_Training_298",
+      "volume_id": 298,
+      "grade": "lgg",
+      "split": "test",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 14413,
+        "edema": 31183,
+        "enhancing": 94
+      }
+    },
+    {
+      "subject_index": 298,
+      "subject_id": "BraTS20_Training_299",
+      "volume_id": 299,
+      "grade": "lgg",
+      "split": "test",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 87110,
+        "edema": 23249,
+        "enhancing": 659
+      }
+    },
+    {
+      "subject_index": 299,
+      "subject_id": "BraTS20_Training_300",
+      "volume_id": 300,
+      "grade": "lgg",
+      "split": "test",
+      "slices": 127,
+      "voxels": {
+        "ncr_net": 65946,
+        "edema": 28431,
+        "enhancing": 1072
+      }
+    },
+    {
+      "subject_index": 300,
+      "subject_id": "BraTS20_Training_301",
+      "volume_id": 301,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 53557,
+        "edema": 115786,
+        "enhancing": 3873
+      }
+    },
+    {
+      "subject_index": 301,
+      "subject_id": "BraTS20_Training_302",
+      "volume_id": 302,
+      "grade": "lgg",
+      "split": "val",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 100261,
+        "edema": 13194,
+        "enhancing": 2162
+      }
+    },
+    {
+      "subject_index": 302,
+      "subject_id": "BraTS20_Training_303",
+      "volume_id": 303,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 131,
+      "voxels": {
+        "ncr_net": 23874,
+        "edema": 10653,
+        "enhancing": 1324
+      }
+    },
+    {
+      "subject_index": 303,
+      "subject_id": "BraTS20_Training_304",
+      "volume_id": 304,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 130,
+      "voxels": {
+        "ncr_net": 27850,
+        "edema": 3320,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 304,
+      "subject_id": "BraTS20_Training_305",
+      "volume_id": 305,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 71627,
+        "edema": 53794,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 305,
+      "subject_id": "BraTS20_Training_306",
+      "volume_id": 306,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 97103,
+        "edema": 83621,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 306,
+      "subject_id": "BraTS20_Training_307",
+      "volume_id": 307,
+      "grade": "lgg",
+      "split": "test",
+      "slices": 129,
+      "voxels": {
+        "ncr_net": 94173,
+        "edema": 53582,
+        "enhancing": 32
+      }
+    },
+    {
+      "subject_index": 307,
+      "subject_id": "BraTS20_Training_308",
+      "volume_id": 308,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 128,
+      "voxels": {
+        "ncr_net": 146041,
+        "edema": 49316,
+        "enhancing": 7070
+      }
+    },
+    {
+      "subject_index": 308,
+      "subject_id": "BraTS20_Training_309",
+      "volume_id": 309,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 103582,
+        "edema": 51717,
+        "enhancing": 1976
+      }
+    },
+    {
+      "subject_index": 309,
+      "subject_id": "BraTS20_Training_310",
+      "volume_id": 310,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 142,
+      "voxels": {
+        "ncr_net": 93990,
+        "edema": 81377,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 310,
+      "subject_id": "BraTS20_Training_311",
+      "volume_id": 311,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 131,
+      "voxels": {
+        "ncr_net": 7040,
+        "edema": 22743,
+        "enhancing": 540
+      }
+    },
+    {
+      "subject_index": 311,
+      "subject_id": "BraTS20_Training_312",
+      "volume_id": 312,
+      "grade": "lgg",
+      "split": "val",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 65330,
+        "edema": 93209,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 312,
+      "subject_id": "BraTS20_Training_313",
+      "volume_id": 313,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 82655,
+        "edema": 87421,
+        "enhancing": 957
+      }
+    },
+    {
+      "subject_index": 313,
+      "subject_id": "BraTS20_Training_314",
+      "volume_id": 314,
+      "grade": "lgg",
+      "split": "test",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 687,
+        "edema": 23814,
+        "enhancing": 2810
+      }
+    },
+    {
+      "subject_index": 314,
+      "subject_id": "BraTS20_Training_315",
+      "volume_id": 315,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 22438,
+        "edema": 11679,
+        "enhancing": 109
+      }
+    },
+    {
+      "subject_index": 315,
+      "subject_id": "BraTS20_Training_316",
+      "volume_id": 316,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 91349,
+        "edema": 139017,
+        "enhancing": 1585
+      }
+    },
+    {
+      "subject_index": 316,
+      "subject_id": "BraTS20_Training_317",
+      "volume_id": 317,
+      "grade": "lgg",
+      "split": "val",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 2705,
+        "edema": 14226,
+        "enhancing": 3794
+      }
+    },
+    {
+      "subject_index": 317,
+      "subject_id": "BraTS20_Training_318",
+      "volume_id": 318,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 158020,
+        "edema": 52311,
+        "enhancing": 1855
+      }
+    },
+    {
+      "subject_index": 318,
+      "subject_id": "BraTS20_Training_319",
+      "volume_id": 319,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 128,
+      "voxels": {
+        "ncr_net": 83603,
+        "edema": 33391,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 319,
+      "subject_id": "BraTS20_Training_320",
+      "volume_id": 320,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 1972,
+        "edema": 27136,
+        "enhancing": 8358
+      }
+    },
+    {
+      "subject_index": 320,
+      "subject_id": "BraTS20_Training_321",
+      "volume_id": 321,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 28605,
+        "edema": 36632,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 321,
+      "subject_id": "BraTS20_Training_322",
+      "volume_id": 322,
+      "grade": "lgg",
+      "split": "val",
+      "slices": 141,
+      "voxels": {
+        "ncr_net": 62001,
+        "edema": 25407,
+        "enhancing": 119
+      }
+    },
+    {
+      "subject_index": 322,
+      "subject_id": "BraTS20_Training_323",
+      "volume_id": 323,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 100036,
+        "edema": 127388,
+        "enhancing": 4674
+      }
+    },
+    {
+      "subject_index": 323,
+      "subject_id": "BraTS20_Training_324",
+      "volume_id": 324,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 50291,
+        "edema": 18002,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 324,
+      "subject_id": "BraTS20_Training_325",
+      "volume_id": 325,
+      "grade": "lgg",
+      "split": "val",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 9634,
+        "edema": 7323,
+        "enhancing": 125
+      }
+    },
+    {
+      "subject_index": 325,
+      "subject_id": "BraTS20_Training_326",
+      "volume_id": 326,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 124159,
+        "edema": 0,
+        "enhancing": 1194
+      }
+    },
+    {
+      "subject_index": 326,
+      "subject_id": "BraTS20_Training_327",
+      "volume_id": 327,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 134624,
+        "edema": 32351,
+        "enhancing": 16868
+      }
+    },
+    {
+      "subject_index": 327,
+      "subject_id": "BraTS20_Training_328",
+      "volume_id": 328,
+      "grade": "lgg",
+      "split": "test",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 189152,
+        "edema": 171595,
+        "enhancing": 1036
+      }
+    },
+    {
+      "subject_index": 328,
+      "subject_id": "BraTS20_Training_329",
+      "volume_id": 329,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 129,
+      "voxels": {
+        "ncr_net": 45782,
+        "edema": 17153,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 329,
+      "subject_id": "BraTS20_Training_330",
+      "volume_id": 330,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 32724,
+        "edema": 20901,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 330,
+      "subject_id": "BraTS20_Training_331",
+      "volume_id": 331,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 8685,
+        "edema": 39080,
+        "enhancing": 2093
+      }
+    },
+    {
+      "subject_index": 331,
+      "subject_id": "BraTS20_Training_332",
+      "volume_id": 332,
+      "grade": "lgg",
+      "split": "test",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 437,
+        "edema": 54079,
+        "enhancing": 1929
+      }
+    },
+    {
+      "subject_index": 332,
+      "subject_id": "BraTS20_Training_333",
+      "volume_id": 333,
+      "grade": "lgg",
+      "split": "train",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 168606,
+        "edema": 11325,
+        "enhancing": 8755
+      }
+    },
+    {
+      "subject_index": 333,
+      "subject_id": "BraTS20_Training_334",
+      "volume_id": 334,
+      "grade": "lgg",
+      "split": "test",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 1012,
+        "edema": 138739,
+        "enhancing": 11757
+      }
+    },
+    {
+      "subject_index": 334,
+      "subject_id": "BraTS20_Training_335",
+      "volume_id": 335,
+      "grade": "lgg",
+      "split": "val",
+      "slices": 141,
+      "voxels": {
+        "ncr_net": 60154,
+        "edema": 76180,
+        "enhancing": 0
+      }
+    },
+    {
+      "subject_index": 335,
+      "subject_id": "BraTS20_Training_336",
+      "volume_id": 336,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 133,
+      "voxels": {
+        "ncr_net": 35787,
+        "edema": 37052,
+        "enhancing": 32177
+      }
+    },
+    {
+      "subject_index": 336,
+      "subject_id": "BraTS20_Training_337",
+      "volume_id": 337,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 131,
+      "voxels": {
+        "ncr_net": 21669,
+        "edema": 62066,
+        "enhancing": 28232
+      }
+    },
+    {
+      "subject_index": 337,
+      "subject_id": "BraTS20_Training_338",
+      "volume_id": 338,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 131,
+      "voxels": {
+        "ncr_net": 16741,
+        "edema": 74593,
+        "enhancing": 47126
+      }
+    },
+    {
+      "subject_index": 338,
+      "subject_id": "BraTS20_Training_339",
+      "volume_id": 339,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 133,
+      "voxels": {
+        "ncr_net": 25485,
+        "edema": 83375,
+        "enhancing": 38523
+      }
+    },
+    {
+      "subject_index": 339,
+      "subject_id": "BraTS20_Training_340",
+      "volume_id": 340,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 127,
+      "voxels": {
+        "ncr_net": 16395,
+        "edema": 30415,
+        "enhancing": 30930
+      }
+    },
+    {
+      "subject_index": 340,
+      "subject_id": "BraTS20_Training_341",
+      "volume_id": 341,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 404,
+        "edema": 4846,
+        "enhancing": 7220
+      }
+    },
+    {
+      "subject_index": 341,
+      "subject_id": "BraTS20_Training_342",
+      "volume_id": 342,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 134,
+      "voxels": {
+        "ncr_net": 54816,
+        "edema": 38332,
+        "enhancing": 57055
+      }
+    },
+    {
+      "subject_index": 342,
+      "subject_id": "BraTS20_Training_343",
+      "volume_id": 343,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 137,
+      "voxels": {
+        "ncr_net": 28032,
+        "edema": 96204,
+        "enhancing": 33164
+      }
+    },
+    {
+      "subject_index": 343,
+      "subject_id": "BraTS20_Training_344",
+      "volume_id": 344,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 124,
+      "voxels": {
+        "ncr_net": 10448,
+        "edema": 59644,
+        "enhancing": 8988
+      }
+    },
+    {
+      "subject_index": 344,
+      "subject_id": "BraTS20_Training_345",
+      "volume_id": 345,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 130,
+      "voxels": {
+        "ncr_net": 210,
+        "edema": 89636,
+        "enhancing": 5942
+      }
+    },
+    {
+      "subject_index": 345,
+      "subject_id": "BraTS20_Training_346",
+      "volume_id": 346,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 133,
+      "voxels": {
+        "ncr_net": 39495,
+        "edema": 10713,
+        "enhancing": 28376
+      }
+    },
+    {
+      "subject_index": 346,
+      "subject_id": "BraTS20_Training_347",
+      "volume_id": 347,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 7659,
+        "edema": 79073,
+        "enhancing": 24882
+      }
+    },
+    {
+      "subject_index": 347,
+      "subject_id": "BraTS20_Training_348",
+      "volume_id": 348,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 16282,
+        "edema": 25068,
+        "enhancing": 43762
+      }
+    },
+    {
+      "subject_index": 348,
+      "subject_id": "BraTS20_Training_349",
+      "volume_id": 349,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 101,
+      "voxels": {
+        "ncr_net": 48271,
+        "edema": 66713,
+        "enhancing": 58809
+      }
+    },
+    {
+      "subject_index": 349,
+      "subject_id": "BraTS20_Training_350",
+      "volume_id": 350,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 141,
+      "voxels": {
+        "ncr_net": 10403,
+        "edema": 58299,
+        "enhancing": 38973
+      }
+    },
+    {
+      "subject_index": 350,
+      "subject_id": "BraTS20_Training_351",
+      "volume_id": 351,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 135,
+      "voxels": {
+        "ncr_net": 3290,
+        "edema": 79582,
+        "enhancing": 16124
+      }
+    },
+    {
+      "subject_index": 351,
+      "subject_id": "BraTS20_Training_352",
+      "volume_id": 352,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 141,
+      "voxels": {
+        "ncr_net": 365,
+        "edema": 42315,
+        "enhancing": 9110
+      }
+    },
+    {
+      "subject_index": 352,
+      "subject_id": "BraTS20_Training_353",
+      "volume_id": 353,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 140,
+      "voxels": {
+        "ncr_net": 5595,
+        "edema": 31823,
+        "enhancing": 9120
+      }
+    },
+    {
+      "subject_index": 353,
+      "subject_id": "BraTS20_Training_354",
+      "volume_id": 354,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 37851,
+        "edema": 72218,
+        "enhancing": 60230
+      }
+    },
+    {
+      "subject_index": 354,
+      "subject_id": "BraTS20_Training_355",
+      "volume_id": 355,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 127,
+      "voxels": {
+        "ncr_net": 32235,
+        "edema": 45483,
+        "enhancing": 60267
+      }
+    },
+    {
+      "subject_index": 355,
+      "subject_id": "BraTS20_Training_356",
+      "volume_id": 356,
+      "grade": "hgg",
+      "split": "val",
+      "slices": 139,
+      "voxels": {
+        "ncr_net": 10805,
+        "edema": 11711,
+        "enhancing": 20127
+      }
+    },
+    {
+      "subject_index": 356,
+      "subject_id": "BraTS20_Training_357",
+      "volume_id": 357,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 100,
+      "voxels": {
+        "ncr_net": 10057,
+        "edema": 34600,
+        "enhancing": 14708
+      }
+    },
+    {
+      "subject_index": 357,
+      "subject_id": "BraTS20_Training_358",
+      "volume_id": 358,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 132,
+      "voxels": {
+        "ncr_net": 3174,
+        "edema": 92292,
+        "enhancing": 12469
+      }
+    },
+    {
+      "subject_index": 358,
+      "subject_id": "BraTS20_Training_359",
+      "volume_id": 359,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 129,
+      "voxels": {
+        "ncr_net": 19921,
+        "edema": 33390,
+        "enhancing": 31534
+      }
+    },
+    {
+      "subject_index": 359,
+      "subject_id": "BraTS20_Training_360",
+      "volume_id": 360,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 97,
+      "voxels": {
+        "ncr_net": 12759,
+        "edema": 41989,
+        "enhancing": 43764
+      }
+    },
+    {
+      "subject_index": 360,
+      "subject_id": "BraTS20_Training_361",
+      "volume_id": 361,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 136,
+      "voxels": {
+        "ncr_net": 2958,
+        "edema": 75309,
+        "enhancing": 282
+      }
+    },
+    {
+      "subject_index": 361,
+      "subject_id": "BraTS20_Training_362",
+      "volume_id": 362,
+      "grade": "hgg",
+      "split": "test",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 20797,
+        "edema": 98455,
+        "enhancing": 39129
+      }
+    },
+    {
+      "subject_index": 362,
+      "subject_id": "BraTS20_Training_363",
+      "volume_id": 363,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 120,
+      "voxels": {
+        "ncr_net": 23887,
+        "edema": 49966,
+        "enhancing": 46541
+      }
+    },
+    {
+      "subject_index": 363,
+      "subject_id": "BraTS20_Training_364",
+      "volume_id": 364,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 19642,
+        "edema": 47861,
+        "enhancing": 30508
+      }
+    },
+    {
+      "subject_index": 364,
+      "subject_id": "BraTS20_Training_365",
+      "volume_id": 365,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 126,
+      "voxels": {
+        "ncr_net": 32310,
+        "edema": 84019,
+        "enhancing": 31532
+      }
+    },
+    {
+      "subject_index": 365,
+      "subject_id": "BraTS20_Training_366",
+      "volume_id": 366,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 89,
+      "voxels": {
+        "ncr_net": 3916,
+        "edema": 22567,
+        "enhancing": 19747
+      }
+    },
+    {
+      "subject_index": 366,
+      "subject_id": "BraTS20_Training_367",
+      "volume_id": 367,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 138,
+      "voxels": {
+        "ncr_net": 1976,
+        "edema": 105182,
+        "enhancing": 19484
+      }
+    },
+    {
+      "subject_index": 367,
+      "subject_id": "BraTS20_Training_368",
+      "volume_id": 368,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 131,
+      "voxels": {
+        "ncr_net": 1331,
+        "edema": 65474,
+        "enhancing": 16658
+      }
+    },
+    {
+      "subject_index": 368,
+      "subject_id": "BraTS20_Training_369",
+      "volume_id": 369,
+      "grade": "hgg",
+      "split": "train",
+      "slices": 144,
+      "voxels": {
+        "ncr_net": 20589,
+        "edema": 161522,
+        "enhancing": 42721
+      }
+    }
+  ],
+  "runtime_seconds": 5337.9
+}

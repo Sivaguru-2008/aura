@@ -189,12 +189,66 @@ def _sensitivity_floor_threshold(p: np.ndarray, y: np.ndarray, floor: float) -> 
     return best_t if best_t is not None else _best_f1_threshold(p, y)
 
 
+def _operating_point(p: np.ndarray, y: np.ndarray, t: float) -> dict[str, float]:
+    """Threshold ``t`` with the precision and recall it achieves on (p, y)."""
+    y = np.asarray(y, int)
+    pred = p >= t
+    tp = int((pred & (y == 1)).sum())
+    fp = int((pred & (y == 0)).sum())
+    fn = int((~pred & (y == 1)).sum())
+    return {"threshold": round(float(t), 4),
+            "precision": round(tp / (tp + fp), 4) if tp + fp else 0.0,
+            "recall": round(tp / (tp + fn), 4) if tp + fn else 0.0}
+
+
+def _specificity_guard_threshold(p: np.ndarray, y: np.ndarray,
+                                 min_precision: float = 0.75) -> float | None:
+    """The threshold with the most recall among those whose precision reaches
+    ``min_precision``; None when none does.
+
+    At 2-18% prevalence a precision target can be out of reach for a finding. Returning
+    the nearest miss instead would label an operating point with a precision it does not
+    have.
+    """
+    y = np.asarray(y, int)
+    positives = int(y.sum())
+    if positives == 0 or positives == len(y):
+        return None
+    best_t, max_recall = None, -1.0
+    for t in np.unique(np.round(p, 4)):
+        pred = p >= t
+        tp = int((pred & (y == 1)).sum())
+        fp = int((pred & (y == 0)).sum())
+        precision = tp / (tp + fp) if tp + fp else 0.0
+        recall = tp / positives
+        if precision >= min_precision and recall > max_recall:
+            max_recall, best_t = recall, float(t)
+    return best_t
+
+
 def select_threshold(p: np.ndarray, y: np.ndarray, finding: str) -> tuple[float, str]:
     """Per-finding operating point under ``SENSITIVITY_FLOOR``. Returns (thr, policy)."""
     floor = SENSITIVITY_FLOOR.get(finding)
     if floor is None:
         return _best_f1_threshold(p, y), "f1_optimal"
     return _sensitivity_floor_threshold(p, y, floor), f"sensitivity_floor>={floor:.2f}"
+
+
+def select_multi_mode_thresholds(p: np.ndarray, y: np.ndarray,
+                                 finding: str) -> dict[str, dict[str, float] | None]:
+    """Fitted operating points for the triage, balanced and specificity_guard modes.
+
+    Each carries the precision and recall it achieved on (p, y), so a mode written to the
+    serving calibration states what it does rather than what it was meant to do.
+    specificity_guard is None where precision 0.75 is out of reach.
+    """
+    triage_t, _ = select_threshold(p, y, finding)
+    guard_t = _specificity_guard_threshold(p, y, min_precision=0.75)
+    return {
+        "triage": _operating_point(p, y, triage_t),
+        "balanced": _operating_point(p, y, _best_f1_threshold(p, y)),
+        "specificity_guard": None if guard_t is None else _operating_point(p, y, guard_t),
+    }
 
 
 def temperature_scaling(logits: np.ndarray, Y: np.ndarray) -> dict:

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import os
 import uuid
 
 import httpx
 
-OLLAMA_BASE = "http://localhost:11434"
-OLLAMA_MODEL = "llama3.1"
+OLLAMA_BASE = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3")
 OLLAMA_TIMEOUT = 60.0
 
 
@@ -21,6 +22,24 @@ class OllamaCopilotClient:
     def __init__(self, base_url: str = OLLAMA_BASE, model: str = OLLAMA_MODEL):
         self.base_url = base_url.rstrip("/")
         self.model = model
+
+    async def _resolve_model(self, client: httpx.AsyncClient) -> str:
+        """The installed tag of the configured model ("llama3" -> "llama3:latest").
+
+        Only that model. Answering clinical questions with whatever happens to be
+        installed, a code model included, is not a fallback: if the configured model is
+        missing, Ollama says so and the console shows its evidence-graph answer instead.
+        """
+        try:
+            r = await client.get(f"{self.base_url}/api/tags")
+            if r.status_code == 200:
+                for m in r.json().get("models", []):
+                    name = m.get("name", "")
+                    if name == self.model or name.startswith(f"{self.model}:"):
+                        return name
+        except Exception:
+            pass
+        return self.model
 
     async def ask_copilot(
         self,
@@ -44,6 +63,7 @@ class OllamaCopilotClient:
 
         try:
             async with httpx.AsyncClient(timeout=OLLAMA_TIMEOUT) as client:
+                payload["model"] = await self._resolve_model(client)
                 resp = await client.post(
                     f"{self.base_url}/api/chat",
                     json=payload,

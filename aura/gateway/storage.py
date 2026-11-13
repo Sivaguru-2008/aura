@@ -452,8 +452,33 @@ class Store:
                 "database schema migration failed on "
                 f"{self.engine.url.render_as_string(hide_password=True)}: "
                 f"{type(exc).__name__}: {exc}") from exc
+        self._assert_schema_matches_models()
         self.site_id = self._bind_site((site_id or "").strip())
         self._seed_defaults()
+
+    def _assert_schema_matches_models(self) -> None:
+        """Refuse a database that lacks a column the models declare.
+
+        create_all() adds missing tables but never adds a column to an existing one, so
+        a model column without a migration surfaces only as an OperationalError on the
+        first write that touches it. On 2026-09-14 that was every upload and every audit
+        write against a July database (``audit_log.previous_hash``), behind a server
+        that had started and reported healthy.
+        """
+        from sqlalchemy import inspect as sa_inspect
+
+        insp = sa_inspect(self.engine)
+        missing: list[str] = []
+        for table in Base.metadata.sorted_tables:
+            if not insp.has_table(table.name):
+                continue
+            present = {c["name"] for c in insp.get_columns(table.name)}
+            missing += [f"{table.name}.{c.name}" for c in table.columns if c.name not in present]
+        if missing:
+            raise RuntimeError(
+                f"database schema on {self.engine.url.render_as_string(hide_password=True)} "
+                f"is missing {', '.join(missing)} after migrations; add a migration under "
+                "aura/gateway/migrations/versions/ that creates them")
 
     # ---- passwords ----
     # scrypt (RFC 7914) from the standard library: memory-hard, so offline guessing

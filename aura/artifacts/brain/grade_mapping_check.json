@@ -1,0 +1,53 @@
+{
+  "purpose": "Tests whether each corpus's grade labels are attached to the right images, using contrast enhancement in the expert segmentation. Test and threshold fixed before scoring; see module docstring.",
+  "primary_test": "one-sided Fisher exact, non-enhancing rate LGG > HGG",
+  "alpha": 0.01,
+  "results": [
+    {
+      "corpus": "BraTS 2020 official (datasets/brats2020, name_mapping.csv)",
+      "subjects": 369,
+      "labelled_LGG": 76,
+      "labelled_HGG": 293,
+      "non_enhancing_rate_LGG": 0.3553,
+      "non_enhancing_rate_HGG": 0.0,
+      "contingency_[[LGG_nonenh,LGG_enh],[HGG_nonenh,HGG_enh]]": [
+        [
+          27,
+          49
+        ],
+        [
+          0,
+          293
+        ]
+      ],
+      "fisher_one_sided_p": 4.026968487838546e-21,
+      "odds_ratio": null,
+      "enhancing_fraction_auroc_for_HGG": 0.9075,
+      "permutation_p": 9.999000099990002e-05,
+      "verdict": "PASS: labelled grade tracks enhancement in the images"
+    },
+    {
+      "corpus": "withdrawn cohort (E:\\AURA\\datasets\\brats2021_hdf5)",
+      "subjects": 185,
+      "labelled_LGG": 47,
+      "labelled_HGG": 138,
+      "non_enhancing_rate_LGG": 0.0,
+      "non_enhancing_rate_HGG": 0.0,
+      "contingency_[[LGG_nonenh,LGG_enh],[HGG_nonenh,HGG_enh]]": [
+        [
+          0,
+          47
+        ],
+        [
+          0,
+          138
+        ]
+      ],
+      "fisher_one_sided_p": 1.0,
+      "odds_ratio": null,
+      "enhancing_fraction_auroc_for_HGG": 0.6491,
+      "permutation_p": 0.0012998700129987,
+      "verdict": "FAIL: labelled grade is not associated with enhancement in the images"
+    }
+  ]
+}

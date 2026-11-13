@@ -1,0 +1,335 @@
+{
+  "_comment": "Registry mapping published numbers in MANUSCRIPT_v6_npjDM.md to artifacts or verified literals",
+  "numbers": [
+    {
+      "id": "c1_classical_acc",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1/arms/classical/accuracy",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c1_classical_nll",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1/arms/classical/nll",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c1_classical_ece",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1/arms/classical/ece",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c1_classical_auc",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1/arms/classical/macro_auroc",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c1_logistic_acc",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1/arms/logistic/accuracy",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c1_logistic_nll",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1/arms/logistic/nll",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c1_logistic_ece",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1/arms/logistic/ece",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c1_logistic_auc",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1/arms/logistic/macro_auroc",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c1_learnable_acc",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1/arms/learnable/accuracy",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c1_learnable_nll",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1/arms/learnable/nll",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c1_learnable_ece",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1/arms/learnable/ece",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c1_learnable_auc",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1/arms/learnable/macro_auroc",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c1_quantum_acc",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1/arms/quantum/accuracy",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c1_quantum_nll",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1/arms/quantum/nll",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c1_quantum_ece",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1/arms/quantum/ece",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c1_quantum_auc",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1/arms/quantum/macro_auroc",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c1_primary_delta_nll",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1/primary/tost/mean_difference",
+      "format": "{:+.4f}"
+    },
+    {
+      "id": "c2_classical_acc",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C2/classical/accuracy",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c2_classical_nll",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C2/classical/nll",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c2_classical_ece",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C2/classical/ece",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c2_learnable_acc",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C2/learnable/accuracy",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c2_learnable_nll",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C2/learnable/nll",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c2_learnable_ece",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C2/learnable/ece",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c2_quantum_acc",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C2/quantum/accuracy",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c2_quantum_nll",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C2/quantum/nll",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c2_quantum_ece",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C2/quantum/ece",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c2_primary_tost",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C2/primary/tost/mean_difference",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "c2_primary_ci90_lo",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C2/primary/tost/ci90/0",
+      "format": "{:.5f}"
+    },
+    {
+      "id": "c2_primary_ci90_hi",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C2/primary/tost/ci90/1",
+      "format": "{:.5f}"
+    },
+    {
+      "id": "c2_primary_ci95_lo",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C2/primary/ci95/0",
+      "format": "{:.5f}"
+    },
+    {
+      "id": "c2_primary_ci95_hi",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C2/primary/ci95/1",
+      "format": "{:.5f}"
+    },
+    {
+      "id": "c1b_delta_nll",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1b/patient_bootstrap/point",
+      "format": "{:+.5f}"
+    },
+    {
+      "id": "c1b_ci95_lo",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1b/patient_bootstrap/ci95/0",
+      "format": "{:.5f}"
+    },
+    {
+      "id": "c1b_ci95_hi",
+      "artifact": "aura/artifacts/v6_confirmatory.json",
+      "path": "C1b/patient_bootstrap/ci95/1",
+      "format": "{:.5f}"
+    },
+    {
+      "id": "m1_logit_var",
+      "artifact": "aura/artifacts/v6_mechanism.json",
+      "path": "M1/C1_quantum_8q_ring/logit_variance_share_order_ge2",
+      "format": "pct2"
+    },
+    {
+      "id": "m2_order1_nll",
+      "artifact": "aura/artifacts/v6_mechanism.json",
+      "path": "M2/order_le_1/surrogate_nll",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "m2_order2_nll",
+      "artifact": "aura/artifacts/v6_mechanism.json",
+      "path": "M2/order_le_2/surrogate_nll",
+      "format": "{:.4f}"
+    },
+    {
+      "id": "m3_geom_diff",
+      "artifact": "aura/artifacts/v6_mechanism.json",
+      "path": "M3/fusion_encoding/geometric_difference_g_CQ",
+      "format": "{:.2f}"
+    },
+    {
+      "id": "m3_bound",
+      "artifact": "aura/artifacts/v6_mechanism.json",
+      "path": "M3/fusion_encoding/g_bound_sqrt_n",
+      "format": "{:.1f}"
+    }
+  ],
+  "literals": {
+    "99.2": "table number at line 51: 99.2",
+    "90.7": "table number at line 51: 90.7",
+    "9.65": "table number at line 51: −9.65",
+    "0.0009": "table number at line 51: 0.0009",
+    "81.3": "table number at line 52: 81.3",
+    "58.5": "table number at line 52: 58.5",
+    "0.33": "table number at line 52: 0.33",
+    "0.48": "table number at line 52: 0.48",
+    "62.1": "table number at line 53: 62.1",
+    "55.3": "table number at line 53: 55.3",
+    "5.30": "table number at line 53: −5.30",
+    "0.36": "table number at line 84: 0.36",
+    "100.0": "table number at line 54: 100.0",
+    "52.1": "table number at line 86: 52.1",
+    "83.0": "table number at line 55: 83.0",
+    "0.19": "table number at line 55: 0.19",
+    "0.77": "table number at line 55: 0.77",
+    "92.0": "table number at line 56: 92.0",
+    "86.4": "table number at line 56: 86.4",
+    "1.1": "table number at line 84: −1.1",
+    "0.31": "table number at line 56: 0.31",
+    "0.799": "table number at line 57: 0.799",
+    "0.608": "table number at line 57: 0.608",
+    "4.8": "table number at line 79: 4.8",
+    "1.2": "table number at line 79: 1.2",
+    "8.4": "table number at line 79: 8.4",
+    "0.012": "table number at line 79: 0.012",
+    "1.0": "table number at line 80: −1.0",
+    "3.2": "table number at line 80: 3.2",
+    "0.29": "table number at line 80: 0.29",
+    "0.7": "table number at line 81: 0.7",
+    "2.5": "table number at line 81: 2.5",
+    "0.41": "table number at line 81: 0.41",
+    "0.3": "table number at line 82: −0.3",
+    "2.1": "table number at line 82: −2.1",
+    "1.5": "table number at line 82: 1.5",
+    "0.72": "table number at line 82: 0.72",
+    "9.3": "table number at line 83: 9.3",
+    "2.4": "table number at line 83: 2.4",
+    "16.2": "table number at line 83: 16.2",
+    "0.009": "table number at line 83: 0.009",
+    "0.8": "table number at line 84: 0.8",
+    "2.7": "table number at line 84: 2.7",
+    "98.6": "table number at line 85: 98.6",
+    "34.5": "table number at line 85: 34.5",
+    "0.61": "table number at line 86: 0.61",
+    "0.5402": "table number at line 120: 0.5402",
+    "0.5484": "table number at line 120: 0.5484",
+    "0.0100": "table number at line 120: 0.0100",
+    "0.0172": "table number at line 120: 0.0172",
+    "0.5374": "table number at line 121: 0.5374",
+    "0.5456": "table number at line 121: 0.5456",
+    "0.0105": "table number at line 121: 0.0105",
+    "0.0171": "table number at line 121: 0.0171",
+    "0.0005": "table number at line 121: −0.0005",
+    "0.0010": "table number at line 121: −0.0010",
+    "0.0001": "table number at line 121: 0.0001",
+    "0.0011": "table number at line 121: −0.0011",
+    "0.0002": "table number at line 122: −0.0002",
+    "0.5357": "table number at line 122: 0.5357",
+    "0.5439": "table number at line 122: 0.5439",
+    "0.0071": "table number at line 122: 0.0071",
+    "0.0130": "table number at line 122: 0.0130",
+    "0.0008": "table number at line 122: 0.0008",
+    "0.0000": "table number at line 122: 0.0000",
+    "0.0017": "table number at line 122: 0.0017",
+    "0.0019": "table number at line 122: 0.0019",
+    "0.5330": "table number at line 123: 0.5330",
+    "0.5412": "table number at line 123: 0.5412",
+    "0.0051": "table number at line 123: 0.0051",
+    "0.0119": "table number at line 123: 0.0119",
+    "0.0189": "table number at line 123: 0.0189",
+    "0.0221": "table number at line 123: 0.0221",
+    "0.0186": "table number at line 123: 0.0186",
+    "0.0224": "table number at line 123: 0.0224",
+    "0.5399": "table number at line 125: 0.5399",
+    "0.5481": "table number at line 125: 0.5481",
+    "0.0091": "table number at line 125: 0.0091",
+    "0.0168": "table number at line 125: 0.0168",
+    "0.7527": "table number at line 125: 0.7527",
+    "0.5377": "table number at line 126: 0.5377",
+    "0.5459": "table number at line 126: 0.5459",
+    "0.0067": "table number at line 126: 0.0067",
+    "0.0126": "table number at line 126: 0.0126",
+    "0.7548": "table number at line 126: 0.7548",
+    "0.0015": "table number at line 126: −0.0015",
+    "0.0022": "table number at line 126: −0.0022",
+    "0.0007": "table number at line 126: −0.0007",
+    "0.5376": "table number at line 127: 0.5376",
+    "0.5458": "table number at line 127: 0.5458",
+    "0.0088": "table number at line 127: 0.0088",
+    "0.0151": "table number at line 127: 0.0151",
+    "0.7550": "table number at line 127: 0.7550",
+    "0.00260": "table number at line 127: −0.00260"
+  }
+}

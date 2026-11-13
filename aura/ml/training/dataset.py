@@ -85,12 +85,19 @@ def build_real_evidence_dataset(
     X: list[np.ndarray] = []
     y: list[int] = []
     scanned = 0
+    seen_subjects: set[int] = set()
 
     for patient in iter_patients(split, limit=scan_limit):
         if len(X) >= n:
             break
         if patient.n_studies == 0:
             continue
+        # Enforce, rather than assume, one row per patient: the loader yields one
+        # record per CSV row, so a subject repeated across rows would otherwise
+        # enter twice and make every study-level bootstrap a patient-level lie.
+        if patient.subject_id in seen_subjects:
+            continue
+        seen_subjects.add(patient.subject_id)
         scanned += 1
         try:
             study = patient.to_study_input(study_index=-1)

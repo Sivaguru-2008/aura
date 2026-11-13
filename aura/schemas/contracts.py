@@ -111,6 +111,9 @@ class FindingScore(BaseModel):
     probability: float
     # Bounding region (row0,col0,row1,col1) in normalized [0,1] coords for overlay.
     region: tuple[float, float, float, float] = (0.0, 0.0, 1.0, 1.0)
+    operating_mode: Optional[str] = None
+    threshold: Optional[float] = None
+    present: Optional[bool] = None
 
 
 class VisionResult(BaseModel):
@@ -118,6 +121,7 @@ class VisionResult(BaseModel):
     findings: list[FindingScore]
     embedding: list[float]                     # for memory / similarity
     model_version: str
+    operating_mode: Optional[str] = None
     created_at: datetime = Field(default_factory=_now)
 
 

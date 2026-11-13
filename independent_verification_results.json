@@ -1,0 +1,255 @@
+{
+  "C1": {
+    "n": 56534,
+    "nll_quantum": 1.1361708465642368,
+    "nll_poe": 1.1156763799353542,
+    "nll_gated": 1.116526973071988,
+    "nll_logistic": 1.1152153268193312,
+    "acc_quantum": 0.5371104114338274,
+    "acc_poe": 0.5443273074609969,
+    "acc_gated": 0.539816747444016,
+    "acc_logistic": 0.5415148406268794,
+    "diff_mean": 0.02049446662888257,
+    "diff_se": 0.0009743605141330513,
+    "t_stat": 21.03376145852725,
+    "df": 56533,
+    "p_two_sided": 7.649127383472831e-98,
+    "ci90": [
+      0.018891759940273943,
+      0.022097173317491198
+    ],
+    "ci95": [
+      0.018584714225670346,
+      0.022404219032094795
+    ],
+    "tost_margin": 0.01,
+    "t1": 31.29690313447829,
+    "t2": -10.770619782576212,
+    "p_tost": 1.0
+  },
+  "C1b": {
+    "seeds": [
+      7,
+      11,
+      13,
+      17,
+      19,
+      23,
+      29,
+      31,
+      37,
+      41
+    ],
+    "deltas": [
+      0.0113,
+      0.0102,
+      0.0119,
+      0.0203,
+      0.0042,
+      -0.0056,
+      0.0151,
+      0.0078,
+      0.0131,
+      0.0152
+    ],
+    "mean": 0.01035,
+    "sd": 0.007107937659952975,
+    "se": 0.0022477272471938797,
+    "t_stat": 4.6046512150979195,
+    "p_val": 0.0012820131280633857,
+    "patient_bootstrap": {
+      "point": 0.01037,
+      "ci95": [
+        0.00934,
+        0.01138
+      ],
+      "n_resamples": 10000
+    }
+  },
+  "C2": {
+    "quantum_selected": {
+      "config": [
+        4,
+        0.5,
+        0.01,
+        0.01
+      ],
+      "file": "C2_quantum_20.npz",
+      "best_calibration_nll": 1.132646,
+      "best_epoch": 121,
+      "epochs_run": 142,
+      "parameters": 118,
+      "seconds": 961.3
+    },
+    "quantum_nll": 1.11438,
+    "quantum_acc": 0.54167,
+    "poe_selected": {
+      "config": [
+        0.05,
+        0.0001,
+        0.01
+      ],
+      "file": "C2_classical_17.npz",
+      "best_calibration_nll": 1.136911,
+      "best_epoch": 26,
+      "epochs_run": 47,
+      "parameters": 54,
+      "seconds": 3.9
+    },
+    "poe_nll": 1.11698,
+    "poe_acc": 0.54401,
+    "gated_selected": {
+      "config": [
+        0.1,
+        0.0001,
+        0.01
+      ],
+      "file": "C2_learnable_24.npz",
+      "best_calibration_nll": 1.130943,
+      "best_epoch": 46,
+      "epochs_run": 67,
+      "parameters": 126,
+      "seconds": 6.4
+    },
+    "gated_nll": 1.11554,
+    "gated_acc": 0.54178,
+    "primary_contrast": {
+      "contrast": "NLL_quantum - NLL_poe (positive = quantum worse)",
+      "tost": {
+        "n": 56534,
+        "mean_difference": -0.0026,
+        "se": 0.00051,
+        "margin": 0.01,
+        "t_lower": 14.594,
+        "p_lower": 0.0,
+        "t_upper": 24.833,
+        "p_upper": 0.0,
+        "p_tost": 0.0,
+        "ci90": [
+          -0.00343,
+          -0.00176
+        ],
+        "equivalent": true
+      },
+      "ci95": [
+        -0.00359,
+        -0.0016
+      ],
+      "p_two_sided": 3.071e-07,
+      "reading": "detectable difference, quantum better, smaller than the margin; practically equivalent"
+    },
+    "quantum_vs_gated": {
+      "contrast": "NLL_quantum - NLL_poe (positive = quantum worse)",
+      "tost": {
+        "n": 56534,
+        "mean_difference": -0.00116,
+        "se": 0.00038,
+        "margin": 0.01,
+        "t_lower": 22.97,
+        "p_lower": 0.0,
+        "t_upper": 29.023,
+        "p_upper": 0.0,
+        "p_tost": 0.0,
+        "ci90": [
+          -0.0018,
+          -0.00053
+        ],
+        "equivalent": true
+      },
+      "ci95": [
+        -0.00192,
+        -0.00041
+      ],
+      "p_two_sided": 0.002473,
+      "reading": "detectable difference, quantum better, smaller than the margin; practically equivalent"
+    }
+  },
+  "benchmarks": {
+    "ckd": {
+      "claim": "VQC reaches 99.2% accuracy and outperforms SVM, RF, LR, MLP and RBF networks",
+      "reported": {
+        "VQC": 0.992,
+        "RBF network": 0.963,
+        "MLP": 0.948,
+        "LR": 0.939,
+        "SVM": 0.928,
+        "RF": 0.907
+      },
+      "delta": -0.09649999999999999,
+      "ci95": [
+        -0.14917765844404313,
+        -0.043822341555956844
+      ],
+      "t": -3.7808478410001594,
+      "p": 0.0009149765954233426,
+      "verdict": "REVERSED"
+    },
+    "stack_parkinsons": {
+      "claim": "Quantum-kernel stack raises Parkinson's specificity from 0.585 (RBF-SVM) to 0.813",
+      "reported": {
+        "stack": 0.813,
+        "RBF-SVM": 0.585
+      },
+      "delta": 0.003333333333333337,
+      "ci95": [
+        -0.24968596855056854,
+        0.2563526352172352
+      ],
+      "t": 0.027190265014841286,
+      "p": 0.9785328115858687,
+      "verdict": "NOT SUPPORTED"
+    },
+    "stack_pima": {
+      "claim": "Quantum-kernel stack raises diabetes recall from 0.553 (RBF-SVM) to 0.621",
+      "reported": {
+        "stack": 0.621,
+        "RBF-SVM": 0.553
+      },
+      "delta": -0.05302585604472397,
+      "ci95": [
+        -0.10997871232806247,
+        0.003927000238614538
+      ],
+      "t": -1.9215891030177714,
+      "p": 0.0666097511522787,
+      "verdict": "NOT SUPPORTED"
+    },
+    "eeg_qsvm": {
+      "claim": "QSVM with Pauli X/Z maps reaches 100% and shows superior performance",
+      "reported": {
+        "QSVM": 1.0,
+        "LR (Cz)": 1.0,
+        "RF (Cz)": 1.0,
+        "SVM (Cz)": 1.0
+      },
+      "delta": -0.07602941176470587,
+      "ci95": [
+        -0.23011369913598065,
+        0.0780548756065689
+      ],
+      "t": -1.0183841341622388,
+      "p": 0.31865227110487376,
+      "verdict": "NOT SUPPORTED"
+    },
+    "glioma": {
+      "claim": "VQC-1 (CV accuracy 0.83) outperforms KNN, SVC, DTC and RFC",
+      "reported": {
+        "VQC-1": 0.83,
+        "KNN": 0.82,
+        "SVC": 0.75,
+        "DTC": 0.8,
+        "RFC": 0.82,
+        "XGBoost": 0.84,
+        "GBM": 0.83
+      },
+      "delta": 0.0019090390647276934,
+      "ci95": [
+        -0.012199045634079534,
+        0.01601712376353492
+      ],
+      "t": 0.2792769581342469,
+      "p": 0.782424876908575,
+      "verdict": "NOT SUPPORTED"
+    }
+  }
+}

@@ -1,0 +1,255 @@
+{
+  "purpose": "Quantum fidelity kernel against an RBF kernel for glioma grading, on 369 subjects (all subjects in the dump), under nested subject-level cross-validation and symmetric hyperparameter grids.",
+  "supersedes": "artifacts/brain/qkl_training_report.json",
+  "embedding_source": "aura\\artifacts\\brain\\embeddings_official\\brats2020_369.npz",
+  "embedding_checkpoint": "E:\\AURA\\aura-main\\aura\\artifacts\\brain\\checkpoints\\best_brain_model.pt",
+  "embedding_note": "Encoder embeddings for every official BraTS 2020 subject, graded from the release's name_mapping.csv. Replaces epoch_001.npz (datasets/brats2021_hdf5, untraceable IDs and grades) as the input to the full-coverage kernel comparison.",
+  "grade_source": "E:\\AURA\\datasets\\brats2020\\BraTS2020_training_data\\content\\data\\name_mapping.csv",
+  "subset": "all subjects in the dump",
+  "design": {
+    "outer_folds": 5,
+    "outer_split": "subject-level, stratified by grade",
+    "inner_split": "75/25 of each fold's training subjects, stratified",
+    "selection_metric": "AUROC on the inner calibration split",
+    "calibration": "Platt, fitted on the inner calibration split only",
+    "primary_unit": "subject (grade is a subject-level property)",
+    "slices_per_test_subject_cap": 30,
+    "fit_slices_per_fold": 1200,
+    "calibration_slices_per_fold": 800,
+    "seed": 7
+  },
+  "symmetric_tuning": {
+    "quantum": {
+      "C": [
+        0.1,
+        1.0,
+        10.0,
+        100.0,
+        1000.0
+      ],
+      "bandwidth": [
+        0.25,
+        0.5,
+        1.0,
+        2.0,
+        4.0
+      ]
+    },
+    "rbf": {
+      "C": [
+        0.1,
+        1.0,
+        10.0,
+        100.0,
+        1000.0
+      ],
+      "gamma": [
+        0.001,
+        0.01,
+        0.1,
+        1.0,
+        10.0
+      ]
+    },
+    "note": "Both arms search a 5 x 5 grid on the same split by the same metric. The superseded run gave the RBF arm a bandwidth and the quantum arm none, which is not symmetry (Section 11.5). The quantum bandwidth scales the projection feeding the feature map, following Shaydulin and Wild."
+  },
+  "corpus": {
+    "slices": 49581,
+    "subjects": 369,
+    "subject_positives_LGG": 76,
+    "subject_negatives_HGG": 293
+  },
+  "per_fold": [
+    {
+      "fold": 0,
+      "test_subjects": 75,
+      "test_slices": 2250,
+      "positives_subject_level": 16,
+      "quantum": {
+        "selection": {
+          "C": 10.0,
+          "bandwidth": 0.25,
+          "calibration_auroc": 0.77029375
+        },
+        "subject_auroc": 0.8845,
+        "slice_auroc": 0.6922
+      },
+      "rbf": {
+        "selection": {
+          "C": 1000.0,
+          "gamma": 0.001,
+          "calibration_auroc": 0.80766875
+        },
+        "subject_auroc": 0.8835,
+        "slice_auroc": 0.7139
+      },
+      "seconds": 89.3,
+      "delta_subject_auroc": 0.001
+    },
+    {
+      "fold": 1,
+      "test_subjects": 74,
+      "test_slices": 2220,
+      "positives_subject_level": 15,
+      "quantum": {
+        "selection": {
+          "C": 10.0,
+          "bandwidth": 0.25,
+          "calibration_auroc": 0.72829375
+        },
+        "subject_auroc": 0.9672,
+        "slice_auroc": 0.773
+      },
+      "rbf": {
+        "selection": {
+          "C": 1000.0,
+          "gamma": 0.01,
+          "calibration_auroc": 0.7533625
+        },
+        "subject_auroc": 0.9616,
+        "slice_auroc": 0.7995
+      },
+      "seconds": 88.3,
+      "delta_subject_auroc": 0.0056
+    },
+    {
+      "fold": 2,
+      "test_subjects": 74,
+      "test_slices": 2220,
+      "positives_subject_level": 15,
+      "quantum": {
+        "selection": {
+          "C": 10.0,
+          "bandwidth": 0.25,
+          "calibration_auroc": 0.7765375
+        },
+        "subject_auroc": 0.9356,
+        "slice_auroc": 0.7742
+      },
+      "rbf": {
+        "selection": {
+          "C": 1000.0,
+          "gamma": 0.001,
+          "calibration_auroc": 0.7819125
+        },
+        "subject_auroc": 0.9412,
+        "slice_auroc": 0.7911
+      },
+      "seconds": 97.8,
+      "delta_subject_auroc": -0.0056
+    },
+    {
+      "fold": 3,
+      "test_subjects": 73,
+      "test_slices": 2190,
+      "positives_subject_level": 15,
+      "quantum": {
+        "selection": {
+          "C": 10.0,
+          "bandwidth": 0.25,
+          "calibration_auroc": 0.73755625
+        },
+        "subject_auroc": 0.9701,
+        "slice_auroc": 0.7778
+      },
+      "rbf": {
+        "selection": {
+          "C": 1000.0,
+          "gamma": 0.01,
+          "calibration_auroc": 0.77781875
+        },
+        "subject_auroc": 0.9517,
+        "slice_auroc": 0.7847
+      },
+      "seconds": 105.7,
+      "delta_subject_auroc": 0.0184
+    },
+    {
+      "fold": 4,
+      "test_subjects": 73,
+      "test_slices": 2190,
+      "positives_subject_level": 15,
+      "quantum": {
+        "selection": {
+          "C": 0.1,
+          "bandwidth": 0.25,
+          "calibration_auroc": 0.73715625
+        },
+        "subject_auroc": 0.9563,
+        "slice_auroc": 0.7426
+      },
+      "rbf": {
+        "selection": {
+          "C": 1000.0,
+          "gamma": 0.01,
+          "calibration_auroc": 0.77221875
+        },
+        "subject_auroc": 0.9724,
+        "slice_auroc": 0.8131
+      },
+      "seconds": 99.5,
+      "delta_subject_auroc": -0.0161
+    }
+  ],
+  "pooled_out_of_fold": {
+    "n_subjects": 369,
+    "quantum": {
+      "auroc": 0.9421591521465782,
+      "auprc": 0.8529386089439371,
+      "accuracy": 0.8672086720867209,
+      "sensitivity": 0.8421052631578947,
+      "specificity": 0.8737201365187713,
+      "precision": 0.6336633663366337,
+      "f1": 0.7231638418079096,
+      "ece": 0.3075,
+      "brier": 0.16795073508315272,
+      "n": 369,
+      "n_positive": 76
+    },
+    "rbf": {
+      "auroc": 0.9404975749955092,
+      "auprc": 0.8445180109011445,
+      "accuracy": 0.8644986449864499,
+      "sensitivity": 0.8421052631578947,
+      "specificity": 0.8703071672354948,
+      "precision": 0.6274509803921569,
+      "f1": 0.7191011235955056,
+      "ece": 0.2842,
+      "brier": 0.15533260241417152,
+      "n": 369,
+      "n_positive": 76
+    },
+    "delong": {
+      "auroc_a": 0.9422,
+      "auroc_b": 0.9405,
+      "delta_auroc": 0.0017,
+      "se": 0.0059,
+      "ci95": [
+        -0.0099,
+        0.0132
+      ],
+      "z": 0.2828,
+      "p": 0.77733,
+      "n_positive": 76,
+      "n_negative": 293,
+      "method": "DeLong (Sun & Xu 2014 fast midrank implementation)"
+    },
+    "bootstrap_delta_auroc": {
+      "median": 0.0016,
+      "ci95": [
+        -0.0107,
+        0.0126
+      ],
+      "n_resamples": 2000
+    },
+    "fold_level_wilcoxon_p": 0.875,
+    "fold_deltas": [
+      0.001,
+      0.0056,
+      -0.0056,
+      0.0184,
+      -0.0161
+    ]
+  },
+  "runtime_seconds": 481.5
+}

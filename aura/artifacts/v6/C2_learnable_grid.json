@@ -1,0 +1,470 @@
+[
+  {
+    "config": [
+      0.003,
+      0.0,
+      0.01
+    ],
+    "file": "C2_learnable_00.npz",
+    "best_calibration_nll": 1.138809,
+    "best_epoch": 57,
+    "epochs_run": 78,
+    "parameters": 126,
+    "seconds": 8.3
+  },
+  {
+    "config": [
+      0.003,
+      0.0,
+      0.1
+    ],
+    "file": "C2_learnable_01.npz",
+    "best_calibration_nll": 1.138429,
+    "best_epoch": 81,
+    "epochs_run": 102,
+    "parameters": 126,
+    "seconds": 8.9
+  },
+  {
+    "config": [
+      0.003,
+      1e-05,
+      1.0
+    ],
+    "file": "C2_learnable_02.npz",
+    "best_calibration_nll": 1.133103,
+    "best_epoch": 136,
+    "epochs_run": 150,
+    "parameters": 126,
+    "seconds": 13.3
+  },
+  {
+    "config": [
+      0.003,
+      0.0001,
+      0.1
+    ],
+    "file": "C2_learnable_03.npz",
+    "best_calibration_nll": 1.134669,
+    "best_epoch": 136,
+    "epochs_run": 150,
+    "parameters": 126,
+    "seconds": 14.7
+  },
+  {
+    "config": [
+      0.003,
+      0.001,
+      0.01
+    ],
+    "file": "C2_learnable_04.npz",
+    "best_calibration_nll": 1.148476,
+    "best_epoch": 81,
+    "epochs_run": 102,
+    "parameters": 126,
+    "seconds": 14.5
+  },
+  {
+    "config": [
+      0.003,
+      0.001,
+      0.1
+    ],
+    "file": "C2_learnable_05.npz",
+    "best_calibration_nll": 1.148473,
+    "best_epoch": 81,
+    "epochs_run": 102,
+    "parameters": 126,
+    "seconds": 14.0
+  },
+  {
+    "config": [
+      0.01,
+      0.0,
+      0.01
+    ],
+    "file": "C2_learnable_06.npz",
+    "best_calibration_nll": 1.137555,
+    "best_epoch": 54,
+    "epochs_run": 75,
+    "parameters": 126,
+    "seconds": 10.1
+  },
+  {
+    "config": [
+      0.01,
+      0.0,
+      0.1
+    ],
+    "file": "C2_learnable_07.npz",
+    "best_calibration_nll": 1.137517,
+    "best_epoch": 54,
+    "epochs_run": 75,
+    "parameters": 126,
+    "seconds": 9.3
+  },
+  {
+    "config": [
+      0.01,
+      1e-05,
+      0.1
+    ],
+    "file": "C2_learnable_08.npz",
+    "best_calibration_nll": 1.13229,
+    "best_epoch": 54,
+    "epochs_run": 75,
+    "parameters": 126,
+    "seconds": 9.9
+  },
+  {
+    "config": [
+      0.01,
+      0.0001,
+      0.01
+    ],
+    "file": "C2_learnable_09.npz",
+    "best_calibration_nll": 1.13293,
+    "best_epoch": 54,
+    "epochs_run": 75,
+    "parameters": 126,
+    "seconds": 6.5
+  },
+  {
+    "config": [
+      0.01,
+      0.0001,
+      0.1
+    ],
+    "file": "C2_learnable_10.npz",
+    "best_calibration_nll": 1.132931,
+    "best_epoch": 54,
+    "epochs_run": 75,
+    "parameters": 126,
+    "seconds": 6.7
+  },
+  {
+    "config": [
+      0.01,
+      0.0001,
+      1.0
+    ],
+    "file": "C2_learnable_11.npz",
+    "best_calibration_nll": 1.132965,
+    "best_epoch": 54,
+    "epochs_run": 75,
+    "parameters": 126,
+    "seconds": 6.5
+  },
+  {
+    "config": [
+      0.01,
+      0.001,
+      1.0
+    ],
+    "file": "C2_learnable_12.npz",
+    "best_calibration_nll": 1.147674,
+    "best_epoch": 19,
+    "epochs_run": 40,
+    "parameters": 126,
+    "seconds": 3.5
+  },
+  {
+    "config": [
+      0.05,
+      0.0,
+      0.1
+    ],
+    "file": "C2_learnable_13.npz",
+    "best_calibration_nll": 1.135071,
+    "best_epoch": 54,
+    "epochs_run": 75,
+    "parameters": 126,
+    "seconds": 6.7
+  },
+  {
+    "config": [
+      0.05,
+      1e-05,
+      0.01
+    ],
+    "file": "C2_learnable_14.npz",
+    "best_calibration_nll": 1.133816,
+    "best_epoch": 36,
+    "epochs_run": 57,
+    "parameters": 126,
+    "seconds": 4.5
+  },
+  {
+    "config": [
+      0.05,
+      1e-05,
+      0.1
+    ],
+    "file": "C2_learnable_15.npz",
+    "best_calibration_nll": 1.133836,
+    "best_epoch": 36,
+    "epochs_run": 57,
+    "parameters": 126,
+    "seconds": 4.9
+  },
+  {
+    "config": [
+      0.05,
+      1e-05,
+      1.0
+    ],
+    "file": "C2_learnable_16.npz",
+    "best_calibration_nll": 1.132475,
+    "best_epoch": 9,
+    "epochs_run": 30,
+    "parameters": 126,
+    "seconds": 2.5
+  },
+  {
+    "config": [
+      0.05,
+      0.0001,
+      0.01
+    ],
+    "file": "C2_learnable_17.npz",
+    "best_calibration_nll": 1.132138,
+    "best_epoch": 63,
+    "epochs_run": 84,
+    "parameters": 126,
+    "seconds": 7.2
+  },
+  {
+    "config": [
+      0.05,
+      0.0001,
+      0.1
+    ],
+    "file": "C2_learnable_18.npz",
+    "best_calibration_nll": 1.132138,
+    "best_epoch": 63,
+    "epochs_run": 84,
+    "parameters": 126,
+    "seconds": 7.8
+  },
+  {
+    "config": [
+      0.05,
+      0.0001,
+      1.0
+    ],
+    "file": "C2_learnable_19.npz",
+    "best_calibration_nll": 1.133774,
+    "best_epoch": 9,
+    "epochs_run": 30,
+    "parameters": 126,
+    "seconds": 2.7
+  },
+  {
+    "config": [
+      0.05,
+      0.001,
+      0.01
+    ],
+    "file": "C2_learnable_20.npz",
+    "best_calibration_nll": 1.146077,
+    "best_epoch": 5,
+    "epochs_run": 26,
+    "parameters": 126,
+    "seconds": 2.5
+  },
+  {
+    "config": [
+      0.05,
+      0.001,
+      1.0
+    ],
+    "file": "C2_learnable_21.npz",
+    "best_calibration_nll": 1.145998,
+    "best_epoch": 5,
+    "epochs_run": 26,
+    "parameters": 126,
+    "seconds": 2.1
+  },
+  {
+    "config": [
+      0.1,
+      0.0,
+      0.01
+    ],
+    "file": "C2_learnable_22.npz",
+    "best_calibration_nll": 1.134955,
+    "best_epoch": 46,
+    "epochs_run": 67,
+    "parameters": 126,
+    "seconds": 5.7
+  },
+  {
+    "config": [
+      0.1,
+      1e-05,
+      1.0
+    ],
+    "file": "C2_learnable_23.npz",
+    "best_calibration_nll": 1.131543,
+    "best_epoch": 36,
+    "epochs_run": 57,
+    "parameters": 126,
+    "seconds": 4.9
+  },
+  {
+    "config": [
+      0.1,
+      0.0001,
+      0.01
+    ],
+    "file": "C2_learnable_24.npz",
+    "best_calibration_nll": 1.130943,
+    "best_epoch": 46,
+    "epochs_run": 67,
+    "parameters": 126,
+    "seconds": 6.4
+  },
+  {
+    "config": [
+      0.1,
+      0.001,
+      0.1
+    ],
+    "file": "C2_learnable_25.npz",
+    "best_calibration_nll": 1.14577,
+    "best_epoch": 46,
+    "epochs_run": 67,
+    "parameters": 126,
+    "seconds": 5.8
+  },
+  {
+    "config": [
+      0.1,
+      0.001,
+      1.0
+    ],
+    "file": "C2_learnable_26.npz",
+    "best_calibration_nll": 1.145737,
+    "best_epoch": 46,
+    "epochs_run": 67,
+    "parameters": 126,
+    "seconds": 5.8
+  },
+  {
+    "config": [
+      0.3,
+      0.0,
+      1.0
+    ],
+    "file": "C2_learnable_27.npz",
+    "best_calibration_nll": 1.153419,
+    "best_epoch": 22,
+    "epochs_run": 43,
+    "parameters": 126,
+    "seconds": 3.3
+  },
+  {
+    "config": [
+      0.3,
+      1e-05,
+      0.01
+    ],
+    "file": "C2_learnable_28.npz",
+    "best_calibration_nll": 1.138505,
+    "best_epoch": 18,
+    "epochs_run": 39,
+    "parameters": 126,
+    "seconds": 3.4
+  },
+  {
+    "config": [
+      0.3,
+      1e-05,
+      0.1
+    ],
+    "file": "C2_learnable_29.npz",
+    "best_calibration_nll": 1.139771,
+    "best_epoch": 18,
+    "epochs_run": 39,
+    "parameters": 126,
+    "seconds": 3.2
+  },
+  {
+    "config": [
+      0.3,
+      0.0001,
+      0.01
+    ],
+    "file": "C2_learnable_30.npz",
+    "best_calibration_nll": 1.137876,
+    "best_epoch": 18,
+    "epochs_run": 39,
+    "parameters": 126,
+    "seconds": 3.3
+  },
+  {
+    "config": [
+      0.3,
+      0.0001,
+      0.1
+    ],
+    "file": "C2_learnable_31.npz",
+    "best_calibration_nll": 1.137232,
+    "best_epoch": 18,
+    "epochs_run": 39,
+    "parameters": 126,
+    "seconds": 3.6
+  },
+  {
+    "config": [
+      0.3,
+      0.0001,
+      1.0
+    ],
+    "file": "C2_learnable_32.npz",
+    "best_calibration_nll": 1.135091,
+    "best_epoch": 18,
+    "epochs_run": 39,
+    "parameters": 126,
+    "seconds": 3.8
+  },
+  {
+    "config": [
+      0.3,
+      0.001,
+      0.01
+    ],
+    "file": "C2_learnable_33.npz",
+    "best_calibration_nll": 1.151695,
+    "best_epoch": 24,
+    "epochs_run": 45,
+    "parameters": 126,
+    "seconds": 3.9
+  },
+  {
+    "config": [
+      0.3,
+      0.001,
+      0.1
+    ],
+    "file": "C2_learnable_34.npz",
+    "best_calibration_nll": 1.151702,
+    "best_epoch": 24,
+    "epochs_run": 45,
+    "parameters": 126,
+    "seconds": 4.0
+  },
+  {
+    "config": [
+      0.3,
+      0.001,
+      1.0
+    ],
+    "file": "C2_learnable_35.npz",
+    "best_calibration_nll": 1.151662,
+    "best_epoch": 24,
+    "epochs_run": 45,
+    "parameters": 126,
+    "seconds": 3.9
+  }
+]

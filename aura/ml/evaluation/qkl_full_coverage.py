@@ -25,6 +25,13 @@ subjects at the same ``best_brain_model.pt`` checkpoint the 55-subject dump was 
 from. Nothing is retrained; this is the re-export Section 11.9 item 2 asked for, and
 it was already on disk.
 
+**Withdrawn input, 2026-09-13.** ``epoch_001.npz`` came from ``datasets/brats2021_hdf5``,
+whose subject IDs and grades do not trace to BraTS 2020. The result it produced is
+withdrawn. The analysis is unchanged; its input is now
+``embeddings_official/brats2020_369.npz`` (``export_brats2020_embeddings.py``), graded
+from the release's ``name_mapping.csv``, with the label join tested against the images by
+``verify_brats2020_grade_mapping.py``. Pass ``--embeddings`` and ``--output``.
+
 **Nested cross-validation.** Five outer subject-level folds, stratified by grade.
 Within each fold's training subjects, an inner calibration split selects
 hyperparameters and fits Platt scaling. No subject contributes to both the selection
@@ -289,6 +296,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--embeddings", type=Path, default=EMBED_DIR / "epoch_001.npz")
     ap.add_argument("--folds", type=int, default=N_FOLDS)
     ap.add_argument("--seed", type=int, default=SEED)
+    ap.add_argument("--output", type=Path, default=OUTPUT)
+    ap.add_argument("--exclude-encoder-train", action="store_true",
+                    help="keep only subjects the encoder never trained on (needs a "
+                         "sidecar with a per-subject split, e.g. brats2020_369.json)")
     args = ap.parse_args(argv)
 
     started = time.time()
@@ -297,6 +308,15 @@ def main(argv: list[str] | None = None) -> int:
     data = load_embeddings(args.embeddings)
     X, y, subj = data["embedding"], data["grade"], data["subject"]
     sidecar = json.loads(args.embeddings.with_suffix(".json").read_text(encoding="utf-8"))
+    subset_note = "all subjects in the dump"
+    if args.exclude_encoder_train:
+        if "subjects" not in sidecar:
+            raise SystemExit(f"{args.embeddings.name}'s sidecar has no per-subject split")
+        keep_ids = [s["subject_index"] for s in sidecar["subjects"] if s["split"] != "train"]
+        keep = np.isin(subj, keep_ids)
+        X, y, subj = X[keep], y[keep], subj[keep]
+        subset_note = ("only subjects outside the encoder's training split "
+                       "(val + test); none of them influenced any weight")
     n_subjects = int(len(np.unique(subj)))
     print(f"[data] {args.embeddings.name}: {len(y)} slices, {n_subjects} subjects, "
           f"checkpoint {sidecar.get('checkpoint')}", flush=True)
@@ -401,19 +421,16 @@ def main(argv: list[str] | None = None) -> int:
     n_pos, n_neg = int(ys.sum()), int((~ys.astype(bool)).sum())
     result = {
         "purpose": (
-            "Quantum fidelity kernel against an RBF kernel for glioma grading, on all "
-            "185 subjects, under nested subject-level cross-validation and symmetric "
-            "hyperparameter grids. Supersedes the 11-test-subject single-split "
-            "comparison of Section 8.5, which Section 11.4 reports as establishing "
-            "nothing in either direction."
+            f"Quantum fidelity kernel against an RBF kernel for glioma grading, on "
+            f"{n_subjects} subjects ({subset_note}), under nested subject-level "
+            f"cross-validation and symmetric hyperparameter grids."
         ),
         "supersedes": "artifacts/brain/qkl_training_report.json",
         "embedding_source": str(args.embeddings),
         "embedding_checkpoint": sidecar.get("checkpoint"),
-        "embedding_note": (
-            "Same checkpoint as the superseded run. The earlier dump covered 55 of "
-            "185 subjects; this one covers all of them. No model was retrained."
-        ),
+        "embedding_note": sidecar.get("purpose", ""),
+        "grade_source": sidecar.get("grade_source"),
+        "subset": subset_note,
         "design": {
             "outer_folds": args.folds,
             "outer_split": "subject-level, stratified by grade",
@@ -455,9 +472,9 @@ def main(argv: list[str] | None = None) -> int:
         },
         "runtime_seconds": round(time.time() - started, 1),
     }
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text(json.dumps(result, indent=2), encoding="utf-8")
-    np.savez(OUTPUT.with_suffix(".npz"), p_quantum=pq, p_rbf=pr, y=ys, subject=ids)
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
+    np.savez(args.output.with_suffix(".npz"), p_quantum=pq, p_rbf=pr, y=ys, subject=ids)
 
     print("\n=== pooled out-of-fold, subject level ===")
     print(f"n subjects        {len(ys)}  ({n_pos} LGG / {n_neg} HGG)")
@@ -468,7 +485,7 @@ def main(argv: list[str] | None = None) -> int:
           f"DeLong p = {dl['p']:.4g}")
     print(f"bootstrap delta   {boot['median']:+.4f} CI {boot['ci95']}")
     print(f"fold-level Wilcoxon p = {fold_p:.4f}   fold deltas {fold_deltas}")
-    print(f"\n[done] wrote {OUTPUT} in {time.time() - started:.1f}s")
+    print(f"\n[done] wrote {args.output} in {time.time() - started:.1f}s")
     return 0
 
 

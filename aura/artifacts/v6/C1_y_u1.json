@@ -1,0 +1,209 @@
+{
+  "arms": {
+    "classical": {
+      "n": 56534,
+      "temperature": 1.0746,
+      "accuracy": 0.5309,
+      "correct": 30015,
+      "accuracy_ci95_jeffreys": [
+        0.5268,
+        0.535
+      ],
+      "nll": 1.124,
+      "ece": 0.0102,
+      "macro_auroc": 0.7464
+    },
+    "learnable": {
+      "n": 56534,
+      "temperature": 1.0403,
+      "accuracy": 0.5306,
+      "correct": 29995,
+      "accuracy_ci95_jeffreys": [
+        0.5265,
+        0.5347
+      ],
+      "nll": 1.1256,
+      "ece": 0.0162,
+      "macro_auroc": 0.7468
+    },
+    "quantum": {
+      "n": 56534,
+      "temperature": 1.0537,
+      "accuracy": 0.5249,
+      "correct": 29677,
+      "accuracy_ci95_jeffreys": [
+        0.5208,
+        0.5291
+      ],
+      "nll": 1.1314,
+      "ece": 0.0199,
+      "macro_auroc": 0.7443
+    },
+    "logistic": {
+      "n": 56534,
+      "temperature": 1.0873,
+      "accuracy": 0.5298,
+      "correct": 29953,
+      "accuracy_ci95_jeffreys": [
+        0.5257,
+        0.5339
+      ],
+      "nll": 1.1249,
+      "ece": 0.0151,
+      "macro_auroc": 0.7466
+    }
+  },
+  "fitting": {
+    "classical": {
+      "selected_lr": 0.05,
+      "best_epoch": 31,
+      "epochs_run": 52,
+      "converged_by_early_stopping": true,
+      "parameters": 54,
+      "grid": [
+        {
+          "lr": 0.01,
+          "best_calibration_nll": 1.130483,
+          "best_epoch": 31,
+          "epochs_run": 52,
+          "stopped_early": true,
+          "final_train_nll": 1.067117,
+          "seconds": 11.1
+        },
+        {
+          "lr": 0.05,
+          "best_calibration_nll": 1.129027,
+          "best_epoch": 31,
+          "epochs_run": 52,
+          "stopped_early": true,
+          "final_train_nll": 1.071114,
+          "seconds": 6.0
+        },
+        {
+          "lr": 0.1,
+          "best_calibration_nll": 1.130254,
+          "best_epoch": 43,
+          "epochs_run": 64,
+          "stopped_early": true,
+          "final_train_nll": 1.071327,
+          "seconds": 7.8
+        }
+      ]
+    },
+    "learnable": {
+      "selected_lr": 0.05,
+      "best_epoch": 5,
+      "epochs_run": 26,
+      "converged_by_early_stopping": true,
+      "parameters": 126,
+      "grid": [
+        {
+          "lr": 0.01,
+          "best_calibration_nll": 1.130006,
+          "best_epoch": 47,
+          "epochs_run": 68,
+          "stopped_early": true,
+          "final_train_nll": 1.066056,
+          "seconds": 11.6
+        },
+        {
+          "lr": 0.05,
+          "best_calibration_nll": 1.129291,
+          "best_epoch": 5,
+          "epochs_run": 26,
+          "stopped_early": true,
+          "final_train_nll": 1.073303,
+          "seconds": 4.8
+        },
+        {
+          "lr": 0.1,
+          "best_calibration_nll": 1.13095,
+          "best_epoch": 5,
+          "epochs_run": 26,
+          "stopped_early": true,
+          "final_train_nll": 1.074324,
+          "seconds": 4.9
+        }
+      ]
+    },
+    "quantum": {
+      "selected_lr": 0.01,
+      "best_epoch": 68,
+      "epochs_run": 89,
+      "converged_by_early_stopping": true,
+      "parameters": 102,
+      "grid": [
+        {
+          "lr": 0.01,
+          "best_calibration_nll": 1.139405,
+          "best_epoch": 68,
+          "epochs_run": 89,
+          "stopped_early": true,
+          "final_train_nll": 1.067721,
+          "seconds": 661.1
+        },
+        {
+          "lr": 0.05,
+          "best_calibration_nll": 1.145402,
+          "best_epoch": 7,
+          "epochs_run": 28,
+          "stopped_early": true,
+          "final_train_nll": 1.076858,
+          "seconds": 193.0
+        },
+        {
+          "lr": 0.1,
+          "best_calibration_nll": 1.149312,
+          "best_epoch": 17,
+          "epochs_run": 38,
+          "stopped_early": true,
+          "final_train_nll": 1.123457,
+          "seconds": 250.2
+        }
+      ]
+    },
+    "logistic": {
+      "selected_C": 100.0,
+      "lbfgs_iterations": 251,
+      "converged": true,
+      "classes_fitted": [
+        0,
+        1,
+        2,
+        4,
+        5
+      ],
+      "grid": [
+        {
+          "C": 0.01,
+          "calibration_nll": 1.2099
+        },
+        {
+          "C": 0.1,
+          "calibration_nll": 1.1426
+        },
+        {
+          "C": 1.0,
+          "calibration_nll": 1.1297
+        },
+        {
+          "C": 10.0,
+          "calibration_nll": 1.1283
+        },
+        {
+          "C": 100.0,
+          "calibration_nll": 1.1283
+        },
+        {
+          "C": 1000.0,
+          "calibration_nll": 1.1283
+        }
+      ],
+      "parameters": 45
+    }
+  },
+  "simulator": "torch",
+  "n_train": 6400,
+  "n_cal": 1600,
+  "n_test": 56534
+}

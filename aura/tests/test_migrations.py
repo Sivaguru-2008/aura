@@ -13,12 +13,13 @@ def test_migration_discovery():
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
     runner = MigrationRunner(engine)
     migrations = runner.discover_migrations()
-    assert len(migrations) >= 4
+    assert len(migrations) >= 5
     versions = [m.version for m in migrations]
     assert "001" in versions
     assert "002" in versions
     assert "003" in versions
     assert "004" in versions
+    assert "005" in versions
     engine.dispose()
 
 
