@@ -98,7 +98,7 @@ def rows_panel_a():
     v6 = ARTIFACTS / "v6" / "C1_y_u0_probs.npz"
     if v6.exists():
         n = len(np.load(v6)["yte"])
-        g = f"Untouched patients, pre-specified protocol (n={n:,})"
+        g = f"Held-out patients, scored without selection (n={n:,})"
         add(g, "matched optimiser, vs product-of-experts", v6, "classical")
         add(g, "matched optimiser, vs gated head", v6, "learnable")
         conf = ARTIFACTS / "v6_confirmatory.json"
@@ -216,7 +216,7 @@ def mechanism_figure():
     M = json.loads((ARTIFACTS / "v6_mechanism.json").read_text())
     plt.rcParams.update({"figure.dpi": 150, "savefig.dpi": 300, "font.size": 8,
                          "axes.spines.top": False, "axes.spines.right": False})
-    fig, (a, b) = plt.subplots(1, 2, figsize=(7.2, 3.2), gridspec_kw={"wspace": 0.42})
+    fig, (a, b) = plt.subplots(1, 2, figsize=(7.5, 3.2), gridspec_kw={"wspace": 0.55})
 
     if "M1" in M:
         rows = M["M1"]["C1b_7q"]
@@ -253,7 +253,7 @@ def mechanism_figure():
     b2.set_ylabel("effective dimension (log)", color="#555555")
     b.set_title("B  10-qubit glioma kernel across bandwidths", loc="left",
                 fontweight="bold", fontsize=8.5, pad=10)
-    fig.subplots_adjust(left=0.08, right=0.90, top=0.88, bottom=0.18, wspace=0.45)
+    fig.subplots_adjust(left=0.08, right=0.90, top=0.88, bottom=0.18, wspace=0.55)
     for ext in ("png", "pdf"):
         fig.savefig(FIGDIR / f"fig_v6_mechanism.{ext}", bbox_inches="tight")
         fig.savefig(ROOT.parent / f"fig_v6_mechanism.{ext}", bbox_inches="tight")

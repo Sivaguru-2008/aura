@@ -1,0 +1,29 @@
+=== LEVEL C RETRAINING REPRODUCTION PROTOCOL & VERIFICATION ===
+Protocol: Full End-to-End Retraining and Grid Sweeps
+Target Script: reproduce_paper.py --full
+Command: python reproduce_paper.py --full
+Computational Environment: Python 3.12, PyTorch 2.11+cu128, NumPy, SciPy, scikit-learn
+Expected Compute Budget: ~16 hours across 36 hyperparameter configurations per arm
+Hardware Support: Multi-core x86-64 CPU (bit-for-bit exact statevector) or CUDA GPU
+
+Required Credentialed Datasets:
+1. Stanford CheXpert-v1.0-small (Research Data Agreement via AIMI Stanford)
+   Path: 
+2. MIMIC-CXR-JPG v2.0.0 (PhysioNet Credentialed Health Data License 1.5.0)
+   Path: 
+3. BraTS 2020 / TCGA benchmarks (TCIA / GDC open access)
+
+Retraining Scope:
+- Analysis C1: Default matched optimization (4 models x 10 random seeds = 40 training runs)
+- Analysis C1b: Entanglement ablations (10 random initialization seeds = 20 training runs)
+- Analysis C2: 36-configuration hyperparameter search grid per architecture (36 x 3 = 108 configs)
+- Multi-seed confirmatory evaluation: 10 seeds on winning C2 architectures (SEEDS = [7, 11, 13, 17, 19, 23, 29, 31, 37, 41])
+- Mechanistic surrogates: Polynomial and trigonometric classical Fourier regressions
+- Benchmark evaluations: 25-fold nested CV across CKD (90-protocol grid), Parkinson voice, Pima diabetes, Schizophrenia EEG, Glioma TCGA/BraTS, and Heart Disease.
+
+Output Checkpoint Artifacts:
+- artifacts/v6/C2_quantum_20.npz (Winning VQC parameter weights)
+- artifacts/v6/C2_poe_*.npz (PoE weight checkpoints)
+- artifacts/v6/C2_gated_*.npz (Gated Head weight checkpoints)
+- results/revision_r4/*.json (Aggregated metrics matching results/revision_r4/manifest.json)
+All generated artifacts are cryptographically verified against SHA-256 checksums in results/revision_r4/manifest.json.

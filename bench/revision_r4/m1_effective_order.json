@@ -1,0 +1,437 @@
+{
+  "C1_default_vqc": {
+    "qubits": 8,
+    "informative_qubits": 7,
+    "entangler": "ring",
+    "effective_coefficient_energy_share_by_order": {
+      "0": 0.0,
+      "1": 0.0,
+      "2": 0.022967,
+      "3": 0.268277,
+      "4": 0.396728,
+      "5": 0.231979,
+      "6": 0.048482,
+      "7": 0.031567
+    },
+    "effective_energy_share_ge2": 1.0,
+    "raw_energy_share_ge2": 1.0,
+    "effective_logit_variance_share_order_ge2": 0.999708
+  },
+  "C2_winner_vqc": {
+    "qubits": 8,
+    "informative_qubits": 7,
+    "entangler": "ring",
+    "effective_coefficient_energy_share_by_order": {
+      "0": 0.0,
+      "1": 0.042076,
+      "2": 0.256699,
+      "3": 0.211863,
+      "4": 0.358418,
+      "5": 0.068866,
+      "6": 0.051711,
+      "7": 0.010367
+    },
+    "effective_energy_share_ge2": 0.957924,
+    "raw_energy_share_ge2": 1.0,
+    "effective_logit_variance_share_order_ge2": 0.850289
+  },
+  "C1b_7q": [
+    {
+      "seed": 7,
+      "ring": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "ring",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 0.0,
+          "2": 0.061414,
+          "3": 0.181319,
+          "4": 0.193654,
+          "5": 0.344929,
+          "6": 0.109914,
+          "7": 0.108771
+        },
+        "effective_energy_share_ge2": 1.0,
+        "raw_energy_share_ge2": 1.0,
+        "effective_logit_variance_share_order_ge2": 0.999976
+      },
+      "none": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "none",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 1.0,
+          "2": 0.0,
+          "3": 0.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0
+        },
+        "effective_energy_share_ge2": 0.0,
+        "raw_energy_share_ge2": 0.0,
+        "effective_logit_variance_share_order_ge2": 0.0
+      }
+    },
+    {
+      "seed": 11,
+      "ring": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "ring",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 7.2e-05,
+          "2": 0.001076,
+          "3": 0.32983,
+          "4": 0.240271,
+          "5": 0.267357,
+          "6": 0.128881,
+          "7": 0.032513
+        },
+        "effective_energy_share_ge2": 0.999928,
+        "raw_energy_share_ge2": 0.999928,
+        "effective_logit_variance_share_order_ge2": 0.993689
+      },
+      "none": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "none",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 1.0,
+          "2": 0.0,
+          "3": 0.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0
+        },
+        "effective_energy_share_ge2": 0.0,
+        "raw_energy_share_ge2": 0.0,
+        "effective_logit_variance_share_order_ge2": 0.0
+      }
+    },
+    {
+      "seed": 13,
+      "ring": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "ring",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 4e-06,
+          "2": 0.003293,
+          "3": 0.087835,
+          "4": 0.604464,
+          "5": 0.291144,
+          "6": 0.013029,
+          "7": 0.000231
+        },
+        "effective_energy_share_ge2": 0.999996,
+        "raw_energy_share_ge2": 0.999996,
+        "effective_logit_variance_share_order_ge2": 1.001772
+      },
+      "none": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "none",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 1.0,
+          "2": 0.0,
+          "3": 0.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0
+        },
+        "effective_energy_share_ge2": 0.0,
+        "raw_energy_share_ge2": 0.0,
+        "effective_logit_variance_share_order_ge2": 0.0
+      }
+    },
+    {
+      "seed": 17,
+      "ring": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "ring",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 1.3e-05,
+          "2": 0.001688,
+          "3": 0.243666,
+          "4": 0.269368,
+          "5": 0.358467,
+          "6": 0.118879,
+          "7": 0.007919
+        },
+        "effective_energy_share_ge2": 0.999987,
+        "raw_energy_share_ge2": 0.999987,
+        "effective_logit_variance_share_order_ge2": 1.002586
+      },
+      "none": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "none",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 1.0,
+          "2": 0.0,
+          "3": 0.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0
+        },
+        "effective_energy_share_ge2": 0.0,
+        "raw_energy_share_ge2": 0.0,
+        "effective_logit_variance_share_order_ge2": 0.0
+      }
+    },
+    {
+      "seed": 19,
+      "ring": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "ring",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 4e-06,
+          "2": 0.061174,
+          "3": 0.301046,
+          "4": 0.356702,
+          "5": 0.196435,
+          "6": 0.035563,
+          "7": 0.049076
+        },
+        "effective_energy_share_ge2": 0.999996,
+        "raw_energy_share_ge2": 0.999996,
+        "effective_logit_variance_share_order_ge2": 1.000417
+      },
+      "none": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "none",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 1.0,
+          "2": 0.0,
+          "3": 0.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0
+        },
+        "effective_energy_share_ge2": 0.0,
+        "raw_energy_share_ge2": 0.0,
+        "effective_logit_variance_share_order_ge2": 0.0
+      }
+    },
+    {
+      "seed": 23,
+      "ring": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "ring",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 0.002273,
+          "2": 0.111422,
+          "3": 0.180119,
+          "4": 0.240444,
+          "5": 0.345854,
+          "6": 0.100184,
+          "7": 0.019705
+        },
+        "effective_energy_share_ge2": 0.997727,
+        "raw_energy_share_ge2": 0.997727,
+        "effective_logit_variance_share_order_ge2": 0.976479
+      },
+      "none": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "none",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 1.0,
+          "2": 0.0,
+          "3": 0.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0
+        },
+        "effective_energy_share_ge2": 0.0,
+        "raw_energy_share_ge2": 0.0,
+        "effective_logit_variance_share_order_ge2": 0.0
+      }
+    },
+    {
+      "seed": 29,
+      "ring": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "ring",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 0.000595,
+          "2": 0.001385,
+          "3": 0.174664,
+          "4": 0.388003,
+          "5": 0.269568,
+          "6": 0.147327,
+          "7": 0.018458
+        },
+        "effective_energy_share_ge2": 0.999405,
+        "raw_energy_share_ge2": 0.999405,
+        "effective_logit_variance_share_order_ge2": 1.031718
+      },
+      "none": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "none",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 1.0,
+          "2": 0.0,
+          "3": 0.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0
+        },
+        "effective_energy_share_ge2": 0.0,
+        "raw_energy_share_ge2": 0.0,
+        "effective_logit_variance_share_order_ge2": 0.0
+      }
+    },
+    {
+      "seed": 31,
+      "ring": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "ring",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 4e-06,
+          "2": 0.000999,
+          "3": 0.153407,
+          "4": 0.370035,
+          "5": 0.331782,
+          "6": 0.064667,
+          "7": 0.079107
+        },
+        "effective_energy_share_ge2": 0.999996,
+        "raw_energy_share_ge2": 0.999996,
+        "effective_logit_variance_share_order_ge2": 1.000442
+      },
+      "none": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "none",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 1.0,
+          "2": 0.0,
+          "3": 0.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0
+        },
+        "effective_energy_share_ge2": 0.0,
+        "raw_energy_share_ge2": 0.0,
+        "effective_logit_variance_share_order_ge2": 0.0
+      }
+    },
+    {
+      "seed": 37,
+      "ring": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "ring",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 2e-06,
+          "2": 0.000487,
+          "3": 0.329276,
+          "4": 0.303491,
+          "5": 0.241285,
+          "6": 0.113643,
+          "7": 0.011817
+        },
+        "effective_energy_share_ge2": 0.999998,
+        "raw_energy_share_ge2": 0.999998,
+        "effective_logit_variance_share_order_ge2": 0.999471
+      },
+      "none": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "none",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 1.0,
+          "2": 0.0,
+          "3": 0.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0
+        },
+        "effective_energy_share_ge2": 0.0,
+        "raw_energy_share_ge2": 0.0,
+        "effective_logit_variance_share_order_ge2": 0.0
+      }
+    },
+    {
+      "seed": 41,
+      "ring": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "ring",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 4.7e-05,
+          "2": 0.113104,
+          "3": 0.161456,
+          "4": 0.186287,
+          "5": 0.289189,
+          "6": 0.108739,
+          "7": 0.141179
+        },
+        "effective_energy_share_ge2": 0.999953,
+        "raw_energy_share_ge2": 0.999953,
+        "effective_logit_variance_share_order_ge2": 1.000024
+      },
+      "none": {
+        "qubits": 7,
+        "informative_qubits": 7,
+        "entangler": "none",
+        "effective_coefficient_energy_share_by_order": {
+          "0": 0.0,
+          "1": 1.0,
+          "2": 0.0,
+          "3": 0.0,
+          "4": 0.0,
+          "5": 0.0,
+          "6": 0.0,
+          "7": 0.0
+        },
+        "effective_energy_share_ge2": 0.0,
+        "raw_energy_share_ge2": 0.0,
+        "effective_logit_variance_share_order_ge2": 0.0
+      }
+    }
+  ],
+  "C1b_summary": {
+    "ring_eff_logit_var_ge2_mean": 1.000657,
+    "ring_eff_logit_var_ge2_sd": 0.013355,
+    "none_eff_logit_var_ge2_mean": 0.0,
+    "ring_energy_ge2_mean": 0.999699,
+    "none_energy_ge2_mean": 0.0
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "title": "Revision R4 Master Experimental Artifacts Manifest",
+  "target_journal": "npj Digital Medicine",
+  "git_branch": "revision-r4",
+  "git_hash": "a54ca46f2b7a05bda37fc2a67d9045241336a2ed",
+  "seed_list": [
+    7,
+    11,
+    13,
+    17,
+    19,
+    23,
+    29,
+    31,
+    37,
+    41
+  ],
+  "timestamp_utc": "2026-11-02T08:57:52.743120+00:00",
+  "artifacts": {
+    "classical_seeds_summary.json": {
+      "script": "bench/revision_r4/run_a1_classical_seeds.py",
+      "description": "10-seed evaluation of C2 tuned PoE, C2 tuned Gated Head, and C1 default PoE on N=56,534 held-out patients.",
+      "sha256": "04fff45a11eba82c5970d8afe012bd4259d7980638d78b96dec8b17f92058de7",
+      "bytes": 7349
+    },
+    "a1_quantum_seeds_summary.json": {
+      "script": "bench/revision_r4/run_a1_quantum_seeds.py",
+      "description": "10-seed evaluation of C1 default VQC and C2 tuned VQC, paired t-tests, seed-level TOST, and hierarchical bootstrap.",
+      "sha256": "07c7778c35d9955a15218e1da7be9a247e0ab31e8fbc63e1a69d630d006b95ca",
+      "bytes": 9395
+    },
+    "a2_selection_robustness.json": {
+      "script": "bench/revision_r4/run_a2_selection_robustness.py",
+      "description": "36-config selection stability across 20 resampled dev splits, plus full 60 classical grid sensitivity analysis.",
+      "sha256": "301193f7a10a7173163dd395f6e5889dd02b5af9c1dc5e8a3f0c63f4d5357280",
+      "bytes": 48226
+    },
+    "a3_class_analysis.json": {
+      "script": "bench/revision_r4/run_a3_class_analysis.py",
+      "description": "Class-conditional DeltaNLL with 95% bootstrap CIs, macro-mean TOST failure, and vector scaling ablation.",
+      "sha256": "ee0d9ea07ef0f493e441d7954855eb717db1906681f337b2e5ee5f4eafd8dabd",
+      "bytes": 6331
+    },
+    "domain_shift_analysis.json": {
+      "script": "bench/revision_r4/run_a4_domain_shift.py",
+      "description": "Institutional transfer from MIMIC-CXR to CheXpert, angle-wrapping verification, and Fourier trigonometric baseline comparison.",
+      "sha256": "12e548be2377865db622427454429bf44a092a737f90bcadecf90c78a6faeb61",
+      "bytes": 24637
+    },
+    "m1_effective_order.json": {
+      "script": "bench/revision_r4/run_a5_m1_order.py",
+      "description": "Interaction-order energy spectrum excluding constant Z8 reference qubit across 10 C1b seeds and confirmatory circuit.",
+      "sha256": "efeb24b60d037a60599d5369ad4e84bc6777ebaaf172015192cf739b35ced4d7",
+      "bytes": 11763
+    },
+    "m2_completeness.json": {
+      "script": "bench/revision_r4/run_a6_m2_surrogates.py",
+      "description": "Classical order-1 and order-2 trigonometric Fourier surrogates and polynomial linear regression on N=56,534 test patients.",
+      "sha256": "5a6dd9958ef506e24f4e6ee3830d152b7450acea7540945772114803de7608e6",
+      "bytes": 1583
+    },
+    "ckd_protocol_grid.json": {
+      "script": "bench/revision_r4/run_a7_ckd_grid.py",
+      "description": "90-protocol grid for Chronic Kidney Disease literature replication across scalers, cross-validation schemes, and models.",
+      "sha256": "57c4f1ea7682e7f4b8f79a1bd1e6fdeee492572c21fae7575359147a7c0c239d",
+      "bytes": 48608
+    }
+  }
+}

@@ -40,6 +40,7 @@ We formulate an operational, reproducible **seven-rule symmetric evaluation prot
 
 3. **Mechanistic and Theoretical Clarification:**
    * Through exact Fourier expansion (M1; effective clinical interaction order bounded at 7 due to constant reference qubit $x_8 \equiv 0$), classical trigonometric surrogates (M2; where order-1 classical trigonometric regression achieves NLL 1.1123, outperforming both tuned quantum 1.1144 and classical PoE 1.1170), and geometric kernel distance bounds ($g(K_{\text{RBF}} \parallel K_Q) = 1.2712 \ll 44.72$), we mathematically isolate why shallow quantum circuits provide no inductive advantage over classical models in these tabular and imaging regimes.
+   * Through the **Outcome-Conditioned Entanglement Necessity (OCEN)** score test and **CENSA** algorithm (M4), we explain why pruning 50% of candidate entangling gates improves out-of-sample likelihood ($p = 0.0085$), mathematically proving that heuristic dense entanglers inflate parameter variance without reducing clinical prediction bias.
 
 ### Open Science, Reproducibility, and Reporting Standards
 * **Pre-Specified Protocol:** The confirmatory protocol, primary endpoints, equivalence margin ($\pm 0.010$ nats), and decision rules were pre-specified and deposited in `docs/PREREGISTRATION_v6_2026-10-03.md` (Git commit `61e777b`) on October 3, 2026, prior to test data scoring on October 11, 2026.

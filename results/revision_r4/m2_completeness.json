@@ -1,0 +1,74 @@
+{
+  "order1_trig_lr": {
+    "features": 14,
+    "selected_C": 1.0,
+    "temperature": 1.1289,
+    "test_nll": 1.11233,
+    "test_accuracy": 0.54026,
+    "test_ece": 0.01283,
+    "vqc_minus_model_nll": 0.00205,
+    "vqc_minus_model_ci95": [
+      0.00109,
+      0.00301
+    ],
+    "poe_minus_model_nll": 0.00465,
+    "poe_minus_model_ci95": [
+      0.00357,
+      0.00573
+    ]
+  },
+  "order2_trig_lr": {
+    "features": 112,
+    "selected_C": 0.1,
+    "temperature": 1.1228,
+    "test_nll": 1.1095,
+    "test_accuracy": 0.54192,
+    "test_ece": 0.01223,
+    "vqc_minus_model_nll": 0.00488,
+    "vqc_minus_model_ci95": [
+      0.0039,
+      0.00586
+    ],
+    "poe_minus_model_nll": 0.00747,
+    "poe_minus_model_ci95": [
+      0.00625,
+      0.0087
+    ]
+  },
+  "poly14_lr": {
+    "features": 14,
+    "selected_C": 100.0,
+    "temperature": 1.1317,
+    "test_nll": 1.10923,
+    "test_accuracy": 0.5406,
+    "test_ece": 0.01011,
+    "vqc_minus_model_nll": 0.00514,
+    "vqc_minus_model_ci95": [
+      0.00414,
+      0.00615
+    ],
+    "poe_minus_model_nll": 0.00774,
+    "poe_minus_model_ci95": [
+      0.00661,
+      0.00887
+    ]
+  },
+  "linear7_lr": {
+    "features": 7,
+    "selected_C": 100.0,
+    "temperature": 1.1283,
+    "test_nll": 1.11515,
+    "test_accuracy": 0.54174,
+    "test_ece": 0.01277,
+    "vqc_minus_model_nll": -0.00077,
+    "vqc_minus_model_ci95": [
+      -0.00155,
+      0.0
+    ],
+    "poe_minus_model_nll": 0.00183,
+    "poe_minus_model_ci95": [
+      0.00115,
+      0.0025
+    ]
+  }
+}

@@ -1,17 +1,17 @@
-# Claimed quantum benefits in clinical machine learning could not be verified under symmetric evaluation: an empirical and literature audit
+# Symmetric evaluation of shallow quantum machine learning in healthcare
 
-**Author:** Sivaguru R. M.  
-**Affiliation:** Independent Researcher, Chennai, India  
-**Correspondence:** sivagurumurugan1@gmail.com  
+**Author:** Sivaguru R. M.$^{1,*}$  
+**Affiliation:** $^{1}$Independent Researcher, Chennai, India  
+**Correspondence:** *e-mail:* [sivagurumurugan1@gmail.com](mailto:sivagurumurugan1@gmail.com)  
 **Target Journal:** *npj Digital Medicine* (Article Format)  
 **Status:** Preprint / Manuscript Under Review Draft (October 2026)  
-**Repository:** `https://github.com/Sivaguru-2008/aura`  
+**Repository:** [https://github.com/Sivaguru-2008/aura](https://github.com/Sivaguru-2008/aura)  
 
 ---
 
 ## Abstract
 
-Empirical claims that quantum machine learning (QML) algorithms outperform classical models on near-term hardware have proliferated in digital health, yet the methodological symmetry of these comparisons is rarely audited. Here, we evaluate whether reported empirical quantum benefits survive symmetric evaluation—a protocol requiring matched hyperparameter optimization budgets, independent probability calibration, leak-free partitioning, and appropriate resampling-corrected hypothesis testing. We investigated this question through an internal chest radiograph triage prototype and an independent audit of published literature. In our clinical prototype, reported calibration and likelihood advantages disappeared when classical baselines received matched optimization and independent temperature scaling. In a pre-specified confirmatory test across 56,534 held-out patients evaluating additive radiological triage, the default variational quantum circuit checkpoint performed worse on negative log-likelihood than matched classical baselines ($\Delta\text{NLL} = +0.0205$ nats, 95% test-sampling CI 0.0186 to 0.0224), though this single-run difference is on the order of training-seed variance ($\sigma_{\text{seed}} = 0.0116$ nats). When granted an equal budget of 36 hyperparameter configurations per arm, the optimal quantum configuration achieved a small likelihood difference ($\Delta\text{NLL} = -0.0026$ nats vs linear Product-of-Experts) that fell entirely inside our pre-specified operational equivalence band ($\pm 0.010$ nats; Two One-Sided Tests $p_{\text{TOST}} < 10^{-6}$) and within training-seed variance, while requiring 92.8-fold more training compute. Furthermore, a classical order-1 trigonometric Fourier surrogate achieved lower loss (NLL 1.1123) than both the tuned quantum circuit (1.1144) and classical baselines. Under institutional transfer from MIMIC-CXR to CheXpert, the quantum circuit degraded severely ($\Delta\text{NLL} = +0.1589$ to $+0.1967$, 15--20-fold the margin), exposing the vulnerability of periodic trigonometric encodings to feature scale drift. In an audit of five reconstructible published studies spanning six clinical prediction tasks, none of the six published advantage claims could be verified: one could not be reproduced under the reported feature set and favored classical models ($p = 0.0009$), one collapsed to chance level (52.1%) after eliminating participant-level temporal leakage, and four were statistically inconclusive due to wide corrected uncertainty intervals. These findings demonstrate that published empirical quantum benefits in these near-term healthcare tasks reflect evaluation asymmetries, uncalibrated comparisons, or underpowered cohorts rather than verified algorithmic superiority.
+Empirical claims that quantum machine learning outperforms classical models have proliferated in digital health, yet comparison symmetry is rarely audited. We evaluated whether reported quantum benefits survive symmetric evaluation requiring matched optimization, independent calibration, leak-free partitioning, and resampled inference. In a chest radiograph triage prototype across 56,534 held-out patients, default variational quantum circuits (VQC) yielded higher negative log-likelihood ($\Delta\text{NLL} = +0.0205$ nats; 10-seed mean $+0.0142$ nats) than matched classical baselines, exceeding seed variance ($\sigma_{\text{seed}} = 0.0045$ nats). Under matched 36-configuration search, optimal VQC test loss was statistically equivalent to classical baselines overall ($\Delta\text{NLL} = -0.0026$ nats; 10-seed mean $-0.00067$ nats, $\pm 0.010$ margin), but equivalence failed under class-balanced macro-averaging ($\Delta\text{NLL}_{\text{macro}} = +0.0389$ nats, $p_{\text{TOST}} > 0.99$; Malignancy $+0.1771$ nats), while requiring 92.8-fold more compute. Classical polynomial (NLL 1.1092) and Fourier surrogates (NLL 1.1123) outperformed the tuned VQC (1.1144). Under institutional transfer, the quantum circuit trailed classical baselines by $\Delta\text{NLL} = +0.1589$ to $+0.1967$ nats. Across five reconstructible publications spanning six clinical tasks, none of six published claims were verified: one was not reproduced, one collapsed to chance (52.1%), and four were statistically inconclusive. Reported quantum benefits reflected evaluation asymmetries, uncalibrated comparisons, or underpowered cohorts rather than verified algorithmic superiority.
 
 ---
 
@@ -26,211 +26,148 @@ Quantum machine learning (QML) applied to clinical data represents an ideal doma
 These findings raise an unresolved question in clinical artificial intelligence: **When claimed quantum machine-learning advantages in clinical prediction are evaluated with symmetric model selection, comparable classical baselines, leakage-resistant data partitioning, and appropriate statistical inference, which advantages remain supported by evidence?**
 
 To address this question, we formulated a seven-rule symmetric evaluation protocol (P1–P7) and operationalized it into a 17-item checklist with objective binary scoring criteria, aligning with international reporting standards including CONSORT-AI [29] and TRIPOD+AI [26]. We executed a dual-track empirical investigation:
-1. **Confirmatory Clinical Decision-Support Study:** We audited an internal multi-class clinical triage prototype mapping radiographic finding probabilities from frontal chest radiographs to six acuity categories. We evaluated four interchangeable backend architectures (Classical Product-of-Experts, Multinomial Logistic Regression, Attention-Gated Nonlinear Neural Head, and Variational Quantum Circuit) across development cohorts ($n=8,000$) and a pre-specified confirmatory cohort of 56,534 untouched clinical patients.
-2. **Systematic Benchmark Re-evaluation:** We conducted an independent screening of 231 PubMed publications, systematically identifying eight eligible studies and computationally reimplementing five reconstructible publications spanning six distinct clinical prediction tasks (chronic kidney disease, Parkinson's voice phonation, diabetes onset, schizophrenia electroencephalography, glioma tumor grading, and low-data heart disease risk).
+1. **Systematic Benchmark Re-evaluation:** We conducted an independent screening of 231 PubMed publications, systematically identifying eight eligible studies and computationally reimplementing five reconstructible publications spanning six distinct clinical prediction tasks (chronic kidney disease, Parkinson's voice phonation, diabetes onset, schizophrenia electroencephalography, glioma tumor grading, and low-data heart disease risk).
+2. **Confirmatory Clinical Decision-Support Study:** We audited an internal multi-class clinical triage prototype mapping radiographic finding probabilities from frontal chest radiographs to six acuity categories. We evaluated four interchangeable backend architectures (Classical Product-of-Experts, Multinomial Logistic Regression, Attention-Gated Nonlinear Neural Head, and Variational Quantum Circuit) across development cohorts ($n=8,000$) and a pre-specified confirmatory cohort of 56,534 untouched clinical patients.
 
-Across both tracks, our findings demonstrate that claimed quantum advantages in clinical machine learning are artifacts of asymmetric evaluation choices: undertuned baselines, one-sided calibration, and partition leakage across subjects. When evaluation protocols are symmetrized, claimed advantages either fail to reproduce under the reported feature set, become statistically indistinguishable, or collapse to chance.
-
----
-
-## Methods and Mathematical Formulation
-
-### 1. Supervised Learning Objective and Empirical Risk
-
-Let $\mathcal{X} \subset \mathbb{R}^d$ denote the input feature space and $\mathcal{Y} = \{1, \dots, C\}$ denote the label space corresponding to $C$ mutually exclusive clinical categories. A training dataset consists of $N$ independent and identically distributed pairs:
-$$\mathcal{D} = \{(x_i, y_i)\}_{i=1}^N, \quad x_i \in \mathcal{X}, \quad y_i \in \mathcal{Y}$$
-A classification model parameterizes a mapping $f_\theta: \mathcal{X} \to \mathbb{R}^C$, generating unnormalized class scores (logits) $z(x) = f_\theta(x)$. Predicted class probabilities are obtained via the softmax transformation:
-$$P_\theta(y = k \mid x) = \sigma(z(x))_k = \frac{\exp(z_k(x))}{\sum_{j=1}^C \exp(z_j(x))}$$
-Model parameters $\theta \in \Theta$ are estimated by minimizing the empirical cross-entropy loss over training data:
-$$\mathcal{L}(\theta; \mathcal{D}) = -\frac{1}{N} \sum_{i=1}^N \sum_{k=1}^C \mathbb{I}(y_i = k) \ln P_\theta(y = k \mid x_i) + \lambda \mathcal{R}(\theta)$$
-where $\mathbb{I}(\cdot)$ is the indicator function and $\mathcal{R}(\theta)$ is an L2 weight regularization penalty with regularization coefficient $\lambda \ge 0$.
-
-### 2. Classical Comparator Parameterization
-
-We evaluated three standard classical model families matched in input dimensionality and trained under identical optimization schedules:
-1. **Multinomial Logistic Regression (Linear Baseline):** Parameterized by weight matrix $W \in \mathbb{R}^{C \times d}$ and bias $b \in \mathbb{R}^C$, producing logits $z(x) = W x + b$ ($C \cdot d + C = 54$ parameters).
-2. **Product-of-Experts (PoE Architecture):** Evaluates independent linear experts per class, mathematically equivalent in representational capacity to multinomial logistic regression ($54$ parameters).
-3. **Attention-Gated Neural Head (Nonlinear Comparator):** Introduces input-dependent soft gating: $g(x) = \text{sigmoid}(A x + c)$, $z(x) = W (g(x) \odot x) + b$, where $A \in \mathbb{R}^{d \times d}$ and $c \in \mathbb{R}^d$ ($64 + 8 + 54 = 126$ parameters).
-
-### 3. Variational Quantum Circuit Parameterization
-
-The quantum classifier maps continuous input vectors $x \in [0, 1]^d$ to statevectors $|\psi(x)\rangle \in \mathcal{H}_{2^n}$ on an $n$-qubit register ($n = d = 8$). Features are encoded via single-qubit rotations:
-$$U_{\text{enc}}(x) = \bigotimes_{j=1}^n R_Y(\pi \cdot s \cdot x_j)$$
-where $s > 0$ is a scalar encoding bandwidth parameter. The parameterized variational ansatz consists of $L$ alternating layers of single-qubit rotations and entangling unitaries:
-$$U_{\text{ansatz}}(\theta) = \prod_{l=1}^L \left( U_{\text{ent}} \cdot \bigotimes_{j=1}^n R_Y(\theta_{l,j}) \right)$$
-where $U_{\text{ent}}$ denotes a circular CNOT entangling ring ($CNOT(j, (j \bmod n) + 1)$). The system state is $|\psi(x; \theta)\rangle = U_{\text{ansatz}}(\theta) U_{\text{enc}}(x) |0\rangle^{\otimes n}$. Quantum observables are the expectation values of local Pauli-$Z$ operators:
-$$\langle Z_j \rangle(x; \theta) = \langle \psi(x; \theta) | Z_j | \psi(x; \theta) \rangle \in [-1, 1]$$
-Logits are computed via a linear readout layer: $z(x) = W_{\text{out}} \langle Z \rangle(x; \theta) + b_{\text{out}}$, where $W_{\text{out}} \in \mathbb{R}^{C \times n}$ and $b_{\text{out}} \in \mathbb{R}^C$. Trainable parameters total $n \cdot L + C \cdot n + C$ (102 parameters at $L=3$; 118 parameters at $L=4$).
-
-### 4. Post-Hoc Probability Calibration
-
-To ensure unbiased probabilistic predictions, all models underwent post-hoc Platt temperature scaling [30, 31]. Logits $z(x)$ were scaled by a learned scalar temperature $T > 0$:
-$$P_T(y = k \mid x) = \frac{\exp(z_k(x) / T)}{\sum_{j=1}^C \exp(z_j(x) / T)}$$
-The temperature $T^*$ was estimated strictly on independent development calibration data ($\mathcal{D}_{\text{cal}}$) by minimizing cross-entropy via L-BFGS-B:
-$$T^* = \arg\min_{T > 0} \left[ -\frac{1}{|\mathcal{D}_{\text{cal}}|} \sum_{i \in \mathcal{D}_{\text{cal}}} \sum_{k=1}^C \mathbb{I}(y_i = k) \ln P_T(y = k \mid x_i) \right]$$
-Temperature scaling was applied symmetrically across all model arms.
-
-### 5. Statistical Inference and Equivalence Testing (TOST)
-
-For paired performance differences on held-out test data, we evaluated individual observation loss differences:
-$$d_i = \ell(f_{\text{quantum}}(x_i), y_i) - \ell(f_{\text{classical}}(x_i), y_i)$$
-The sample mean difference is $\bar{d} = \frac{1}{N} \sum_{i=1}^N d_i$, with sample standard error $\text{SE}(\bar{d}) = s_d / \sqrt{N}$. Under our convention, $\bar{d} > 0$ indicates classical superiority, while $\bar{d} < 0$ indicates quantum superiority.
-
-To evaluate whether a statistically detectable difference represents practical operational equivalence rather than substantive superiority, we conducted Two One-Sided Tests (TOST) [32, 33] against a pre-specified operational equivalence margin $\Delta_{\text{equiv}} = \pm 0.010$ nats:
-$$t_1 = \frac{\bar{d} - (-\Delta_{\text{equiv}})}{\text{SE}(\bar{d})}, \quad t_2 = \frac{+\Delta_{\text{equiv}} - \bar{d}}{\text{SE}(\bar{d})}$$
-$$p_{\text{TOST}} = \max\left(1 - \Phi(t_1), 1 - \Phi(t_2)\right)$$
-Operational equivalence at significance level $\alpha = 0.05$ is confirmed if $p_{\text{TOST}} < 0.05$, which occurs if and only if the 90% confidence interval for $\bar{d}$ is contained strictly within $[-\Delta_{\text{equiv}}, +\Delta_{\text{equiv}}]$.
-
-### 6. Dependency-Corrected Resampled Cross-Validation
-
-For literature benchmarks evaluated under $J \times K$ repeated cross-validation ($J$ repetitions of $K$-fold CV), standard Student's $t$-tests underestimate variance due to training-set overlap. We applied the Nadeau–Bengio correction [14]:
-$$\hat{\sigma}^2_{\text{corrected}} = \left( \frac{1}{J \cdot K} + \frac{n_{\text{test}}}{n_{\text{train}}} \right) S^2$$
-$$t_{\text{NB}} = \frac{\bar{d}}{\hat{\sigma}_{\text{corrected}}}, \quad df = J \cdot K - 1$$
-where $S^2$ is the sample variance across the $J \cdot K$ fold performance differences.
+Across both tracks, our findings demonstrate that claimed quantum advantages in clinical machine learning are artifacts of asymmetric evaluation choices: undertuned baselines, one-sided calibration, and partition leakage across subjects. When evaluation protocols are symmetrized, claimed advantages either fail to reproduce under the reported feature set, become statistically inconclusive, or collapse to chance.
 
 ---
 
 ## Results
 
-### 1. Systematic Review and Checklist Audit of Published Claims
+### Audited published studies exhibit pervasive methodological asymmetries
 
-Our screening flow identified 231 records from PubMed matching quantum clinical prediction terms. Title and abstract screening identified 129 publications addressing human health, of which 41 explicitly claimed an empirical quantum advantage on a clinical outcome. Eight publications met eligibility criteria by evaluating clinical prediction tasks on reconstructible or open data. Three studies were inaccessible for independent computational execution: Jahin et al. [20] did not release source code or tensor weights for their 3-million-parameter classical-quantum hybrid network; Chen et al. [21] evaluated PROSTATEx lesions using proprietary MRI radiomics features and private network weights; and Choi et al. [22] evaluated controlled-access COVID-19 multi-omics data requiring unreleased institutional credentialing.
-
-The remaining five reconstructible publications spanning six clinical prediction tasks were reimplemented with complete code and verified against primary datasets: Chronic Kidney Disease (Parthasarathi et al. [15]), Parkinson's Voice and Pima Diabetes (Daga et al. [16]), Schizophrenia EEG (Aksoy & Cattan [17]), Glioma Tumor Grading (Akpinar & Oduncuoglu [18]), and Heart Disease Risk (Ghisoni et al. [19]).
-
-Six publications with accessible texts were assessed against our 17-item checklist (**Table 1**). All six evaluated tasks exhibited at least one form of methodological asymmetry: utilizing an untuned classical comparator, fitting dimensionality reduction (e.g., PCA) before data partitioning, allowing repeated patient recordings or temporal epochs to cross validation splits, or selecting checkpoints based on test-set metrics. Crucially, all six studies originally asserted superiority without paired hypothesis testing or uncertainty intervals on performance differences.
+To examine the prevalence and severity of evaluation asymmetries in the literature, we conducted a systematic screening of 231 PubMed records (January 2020 through October 2026). Following PRISMA flow accounting, 129 records addressed clinical or health-related prediction tasks, 41 claimed empirical quantum advantages over classical baselines, eight met formal eligibility criteria (empirical evaluation on real-world clinical datasets comparing parameterized quantum and classical models), and five publications spanning six clinical prediction tasks provided sufficient methodological documentation for computational reconstruction (**Table 1**).
 
 **Table 1 | Methodological audit of eligible published quantum machine learning studies in digital health.**
 
-| Study & Clinical Task | Publication & Data Access | Sample Size ($n$) & Split Design | Qubits & Architecture | Reported Quantum Claim | Asymmetric Risk Identified | Symmetric Evaluation Result ($\Delta$, 95% CI) | Statistical Test & $p$-value | Outcome Classification |
-|---|---|---|:---:|---|:---:|---|:---:|---|
-| **Parthasarathi et al.**<br>Chronic Kidney Disease | *PeerJ CS* 2025 [15]<br>PMID 40567645 | $n=400$ patients<br>80/20 train/test | 8 qubits<br>VQC (SAE+LASSO) | VQC 99.2% accuracy beats classical (RF 90.7%, RBF Net 96.3%) | **YES** (Untuned baseline, global preprocessing) | Classical 97.35% vs Quantum 87.70%<br>$\Delta = -9.65\%$ ($-14.92\%$ to $-4.38\%$) | Nadeau–Bengio corrected $t$<br>$t = -3.78, df = 24, p = 0.000915$ | **Not Reproduced**\* (Classical baseline significantly superior on reported features) |
-| **Daga et al.**<br>Parkinson's Disease Voice | *Sci Rep* 2026 [16]<br>PMID 42286086 | $n=195$ recordings<br>31 subjects; recording split | 10 qubits<br>QKL Stacking | QKL Stacking 81.3% specificity beats SVM (58.5%) [abstract; up to 99.1% on recording split] | **YES** (Global PCA, recording-level split) | 25-fold nested CV: $\Delta = +0.33\%$ ($-24.97\%$ to $+25.64\%$); Factorial naive recording split: $\Delta = -0.3\%$ ($-2.1\%$ to $+1.5\%$) | Nadeau–Bengio $t = +0.03, df = 24, p = 0.9785$;<br>Factorial $t$ $p = 0.72$ | **Statistically Inconclusive** (Advantage not reproduced under subject grouping) |
-| **Daga et al.**<br>Pima Diabetes Mellitus | *Sci Rep* 2026 [16]<br>PMID 42286086 | $n=768$ patients<br>70/30 train/test | 8 qubits<br>QKL Stacking | QKL Stacking 62.1% sensitivity beats SVM (55.3%) [up to 88.5% on author split] | **YES** (Global PCA, untuned comparator) | 25-fold nested CV: $\Delta = -5.30\%$ ($-11.00\%$ to $+0.39\%$); Factorial: $\Delta = +0.8\%$ ($-1.1\%$ to $+2.7\%$) | Nadeau–Bengio $t = -1.92, df = 24, p = 0.0666$;<br>Factorial $t$ $p = 0.36$ | **Statistically Inconclusive** (Advantage not reproduced under baseline tuning) |
-| **Aksoy & Cattan**<br>EEG Schizophrenia | *J Med Syst* 2024 [17]<br>PMID 38441727 | $N=84$ participants (45 cases, 39 controls)<br>84 whole recordings (1,008 epochs) | 10 qubits<br>Quantum SVM (Pauli-$Z$) | Quantum SVM achieves 100.0% test accuracy | **YES** (Epoch split contamination / temporal leakage) | Subject-grouped leak-free: **52.1%** mean accuracy (descriptive range: 43.2%–61.0%; chance); 25-fold nested CV: $\Delta = -7.60\%$ ($-23.01\%$ to $+7.81\%$) | Nadeau–Bengio corrected $t$<br>$t = -1.02, df = 24, p = 0.3187$ | **Collapsed to Chance** (100% claim is a partition leakage artifact) |
-| **Akpinar & Oduncuoglu**<br>Glioma Grading (TCGA & BraTS) | *Sci Rep* 2025 [18]<br>PMID 40676161 | $n=839$ (TCGA)<br>$n=369$ (BraTS 2020) | 5 qubits (TCGA)<br>10 qubits (BraTS) | VQC 83.0% accuracy beats classical baselines (75–82%) | **YES** (Feature selection on full dataset) | TCGA nested CV: $\Delta = +0.19\%$ ($-1.22\%$ to $+1.60\%$); BraTS held-out: RBF 0.9625 vs QKL 0.9407 ($\Delta = -0.0217$, $-0.0543$ to $+0.0109$) | Nadeau–Bengio $t = +0.28, df = 24, p = 0.7824$;<br>DeLong test $Z = 1.31, p = 0.1912$ | **Statistically Inconclusive** (Classical RBF matches on TCGA, higher point AUROC on BraTS) |
-| **Ghisoni et al.**<br>Heart Disease Risk | *Sci Rep* 2026 [19]<br>PMID 41513819 | $N=918$ patients (low-data regime)<br>10% training fraction ($n_{\text{train}}=74, n_{\text{test}}=184$) | 11 features<br>1-layer QNN | 1-layer QNN 82.72% beats classical NN (80.51%) at 10% data | **YES** (Early stop on test cost, untuned NN) | Symmetric nested CV with validation stopping: Classical NN 82.6% vs Quantum 81.5%<br>$\Delta = -1.10\%$ (paired $t$ 95\% CI $-3.20\%$ to $+1.00\%$; NB 95\% CI $-18.45\%$ to $+16.25\%$) | Paired Student's $t$ ($p = 0.310$);<br>Nadeau–Bengio ($p = 0.897$) | **Statistically Inconclusive** (Advantage vanishes with validation-based stopping; wide CI $[-18.45\%, +16.25\%]$) |
-| **Jahin et al.**<br>Cardiovascular Disease | *Comput Biol Med* 2025 [20]<br>PMID 40865268 | $n=1,025$ patients<br>80/20 train/test | 4 qubits<br>KACQ-DCNN (3M params) | KACQ-DCNN 92.0% accuracy beats CatBoost (86.4%) | **YES** (Untuned baseline, SMOTE pre-split) | Not Reimplemented (No code released; 3-million-parameter classical-quantum network) | — | *Eligible, Inaccessible* (Unreleased source code) |
-| **Chen et al.**<br>Prostate Lesions (PROSTATEx) | *Proc SPIE* 2026 [21]<br>PMID 42046760 | $n=330$ lesions<br>MRI radiomics | 8 qubits<br>QSVM | QSVM 0.799 AUROC beats SVM-RBF (0.608) | Unclear (Proprietary features / weights) | Not Reimplemented (Proprietary radiomics extraction pipeline and weights unreleased) | — | *Eligible, Inaccessible* (Proprietary radiomics pipeline) |
-| **Choi et al.**<br>COVID-19 Biomarkers | *Comput Methods Programs Biomed* 2026 [22]<br>PMID 41966795 | $n=128$ patients<br>Multi-omics profiles | 6 qubits<br>QSVM | QSVM comparable or exceeds classical SVM | Unclear (Data inaccessible) | Not Reimplemented (Controlled-access multi-omics data requiring institutional credentialing) | — | *Eligible, Inaccessible* (Restricted omics access) |
+| Study & Disease | Publication | Qubits | Reported Claim | Asymmetric Risk | Inference | Re-Test Verdict |
+|---|---|:---:|---|:---:|:---:|---|
+| **Parthasarathi et al.**<br>Kidney Disease | *PeerJ CS* 2025 [15] | 8 | VQC 99.2% acc beats RF (90.7%), RBF (96.3%) | **YES** (Untuned baseline, global preprocessing) | **NO** | **NOT REPRODUCED**$^*$ (VQC 83.5% on reported features vs 99.2% claimed; classical baselines 97.4% vs 87.7% nested VQC; $\Delta = -9.65\%$, $p = 0.0009$) |
+| **Daga et al.**<br>Parkinson's Voice | *Sci Rep* 2026 [16] | 10 | QKL Stacking 81.3% spec beats SVM (58.5%) [claim in abstract; up to 99.1% on recording split] | **YES** (Global PCA, recording split) | **NO** | **INCONCLUSIVE** (25-fold nested CV: $\Delta = +0.33\%$, 95% CI $-24.97\%$ to $+25.64\%$, $p = 0.98$; Factorial naive recording split: $-0.3\%$, $p = 0.72$) |
+| **Daga et al.**<br>Diabetes Mellitus | *Sci Rep* 2026 [16] | 8 | QKL Stacking 62.1% sens beats SVM (55.3%) [up to 88.5% on author split] | **YES** (Global PCA, untuned baseline) | **NO** | **INCONCLUSIVE** (25-fold nested CV: $\Delta = -5.30\%$, 95% CI $-11.00\%$ to $+0.39\%$, $p = 0.067$; Factorial: $+0.8\%$, $p = 0.36$) |
+| **Aksoy & Cattan**<br>Schizophrenia EEG | *J Med Syst* 2024 [17] | 10 | Quantum SVM achieves 100.0% accuracy | **YES** (Epoch split contamination) | **NO** | **COLLAPSED TO CHANCE** (Drops to 52.1% on subject split; 25-fold nested CV: $\Delta = -7.6\%$, 95% CI $-23.0\%$ to $+7.8\%$, $p = 0.32$) |
+| **Akpinar & Oduncuoglu**<br>Glioma Grading | *Sci Rep* 2025 [18] | 5 | VQC 83.0% acc beats classical (75–82%) | **YES** (Feature selection on full data) | **NO** | **INCONCLUSIVE** (TCGA $\Delta = +0.19\%$, 95% CI $-1.22\%$ to $+1.60\%$, $p = 0.78$; BraTS 2020: $\Delta\text{AUROC} = -0.022$, $p = 0.19$) |
+| **Ghisoni et al.**<br>Cardiovascular Risk | *Sci Rep* 2026 [19] | 11 | QNN 82.72% beats classical NN (80.51%) | **YES** (Early stop on test cost, untuned NN) | **NO** | **INCONCLUSIVE** ($\Delta = -1.1\%$; paired $t$ 95% CI $-3.2\%$ to $+1.0\%$; Nadeau–Bengio 95% CI $-18.45\%$ to $+16.25\%$, $p = 0.90$) |
+| **Jahin et al.** | *Comput Biol Med* 2025 [20] | 4 | KACQ-DCNN 92.0% acc beats CatBoost (86.4%) | **YES** (Untuned baseline, SMOTE pre-split) | **NO** | *Eligible, Not Reproducible* (3M-param hybrid, no code) |
+| **Chen et al.** | *Proc SPIE* 2026 [21] | 8 | QSVM 0.799 AUROC beats SVM-RBF (0.608) | Unclear (Proprietary features) | **NO** | *Eligible, Not Reproducible* (Pipeline non-reconstructible) |
+| **Choi et al.** | *Comput Meth Prog Bio* 2026 [22] | 6 | QSVM comparable or exceeds classical SVM | Unclear (Data inaccessible) | **NO** | *Eligible, Not Reproducible* (Restricted omics access) |
 
-\* *Footnote on Chronic Kidney Disease:* The published 99.2% accuracy claim utilized an under-specified sparse autoencoder augmentation and Kalman filter imputation that could not be replicated from the published text and had no public repository; on the published 13 LASSO features, our reimplemented VQC reached only 83.5% under the author protocol, while standard classical models achieved 96--98%. Under symmetric nested tuning, classical models maintained significant superiority ($\Delta = -9.65\%$, $p = 0.0009$).
+<small>$^*$The published 99.2% accuracy claim utilized an under-specified sparse autoencoder augmentation and Kalman filter imputation that could not be replicated from the published text and had no public repository; on the published 13 LASSO features, our reimplemented VQC reached only 83.5% under the author protocol, while standard classical models achieved 96–98%. Under symmetric nested tuning, classical models maintained significant superiority ($\Delta = -9.65\%$, $p = 0.0009$).</small>
 
-<div class="figure-container">
-    <img src="file:///E:/AURA/aura-main/docs/figures/fig_v6_forest.png" alt="Figure 1" style="width:100%; max-width:900px; display:block; margin:auto;" />
-    <p class="figure-caption"><strong>Figure 1 | Systematic benchmark comparison across evaluation regimes.</strong> 
-    <strong>(a)</strong> Paired per-study likelihood differences (&Delta;NLL) in the internal decision-support prototype across comparator choices, calibration protocols, out-of-sample partitions, and confirmatory cohorts. Under default matched optimization (C1), the quantum circuit is materially worse (&Delta;NLL = +0.0205 nats). Under 36-configuration symmetric tuning (C2), the observed effect (&Delta;NLL = -0.0026 nats) falls entirely within the prespecified &plusmn;0.010-nat operational equivalence band (gray region).
-    <strong>(b)</strong> Re-tested published claims of quantum benefit across literature benchmarks. Hollow markers indicate original reported margins; solid markers indicate re-evaluated performance differences with Nadeau–Bengio 95% confidence intervals under symmetric evaluation. Zero of the six benchmark claims could be verified under symmetric evaluation.</p>
-</div>
-
-### 2. External Clinical Benchmark Re-evaluations
-
-Under our pre-specified decision protocol, declaring that a published advantage was verified required establishing statistically significant superiority ($p < 0.05$) under leak-free nested cross-validation. Under this criterion, **none of the six benchmark claims could be verified** (**Figure 1b**).
-
-1. **Claim Not Reproduced Under Published Feature Set (Classical Baselines Superior):**
-   * *Chronic Kidney Disease (Parthasarathi et al.):* Parthasarathi et al. reported that a variational quantum classifier attained 99.2% accuracy on the UCI CKD dataset ($n=400$), beating Random Forest (90.7%) and an RBF Network (96.3%). In their original paper, the authors utilized a pipeline combining 13 LASSO features with a sparse autoencoder for data augmentation and Kalman-filter imputation. Because the autoencoder dimensions, latent hyperparameter schedules, and Kalman filter parameters were under-specified in their published text and no repository was made public, our replication under the author protocol evaluated the 13 reported LASSO features and full-data scaling across 10-fold CV without the proprietary augmentation. Under this protocol, the VQC reached only 83.50% $\pm$ 6.04% accuracy, while classical baselines already achieved 96.00% to 97.75%. When subjected to symmetric nested cross-validation with hyperparameter optimization (tuning reps and iterations), the quantum model attained 87.70% $\pm$ 4.10% accuracy, while nested-selected classical baselines achieved 97.35% $\pm$ 1.90%. Under symmetric evaluation, the classical arm won by **9.65 percentage points** (95% CI 4.38% to 14.92%; Nadeau–Bengio $t = -3.78, df = 24, p = 0.000915$). Because our reimplemented VQC reached only 83.5%--87.7% rather than 99.2%, this outcome represents an **unreproduced claim** where classical baselines outperform the VQC on the reported feature set. Whether the authors' originally reported 99.2% arose from autoencoder data leakage or circuit architecture cannot be definitively resolved without their original code checkpoints.
-
-2. **Statistically Inconclusive Under Matched Evaluation:**
-   * *Parkinson's Disease Voice (Daga et al.):* Daga et al. reported that Quantum Kernel Learning (QKL) stacking attained 81.3% specificity on UCI Parkinson's Voice data in their abstract, while under their recording-level split protocol, the QKL reached 99.1% specificity vs 94.2% classical ($p = 0.012$). In our controlled factorial analysis (**Table 2**), baseline tuning closed the gap even before fixing recording-split leakage, and under full symmetric evaluation on the fixed factorial partition, the difference was $\Delta = -0.3\%$ ($95\%$ CI $-2.1\%$ to $+1.5\%$, $p = 0.72$). Crucially, this fixed factorial partition evaluated recording-level splits ($\pm 1.8$ percentage points with 31 subjects), treating multiple voice recordings from the same individual as independent—an exact reproduction of the recording-level data leakage present in the literature. In contrast, when evaluated under repeated 25-fold nested cross-validation with Nadeau–Bengio correction to account for true patient clustering (**Table 1**), the difference was $\Delta = +0.33\%$ ($95\%$ CI $-24.97\%$ to $+25.64\%$, $p = 0.979$), demonstrating that the result is **statistically inconclusive**.
-   * *Pima Diabetes Mellitus (Daga et al.):* On 768 patients, the author protocol reproduction yielded 88.5% sensitivity vs 79.2% ($p = 0.009$). Under the fixed factorial design, in-fold PCA and baseline tuning narrowed the advantage to $+0.8\%$ ($95\%$ CI $-1.1\%$ to $+2.7\%$, $p = 0.36$). Under repeated 25-fold nested CV, the classical baseline achieved a superior point estimate ($\Delta = -5.30\%$, $95\%$ CI $-11.00\%$ to $+0.39\%$, $p = 0.0666$), which remained statistically inconclusive at $\alpha = 0.05$. Under neither task was the reported quantum superiority verified.
-   * *Glioma Tumor Grading (Akpinar & Oduncuoglu):* On TCGA clinical and genomic mutation features ($n=839$), the quantum classifier matched classical baselines without statistical separation ($\Delta = +0.19\%$, 95% CI $-1.22\%$ to $+1.60\%$, $p = 0.7824$). Furthermore, on 369 official neuroimaging subjects from BraTS 2020, Quantum Kernel Learning achieved a test AUROC of 0.9407 on held-out subjects ($n=111$), while a standard classical RBF kernel achieved **0.9625** ($\Delta\text{AUROC} = -0.0217$, 95% CI $-0.0543$ to $+0.0109$; DeLong $Z = 1.31, p = 0.1912$).
-   * *Heart Disease Low-Data Regime (Ghisoni et al.):* Ghisoni et al. investigated whether quantum neural networks excel under extreme data scarcity, reporting an advantage at a 10% training data fraction on UCI Heart Disease ($N=918$). When early stopping was monitored on test-set cost (as in the original paper), an apparent advantage appeared ($\Delta = +2.2\%$). Under symmetric 5-fold cross-validation across 25 outer folds ($N=918$, with training pool $n=734$ subsampled to $n_{\text{train}}=74$ and evaluated on $n_{\text{test}}=184$, test/train ratio 2.49), the advantage vanished when early stopping was monitored on validation loss ($\Delta = -1.10\%$, uncorrected paired $t$ 95% CI $-3.20\%$ to $+1.00\%$, paired $t = -1.0400, df = 24, p = 0.3100$; under Nadeau–Bengio dependency correction, $t = -0.1309, df = 24, p = 0.8970$, corrected 95% CI $-18.45\%$ to $+16.25\%$). This wide uncertainty interval demonstrates that the result is **statistically inconclusive**, not proof that the methods are equivalent. In small-to-moderate sample sizes under dependency correction, failure to reject the null cannot be construed as demonstrating equivalence, which would require adequate statistical power to rule out meaningful differences.
-
-3. **Advantage Not Reproduced Due to Partition Leakage:**
-   * *Schizophrenia EEG (Aksoy & Cattan):* Aksoy & Cattan reported that a Quantum SVM achieved **100.0% accuracy** in distinguishing adolescent schizophrenia patients from healthy controls. Under random epoch splitting across 1,008 segmented 5-second EEG epochs derived from $N=84$ participants (45 cases, 39 controls; 53.57% baseline prevalence), the 100% claim reproduced (mean accuracy 98.6%, with 34.5% of splits hitting 100.0%). However, because participant-specific EEG rhythms are persistent over time, random epoch splitting allows the classifier to memorize individual subject identities rather than pathology. When partitions were grouped strictly by participant (so that no patient's epochs crossed splits), accuracy collapsed to a descriptive mean of **52.1%** (SD 7.0%, empirical 95% split range 43.2%–61.0%, with 0% of splits reaching >75%), matching the 53.57% majority-class prevalence. Formal 25-fold nested cross-validation with Nadeau–Bengio correction confirmed no difference from classical baselines ($t = -1.0184, df = 24, p = 0.3187$).
-
-**Table 2 | Pre-specified factorial analysis isolating the evaluation mechanisms of apparent quantum advantage.**
-
-| Dataset & Study | Factorial Design Space | Cell Configuration | Mean Quantum Advantage $\Delta$ (95% CI) | Corrected $p$-value | Finding |
-|---|---|---|:---:|:---:|---|
-| **Parkinson's Voice**<br>(Daga et al. [16]) | 2 × 2 × 2 Factorial:<br>• PCA Scope (Global vs In-Fold)<br>• Split Unit (Recording vs Subject)<br>• Baseline (Untuned vs Tuned) | **Author Protocol:**<br>Global PCA × Recording Split × Untuned SVM | **+4.8%** (+1.2% to +8.4%) | $p = 0.012$ | Apparent advantage reproduced under author design. |
-| | | In-Fold PCA × Recording Split × Untuned SVM | +1.1% (−1.0% to +3.2%) | $p = 0.29$ | Fixing PCA leakage eliminates significance. |
-| | | Global PCA × Subject Grouped × Untuned SVM | +0.7% (−1.1% to +2.5%) | $p = 0.41$ | Subject grouping eliminates significance. |
-| | | **Symmetric Protocol:**<br>In-Fold PCA × Subject Grouped × Tuned SVM | **−0.3%** (−2.1% to +1.5%) | $p = 0.72$ | Advantage completely vanishes (naive split CI: $\pm 1.8\%$). |
-| **Pima Diabetes**<br>(Daga et al. [16]) | 2 × 2 Factorial:<br>• PCA Scope (Global vs In-Fold)<br>• Baseline (Untuned vs Tuned) | **Author Protocol:**<br>Global PCA × Untuned SVM | **+9.3%** (+2.4% to +16.2%) | $p = 0.009$ | Apparent advantage reproduced under author design. |
-| | | **Symmetric Protocol:**<br>In-Fold PCA × Tuned SVM | **+0.8%** (−1.1% to +2.7%) | $p = 0.36$ | Tuning classical baseline removes advantage. |
-| **Schizophrenia EEG**<br>(Aksoy & Cattan [17]) | Partition Scheme:<br>Random Epoch vs Subject-Grouped<br>($N=84$ participants, 1,008 epochs) | Random Epoch Splitting (Author Design) | **98.6% Accuracy** (34.5% reach 100%) | $p < 10^{-6}$ | 100% accuracy reproduced via temporal leakage. |
-| | | Subject-Grouped Splitting (Leak-Free) | **52.1% Mean Accuracy** (empirical 95% range: 43.2%–61.0%; 0% reach >75%) | Prevalence: 53.6% (45/84)<br>Nadeau–Bengio CV: $p = 0.3187$ | Advantage is entirely a partition artifact. |
-
-### 3. Clinical Decision-Support Prototype: Sensitivity to Evaluation Choices
-
-In our chest radiograph triage prototype, four backends were evaluated on the task of mapping finding probabilities extracted by a DenseNet-121 to six clinical acuity categories:
-- **Feature Extractor Provenance:** The eight-channel vector of finding probabilities is extracted by a DenseNet-121 backbone pretrained exclusively on **MIMIC-CXR** (`best_model.pt`). Consequently, the 56,534 held-out CheXpert confirmatory patients were completely untouched by **both** the upstream visual feature extractor and the downstream fusion heads.
-- **Calibration Asymmetry:** The system's initial published claim asserted an expected calibration error (ECE) of 0.020 for the quantum circuit versus 0.276 for classical Product-of-Experts. Auditing the codebase revealed that temperature scaling had been applied exclusively to the quantum arm. When both arms were calibrated independently on validation data, the raw test calibration gap of 0.139 shrank to 0.037. **More than 73% of the reported calibration advantage was generated entirely by one-sided calibration.**
-- **Comparator Selection:** When models were fitted under author-preferred optimizers, rankings shifted depending on which baseline was evaluated: the quantum circuit beat Product-of-Experts ($p = 0.006$), matched the Gated Head ($p = 0.052$), and lost to Logistic Regression ($\Delta\text{NLL} = +0.054$, Holm $p = 0.036$).
-- **Optimizer Standardization:** When all arms received matched Adam optimization with learning rates selected on validation loss, the likelihood gap vs Product-of-Experts shrank to $\Delta\text{NLL} = +0.0033$ ($p = 1.0$), with a 90% CI ($[-0.0270, +0.0337]$) too wide to assert equivalence.
-- **Institutional Domain Shift and Angle Wrapping:** When models trained on MIMIC-CXR ($n = 1,338$ training studies, 446 calibration, and 447 test) were transferred frozen to CheXpert ($n=4,800$), the quantum circuit finished last of all four arms ($\Delta\text{NLL} = +0.1589$ vs PoE, 95% CI $0.1422$ to $0.1757$; $+0.1967$ vs Logistic Regression, 95% CI $0.1785$ to $0.2149$; **Figure 1a**). This 15--20-fold degradation beyond our equivalence margin reflects a fundamental structural vulnerability: single-qubit angle encoding $R_Y(\pi s x_i)$ maps features periodically onto the Bloch sphere. Under out-of-distribution domain shift or unnormalized covariate shift across clinical institutions, feature values drift outside the calibrated interval and wrap around $2\pi$, producing catastrophic non-monotonic distortions in predicted risk. In contrast, classical monotonic models degrade smoothly.
-
-**Table 3 | Pre-specified confirmatory evaluation across 56,534 untouched clinical patients under default and tuned protocols.**
-
-| Architecture / Model Arm | Trainable Parameters | Test Accuracy (95% Jeffreys CI) | Negative Log-Likelihood (NLL) | Expected Calibration Error (ECE, 95% Boot CI) | Macro-AUROC | Paired $\Delta\text{NLL}$ vs PoE (90% CI, 95% CI) | Statistical Test & $p$-value | Pre-Specified Verdict |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Panel A: Analysis C1 — Default Matched Optimization Protocol** | | | | | | | | |
-| **Classical Product-of-Experts** | 54 | **0.5443** (0.5402, 0.5484) | **1.1157** | 0.0131 (0.0100, 0.0172) | **0.7534** | Reference Baseline | — | — |
-| **Multinomial Logistic Regression** | 54 | 0.5415 (0.5374, 0.5456) | **1.1152** | 0.0128 (0.0105, 0.0171) | **0.7534** | $-0.0005$ (−0.0010, +0.0001; −0.0011, +0.0002) | Paired $t$ $p = 0.28$;<br>TOST $p < 10^{-6}$ | Practically Equivalent ($\Delta < 0.010$) |
-| **Classical Gated Head** | 126 | 0.5398 (0.5357, 0.5439) | 1.1165 | 0.0085 (0.0071, 0.0130) | **0.7553** | $+0.0008$ (0.0000, 0.0017; −0.0002, 0.0019) | Paired $t$ $p = 4.9 \times 10^{-7}$;<br>TOST $p < 10^{-6}$ | Practically Equivalent ($\Delta < 0.010$) |
-| **Variational Quantum Circuit** | 102 | 0.5371 (0.5330, 0.5412) | 1.1362 | 0.0076 (0.0051, 0.0119) | 0.7436 | $\mathbf{+0.0205}$<br>90% CI: (0.0189, 0.0221)<br>95% CI: (0.0186, 0.0224) | Paired $t = 21.03, p = 7.65 \times 10^{-98}$;<br>TOST $p = 1.000$ | **Quantum Materially Worse** |
-| **Panel B: Analysis C2 — Symmetric 36-Configuration Hyperparameter Grid Search** | | | | | | | | |
-| **Tuned Product-of-Experts** | 54 | **0.5440** (0.5399, 0.5481) | 1.1170 | 0.0125 (0.0091, 0.0168) | 0.7527 | Reference (Tuned PoE) | — | — |
-| **Tuned Classical Gated Head** | 126 | 0.5418 (0.5377, 0.5459) | 1.1155 | **0.0082** (0.0067, 0.0126) | 0.7548 | $-0.0015$ (−0.0022, −0.0007) vs Tuned PoE | Paired $t = -4.01, p = 1.2 \times 10^{-4}$;<br>TOST $p < 10^{-6}$ | Tuned Nonlinear Comparator |
-| **Optimal Variational Quantum** | 118 | 0.5417 (0.5376, 0.5458) | **1.1144** | 0.0111 (0.0088, 0.0151) | **0.7550** | $\mathbf{-0.00260}$<br>90% CI: (−0.00343, −0.00176)<br>95% CI: (−0.00359, −0.00160) | Paired $t = -5.10, p = 3.07 \times 10^{-7}$;<br>TOST $p < 10^{-6}$ | **Practically Equivalent** |
-
-### 4. Confirmatory Evaluation Across 56,534 Untouched Patients
-
-To overcome power limitations, we executed our pre-specified confirmatory evaluation on **56,534 untouched CheXpert patients** (one frontal radiograph per patient; zero overlap with development data; **Table 3**). Selecting one frontal study per patient establishes patient-level independence by construction, eliminating intra-patient clustering.
-
-*Task Noise Ceiling, Upstream Extraction Noise, and Active Classes:* We emphasize that this confirmatory evaluation assesses how faithfully each backend architecture emulates an additive clinical triage rule derived from DenseNet radiological finding probabilities. In the CheXpert confirmatory cohort ($N=56,534$), the automated labeler does not extract hyperinflation, resulting in exactly 0 positive occurrences for Acuity Class 3 (COPD). Consequently, all 56,534 test patients fall into five active diagnostic classes ($y \in \{0, 1, 2, 4, 5\}$). Discrimination metrics (Macro-AUROC) are computed across these five present classes. Non-differential NLP report extraction errors and DenseNet perceptual uncertainty create an upstream empirical noise ceiling (test accuracy saturating at $\sim$54.4\% and multi-class AUROC at $\sim$0.755). When models operate near this noise floor, the observed performance equivalence indicates that shallow variational quantum circuits do not bypass or resolve upstream perceptual and annotation noise. Furthermore, because CheXpert represents a single academic medical center, single-center patient independence does not guarantee multi-center clinical generalizability; this motivated our multi-center transfer evaluation (MIMIC-CXR $\to$ CheXpert), where quantum performance degraded severely.
-
-- **Analysis C1 (Default Matched Protocol):** The quantum circuit finished lowest in accuracy (53.71%), likelihood (1.1362), and discrimination (0.7436). The paired likelihood difference vs Product-of-Experts was $\Delta\text{NLL} = \mathbf{+0.0205}$ nats ($95\%$ CI $0.01858$ to $0.02240$, $t = 21.034, p = 7.65 \times 10^{-98}$; TOST $p = 1.000$). We emphasize that this $+0.0205$-nat gap represents a single trained checkpoint comparison and is on the order of random initialization seed variance ($\approx 1.8 \sigma_{\text{seed}}$). In calibration, the Expected Calibration Error of the quantum circuit (**ECE = 0.0076**, 95% bootstrap CI 0.0051 to 0.0119) overlaps with the classical Gated Head (0.0085, 95% CI 0.0071 to 0.0130), demonstrating that calibration error was statistically indistinguishable between properly calibrated arms. The outcome fell into the pre-specified reading: **"Quantum materially worse."**
-- **Analysis C1b (Entanglement Ablation):** Across ten random initialization seeds on the 56,534 patients, removing CNOT entanglement gates improved likelihood: $\Delta\text{NLL} = \text{NLL}_{\text{entangled}} - \text{NLL}_{\text{product}} = \mathbf{+0.01037}$ nats. Across the 10 training seeds, the seed-level 95% Student's $t$ confidence interval is **$[0.00491, 0.01583]$ nats** ($t = 4.30, p = 0.0013$), while the patient-level bootstrap interval for the reference checkpoint difference was $[0.00934, 0.01138]$. Unentangled circuits outperformed entangled circuits in 9 of 10 seeds, confirming: **"The entanglement penalty replicates on untouched patients."**
-  * *Scope of Entanglement Finding:* We emphasize that this observed entanglement penalty ($\Delta\text{NLL} = +0.0104$ nats across seeds) should not be interpreted as a universal causal claim that entanglement is detrimental across all clinical machine learning. Rather, it is strictly bounded to the evaluated hardware-efficient ansatz (8 qubits with circular CNOT entangling rings) applied to additive clinical triage rules. As proven by our Fourier spectrum analysis (M1), entangling unitaries disperse representational energy across high-order interaction cross-terms ($\ge 2$); when the underlying clinical acuity target is fundamentally an additive combination of radiological signs, these cross-terms represent unhelpful model capacity that inflates variance without reducing bias. For clinical prediction tasks governed by non-additive pathophysiology, multi-gene epistatic interactions, or native quantum physical sensors, entanglement remains structurally necessary.
-- **Analysis C2 (36-Configuration Symmetric Search & Configuration Transparency):** To ensure evaluation symmetry under capacity optimization, both quantum and classical architectures received a budget of **36 configurations** trained on the 6,400 development cases and selected strictly by minimum NLL on the 1,600 calibration patients. The 36 trials sampled 27% of the 135-configuration quantum grid vs 60% of the 60-configuration classical grid.
-  * *Winning Configurations and Parameter Capacities:*
-    - **Quantum Circuit:** 4 layers ($L=4$), encoding scale $s=0.5$, initialization $\text{sd}=0.01$, learning rate $\eta=0.01$. Total parameters: **118** (64 variational angles + 54 linear readout weights). Calibration NLL: 1.1326; calibration temperature $T = 1.0393$. Test NLL on 56,534 held-out patients: **1.1144**; test accuracy: 54.17%; test ECE: 0.0111.
-    - **Product-of-Experts (PoE):** Learning rate $\eta=0.05$, weight decay $\lambda=10^{-4}$, initialization $\text{sd}=0.01$. Total parameters: **54**. Calibration NLL: 1.1369; calibration temperature $T = 1.0751$. Test NLL on 56,534 held-out patients: **1.1170**; test accuracy: 54.40%; test ECE: 0.0125.
-    - **Nonlinear Gated Head:** Learning rate $\eta=0.1$, weight decay $\lambda=10^{-4}$, initialization $\text{sd}=0.01$. Total parameters: **126**. Calibration NLL: 1.1309; calibration temperature $T = 1.0477$. Test NLL on 56,534 held-out patients: **1.1155**; test accuracy: 54.18%; test ECE: 0.0082.
-  * *Computational Effort and Wall-Clock Runtime Asymmetry:* To ensure transparent accounting of computational cost, we logged the exact wall-clock training and validation runtimes across all 36 configurations per arm. Classical Product-of-Experts required **161.4 seconds in total** across 36 trials (mean 4.5 seconds per configuration; range 1.2 to 14.3 s). The classical Gated Head required **228.1 seconds in total** across 36 trials (mean 6.3 seconds per configuration; range 2.1 to 14.7 s). In contrast, the variational quantum circuit required **14,969.4 seconds in total** (4.16 hours; mean 415.8 seconds per configuration; range 114.6 to 1642.6 s) on batched PyTorch statevector simulation. The quantum arm consumed approximately **92.8 times more wall-clock training compute** than classical PoE (~65.6 times more than Gated Head). Granting equal configuration counts does not equate to granting equal compute budgets.
-  * *Deconstructing Test-Sampling Variance vs Training-Seed Variance:* Crucially, we must distinguish between *checkpoint-level equivalence* and *architectural-level equivalence across random initializations*. Across 10 random initialization seeds evaluated on the 56,534 test patients, the classical Product-of-Experts exhibited near-zero initialization variance ($\sigma_{\text{seed}} = \mathbf{0.00001\text{ nats}}$), and the classical Gated Head exhibited $\sigma_{\text{seed}} = \mathbf{0.00021\text{ nats}}$. In sharp contrast, the variational quantum circuit exhibited an initialization seed standard deviation of $\sigma_{\text{seed}} = \mathbf{0.01163\text{ nats}}$ (ranging from 1.1275 to 1.1688 nats in C1b)—50 to 1,000 times larger than classical comparators. Because the VQC seed standard deviation ($\sigma_{\text{seed}} = 0.0116$ nats) exceeds the pre-specified equivalence margin ($\Delta_{\text{equiv}} = \pm 0.010$ nats), Two One-Sided Tests (TOST) on a single selected checkpoint pair establishes **operational equivalence strictly for the evaluated checkpoints**, but cannot establish architectural equivalence across arbitrary random initializations. Across initializations, VQC performance spans outside the $\pm 0.010$-nat boundary. Furthermore, finite validation split noise on $n_{\text{cal}} = 1,600$ patients ($\text{SE} \approx \sigma / \sqrt{1600} \approx 0.015$ nats) introduces selection jitter, directly evidenced by tuned PoE (1.1170) performing 0.0013 nats worse on test than default PoE (1.1157). Consequently, an observed difference of 0.0026 nats cannot be reliably distinguished from training-seed noise and validation-selection jitter, reinforcing the conclusion of operational equivalence.
-  * *Operational Equivalence Margin Rationale, Information Grounding, and Clinical Risk:* The margin $\Delta_{\text{equiv}} = \pm 0.010$ nats was pre-specified a priori. Relative to a uniform prior over 5 active classes ($H_{\text{uniform}} = \ln 5 \approx 1.6094$ nats), $0.010$ nats represents $0.62\%$. Relative to empirical marginal class entropy ($H(Y) \approx 1.3699$ nats), it represents $0.73\%$. Relative to baseline model NLL ($1.1157$ nats), it represents $0.90\%$. Crucially, relative to the predictive mutual information gained over the unconditioned marginal class prior ($\Delta I = H(Y) - \text{NLL} \approx 0.2542$ nats), the margin represents **$3.93\%$** ($\approx 4\%$).
-  * *Per-Patient Prediction Concordance:* On a per-patient basis, the mean absolute difference in predicted class probabilities between the tuned quantum model and tuned PoE is only **0.0139** (1.4 percentage points), with the 95th percentile at $0.0536$ and 99th percentile at $0.0873$. Both models produce identical top-1 predicted triage categories for **92.90\% of patients**.
-  * *Subgroup Likelihood Trade-offs and Acute Condition Disparities:* Evaluating disease-specific subgroups across acute triage categories revealed that the small population-averaged difference ($\Delta\text{NLL} = -0.0026$ nats) is the net result of large opposing class-conditional likelihood shifts:
-    - **Normal** ($n = 17,692$): $\Delta\text{NLL} = \mathbf{-0.0169}$ nats ($95\%$ CI $[-0.0186, -0.0152]$), favoring quantum.
-    - **Pneumothorax** ($n = 17,052$): $\Delta\text{NLL} = \mathbf{-0.0846}$ nats ($95\%$ CI $[-0.0859, -0.0833]$), favoring quantum.
-    - **Malignancy** ($n = 16,490$): $\Delta\text{NLL} = \mathbf{+0.0706}$ nats ($95\%$ CI $[+0.0694, +0.0717]$), favoring classical PoE.
-    - **Pneumonia** ($n = 2,192$): $\Delta\text{NLL} = \mathbf{+0.1446}$ nats ($95\%$ CI $[+0.1364, +0.1528]$), strongly favoring classical PoE.
-    - **Heart Failure** ($n = 3,108$): $\Delta\text{NLL} = \mathbf{+0.0368}$ nats ($95\%$ CI $[+0.0334, +0.0401]$), favoring classical PoE.
-    When compared against the tuned nonlinear Gated Head, Pneumonia loss remains substantially higher for the quantum circuit ($\Delta\text{NLL} = \mathbf{+0.1094}$ nats, $95\%$ CI $[+0.1013, +0.1176]$). This demonstrates an essential clinical and methodological lesson: aggregate population equivalence ($\Delta\text{NLL} \in \pm 0.010$) completely conceals acute condition disparities. While quantum optimization reduces loss on Pneumothorax, classical models achieve markedly superior calibration on critical, lower-prevalence acute pathologies such as Pneumonia and Malignancy. Auditing class-conditional confidence intervals is indispensable to prevent aggregate metrics from masking clinically relevant trade-offs.
-  * *Contrasts and Decision Verdict:*
-    - **Primary C2 Contrast (vs Tuned PoE):** $\Delta\text{NLL} = 1.1144 - 1.1170 = \mathbf{-0.00260}$ nats (90% CI $[-0.00343, -0.00176]$, 95% CI $[-0.00359, -0.00160]$, $t = -5.10, p = 3.07 \times 10^{-7}$). The 95% CI falls entirely within the operational equivalence band ($\pm 0.010$ nats; TOST $p_{\text{TOST}} < 10^{-6}$).
-    - **Secondary Reference Contrast (vs Default C1 PoE):** $\Delta\text{NLL} = 1.1144 - 1.1157 = \mathbf{-0.0013}$ nats, also lying comfortably within the $\pm 0.010$-nat operational equivalence band.
-    - **Nonlinear Head Contrast (vs Tuned Gated Head):** $\Delta\text{NLL} = 1.1144 - 1.1155 = \mathbf{-0.0012}$ nats (95% CI $[-0.00192, -0.00041]$, $t = -3.05, p = 0.0025, p_{\text{TOST}} < 10^{-6}$).
-    Under our pre-specified decision protocol, declaring that a quantum benefit was verified required the upper bound of the 95% CI to fall strictly below $-\Delta_{\text{equiv}} = -0.010$ nats. The observed CI fell entirely inside the equivalence band, confirming the reading: **"Detectable difference, quantum better, smaller than the margin; practically equivalent."**
-
-<div class="figure-container">
-    <img src="file:///E:/AURA/aura-main/docs/figures/fig_v6_confirmatory.png" alt="Figure 3" style="width:100%; max-width:900px; display:block; margin:auto;" />
-    <p class="figure-caption"><strong>Figure 3 | Pre-specified confirmatory evaluation across 56,534 untouched patients.</strong> 
-    <strong>(a)</strong> Analyses C1 and C1b under default matched optimization. The quantum circuit performs materially worse than classical baselines (&Delta;NLL = +0.0205 nats; blue points), and entangled circuits underperform unentangled product circuits across ten random seeds (&Delta;NLL = +0.0104 nats, seed-level 95% CI 0.0049 to 0.0158).
-    <strong>(b)</strong> Analysis C2 under 36-configuration symmetric hyperparameter tuning. While the quantum model achieves a small point advantage over PoE (&Delta;NLL = -0.0026 nats) and Gated Head (&Delta;NLL = -0.0012 nats), both the 90% (dark red) and 95% (light red) confidence intervals lie strictly inside the prespecified &plusmn;0.010-nat operational equivalence region (gray band) and within training-seed variance.
-    <strong>(c)</strong> Sensitivity analysis of Two One-Sided Tests (TOST) p-values across varying operational margins &delta;. Equivalence is robustly confirmed (p &lt; 0.05) across all margins &ge; 0.005 nats.</p>
-</div>
+We evaluated each study against our 17-item checklist. Every eligible study exhibited at least one critical methodological asymmetry: 8 of 8 left classical comparators under-optimized; 7 of 8 fitted preprocessing or feature selection on the complete pooled dataset before cross-validation partitioning; 5 of 8 evaluated on partitions with patient-level record or temporal leakage; and 0 of 8 applied dependency-corrected resampled hypothesis testing (such as the Nadeau–Bengio correction [14]), treating correlated cross-validation folds as independent draws.
 
 ---
 
-## Mechanistic Analysis
+### Re-tested published claims could not be verified under symmetric evaluation
 
-Three pre-specified mechanistic experiments explain why quantum circuits provide no practical utility on this clinical task (**Figure 2**):
+We computationally reimplemented five eligible published studies spanning six distinct clinical prediction tasks. Each study was evaluated under three clearly distinguished experimental streams: (1) an exact author replication arm matching the published workflows as far as documented; (2) a factorial confounder dissection isolating leakage from tuning on fixed evaluation partitions; and (3) a standardized symmetric evaluation arm with nested cross-validation and Nadeau–Bengio variance correction (**Table 2**, **Figure 1**).
 
-<div class="figure-container">
-    <img src="file:///E:/AURA/aura-main/docs/figures/fig_v6_mechanism.png" alt="Figure 2" style="width:100%; max-width:900px; display:block; margin:auto;" />
-    <p class="figure-caption"><strong>Figure 2 | Mechanistic dissection of circuit expressivity and kernel geometry.</strong> 
-    <strong>(a)</strong> Fourier interaction-order coefficient energy spectrum (M1). In the unentangled product circuit, 100.0% of coefficient energy is concentrated in linear order 1. In the entangled circuit (CNOT ring), 100.0% of non-trivial energy and 99.99% of logit variance are dispersed across high-order interaction cross-terms (&ge; 2). In the 8-qubit confirmatory architecture (incorporating constant reference qubit $x_8 \equiv 0.0$), the effective interaction order over clinical inputs is bounded at 7.
-    <strong>(b)</strong> Quantum kernel bandwidth sweep on glioma neuroimaging (M3). Peak kernel-target alignment occurs at bandwidth 0.25 across all folds, where effective dimension stabilizes. The geometric distance g(K_RBF || K_Q) = 1.27 &ll; &radic;N = 44.72 confirms classical RBF kernels achieve comparable sample complexity.</p>
-</div>
+**Table 2 | Pre-specified factorial analysis isolating the evaluation mechanisms of apparent quantum advantage.**
 
-1. **Interaction-Order Energy Dispersion (M1):** In the primary 8-qubit entangled circuit (7 informative clinical channels plus 1 constant baseline reference qubit coupled via the CNOT ring), the algebraic decomposition over all 8 physical qubits yields 100.0% of non-trivial coefficient energy and 99.99% of logit variance in interaction orders $\ge 2$ (orders 0–1: 0.0%; order 2: 2.2%; order 3: 8.5%; order 4: 42.5%; order 5: 21.0%; order 6: 18.3%; order 7: 4.5%; order 8: 3.1%). Crucially, because the 8th qubit receives a constant zero reference input ($x_8 \equiv 0.0$), $\cos(\pi x_8) = 1$ and $\sin(\pi x_8) = 0$; thus Pauli-$Z$ on qubit 8 acts as a constant scalar multiplier, and Pauli-$X$ components vanish identically. Consequently, the *effective interaction order* across the seven active clinical features is strictly bounded by order 7 (matching the x-axis of **Figure 2a**). In the 10-seed ablation isolating the 7 informative channels (Analysis C1b), the entangled CNOT ring circuits similarly concentrated 100.0% of non-trivial coefficient energy into interaction orders $\ge 2$ across all seeds (mean order: 4.3; **Figure 2a**), whereas unentangled product circuits strictly confine interaction order to $\le 1$ by construction (0.0% cross-channel energy). Because the clinical triage target is fundamentally an additive scoring rule of radiographic signs, the high-order cross-terms generated by entanglement represent unhelpful capacity that increases variance without reducing bias.
-2. **Classical Fourier Basis Surrogate (M2):** To test whether the circuit's functional form possesses special utility, we fitted an ordinary $L_2$-regularized logistic regression directly on the classical trigonometric Fourier basis ($\cos(\pi x_i)$ and $\sin(\pi x_i)$). To ensure a strictly fair, leak-free comparison matching the quantum arm, the classical surrogate was fitted strictly on the 6,400 development training studies, its regularization parameter $C \in \{0.01, 0.1, 1.0, 10.0, 100.0\}$ and Platt temperature scale $T$ were selected on the 1,600 calibration studies, and it was evaluated strictly once out-of-sample on the 56,534 untouched test patients. A classical surrogate restricted to order 1 (14 features) achieved NLL **1.1123**, outperforming the default quantum circuit (1.1362) by $\Delta\text{NLL} = 0.0238$ ($p < 10^{-4}$) and still outperforming the optimal tuned quantum circuit (1.1144) by $\Delta\text{NLL} = \mathbf{0.0021}$ ($95\%$ CI $0.0008$ to $0.0034$; $p = 0.0016$). Extending the classical surrogate to pairwise interaction terms of order 2 (112 features) attained NLL **1.1095**, outperforming the tuned quantum circuit by $\Delta\text{NLL} = 0.0049$ ($p < 10^{-4}$). This establishes a vital insight: order-1 classical trigonometric regression outperforms both the tuned quantum circuit (1.1144) and classical PoE (1.1170). The tiny apparent advantage of tuned VQC over PoE in Analysis C2 was simply an artifact of PoE lacking trigonometric basis terms; when classical models are provided the exact same single-qubit Fourier features, classical optimization achieves superior test likelihood.
-3. **Analytic Kernel Equivalence and Geometric Distance (M3):** On unentangled product states, the quantum fidelity kernel analytically equals the classical product-cosine kernel ($3.11 \times 10^{-15}$ max discrepancy vs statevector simulation). The empirical geometric distance evaluated on a 2,000-sample split between the quantum kernel and a classical RBF kernel is $g(K_{\text{RBF}} \parallel K_Q) = 1.2712 \ll \sqrt{N} \approx 44.72$. Under the geometric difference theorem of Huang et al. [10], classical RBF kernels achieve comparable sample complexity on any target learnable by this quantum kernel (**Figure 2b**).
-4. **Sensitivity Positive Control:** On a synthetic quadratic target (T2b: $x^T M x + a^T x$), both the quantum circuit (NLL 0.2515) and Gated Head (NLL 0.2560) significantly outperformed linear logistic regression (NLL 0.3155, Holm $p < 10^{-4}$), demonstrating that our apparatus reliably detects nonlinear advantages when present.
+| Dataset & Study | Factorial Design Space | Cell Configuration | Advantage $\Delta$ (95% CI) | $p$-value | Finding |
+|---|---|---|:---:|:---:|---|
+| **Parkinson's Voice**<br>(Daga et al. [16]) | $2 \times 2 \times 2$ Factorial:<br>• PCA (Global vs In-Fold)<br>• Split (Record vs Subject)<br>• Baseline (Untuned vs Tuned) | **Author Protocol:** Global PCA $\times$ Record Split $\times$ Untuned<br>In-Fold PCA $\times$ Record Split $\times$ Untuned<br>Global PCA $\times$ Subject Split $\times$ Untuned<br>**Tuned on Factorial Split:** In-Fold PCA $\times$ Record Split $\times$ Tuned | **+4.8%** (+1.2% to +8.4%)<br>+1.1% ($-1.0\%$ to +3.2%)<br>+0.7% ($-1.1\%$ to +2.5%)<br>**$-$0.3%** ($-2.1\%$ to +1.5%) | $p = 0.012$<br>$p = 0.29$<br>$p = 0.41$<br>$p = 0.72$ | **Apparent gain** reproduced.<br>PCA leakage fix.<br>Subject split fix.<br>**Advantage vanishes.** |
+| **Pima Diabetes**<br>(Daga et al. [16]) | $2 \times 2$ Factorial:<br>• PCA (Global vs In-Fold)<br>• Baseline (Untuned vs Tuned) | **Author Protocol:** Global PCA $\times$ Untuned<br>**Symmetric Protocol:** In-Fold PCA $\times$ Tuned | **+9.3%** (+2.4% to +16.2%)<br>**+0.8%** ($-1.1\%$ to +2.7%) | $p = 0.009$<br>$p = 0.36$ | **Apparent gain** reproduced.<br>**Tuning removes gain.** |
+| **Schizophrenia EEG**<br>(Aksoy & Cattan [17]) | Partition Scheme:<br>Random Epoch vs Subject-Grouped (200 splits) | **Author Design:** Random Epoch Split<br>**Symmetric Design:** Subject-Grouped | **98.6% Accuracy** (34.5% reach 100%)<br>**52.1% Accuracy** (0% reach $>75\%$) | $p < 10^{-6}$<br>$p = 0.32$ | **Leakage artifact.**<br>**Chance level.** |
+
+Across all six re-tested claims:
+- **Chronic Kidney Disease (Parthasarathi et al. [15]):** The published claim of 99.2% VQC accuracy could not be reproduced from the reported feature set (reimplemented VQC reached 83.50% vs 97.40% for classical RBF SVM). Under symmetric nested cross-validation, classical models were significantly superior: $\Delta = -9.65\%$ (95% CI $-14.92\%$ to $-4.38\%$, $t_{\text{NB}} = -3.74, p = 0.0009$).
+- **Schizophrenia EEG (Aksoy & Cattan [17]):** The reported 100.0% accuracy collapsed to chance (52.14%) when 2-second EEG epochs were partitioned strictly by human subject rather than randomly shuffled across epochs ($p = 0.32$).
+- **Parkinson's Voice Phonation & Pima Diabetes (Daga et al. [16]):** Under the published protocol, apparent advantages of +4.8% and +9.3% were reproduced. However, when baseline models were tuned and PCA was fitted strictly inside training folds, the differences diminished to $-0.3\%$ ($p = 0.72$) and $+0.8\%$ ($p = 0.36$). Under repeated nested cross-validation with Nadeau–Bengio correction, both findings were statistically inconclusive (Parkinson's: $\Delta = +0.33\%$, 95% CI $-24.97\%$ to $+25.64\%$, $p = 0.98$; Diabetes: $\Delta = -5.30\%$, 95% CI $-11.00\%$ to $+0.39\%$, $p = 0.067$).
+- **Glioma Neuroimaging (Akpinar & Oduncuoglu [18]):** On TCGA ($n=839$), the symmetric difference was $\Delta = +0.19\%$ (95% CI $-1.22\%$ to $+1.60\%$, $p = 0.78$); on BraTS 2020 ($n=369$), $\Delta\text{AUROC} = -0.022$ ($p = 0.19$).
+- **Cardiovascular Risk (Ghisoni et al. [19]):** On the low-data split ($n=69$), the observed difference was $\Delta = -1.10\%$. Correcting for cross-validation dependence via Nadeau–Bengio yielded a 95% confidence interval spanning 34.7 percentage points ($-18.45\%$ to $+16.25\%$, $t_{\text{NB}} = -0.13, p = 0.90$), demonstrating the analysis was severely underpowered.
+
+![Figure 1 | Forest plot of evaluation mechanisms and re-tested clinical claims](docs/figures/fig_v6_forest.png)  
+*Figure 1 | Forest plot of evaluation mechanisms and re-tested clinical claims. (a) Paired likelihood differences ($\Delta\text{NLL}$) in the chest radiograph prototype across optimizers, calibration protocols, out-of-sample partitions, and confirmatory cohorts ($n=447$ to $n=56,534$). Horizontal error bars indicate 95% confidence intervals; vertical dashed lines indicate the operational equivalence boundary ($\pm 0.010$ nats). (b) Re-tested published claims under author protocols versus symmetric evaluation across five eligible published studies spanning six clinical prediction tasks. Blue intervals represent symmetric evaluations; red markers represent author-declared protocols.*
+
+---
+
+### In a clinical decision-support prototype, the outcome depended on evaluation choices
+
+To investigate how evaluation choices alter conclusions within an active engineering pipeline, we conducted an exhaustive forensic audit of an internal multi-class clinical decision-support prototype for chest radiograph triage. The prototype maps seven radiographic finding probabilities extracted by a DenseNet-121 backbone to six clinical acuity categories (Normal, Pneumonia, Heart Failure, COPD, Malignancy, Pneumothorax).
+
+Prior to audit, the system featured a variational quantum fusion layer and asserted that the quantum circuit conferred superior calibration and likelihood over classical models. By systematically toggling evaluation choices across four experimental dimensions, we found that every reported quantum advantage was an artifact of asymmetric evaluation:
+1. **Optimizer Matching:** When classical comparators used unoptimized Adam with default learning rates while the quantum circuit used extensive parameter tuning, the quantum circuit appeared superior ($\Delta\text{NLL} = -0.0173$ nats vs Product-of-Experts). When baselines received matched L-BFGS-B optimization, the apparent advantage vanished ($\Delta\text{NLL} = +0.0033$ nats, 95% CI $-0.0329$ to $+0.0396$; $p = 0.86$).
+2. **Symmetric Probability Calibration:** The uncalibrated quantum circuit achieved ECE = 0.0384, appearing substantially better than the uncalibrated classical linear baseline (ECE = 0.0815). However, when both models underwent independent scalar temperature scaling fitted strictly on calibration folds, calibration errors converged (classical ECE = 0.0131 vs quantum ECE = 0.0076) with overlapping confidence intervals.
+3. **Out-of-Sample Evaluation:** On the internal development cohort ($n=447$), the quantum circuit appeared competitive. When evaluated on out-of-sample chest radiograph evidence ($n=1,600$), the classical Product-of-Experts baseline achieved lower negative log-likelihood ($\Delta\text{NLL} = +0.0076$ nats, 95% CI $-0.0029$ to $+0.0181$).
+4. **Institutional Transfer Degradation:** Under frozen institutional transfer from MIMIC-CXR to CheXpert ($n=4,800$), the quantum circuit degraded severely, performing worse than Product-of-Experts by $\Delta\text{NLL} = \mathbf{+0.1589}$ nats (95% CI $0.1422$ to $0.1757$; $p < 10^{-15}$) and worse than Logistic Regression by $\Delta\text{NLL} = \mathbf{+0.1967}$ nats (95% CI $0.1785$ to $0.2149$; $p < 10^{-15}$). This 15- to 20-fold degradation beyond the operational equivalence margin reflects head-to-head performance loss under external institutional transfer; while all architectures degraded under hospital domain shift ($\Delta\text{NLL}_{\text{shift}} = +0.120$ to $+0.143$ nats across models), classical order-1 Fourier surrogates experienced comparable shift degradation, which is consistent with sensitivity to trigonometric basis geometries rather than an effect unique to quantum state spaces.
+
+---
+
+### Pre-specified confirmatory test on 56,534 held-out patients
+
+To eliminate sample-size limitations and patient clustering, we executed our pre-specified confirmatory evaluation across **56,534 held-out CheXpert patients** (one frontal radiograph per unique human subject; zero overlap with development data; $|S_{\text{dev}} \cap S_{\text{test}}| = 0$; **Table 3**, **Figure 3**).
+
+In CheXpert, because automated report labeling lacks the `hyperinflation` finding, Acuity Class 3 (COPD) has zero positive occurrences in both development and test partitions ($y \in \{0, 1, 2, 4, 5\}$). Forward inference and calibration symmetrically compute full 6-way softmax probabilities across all models; sample NLL is evaluated as $-\ln \hat{p}_{i, y_i}$ for observed labels $y_i$, while multi-class AUROC is macro-averaged across the 5 observed positive classes. Upstream DenseNet perceptual uncertainty establishes an empirical noise ceiling (test accuracy $\sim$54.4%, AUROC $\sim$0.755).
+
+- **Analysis C1 (Default Matched Protocol):** The quantum circuit achieved the lowest accuracy (53.71%), likelihood (1.1362), and AUROC (0.7436). The paired likelihood difference vs Product-of-Experts was $\Delta\text{NLL} = \mathbf{+0.0205}$ nats (95% CI $0.0186$ to $0.0224$, $t = 21.034, p = 7.65 \times 10^{-98}$; TOST $p = 1.000$). The outcome fell into the pre-specified reading: **"Quantum materially worse."** Calibration error yielded similar estimates with overlapping confidence intervals between calibrated arms (quantum ECE = 0.0076, 95% bootstrap CI 0.0051 to 0.0119; classical Gated Head ECE = 0.0085, 95% CI 0.0071 to 0.0130). Across 10 random initialization seeds, mean NLL was $1.1305 \pm 0.0045$ (mean difference vs PoE: $+0.0142 \pm 0.0045$ nats), proving the default deficit exceeds initialization noise.
+- **Analysis C1b (Entanglement Ablation):** Across ten random initialization seeds on the 56,534 patients, removing circular CNOT entangling gates improved likelihood: $\Delta\text{NLL} = \text{NLL}_{\text{entangled}} - \text{NLL}_{\text{product}} = \mathbf{+0.01037}$ nats (seed-level 95% Student's $t$ CI $[0.00491, 0.01583]$ nats, $t = 4.30, p = 0.0013$). Unentangled circuits outperformed entangled circuits in 9 of 10 seeds, confirming: **"The entanglement penalty replicates on untouched patients."**
+
+![Figure 3 | Pre-specified confirmatory evaluation across 56,534 held-out patients](docs/figures/fig_v6_confirmatory.png)  
+*Figure 3 | Pre-specified confirmatory evaluation across 56,534 held-out patients scored without selection. (a) Analyses C1 and C1b under default matched optimization ($N=56,534$ patients), showing the quantum circuit is materially worse on likelihood ($\Delta\text{NLL} = +0.0205$, 95% CI 0.0186 to 0.0224) and unentangled product circuits outperform entangled circuits across random seeds ($\Delta\text{NLL} = +0.0104$, seed-level 95% CI 0.0053 to 0.0154). Gray band indicates the pre-specified operational equivalence boundary ($\pm 0.010$ nats). (b) Analysis C2 under 36-configuration symmetric hyperparameter tuning; the observed paired differences ($\Delta\text{NLL} = -0.0026$ vs PoE, $-0.0012$ vs Gated Head) fall entirely inside the operational equivalence band ($p_{\text{TOST}} < 10^{-6}$) and within training-seed variance. (c) Sensitivity analysis of Two One-Sided Tests (TOST) $p$-values across varying operational margins $\delta \in [0.002, 0.015]$ nats.*
+
+---
+
+### Symmetric hyperparameter tuning confirms population equivalence but fails class-balanced evaluation
+
+To ensure evaluation symmetry under capacity optimization, each architecture received a budget of **36 configurations** trained on 6,400 development cases and selected strictly by validation NLL on 1,600 calibration patients (Analysis C2; **Table 3**).
+
+**Table 3 | Pre-specified confirmatory evaluation across 56,534 untouched clinical patients under default and tuned protocols.**
+
+| Model Arm | Params | Accuracy (95% CI) | NLL | ECE (95% Boot CI) | AUROC | Paired $\Delta\text{NLL}$ vs PoE (95% CI) |
+|---|:---:|:---:|:---:|:---:|:---:|---|
+| **Panel A: Analysis C1 — Default Matched Optimization Protocol** | | | | | | |
+| **Product-of-Experts** | 54 | **0.5443** (0.5402, 0.5484) | **1.1157** | 0.0131 (0.0100, 0.0172) | **0.7534** | Reference Baseline |
+| **Logistic Regression** | 54 | 0.5415 (0.5374, 0.5456) | **1.1152** | 0.0128 (0.0105, 0.0171) | **0.7534** | $-0.0005$ ($-0.0011$, $+0.0002$) |
+| **Gated Head** | 126 | 0.5398 (0.5357, 0.5439) | 1.1165 | 0.0085 (0.0071, 0.0130) | **0.7553** | $+0.0008$ ($-0.0002$, $+0.0019$) |
+| **Variational Quantum** | 102 | 0.5371 (0.5330, 0.5412) | 1.1362 | 0.0076 (0.0051, 0.0119) | 0.7436 | $\mathbf{+0.0205}$ (0.0186, 0.0224) [**Materially Worse**] |
+| **Panel B: Analysis C2 — Symmetric 36-Configuration Hyperparameter Grid Search** | | | | | | |
+| **Tuned Product-of-Experts** | 54 | **0.5440** (0.5399, 0.5481) | 1.1170 | 0.0125 (0.0091, 0.0168) | 0.7527 | Reference (Tuned PoE) |
+| **Tuned Gated Head** | 126 | 0.5418 (0.5377, 0.5459) | 1.1155 | **0.0082** (0.0067, 0.0126) | 0.7548 | $-0.0015$ ($-0.0022$, $-0.0007$) vs Tuned PoE |
+| **Optimal Variational Quantum** | 118 | 0.5417 (0.5376, 0.5458) | **1.1144** | 0.0111 (0.0088, 0.0151) | **0.7550** | $\mathbf{-0.0026}$ ($-0.0036$, $-0.0016$) [**Practically Equivalent**] |
+| *10-Seed Initialization Means (Post-Hoc Analysis across 56,534 Test Patients):* | | | | | | |
+| *Tuned Product-of-Experts* | 54 | $0.5425 \pm 0.0015$ | $1.1180 \pm 0.0013$ | $0.0109 \pm 0.0011$ | $0.7533 \pm 0.0009$ | Reference (10-Seed PoE Mean: 1.11797) |
+| *Tuned Gated Head* | 126 | $0.5411 \pm 0.0015$ | $1.1179 \pm 0.0037$ | $0.0111 \pm 0.0024$ | $0.7547 \pm 0.0010$ | $-0.00003$ vs Tuned PoE Mean |
+| *Optimal Variational Quantum* | 118 | $0.5411 \pm 0.0014$ | $1.1173 \pm 0.0035$ | $0.0117 \pm 0.0037*$ | $0.7546 \pm 0.0011$ | $\mathbf{-0.00067}$ ($-0.00288, +0.00153$) [$p_{\text{TOST}} < 10^{-5}$] |
+| **Panel C: Analysis M2 — Classical Fourier Basis Surrogates (56,534 Test Patients)** | | | | | | |
+| **Order-1 Trigonometric LR** | 90 | 0.5403 (0.5362, 0.5444) | 1.1123 | 0.0128 (0.0094, 0.0171) | 0.7541 | $-0.0047$ ($-0.0057$, $-0.0036$) vs Tuned PoE |
+| **Order-2 Trigonometric LR** | 678 | **0.5419** (0.5378, 0.5460) | 1.1095 | 0.0122 (0.0089, 0.0164) | 0.7552 | $-0.0075$ ($-0.0087$, $-0.0062$) vs Tuned PoE |
+| **Polynomial LR ($x, x^2$)** | 90 | 0.5406 (0.5365, 0.5447) | **1.1092** | **0.0101** (0.0072, 0.0143) | **0.7555** | $-0.0077$ ($-0.0089$, $-0.0066$) vs Tuned PoE |
+
+In Panel B, the selected single quantum checkpoint achieved NLL 1.1144 ($\Delta\text{NLL} = -0.0026$ nats vs tuned PoE, 95% CI $-0.0036$ to $-0.0016$, $p_{\text{TOST}} < 10^{-6}$; $\Delta\text{NLL} = -0.0012$ nats vs tuned Gated Head, $p_{\text{TOST}} < 10^{-6}$), confirming practical statistical equivalence on the overall population. However, total training runtimes across the 36 configurations were 161.4 s for PoE, 228.1 s for Gated Head, and 14,969.4 s for the quantum circuit (a **92.8-fold compute penalty**).
+
+Across 10 random initialization seeds of these selected winning configurations, tuned VQC achieved mean test NLL $1.11730 \pm 0.00346$ vs $1.11797 \pm 0.00130$ for PoE (mean paired difference $-0.00067$ nats, Student's $t$ with $\nu=9$, $p_{\text{TOST}} = 2.57 \times 10^{-6}$), and $-0.00064$ nats vs Gated Head ($p_{\text{TOST}} = 1.50 \times 10^{-5}$). Under canonical development calibration ($n_{\text{cal}}=1,600$), tuned VQC 10-seed mean ECE is **$0.0117 \pm 0.0037$** ($\text{SE} = 0.0012$, range $0.0065$ to $0.0163$), in near-perfect agreement with the selected winning checkpoint (0.0111) yielding similar calibration estimates with overlapping confidence intervals compared to tuned PoE ($0.0109 \pm 0.0011$) and tuned Gated Head ($0.0111 \pm 0.0024$). Under sensitivity testing on an inverted calibration slice, seed ECE shifts to $0.0252 \pm 0.0038$ due to temperature under-estimation (Supplementary Note 6).
+
+**Table 4 | Class-conditional log-likelihood decomposition across 56,534 held-out patients.**
+
+| Clinical Triage Diagnosis | Patients ($n$) | Prevalence | VQC NLL | PoE NLL | Gated NLL | $\Delta\text{NLL}$ vs PoE (95% Boot CI) |
+|---|:---:|:---:|:---:|:---:|:---:|---|
+| **Normal** | 17,692 | 31.29% | 0.7379 | 0.7577 | 0.7329 | $\mathbf{-0.0198}$ ($-0.0217$, $-0.0180$) |
+| **Pneumonia** | 17,052 | 30.16% | 1.0263 | 1.1192 | 1.0364 | $\mathbf{-0.0929}$ ($-0.0943$, $-0.0915$) |
+| **Heart Failure** | 16,490 | 29.17% | 1.0926 | 1.0172 | 1.1060 | $\mathbf{+0.0753}$ ($+0.0742$, $+0.0765$) |
+| **Pneumothorax** | 3,108 | 5.50% | 2.5705 | 2.5156 | 2.5817 | $\mathbf{+0.0549}$ ($+0.0510$, $+0.0586$) |
+| **Malignancy** | 2,192 | 3.88% | 2.8990 | 2.7219 | 2.7686 | $\mathbf{+0.1771}$ ($+0.1681$, $+0.1861$) |
+| **Summary Metrics Across All Categories:** | | | | | | |
+| \quad**Prevalence-Weighted Mean ($\sum_i \frac{n_i}{N} \delta_i$):** | | | | | | $\mathbf{-0.00235}$ nats (95% CI $-0.00326$ to $-0.00146$) [*Practically Equivalent*] |
+| \quad**Class-Balanced Macro-Mean ($\frac{1}{K}\sum_i \delta_i$):** | | | | | | $\mathbf{+0.03892}$ nats (95% CI $+0.03688$ to $+0.04098$) [**Equivalence Fails**, $p_{\text{TOST}} > 0.99$] |
+
+Crucially, post-hoc subgroup analysis revealed that the small population equivalence ($\Delta\text{NLL} = -0.00235$ nats prevalence-weighted) masks substantial degradation on minority acute conditions (**Table 4**). While the quantum circuit achieved lower loss on high-prevalence categories (Normal, Pneumonia), it degraded sharply on Heart Failure ($\Delta = \mathbf{+0.0753}$ nats; PoE detected 1,187 more acute heart failure cases than VQC), Pneumothorax ($\Delta = \mathbf{+0.0549}$ nats), and Malignancy ($\Delta = \mathbf{+0.1771}$ nats). Under unweighted class-balanced macro-averaging, operational equivalence failed decisively: $\Delta\text{NLL}_{\text{macro}} = \mathbf{+0.03892}$ nats (95% bootstrap CI $0.0369$ to $0.0410$, $p_{\text{TOST}} > 0.99$).
+
+---
+
+### Mechanistic dissection of the observed nulls
+
+We investigated why shallow variational quantum circuits fail to demonstrate representational advantages over classical linear and kernel baselines on clinical tabular data (**Figure 2**):
+
+![Figure 2 | Mechanistic dissection of observed circuit performance and kernel geometry](docs/figures/fig_v6_mechanism.png)  
+*Figure 2 | Mechanistic dissection of observed circuit performance and kernel geometry. (a) Interaction-order coefficient energy spectrum across 10 random initialization seeds for circuits trained on the 7 clinical finding channels (Analysis C1b; red: circular CNOT ring entanglement; blue: unentangled product circuit), showing 100.0% of non-trivial energy in interaction orders $\ge 2$ under entanglement. In the 8-qubit confirmatory architecture (incorporating the constant reference qubit $x_8 \equiv 0.0$), the effective interaction order over clinical inputs is bounded at 7. (b) Bandwidth sweep and regularized geometric difference distance $g_\lambda(K_{\text{RBF}} \parallel K_{\text{Q}}) = 1.27 \ll \sqrt{N} = 44.72$ on 10-qubit glioma neuroimaging (M3), demonstrating classical kernel surrogacy.*
+
+1. **Interaction-Order Energy Dispersion (M1):** In the primary 8-qubit entangled circuit (7 clinical features plus 1 constant reference qubit $x_8 \equiv 0.0$), 100.0% of non-trivial coefficient energy and 99.99% of logit variance reside in interaction orders $\ge 2$ across all seeds (mean order: 4.3; **Figure 2a**), whereas unentangled product circuits strictly confine interaction order to $\le 1$ (0.0% cross-channel energy). Because clinical triage rules are fundamentally additive combinations of radiological signs, high-order cross-terms generated by entanglement represent unhelpful capacity that increases variance without reducing bias.
+2. **Classical Fourier Basis Surrogates (M2):** Fitting an ordinary $L_2$-regularized logistic regression directly on the classical trigonometric Fourier basis ($\cos(\pi x_i), \sin(\pi x_i)$) achieved NLL **1.1123** at order 1 (outperforming the optimal tuned quantum circuit's 1.1144; $p = 0.0016$), NLL **1.1095** at order 2, and NLL **1.1092** for polynomial regression ($x, x^2$; **Table 3, Panel C**). The tiny advantage of tuned VQC over linear PoE was simply an artifact of PoE lacking trigonometric features; when classical models receive the identical single-qubit Fourier features, classical optimization achieves superior test likelihood.
+3. **Analytic Kernel Equivalence and Geometric Distance (M3):** On unentangled product states, the quantum fidelity kernel analytically equals the classical product-cosine kernel:
+   $$K_Q(x, x') = \prod_{i=1}^n \cos^2\left(\frac{\pi(x_i - x_i')}{2}\right)$$
+   ($3.11 \times 10^{-15}$ max discrepancy vs statevector simulation). On 10-qubit glioma neuroimaging, the empirical geometric distance between the quantum kernel and a classical RBF kernel is $g_\lambda(K_{\text{RBF}} \parallel K_Q) = 1.2712 \ll \sqrt{N} = 44.72$. Under the geometric difference theorem [10], classical RBF kernels achieve comparable sample complexity on any target learnable by this quantum kernel (**Figure 2b**).
 
 ---
 
@@ -238,32 +175,170 @@ Three pre-specified mechanistic experiments explain why quantum circuits provide
 
 Across five reconstructible published clinical machine learning studies spanning six distinct clinical prediction tasks, none of the six published advantage claims could be verified under symmetric evaluation; where disparities existed, apparent superiority was traced to comparator undertuning, data leakage, or underpowered cohorts. In our internal chest radiograph decision-support prototype, reported calibration advantages disappeared when baselines received matched optimization and independent temperature scaling. Where empirical advantages were claimed in the audited literature, they traced to specific methodological flaws:
 1. Calibrating only the quantum arm while leaving classical comparators uncalibrated [31].
-2. Comparing tuned quantum circuits against untuned default classical implementations.
-3. Information leakage caused by fitting dimensionality reduction (PCA) prior to dataset partitioning.
-4. Partition contamination where multiple recordings or temporal epochs from the same subject crossed the train/test split.
-5. Unreproducible preprocessing pipelines and lack of code availability preventing independent verification.
-
-When these evaluation choices were aligned, apparent quantum utility vanished. The pre-specified confirmatory test across 56,534 held-out patients provides narrow test-sampling uncertainty: under matched default optimization (C1), the quantum circuit was materially worse on likelihood ($\Delta\text{NLL} = +0.0205$, 95\% CI 0.0186 to 0.0224), though this single-run gap is on the order of training seed variance ($\sigma_{\text{seed}} = 0.0116$ nats) and calibration error was indistinguishable between calibrated arms. Under symmetric hyperparameter search (C2), it achieved a small likelihood advantage over linear PoE ($-0.0026$ nats) and nonlinear gated heads ($-0.0012$ nats) that fell entirely inside the pre-specified operational equivalence margin ($\pm 0.010$ nats; TOST $p < 10^{-6}$) and within training-seed variance. Crucially, because the quantum initialization seed variance ($\sigma_{\text{seed}} = 0.0116$ nats) is 50- to 1,000-fold larger than classical seed variance ($\le 2 \times 10^{-4}$ nats) and exceeds the equivalence margin ($\Delta_{\text{equiv}} = 0.010$ nats), checkpoint-level equivalence does not establish architectural equivalence across initializations.
-
-Furthermore, evaluating out-of-distribution institutional transfer from MIMIC-CXR to CheXpert revealed our largest empirical effect ($\Delta\text{NLL} = +0.1589$ to $+0.1967$), where the quantum circuit degraded severely due to periodic angle-wrapping vulnerabilities under covariate scale drift. When provided identical trigonometric basis features, classical order-1 Fourier regression achieved superior test likelihood (1.1123) over both tuned quantum circuits (1.1144) and classical PoE (1.1170), demonstrating that quantum expressivity in this regime is fully captured by classical models.
-
-Importantly, our findings highlight a crucial biostatistical distinction between inconclusive comparisons on small cohorts and formal equivalence on sufficiently powered datasets [36]. On external benchmark tasks, wide corrected confidence intervals—such as the 95% Nadeau–Bengio interval of approximately $-18.45$ to $+16.25$ percentage points on the heart disease low-data regime—support an **inconclusive result**, not proof that the methods are equivalent. In underpowered studies, failure to reject the null cannot establish equivalence. In contrast, in our confirmatory cohort ($N = 56,534$), the narrow 95% confidence interval ($[-0.00359, -0.00160]$ nats) fell strictly within the operational equivalence boundary, enabling formal rejection of non-equivalence via Two One-Sided Tests ($p_{\text{TOST}} < 10^{-6}$).
-
-The broader implication for digital health extends beyond quantum computing. Any novel machine learning architecture—whether a foundation model adapter, state-space model, or non-standard loss function—can appear superior if evaluated asymmetrically against neglected baselines. The 17-item checklist and symmetric protocol presented here provide clinical AI researchers, reviewers, and journal editors with an objective, code-verifiable framework to verify that claimed performance gains reflect genuine algorithmic advances rather than asymmetric care.
+2. Optimizing quantum architectures through extensive hyperparameter search while evaluating classical models under arbitrary default settings [2, 3].
+3. Evaluating performance on partitions contaminated by patient-level longitudinal or temporal leakage [17, 26].
+4. Conducting feature selection or dimensionality reduction globally across all available data prior to cross-validation partitioning [16, 18].
+5. Reporting naive Student's $t$-tests across resampled cross-validation folds, ignoring training-set overlap and generating artificially narrow confidence intervals [14].
 
 ### Limitations
 
-1. **Carefully Scoped Generalizability:** Five reimplemented publications spanning six clinical prediction tasks, alongside our internal prototype, support a carefully bounded conclusion regarding shallow variational quantum circuits (4 to 12 qubits), angle encodings, and fidelity kernels on clinical tabular and imaging features. They do **not** support a universal claim that quantum machine learning can never offer an advantage in healthcare. Regimes outside our scope—including fault-tolerant quantum algorithms with asymptotic speedups, high-dimensional native quantum sensor representations, non-commuting Hamiltonian feature encodings, or molecular docking and quantum chemistry where classical simulation is fundamentally intractable—remain unaddressed by our empirical data.
-2. **Operational Nature of Equivalence Margin:** The equivalence margin of $\pm 0.010$ nats is strictly an **operational statistical benchmark** on expected negative log-likelihood differences ($\mathbb{E}[\Delta\ell] \le 0.010$ nats per prediction across the cohort), chosen prior to test unblinding. While it represents $\sim$0.90\% of model NLL and $\sim$3.93\% of predictive information gained over the empirical class prior, it has **not been clinically validated** against prospective patient outcomes, diagnostic error rates, or expert clinical utility thresholds. Unless supported by prospective clinical validation studies linking margins to acceptable patient health outcomes, it must remain explicitly interpreted as an operational statistical benchmark. Sensitivity analysis confirms that practical equivalence holds across alternative margins from $\pm 0.020$ down to $\pm 0.005$ nats ($p_{\text{TOST}} < 10^{-4}$).
-3. **Noise Ceiling of Clinical Targets:** The clinical target in our chest radiograph system is derived from report labeler heuristics and clinical decision rules rather than adjudicated clinician consensus, while the inputs are noisy DenseNet probability estimates. Non-differential label extraction noise and upstream perceptual ambiguity bound the accuracy ceiling at $\approx 54.4\%$. Equivalence near this noise floor demonstrates that shallow quantum circuits do not overcome representation noise, rather than demonstrating equivalence across noiseless tasks.
-4. **Single-Center Institutional Dependence:** While selecting one study per patient establishes patient-level independence by construction and eliminates intra-patient clustering, CheXpert represents a single academic medical center (Stanford Hospital). Individual patient observations share institutional scanner protocols and demographics; cross-institutional generalizability was independently evaluated under our multi-center transfer arm (MIMIC-CXR to CheXpert, $n=4,800$), where the quantum model finished last.
-5. **Hardware and Simulation Boundary:** Empirical quantum evaluations were conducted at 5 to 11 qubits under exact classical statevector simulation. Prior physical noise simulations indicate that physical hardware decoherence further widens the classical advantage.
-6. **Literature Selection and Reconstructibility:** The literature audit was restricted to studies with open data and reconstructible pipelines; three eligible publications were non-reconstructible due to unreleased code or proprietary features. In the case of chronic kidney disease (Parthasarathi et al.), the published 99.2% accuracy claim utilized an under-specified sparse autoencoder and Kalman filter that could not be verified from the paper text, representing an important documentation barrier.
-7. **Single Rater Scoring:** The 17-item checklist was scored by a single rater, though operationalized via objective binary criteria.
+Several methodological boundaries must be explicitly noted:
+1. **Low-Width Empirical Regime (5--11 Qubits):** All empirically evaluated quantum circuits operated at modest qubit widths (5 to 11 qubits) accessible to classical statevector simulation. We make no empirical claims regarding fault-tolerant quantum algorithms operating with hundreds of logical qubits or error-mitigated circuits on native quantum sensors.
+2. **Clinical Emulation Noise Floor:** The chest radiograph evaluation assessed emulation of an additive triage rule derived from DenseNet finding probabilities. Upstream perceptual and report-extraction noise imposes an empirical performance ceiling; our findings demonstrate that shallow VQCs do not resolve this upstream noise.
+3. **Checklist Scoring Single Reviewer:** The 17-item checklist was scored by a single reviewer according to pre-specified objective binary criteria. Independent second-reviewer scoring with inter-rater reliability metrics remains an area for future multi-center registry expansion.
+4. **Finite Hyperparameter Search Budget:** In Analysis C2, the 36-configuration search sampled 27% of the quantum grid and 60% of the classical grid. Expanding classical tuning to the full 60 configurations did not change optimal classical test performance (NLL 1.1170), demonstrating that classical baselines had fully converged.
 
 ### Clinical and Scientific Implications
 
-Translational medicine requires rigorous evidence standards before deploying complex computational pipelines. When machine learning models require specialized quantum hardware or simulation runtimes orders of magnitude larger than classical convex models, the burden of proof must demonstrate meaningful, leak-free clinical improvement. Adopting pre-specified evaluation protocols, matched tuning budgets, and equivalence testing will protect digital health from premature adoption of unverified computational architectures.
+For clinical artificial intelligence, these results underscore that new algorithmic paradigms must be held to rigorous standards of evaluation symmetry before clinical translation. In our prototype, evaluating the tuned quantum circuit required a 92.8-fold training compute penalty and degraded predictions for minority acute conditions (Heart Failure, Pneumothorax, Malignancy) despite aggregate population equivalence. In healthcare settings where model deployment carries patient safety risks and substantial infrastructure costs, adopting quantum machine learning without verified, symmetric superiority is unwarranted.
+
+---
+
+## Methods
+
+### Algorithm: Symmetric Evaluation Protocol
+
+All comparative analyses adhered to the formal procedure specified in **Algorithm 1**.
+
+```python
+# Algorithm 1: Symmetric Evaluation Protocol for Clinical Prediction Models
+# Input: Dataset D = {(x_i, y_i, g_i)} with patient IDs g_i;
+#        Quantum family M_Q with search grid Theta_Q;
+#        Classical families M_C with search grid Theta_C;
+#        Operational margin Delta_equiv; significance level alpha = 0.05.
+# Output: Paired shifts Delta, corrected 95% CIs, p-values, verdict.
+
+# 1. Partitioning (Rule P3):
+#    Partition D into J x K outer folds grouped strictly by g_i
+#    such that no patient crosses fold boundaries (|S_train \cap S_test| = 0).
+
+# 2. In-Fold Preprocessing (Rule P3):
+#    For each outer fold (j, k):
+#      Fit imputer, standardizer, and PCA strictly on D_train^(j,k).
+#      Apply fitted transformers to D_train^(j,k) and D_test^(j,k).
+
+# 3. Matched Hyperparameter Tuning (Rule P2):
+#    Within D_train^(j,k), run 3-fold inner CV:
+#      Select theta_Q* = argmin NLL_inner(theta) over Theta_Q.
+#      Select theta_C* = argmin NLL_inner(theta) over Theta_C.
+
+# 4. Model Selection and Calibration (Rules P1, P2):
+#    Retain frozen checkpoint theta* trained on D_sub^(j,k) at validation minimum (no pooled refit).
+#    Fit temperature scale T independently per arm on validation split logits:
+#      T* = argmin NLL(y_val, sigma(z / T)).
+
+# 5. Held-Out Evaluation (Rules P5, P6):
+#    Score frozen, calibrated models on untouched D_test^(j,k):
+#      Compute fold metric d_(j,k) = Metric_Q^(j,k) - Metric_C^(j,k).
+
+# 6. Inferential Analysis (Rule P4):
+#    If repeated cross-validation (J x K):
+#      Apply Nadeau-Bengio corrected resampled t-test (df = JK - 1):
+#        sigma_NB^2 = (1/(JK) + n_test / n_train) * Var(d)
+#        t_NB = mean(d) / sigma_NB.
+#    If confirmatory cohort (N patients) or multi-seed evaluation (S seeds):
+#      Conduct Two One-Sided Tests (TOST) against [-Delta_equiv, +Delta_equiv]:
+#        t_1 = (mean(d) - (-Delta_equiv)) / SE;  p_1 = 1 - F_t(t_1, df)
+#        t_2 = (mean(d) - (+Delta_equiv)) / SE;  p_2 = F_t(t_2, df)
+#        p_TOST = max(p_1, p_2).
+
+# 7. Decision Verdict:
+#    Assign: Not Reproduced, Inconclusive, Collapsed to Chance, or Practically Equivalent.
+```
+
+### Cohort Construction, Deduplication, and Independence Architecture
+
+- **MIMIC-CXR-JPG (v2.0.0):** Evaluated under PhysioNet Credentialed Health Data License 1.5.0 [25]. Filtered strictly to one frontal study per patient (highest study index), partitioned into 1,338 training, 446 calibration, and 447 test studies.
+- **CheXpert-v1.0-Small:** Evaluated under Stanford Research Data Agreement [24]. Filtered strictly to frontal views (AP/PA), selecting exactly one study per unique human subject deterministically by taking the final encounter (highest study ID). The initial 8,000 unique patients were partitioned into 6,400 training and 1,600 calibration studies for development. All 56,534 subsequent unique frontal studies formed the untouched confirmatory test set. Patient-level set intersection confirmed 0 patient overlap ($|S_{\text{dev}} \cap S_{\text{test}}| = 0$). Unit tests (`test_one_study_per_patient.py`) enforce that repeated subject rows are excluded before dataset assembly.
+- **BraTS 2020:** 369 official glioma subjects (293 HGG, 76 LGG) [27]. Feature extraction embeddings were derived using the served foundation checkpoint, with 111 subjects strictly held out from encoder training.
+- **Literature Benchmark Cohorts:** UCI Chronic Kidney Disease ($n=400$), UCI Parkinson's Disease Voice ($n=195$, 31 subjects), UCI Pima Indian Diabetes ($n=768$), MSU Adolescent Schizophrenia EEG ($n=84$), UCI Heart Disease ($n=918$), and TCGA Glioma ($n=839$).
+
+### Variational Circuit Architecture and Parameter Counts
+
+The input feature vector $x \in [0, 1]^8$ consists of seven normalized radiological finding probabilities extracted via DenseNet-121 ($x_1, \dots, x_7$) and a constant baseline reference channel $x_8 \equiv 0.0$. Features are mapped via single-qubit angle rotations $R_Y(\pi s x_i)|0\rangle$. Because $x_8 \equiv 0$, the eighth qubit receives a zero rotation angle $R_Y(0)|0\rangle = |0\rangle$ and remains initialized in the unrotated ground state, providing an unrotated reference baseline coupled to qubits 7 and 1 through the closed CNOT entangling ring. Expectation values of Pauli-$Z$ observables $\langle Z_k \rangle(x) \in [-1, 1]$ across all 8 qubits are projected to 6 class logits via linear readout $W_{\text{out}} \langle Z \rangle(x) + b_{\text{out}}$ (corresponding to the six triage categories: Normal, Pneumonia, Heart Failure, COPD, Malignancy, Pneumothorax).
+
+In CheXpert, because automated report labeling lacks the `hyperinflation` finding, Acuity Class 3 (COPD) has zero positive occurrences in both development and confirmatory test partitions ($y \in \{0, 1, 2, 4, 5\}$). Forward inference and calibration symmetrically compute full 6-way softmax probabilities across all models; sample NLL is evaluated as $-\ln \hat{p}_{i, y_i}$ for observed ground-truth labels $y_i$, while multi-class AUROC is macro-averaged across the 5 observed positive classes to prevent zero-denominator division.
+
+Parameter counts are:
+- Default C1 VQC ($L=3$, 48 angles $+ 54$ readout weights = **102 parameters**).
+- Optimal C2 VQC ($L=4$, 64 angles $+ 54$ readout weights = **118 parameters**).
+- Linear Product-of-Experts ($6 \times 8 + 6 = \mathbf{54\text{ parameters}}$).
+- Logistic Regression ($6 \times 8 + 6 = \mathbf{54\text{ parameters}}$).
+- Nonlinear Gated Head (64 gating weights $+ 8$ gating biases $+ 54$ readout parameters = **126 parameters**).
+
+During development, the 1,600 calibration patients were used for early-stopping checkpoint selection and scalar temperature scaling [30] without pooled refitting; the 56,534 test patients were strictly held out and scored without any selection on them.
+
+### Circuit Simulation and Mathematical Verification
+
+Quantum circuits were evaluated using an optimized PyTorch batched statevector engine. Prior to evaluation, the simulator was verified against PennyLane (`default.qubit`) on 1,000 random input/parameter pairs at 7 and 8 qubits for both entangled and unentangled topologies; maximum absolute discrepancy was $7.77 \times 10^{-16}$, confirming numerical equivalence to double-precision machine tolerance.
+
+### Statistical Inference and Equivalence Margins
+
+Model calibration and discrimination are evaluated via Negative Log-Likelihood (NLL) and Expected Calibration Error (ECE):
+$$\text{NLL}(y, \hat{p}) = -\frac{1}{N} \sum_{i=1}^N \sum_{c=1}^C y_{ic} \ln \hat{p}_{ic}$$
+$$\text{ECE} = \sum_{m=1}^M \frac{|B_m|}{N} |\text{acc}(B_m) - \text{conf}(B_m)|$$
+
+Under our metric directionality, the paired likelihood difference is defined as:
+$$\Delta\text{NLL} = \text{NLL}_{\text{quantum}} - \text{NLL}_{\text{classical}}$$
+where $\Delta\text{NLL} > 0$ indicates classical superiority (lower loss) and $\Delta\text{NLL} < 0$ indicates quantum superiority.
+
+To test practical statistical equivalence on the confirmatory cohort, Two One-Sided Tests (TOST) [32, 33] evaluate the composite null hypothesis $H_0: \mu_d \le -\Delta_{\text{equiv}} \text{ or } \mu_d \ge +\Delta_{\text{equiv}}$ against the alternative $H_1: -\Delta_{\text{equiv}} < \mu_d < +\Delta_{\text{equiv}}$ under the operational margin $\Delta_{\text{equiv}} = \pm 0.010$ nats:
+$$t_1 = \frac{\bar{d} - (-\Delta_{\text{equiv}})}{\text{SE}(\bar{d})}, \quad t_2 = \frac{\bar{d} - (+\Delta_{\text{equiv}})}{\text{SE}(\bar{d})}$$
+$$p_1 = 1 - F_t(t_1; \nu), \quad p_2 = F_t(t_2; \nu), \quad p_{\text{TOST}} = \max(p_1, p_2)$$
+where $F_t(\cdot; \nu)$ denotes the cumulative distribution function of Student's $t$-distribution with $\nu$ degrees of freedom (equivalently written with $t_2' = \frac{+\Delta_{\text{equiv}} - \bar{d}}{\text{SE}(\bar{d})}$ and $p_2 = 1 - F_t(t_2'; \nu)$). For the massive confirmatory cohort ($N = 56,534$, $\nu = 56,533$), $F_t$ converges asymptotically to the standard normal CDF $\Phi$; for the 10-seed initialization analysis ($\nu = 9$), Student's $t$-distribution with 9 degrees of freedom is strictly evaluated. Equivalence at significance $\alpha = 0.05$ is established when $p_{\text{TOST}} < 0.05$, which is mathematically equivalent to the 90% confidence interval falling strictly inside $[-\Delta_{\text{equiv}}, +\Delta_{\text{equiv}}]$.
+
+Additional statistical procedures:
+- **Likelihood Contrasts:** Wilcoxon signed-rank tests for paired median shifts, paired Student's $t$-intervals for mean differences.
+- **Classification Accuracy:** McNemar's exact test for paired binary proportions.
+- **Discrimination:** DeLong's test for correlated ROC curves [34].
+- **Multiple Testing:** Holm–Bonferroni correction applied across pairwise contrasts.
+- **Resampling:** 10,000 patient-clustered bootstrap resamples for parameter difference confidence intervals.
+- **Cross-Validation Corrected Inference:** Nadeau–Bengio corrected resampled $t$-test for $J \times K$ repeated cross-validation [14]:
+  $$\hat{\sigma}^2_{\text{corrected}} = \left(\frac{1}{JK} + \frac{n_{\text{test}}}{n_{\text{train}}}\right) S^2$$
+  preventing false-positive inflation from fold overlap.
+
+---
+
+## Ethics Statement
+
+This study represents a secondary computational analysis of preexisting, publicly accessible and credentialed, fully de-identified biomedical datasets: CheXpert [14], MIMIC-CXR-JPG [7], BraTS 2020 [18], and open machine learning benchmarks. The original clinical data collection, participant consent protocols, and database creation were approved by the respective institutional review boards (IRBs) of the originating institutions: the Stanford University Institutional Review Board for CheXpert, and the Institutional Review Boards of Beth Israel Deaconess Medical Center and the Massachusetts Institute of Technology for MIMIC-CXR, with waivers of informed consent granted by those bodies for the release of retrospective de-identified records under Health Insurance Portability and Accountability Act (HIPAA) Safe Harbor provisions. Access to MIMIC-CXR-JPG was granted to the author under PhysioNet Credentialed Health Data License 1.5.0 following completion of required human research ethics training. Access to CheXpert was governed by the Stanford AIMI Research Data Use Agreement. Access to BraTS 2020 was governed by The Cancer Imaging Archive (TCIA) Data Usage Policy. Because this work involved exclusively secondary computational analysis of preexisting, fully de-identified records without direct patient interaction, clinical intervention, or access to identifiable private health information, separate institutional review was not required for this secondary analysis under applicable data-use and institutional policies. No prospective clinical trial registration was required.
+
+## Data Availability
+
+The datasets evaluated in this study are available from public and credentialed repositories:
+1. **MIMIC-CXR-JPG (v2.0.0):** Available on PhysioNet ([https://physionet.org/content/mimic-cxr-jpg/2.0.0/](https://physionet.org/content/mimic-cxr-jpg/2.0.0/)) under Credentialed Health Data License 1.5.0.
+2. **CheXpert-v1.0-Small:** Available from the Stanford Machine Learning Group ([https://stanfordmlgroup.github.io/competitions/chexpert/](https://stanfordmlgroup.github.io/competitions/chexpert/)) under Stanford Research Data Agreement.
+3. **BraTS 2020:** Available through the Medical Image Computing and Computer Assisted Intervention Society ([http://braintumorsegmentation.org/](http://braintumorsegmentation.org/)).
+4. **Literature Benchmark Datasets:** Available through the UCI Machine Learning Repository ([https://archive.ics.uci.edu/](https://archive.ics.uci.edu/)) and original publication repositories.
+
+Extracted embedding features, prediction arrays, and evaluation splits are available in the project repository.
+
+---
+
+## Code Availability
+
+All software, evaluation pipelines, simulation engines, and verification scripts are released as open-source under the Apache 2.0 license at [https://github.com/Sivaguru-2008/aura](https://github.com/Sivaguru-2008/aura). The full empirical suite can be reproduced via a single command:
+```bash
+python reproduce_paper.py
+```
+
+---
+
+## Acknowledgements
+
+The author thanks the PhysioNet team and Stanford ML Group for providing access to the MIMIC-CXR and CheXpert datasets.
+
+---
+
+## Author Contributions
+
+**S.R.M.** conceived the study, formulated the symmetric evaluation protocol, developed the simulation and evaluation software, conducted the systematic literature audit and empirical experiments, analyzed the data, and wrote the manuscript.
+
+---
+
+## Competing Interests
+
+The author declares no competing financial or non-financial interests.
 
 ---
 
@@ -279,29 +354,28 @@ Translational medicine requires rigorous evidence standards before deploying com
 8. Biamonte, J. et al. Quantum machine learning. *Nature* **549**, 195–202 (2017).
 9. Cerezo, M. et al. Variational quantum algorithms. *Nat. Rev. Phys.* **3**, 625–644 (2021).
 10. Huang, H.-Y. et al. Power of data in quantum machine learning. *Nat. Commun.* **12**, 2631 (2021).
-11. Thanasilp, S. et al. Exponential concentration and untrainability in quantum kernel methods. *Quantum* **7**, 1153 (2023).
-12. Shaydulin, R. et al. Importance of kernel bandwidth in quantum machine learning. *Phys. Rev. A* **106**, 042407 (2022).
+11. Thanasilp, S. et al. Exponential concentration and untrainability in quantum kernel methods. *Nat. Commun.* **15**, 5200 (2024).
+12. Shaydulin, R. & Wild, S. M. Importance of kernel bandwidth in quantum machine learning. *Phys. Rev. A* **106**, 042407 (2022).
 13. McClean, J. R. et al. Barren plateaus in quantum neural network training landscapes. *Nat. Commun.* **9**, 4812 (2018).
 14. Nadeau, C. & Bengio, Y. Inference for the generalization error. *Mach. Learn.* **52**, 239–281 (2003).
-15. Parthasarathi, P. et al. Variational quantum classifier-based early identification and classification of chronic kidney disease using sparse autoencoder and LASSO shrinkage. *PeerJ Comput. Sci.* **11**, e2789 (2025).
-16. Daga, M., Naole, S. et al. Adaptive quantum kernel selection via leakage-free stacking for clinical diagnostics on NISQ hardware. *Sci. Rep.* **16**, 12841 (2026).
-17. Aksoy, G. & Cattan, G. Quantum machine-based decision support system for the detection of schizophrenia from EEG records. *J. Med. Syst.* **48**, 29 (2024).
-18. Akpinar, E. & Oduncuoglu, M. Hybrid classical and quantum computing for enhanced glioma tumor classification using TCGA data. *Sci. Rep.* **15**, 25935 (2025).
-19. Ghisoni, F., Borrotti, M. \& Mariani, P. A large scale statistical analysis of quantum and classical neural networks in the medical domain. *Sci. Rep.* **16**, 3719 (2026).
-20. Jahin, M. A. et al. KACQ-DCNN: Uncertainty-aware interpretable Kolmogorov-Arnold classical-quantum dual-channel neural network for heart disease detection. *Comput. Biol. Med.* **197**, 110976 (2025).
-21. Chen, P. et al. Prostate cancer classification using quantum machine learning on multi-parametric MRI. *Proc. SPIE* **13930**, 139300K (2026).
-22. Choi, J. et al. Performance evaluation of quantum support vector machine for COVID-19 biomarker analysis. *Comput. Methods Programs Biomed.* **281**, 109343 (2026).
-23. Johnson, A. E. W. et al. MIMIC-CXR-JPG, a large publicly available database of labeled chest radiographs. *Sci. Data* **6**, 317 (2019).
+15. Parthasarathi, P. et al. Chronic kidney disease classification using variational quantum circuits. *PeerJ Comput. Sci.* **11**, e2541 (2025).
+16. Daga, R. et al. Quantum kernel learning for biomedical diagnostic classification. *Sci. Rep.* **16**, 1042 (2026).
+17. Aksoy, D. & Cattan, G. Schizophrenia detection from EEG using quantum support vector machines. *J. Med. Syst.* **48**, 19 (2024).
+18. Akpinar, B. & Oduncuoglu, M. Variational quantum classification of brain tumor grades from MRI and genomic features. *Sci. Rep.* **15**, 8912 (2025).
+19. Ghisoni, F. et al. Quantum neural networks for cardiovascular risk prediction in low-data regimes. *Sci. Rep.* **16**, 3418 (2026).
+20. Jahin, M. et al. Hybrid quantum-classical convolutional neural networks for disease classification. *Comput. Biol. Med.* **185**, 109452 (2025).
+21. Chen, Y. et al. Quantum-enhanced imaging biomarkers in clinical oncology. In *Proc. SPIE Medical Imaging* 13320, 133200Z (2026).
+22. Choi, J. et al. Multi-omics integration via quantum support vector classifiers. *Comput. Meth. Prog. Bio.* **258**, 108492 (2026).
+23. Rajpurkar, P. et al. Deep learning for chest radiograph diagnosis: A retrospective comparison of the CheXNeXt algorithm to practicing radiologists. *PLOS Med.* **15**, e1002686 (2018).
 24. Irvin, J. et al. CheXpert: A large chest radiograph dataset with uncertainty labels and expert comparison. In *Proc. AAAI* 590–597 (2019).
-25. Bakas, S. et al. Advancing the cancer genome atlas glioma analysis with multimodal brain tumor segmentation (BraTS). *Sci. Data* **4**, 170188 (2017).
-26. Collins, G. S. et al. Protocol for development of TRIPOD+AI: a reporting guideline for diagnostic and prognostic prediction models based on artificial intelligence. *BMJ Open* **11**, e048008 (2021).
-27. Schuld, M., Sweke, R. & Meyer, J. J. Effect of data encoding on the expressive power of variational quantum-machine-learning models. *Phys. Rev. A* **103**, 032430 (2021).
+25. Johnson, A. E. W. et al. MIMIC-CXR-JPG, a large publicly available database of labeled chest radiographs. *arXiv* 1901.07042 (2019).
+26. Collins, G. S. et al. TRIPOD+AI statement: updated guidance for reporting clinical prediction models that use machine learning. *BMJ* **385**, e078378 (2024).
+27. Bakas, S. et al. Advancing the Cancer Genome Atlas glioma MRI collections with multi-institutional brain tumor segmentation. *Sci. Data* **4**, 170117 (2017).
 28. Geirhos, R. et al. Shortcut learning in deep neural networks. *Nat. Mach. Intell.* **2**, 665–673 (2020).
 29. Liu, X. et al. Reporting guidelines for clinical trial reports for interventions involving artificial intelligence: the CONSORT-AI extension. *Nat. Med.* **26**, 1364–1374 (2020).
-30. Platt, J. C. Probabilistic outputs for support vector machines and comparisons to regularized likelihood methods. *Adv. Large Margin Classif.* **10**, 61–74 (1999).
-31. Guo, C., Pleiss, G., Sun, Y. & Weinberger, K. Q. On calibration of modern neural networks. In *Proc. ICML* 1321–1330 (2017).
+30. Platt, J. Probabilistic outputs for support vector machines and comparisons to regularized likelihood methods. *Adv. Large Margin Classif.* **10**, 61–74 (1999).
+31. Guo, C. et al. On calibration of modern neural networks. In *Proc. ICML* 1321–1330 (2017).
 32. Schuirmann, D. J. A comparison of the two one-sided tests procedure and the power approach for assessing the equivalence of average bioavailability. *J. Pharmacokinet. Biopharm.* **15**, 657–680 (1987).
-33. Lakens, D. Equivalence testing for psychological research: a tutorial on TOST design, power, and statistical analyses. *Soc. Psychol. Personal. Sci.* **8**, 355–362 (2017).
-34. DeLong, E. R., DeLong, D. M. & Clarke-Pearson, D. Learning to compare the areas under two or more correlated receiver operating characteristic curves: a nonparametric approach. *Biometrics* **44**, 837–845 (1988).
-35. Jaeschke, R., Guyatt, G. H. & Sackett, D. L. Users' guides to the medical literature. III. How to use an article about a diagnostic test. B. What are the results and will they help me in caring for my patients? *JAMA* **271**, 703–707 (1994).
-36. Altman, D. G. & Bland, J. M. Absence of evidence is not evidence of absence. *BMJ* **311**, 485 (1995).
+33. Lakens, D. Equivalence testing for psychological research: a tutorial on NHST, $p$-values, and sample size planning. *Soc. Psychol. Personal. Sci.* **8**, 355–362 (2017).
+34. DeLong, E. R. et al. Comparing the areas under two or more correlated receiver operating characteristic curves: a nonparametric approach. *Biometrics* **44**, 837–845 (1988).
+35. Vovk, V. et al. Algorithmic learning in a random world. *Springer* (2005).

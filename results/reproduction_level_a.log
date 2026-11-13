@@ -1,0 +1,173 @@
+=== LEVEL A EXECUTION LOG ===
+Date: 2026-11-02
+Runtime: 16.60 seconds
+Exit Code: 0
+
+STDOUT:
+
+[1/5] Input provenance: pinned SHA-256 of the fusion evidence and predictions
+ok  quantum_study_evidence.npz
+ok  fusion_matched_optimiser_predictions.npz
+
+[2/5] Figure 1: forest plot (every evaluation choice; published claims re-tested)
+{
+ "panel_a": [
+  {
+   "group": "MIMIC-CXR, each arm's own optimiser (n=447)",
+   "label": "vs product-of-experts",
+   "delta": -0.017270012864630813,
+   "ci95": [
+    -0.06465964036346952,
+    0.030119614634207904
+   ],
+   "n": 447
+  },
+  {
+   "group": "MIMIC-CXR, each arm's own optimiser (n=447)",
+   "label": "vs gated head",
+   "delta": 0.019048792221167617,
+   "ci95": [
+    -0.023896370497866342,
+    0.06199395494020157
+   ],
+   "n": 447
+  },
+  {
+   "group": "MIMIC-CXR, each arm's own optimiser (n=447)",
+   "label": "vs logistic regression",
+   "delta": 0.05433390276698059,
+   "ci95": [
+    0.0047847275205495435,
+    0.10388307801341162
+   ],
+   "n": 447
+  },
+  {
+   "group": "MIMIC-CXR, matched optimiser (n=447)",
+   "label": "vs product-of-experts",
+   "delta": 0.003349249466436513,
+   "ci95": [
+    -0.03287905132270055,
+    0.03957755025557358
+   ],
+   "n": 447
+  },
+  {
+   "group": "MIMIC-CXR, matched optimiser (n=447)",
+   "label": "vs gated head",
+   "delta": 0.010379864297511764,
+   "ci95": [
+    -0.029389405650808765,
+    0.0501491342458323
+   ],
+   "n": 447
+  },
+  {
+   "group": "CheXpert, out-of-sample evidence (n=1,600)",
+   "label": "vs product-of-experts",
+   "delta": 0.007623061642520869,
+   "ci95": [
+    -0.0028986465744872377,
+    0.018144769859528977
+   ],
+   "n": 1600
+  },
+  {
+   "group": "CheXpert, out-of-sample evidence (n=1,600)",
+   "label": "vs gated head",
+   "delta": 0.008744210963379358,
+   "ci95": [
+    -0.0017194576302994556,
+    0.01920787955705817
+   ],
+   "n": 1600
+  },
+  {
+   "group": "CheXpert, frozen transfer (n=4,800)",
+   "label": "vs product-of-experts",
+   "delta": 0.15892493893741333,
+   "ci95": [
+    0.14218497746922223,
+    0.17566490040560442
+   ],
+   "n": 4800
+  },
+  {
+   "group": "CheXpert, frozen transfer (n=4,800)",
+   "label": "vs logistic regression",
+   "delta": 0.19670692284548144,
+   "ci95": [
+    0.17849063769621215,
+    0.21492320799475073
+   ],
+   "n": 4800
+  },
+  {
+   "group": "Held-out patients, scored without selection (n=56,534)",
+   "label": "matched optimiser, vs product-of-experts",
+   "delta": 0.02049446662888257,
+   "ci95": [
+    0.018584714225670346,
+    0.022404219032094795
+   ],
+   "n": 56534
+  },
+  {
+   "group": "Held-out patients, scored without selection (n=56,534)",
+   "label": "matched optimiser, vs gated head",
+   "delta": 0.019643873492248557,
+   "ci95": [
+    0.017964429889315976,
+    0.02132331709518114
+   ],
+   "n": 56534
+  },
+  {
+   "group": "Held-out patients, scored without selection (n=56,534)",
+   "label": "36-config search per arm, vs product-of-experts",
+   "delta": -0.0026,
+   "ci95": [
+    -0.00359,
+    -0.0016
+   ],
+   "n": 56534
+  }
+ ],
+ "panel_b": [
+  {
+   "label": "CKD (PeerJ CS 2025)\naccuracy",
+   "reported": 0.029000000000000026,
+   "delta": -0.09649999999999999,
+   "ci95": [
+    -0.14917765844404313,
+    -0.043822341555956844
+   ],
+   "verdict": "REVERSED"
+  },
+  {
+   "label": "Glioma grade (Sci Rep 2025)\naccuracy",
+   "reported": 0.010000000000000009,
+
+
+[3/5] Figure 2: mechanism (interaction-order spectrum; kernel bandwidth sweep)
+
+[4/5] Drift tests: every manuscript number equals its artifact
+...............................                                          [100%]
+
+[5/5] Revision R4: Level A integrity verification of all new artifacts in results/revision_r4/manifest.json
+Verifying 8 Revision R4 artifacts against pinned SHA-256...
+  [OK] classical_seeds_summary.json (7349 bytes, SHA-256: 04fff45a11eb...)
+  [OK] a1_quantum_seeds_summary.json (9395 bytes, SHA-256: 07c7778c35d9...)
+  [OK] a2_selection_robustness.json (48226 bytes, SHA-256: 301193f7a10a...)
+  [OK] a3_class_analysis.json (6331 bytes, SHA-256: ee0d9ea07ef0...)
+  [OK] domain_shift_analysis.json (24637 bytes, SHA-256: 12e548be2377...)
+  [OK] m1_effective_order.json (11763 bytes, SHA-256: efeb24b60d03...)
+  [OK] m2_completeness.json (1583 bytes, SHA-256: 5a6dd9958ef5...)
+  [OK] ckd_protocol_grid.json (48608 bytes, SHA-256: 57c4f1ea7682...)
+
+Level A Verification PASSED: All 8 artifacts intact and bit-for-bit verified.
+
+All 5 steps passed in 16s.
+
+
+STDERR:

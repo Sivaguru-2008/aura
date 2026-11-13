@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this software, reproduce the empirical benchmarks, or cite our clinical audit findings, please cite as below."
+authors:
+  - family-names: Murugan
+    given-names: Sivaguru
+    email: sivagurumurugan1@gmail.com
+    affiliation: "Antigravity Research / Independent Research"
+title: "AURA: Pre-Registered Symmetric Evaluation and Forensic Audit of Quantum Machine Learning in Clinical Decision Support"
+version: 0.1.0
+doi: "10.5281/zenodo.aura2026"
+date-released: 2026-10-11
+url: "https://github.com/Sivaguru-2008/aura"
+repository-code: "https://github.com/Sivaguru-2008/aura"
+license: Apache-2.0
+keywords:
+  - "medical-ai"
+  - "clinical-copilot"
+  - "quantum-machine-learning"
+  - "digital-medicine"
+  - "conformal-prediction"
+  - "reproducibility-audit"
+  - "calibrated-uncertainty"
+  - "chexpert"

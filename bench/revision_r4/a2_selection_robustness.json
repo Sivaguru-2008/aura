@@ -1,0 +1,1990 @@
+{
+  "n_resamples": 20,
+  "dev_split_partition": "80% train (6,400), 20% cal (1,600)",
+  "test_evaluation": "56,534 held-out patients, scored without selection on it",
+  "resample_summary": {
+    "vqc_winner_test_nll": {
+      "mean": 1.11444,
+      "sd": 0.00241,
+      "min": 1.11248,
+      "max": 1.12119,
+      "median": 1.11375,
+      "iqr": 0.00144
+    },
+    "poe_winner_test_nll": {
+      "mean": 1.11397,
+      "sd": 0.00092,
+      "min": 1.11319,
+      "max": 1.11638,
+      "median": 1.11356,
+      "iqr": 0.00056
+    },
+    "gated_winner_test_nll": {
+      "mean": 1.11191,
+      "sd": 0.00138,
+      "min": 1.10996,
+      "max": 1.11535,
+      "median": 1.11153,
+      "iqr": 0.00154
+    },
+    "delta_vqc_vs_poe": {
+      "mean": 0.00047,
+      "sd": 0.00223,
+      "min": -0.00301,
+      "max": 0.00546,
+      "median": -2e-05,
+      "iqr": 0.00136
+    },
+    "delta_vqc_vs_gated": {
+      "mean": 0.00254,
+      "sd": 0.00208,
+      "min": -0.00051,
+      "max": 0.00731,
+      "median": 0.00217,
+      "iqr": 0.0013
+    }
+  },
+  "winner_selection_stability": {
+    "quantum_winners_frequency": {
+      "[6, 0.5, 0.01, 0.01]": 5,
+      "[6, 0.5, 1.0, 0.01]": 4,
+      "[3, 0.5, 1.0, 0.01]": 4,
+      "[4, 1.0, 0.1, 0.01]": 3,
+      "[4, 0.5, 0.01, 0.01]": 3,
+      "[4, 1.0, 1.0, 0.01]": 1
+    },
+    "classical_winners_frequency": {
+      "[0.01, 0.0, 0.1]": 3,
+      "[0.003, 0.0, 0.01]": 6,
+      "[0.01, 0.0, 0.01]": 2,
+      "[0.003, 0.0, 0.1]": 3,
+      "[0.003, 1e-05, 1.0]": 4,
+      "[0.01, 1e-05, 0.1]": 1,
+      "[0.1, 0.0, 0.01]": 1
+    },
+    "pre_registered_quantum_winner": [
+      4,
+      0.5,
+      0.01,
+      0.01
+    ],
+    "pre_registered_classical_winner": [
+      0.05,
+      0.0001,
+      0.01
+    ]
+  },
+  "grid_draw_documentation": {
+    "quantum": {
+      "full_grid_size": 135,
+      "budget": 36,
+      "sampling_fraction": 0.2667,
+      "draw_mechanism": "Pseudorandom seeded draw: np.random.default_rng(7).choice(135, 36, replace=False)"
+    },
+    "classical": {
+      "full_grid_size": 60,
+      "budget": 36,
+      "sampling_fraction": 0.6,
+      "draw_mechanism": "Pseudorandom seeded draw: np.random.default_rng(7).choice(60, 36, replace=False)"
+    }
+  },
+  "full_classical_grid_sensitivity": {
+    "total_configs": 60,
+    "budget_configs": 36,
+    "budget_winner": {
+      "grid_index": 41,
+      "in_36_budget": true,
+      "config": [
+        0.1,
+        1e-05,
+        1.0
+      ],
+      "cal_nll": 1.06504,
+      "test_nll": 1.11744,
+      "test_acc": 0.54118,
+      "test_ece": 0.03125,
+      "temperature": 0.9844
+    },
+    "full_winner": {
+      "grid_index": 39,
+      "in_36_budget": false,
+      "config": [
+        0.1,
+        1e-05,
+        0.01
+      ],
+      "cal_nll": 1.06504,
+      "test_nll": 1.11744,
+      "test_acc": 0.5412,
+      "test_ece": 0.03128,
+      "temperature": 0.9845
+    },
+    "winner_changed": true,
+    "cal_nll_difference": 0.0,
+    "test_nll_difference": 0.0,
+    "all_60_configs": [
+      {
+        "grid_index": 0,
+        "in_36_budget": true,
+        "config": [
+          0.003,
+          0.0,
+          0.01
+        ],
+        "cal_nll": 1.06591,
+        "test_nll": 1.11361,
+        "test_acc": 0.54231,
+        "test_ece": 0.02242,
+        "temperature": 1.0057
+      },
+      {
+        "grid_index": 1,
+        "in_36_budget": true,
+        "config": [
+          0.003,
+          0.0,
+          0.1
+        ],
+        "cal_nll": 1.06586,
+        "test_nll": 1.11362,
+        "test_acc": 0.54233,
+        "test_ece": 0.02255,
+        "temperature": 1.0057
+      },
+      {
+        "grid_index": 2,
+        "in_36_budget": false,
+        "config": [
+          0.003,
+          0.0,
+          1.0
+        ],
+        "cal_nll": 1.06568,
+        "test_nll": 1.11346,
+        "test_acc": 0.54272,
+        "test_ece": 0.02104,
+        "temperature": 1.0013
+      },
+      {
+        "grid_index": 3,
+        "in_36_budget": false,
+        "config": [
+          0.003,
+          1e-05,
+          0.01
+        ],
+        "cal_nll": 1.06554,
+        "test_nll": 1.1143,
+        "test_acc": 0.54072,
+        "test_ece": 0.02438,
+        "temperature": 1.0036
+      },
+      {
+        "grid_index": 4,
+        "in_36_budget": false,
+        "config": [
+          0.003,
+          1e-05,
+          0.1
+        ],
+        "cal_nll": 1.06595,
+        "test_nll": 1.11345,
+        "test_acc": 0.54284,
+        "test_ece": 0.0208,
+        "temperature": 0.9998
+      },
+      {
+        "grid_index": 5,
+        "in_36_budget": true,
+        "config": [
+          0.003,
+          1e-05,
+          1.0
+        ],
+        "cal_nll": 1.06575,
+        "test_nll": 1.11358,
+        "test_acc": 0.54265,
+        "test_ece": 0.0208,
+        "temperature": 0.9993
+      },
+      {
+        "grid_index": 6,
+        "in_36_budget": false,
+        "config": [
+          0.003,
+          0.0001,
+          0.01
+        ],
+        "cal_nll": 1.06687,
+        "test_nll": 1.11506,
+        "test_acc": 0.54162,
+        "test_ece": 0.02234,
+        "temperature": 0.9902
+      },
+      {
+        "grid_index": 7,
+        "in_36_budget": true,
+        "config": [
+          0.003,
+          0.0001,
+          0.1
+        ],
+        "cal_nll": 1.06683,
+        "test_nll": 1.11507,
+        "test_acc": 0.54155,
+        "test_ece": 0.02238,
+        "temperature": 0.9901
+      },
+      {
+        "grid_index": 8,
+        "in_36_budget": false,
+        "config": [
+          0.003,
+          0.0001,
+          1.0
+        ],
+        "cal_nll": 1.06662,
+        "test_nll": 1.11521,
+        "test_acc": 0.54137,
+        "test_ece": 0.02257,
+        "temperature": 0.99
+      },
+      {
+        "grid_index": 9,
+        "in_36_budget": true,
+        "config": [
+          0.003,
+          0.001,
+          0.01
+        ],
+        "cal_nll": 1.07669,
+        "test_nll": 1.12774,
+        "test_acc": 0.53819,
+        "test_ece": 0.02625,
+        "temperature": 0.9263
+      },
+      {
+        "grid_index": 10,
+        "in_36_budget": true,
+        "config": [
+          0.003,
+          0.001,
+          0.1
+        ],
+        "cal_nll": 1.07668,
+        "test_nll": 1.12774,
+        "test_acc": 0.53817,
+        "test_ece": 0.02626,
+        "temperature": 0.9263
+      },
+      {
+        "grid_index": 11,
+        "in_36_budget": false,
+        "config": [
+          0.003,
+          0.001,
+          1.0
+        ],
+        "cal_nll": 1.0761,
+        "test_nll": 1.12746,
+        "test_acc": 0.53822,
+        "test_ece": 0.02587,
+        "temperature": 0.9203
+      },
+      {
+        "grid_index": 12,
+        "in_36_budget": true,
+        "config": [
+          0.01,
+          0.0,
+          0.01
+        ],
+        "cal_nll": 1.06558,
+        "test_nll": 1.11604,
+        "test_acc": 0.54028,
+        "test_ece": 0.02552,
+        "temperature": 0.9882
+      },
+      {
+        "grid_index": 13,
+        "in_36_budget": true,
+        "config": [
+          0.01,
+          0.0,
+          0.1
+        ],
+        "cal_nll": 1.06554,
+        "test_nll": 1.11603,
+        "test_acc": 0.54026,
+        "test_ece": 0.02548,
+        "temperature": 0.9881
+      },
+      {
+        "grid_index": 14,
+        "in_36_budget": false,
+        "config": [
+          0.01,
+          0.0,
+          1.0
+        ],
+        "cal_nll": 1.06525,
+        "test_nll": 1.11609,
+        "test_acc": 0.54021,
+        "test_ece": 0.02507,
+        "temperature": 0.9878
+      },
+      {
+        "grid_index": 15,
+        "in_36_budget": false,
+        "config": [
+          0.01,
+          1e-05,
+          0.01
+        ],
+        "cal_nll": 1.06562,
+        "test_nll": 1.11614,
+        "test_acc": 0.54029,
+        "test_ece": 0.02553,
+        "temperature": 0.9862
+      },
+      {
+        "grid_index": 16,
+        "in_36_budget": true,
+        "config": [
+          0.01,
+          1e-05,
+          0.1
+        ],
+        "cal_nll": 1.06558,
+        "test_nll": 1.11613,
+        "test_acc": 0.54031,
+        "test_ece": 0.02544,
+        "temperature": 0.9862
+      },
+      {
+        "grid_index": 17,
+        "in_36_budget": false,
+        "config": [
+          0.01,
+          1e-05,
+          1.0
+        ],
+        "cal_nll": 1.0653,
+        "test_nll": 1.1162,
+        "test_acc": 0.54017,
+        "test_ece": 0.02531,
+        "temperature": 0.9859
+      },
+      {
+        "grid_index": 18,
+        "in_36_budget": true,
+        "config": [
+          0.01,
+          0.0001,
+          0.01
+        ],
+        "cal_nll": 1.06625,
+        "test_nll": 1.1173,
+        "test_acc": 0.54006,
+        "test_ece": 0.02494,
+        "temperature": 0.9723
+      },
+      {
+        "grid_index": 19,
+        "in_36_budget": true,
+        "config": [
+          0.01,
+          0.0001,
+          0.1
+        ],
+        "cal_nll": 1.06621,
+        "test_nll": 1.1173,
+        "test_acc": 0.54005,
+        "test_ece": 0.02492,
+        "temperature": 0.9723
+      },
+      {
+        "grid_index": 20,
+        "in_36_budget": true,
+        "config": [
+          0.01,
+          0.0001,
+          1.0
+        ],
+        "cal_nll": 1.06592,
+        "test_nll": 1.11733,
+        "test_acc": 0.54008,
+        "test_ece": 0.02499,
+        "temperature": 0.9723
+      },
+      {
+        "grid_index": 21,
+        "in_36_budget": false,
+        "config": [
+          0.01,
+          0.001,
+          0.01
+        ],
+        "cal_nll": 1.0765,
+        "test_nll": 1.12886,
+        "test_acc": 0.53826,
+        "test_ece": 0.03011,
+        "temperature": 0.9297
+      },
+      {
+        "grid_index": 22,
+        "in_36_budget": false,
+        "config": [
+          0.01,
+          0.001,
+          0.1
+        ],
+        "cal_nll": 1.0765,
+        "test_nll": 1.12886,
+        "test_acc": 0.5383,
+        "test_ece": 0.03007,
+        "temperature": 0.9297
+      },
+      {
+        "grid_index": 23,
+        "in_36_budget": true,
+        "config": [
+          0.01,
+          0.001,
+          1.0
+        ],
+        "cal_nll": 1.0764,
+        "test_nll": 1.12884,
+        "test_acc": 0.53835,
+        "test_ece": 0.02996,
+        "temperature": 0.9298
+      },
+      {
+        "grid_index": 24,
+        "in_36_budget": false,
+        "config": [
+          0.05,
+          0.0,
+          0.01
+        ],
+        "cal_nll": 1.06539,
+        "test_nll": 1.115,
+        "test_acc": 0.54197,
+        "test_ece": 0.02018,
+        "temperature": 1.0172
+      },
+      {
+        "grid_index": 25,
+        "in_36_budget": true,
+        "config": [
+          0.05,
+          0.0,
+          0.1
+        ],
+        "cal_nll": 1.06539,
+        "test_nll": 1.11499,
+        "test_acc": 0.54197,
+        "test_ece": 0.02023,
+        "temperature": 1.0172
+      },
+      {
+        "grid_index": 26,
+        "in_36_budget": false,
+        "config": [
+          0.05,
+          0.0,
+          1.0
+        ],
+        "cal_nll": 1.06538,
+        "test_nll": 1.11499,
+        "test_acc": 0.54199,
+        "test_ece": 0.02027,
+        "temperature": 1.0173
+      },
+      {
+        "grid_index": 27,
+        "in_36_budget": true,
+        "config": [
+          0.05,
+          1e-05,
+          0.01
+        ],
+        "cal_nll": 1.06528,
+        "test_nll": 1.115,
+        "test_acc": 0.54206,
+        "test_ece": 0.02008,
+        "temperature": 1.0143
+      },
+      {
+        "grid_index": 28,
+        "in_36_budget": true,
+        "config": [
+          0.05,
+          1e-05,
+          0.1
+        ],
+        "cal_nll": 1.06528,
+        "test_nll": 1.115,
+        "test_acc": 0.54206,
+        "test_ece": 0.02007,
+        "temperature": 1.0143
+      },
+      {
+        "grid_index": 29,
+        "in_36_budget": true,
+        "config": [
+          0.05,
+          1e-05,
+          1.0
+        ],
+        "cal_nll": 1.06526,
+        "test_nll": 1.11499,
+        "test_acc": 0.54206,
+        "test_ece": 0.02013,
+        "temperature": 1.0143
+      },
+      {
+        "grid_index": 30,
+        "in_36_budget": true,
+        "config": [
+          0.05,
+          0.0001,
+          0.01
+        ],
+        "cal_nll": 1.06585,
+        "test_nll": 1.11635,
+        "test_acc": 0.54174,
+        "test_ece": 0.02023,
+        "temperature": 0.9981
+      },
+      {
+        "grid_index": 31,
+        "in_36_budget": true,
+        "config": [
+          0.05,
+          0.0001,
+          0.1
+        ],
+        "cal_nll": 1.06585,
+        "test_nll": 1.11636,
+        "test_acc": 0.54176,
+        "test_ece": 0.02021,
+        "temperature": 0.9981
+      },
+      {
+        "grid_index": 32,
+        "in_36_budget": true,
+        "config": [
+          0.05,
+          0.0001,
+          1.0
+        ],
+        "cal_nll": 1.06584,
+        "test_nll": 1.11636,
+        "test_acc": 0.54178,
+        "test_ece": 0.02024,
+        "temperature": 0.9981
+      },
+      {
+        "grid_index": 33,
+        "in_36_budget": true,
+        "config": [
+          0.05,
+          0.001,
+          0.01
+        ],
+        "cal_nll": 1.07352,
+        "test_nll": 1.13033,
+        "test_acc": 0.53819,
+        "test_ece": 0.02906,
+        "temperature": 0.8996
+      },
+      {
+        "grid_index": 34,
+        "in_36_budget": false,
+        "config": [
+          0.05,
+          0.001,
+          0.1
+        ],
+        "cal_nll": 1.07351,
+        "test_nll": 1.13033,
+        "test_acc": 0.53819,
+        "test_ece": 0.02906,
+        "temperature": 0.8996
+      },
+      {
+        "grid_index": 35,
+        "in_36_budget": true,
+        "config": [
+          0.05,
+          0.001,
+          1.0
+        ],
+        "cal_nll": 1.07352,
+        "test_nll": 1.13034,
+        "test_acc": 0.53819,
+        "test_ece": 0.02908,
+        "temperature": 0.8995
+      },
+      {
+        "grid_index": 36,
+        "in_36_budget": true,
+        "config": [
+          0.1,
+          0.0,
+          0.01
+        ],
+        "cal_nll": 1.06518,
+        "test_nll": 1.11748,
+        "test_acc": 0.54107,
+        "test_ece": 0.03104,
+        "temperature": 0.9872
+      },
+      {
+        "grid_index": 37,
+        "in_36_budget": false,
+        "config": [
+          0.1,
+          0.0,
+          0.1
+        ],
+        "cal_nll": 1.06518,
+        "test_nll": 1.11748,
+        "test_acc": 0.54107,
+        "test_ece": 0.03104,
+        "temperature": 0.9872
+      },
+      {
+        "grid_index": 38,
+        "in_36_budget": false,
+        "config": [
+          0.1,
+          0.0,
+          1.0
+        ],
+        "cal_nll": 1.06518,
+        "test_nll": 1.11748,
+        "test_acc": 0.54107,
+        "test_ece": 0.03104,
+        "temperature": 0.9872
+      },
+      {
+        "grid_index": 39,
+        "in_36_budget": false,
+        "config": [
+          0.1,
+          1e-05,
+          0.01
+        ],
+        "cal_nll": 1.06504,
+        "test_nll": 1.11744,
+        "test_acc": 0.5412,
+        "test_ece": 0.03128,
+        "temperature": 0.9845
+      },
+      {
+        "grid_index": 40,
+        "in_36_budget": false,
+        "config": [
+          0.1,
+          1e-05,
+          0.1
+        ],
+        "cal_nll": 1.06504,
+        "test_nll": 1.11744,
+        "test_acc": 0.5412,
+        "test_ece": 0.03128,
+        "temperature": 0.9845
+      },
+      {
+        "grid_index": 41,
+        "in_36_budget": true,
+        "config": [
+          0.1,
+          1e-05,
+          1.0
+        ],
+        "cal_nll": 1.06504,
+        "test_nll": 1.11744,
+        "test_acc": 0.54118,
+        "test_ece": 0.03125,
+        "temperature": 0.9844
+      },
+      {
+        "grid_index": 42,
+        "in_36_budget": true,
+        "config": [
+          0.1,
+          0.0001,
+          0.01
+        ],
+        "cal_nll": 1.0655,
+        "test_nll": 1.11859,
+        "test_acc": 0.54125,
+        "test_ece": 0.03171,
+        "temperature": 0.969
+      },
+      {
+        "grid_index": 43,
+        "in_36_budget": false,
+        "config": [
+          0.1,
+          0.0001,
+          0.1
+        ],
+        "cal_nll": 1.0655,
+        "test_nll": 1.11859,
+        "test_acc": 0.54125,
+        "test_ece": 0.03171,
+        "temperature": 0.969
+      },
+      {
+        "grid_index": 44,
+        "in_36_budget": false,
+        "config": [
+          0.1,
+          0.0001,
+          1.0
+        ],
+        "cal_nll": 1.0655,
+        "test_nll": 1.11859,
+        "test_acc": 0.54123,
+        "test_ece": 0.03172,
+        "temperature": 0.969
+      },
+      {
+        "grid_index": 45,
+        "in_36_budget": false,
+        "config": [
+          0.1,
+          0.001,
+          0.01
+        ],
+        "cal_nll": 1.07942,
+        "test_nll": 1.13124,
+        "test_acc": 0.5395,
+        "test_ece": 0.03151,
+        "temperature": 0.919
+      },
+      {
+        "grid_index": 46,
+        "in_36_budget": true,
+        "config": [
+          0.1,
+          0.001,
+          0.1
+        ],
+        "cal_nll": 1.07929,
+        "test_nll": 1.13121,
+        "test_acc": 0.53937,
+        "test_ece": 0.03162,
+        "temperature": 0.9187
+      },
+      {
+        "grid_index": 47,
+        "in_36_budget": true,
+        "config": [
+          0.1,
+          0.001,
+          1.0
+        ],
+        "cal_nll": 1.07802,
+        "test_nll": 1.13093,
+        "test_acc": 0.53929,
+        "test_ece": 0.03147,
+        "temperature": 0.9161
+      },
+      {
+        "grid_index": 48,
+        "in_36_budget": false,
+        "config": [
+          0.3,
+          0.0,
+          0.01
+        ],
+        "cal_nll": 1.06971,
+        "test_nll": 1.1269,
+        "test_acc": 0.53605,
+        "test_ece": 0.03367,
+        "temperature": 1.0223
+      },
+      {
+        "grid_index": 49,
+        "in_36_budget": false,
+        "config": [
+          0.3,
+          0.0,
+          0.1
+        ],
+        "cal_nll": 1.06971,
+        "test_nll": 1.1269,
+        "test_acc": 0.53605,
+        "test_ece": 0.03367,
+        "temperature": 1.0223
+      },
+      {
+        "grid_index": 50,
+        "in_36_budget": true,
+        "config": [
+          0.3,
+          0.0,
+          1.0
+        ],
+        "cal_nll": 1.06971,
+        "test_nll": 1.12689,
+        "test_acc": 0.53605,
+        "test_ece": 0.03367,
+        "temperature": 1.0223
+      },
+      {
+        "grid_index": 51,
+        "in_36_budget": true,
+        "config": [
+          0.3,
+          1e-05,
+          0.01
+        ],
+        "cal_nll": 1.06962,
+        "test_nll": 1.12687,
+        "test_acc": 0.53608,
+        "test_ece": 0.03379,
+        "temperature": 1.0193
+      },
+      {
+        "grid_index": 52,
+        "in_36_budget": true,
+        "config": [
+          0.3,
+          1e-05,
+          0.1
+        ],
+        "cal_nll": 1.06962,
+        "test_nll": 1.12687,
+        "test_acc": 0.53608,
+        "test_ece": 0.03379,
+        "temperature": 1.0193
+      },
+      {
+        "grid_index": 53,
+        "in_36_budget": false,
+        "config": [
+          0.3,
+          1e-05,
+          1.0
+        ],
+        "cal_nll": 1.06962,
+        "test_nll": 1.12687,
+        "test_acc": 0.5361,
+        "test_ece": 0.03379,
+        "temperature": 1.0193
+      },
+      {
+        "grid_index": 54,
+        "in_36_budget": true,
+        "config": [
+          0.3,
+          0.0001,
+          0.01
+        ],
+        "cal_nll": 1.07012,
+        "test_nll": 1.12793,
+        "test_acc": 0.53614,
+        "test_ece": 0.03378,
+        "temperature": 1.0029
+      },
+      {
+        "grid_index": 55,
+        "in_36_budget": true,
+        "config": [
+          0.3,
+          0.0001,
+          0.1
+        ],
+        "cal_nll": 1.07012,
+        "test_nll": 1.12793,
+        "test_acc": 0.53614,
+        "test_ece": 0.03378,
+        "temperature": 1.0029
+      },
+      {
+        "grid_index": 56,
+        "in_36_budget": true,
+        "config": [
+          0.3,
+          0.0001,
+          1.0
+        ],
+        "cal_nll": 1.07012,
+        "test_nll": 1.12792,
+        "test_acc": 0.53614,
+        "test_ece": 0.03378,
+        "temperature": 1.003
+      },
+      {
+        "grid_index": 57,
+        "in_36_budget": true,
+        "config": [
+          0.3,
+          0.001,
+          0.01
+        ],
+        "cal_nll": 1.07929,
+        "test_nll": 1.14174,
+        "test_acc": 0.53264,
+        "test_ece": 0.04168,
+        "temperature": 0.9367
+      },
+      {
+        "grid_index": 58,
+        "in_36_budget": true,
+        "config": [
+          0.3,
+          0.001,
+          0.1
+        ],
+        "cal_nll": 1.07929,
+        "test_nll": 1.14174,
+        "test_acc": 0.53264,
+        "test_ece": 0.04167,
+        "temperature": 0.9367
+      },
+      {
+        "grid_index": 59,
+        "in_36_budget": true,
+        "config": [
+          0.3,
+          0.001,
+          1.0
+        ],
+        "cal_nll": 1.07922,
+        "test_nll": 1.14166,
+        "test_acc": 0.53264,
+        "test_ece": 0.04165,
+        "temperature": 0.9369
+      }
+    ]
+  },
+  "resamples": [
+    {
+      "split_id": 0,
+      "seed": 100,
+      "arms": {
+        "quantum": {
+          "winner_idx": 30,
+          "winner_config": [
+            6,
+            0.5,
+            0.01,
+            0.01
+          ],
+          "winner_file": "C2_quantum_30.npz",
+          "calibration_nll": 1.07322,
+          "temperature": 1.0112,
+          "test_nll": 1.11314,
+          "test_accuracy": 0.54151,
+          "test_ece": 0.0218
+        },
+        "classical": {
+          "winner_idx": 7,
+          "winner_config": [
+            0.01,
+            0.0,
+            0.1
+          ],
+          "winner_file": "C2_classical_07.npz",
+          "calibration_nll": 1.07377,
+          "temperature": 1.0332,
+          "test_nll": 1.11354,
+          "test_accuracy": 0.543,
+          "test_ece": 0.01841
+        },
+        "learnable": {
+          "winner_idx": 8,
+          "winner_config": [
+            0.01,
+            1e-05,
+            0.1
+          ],
+          "winner_file": "C2_learnable_08.npz",
+          "calibration_nll": 1.07014,
+          "temperature": 1.0076,
+          "test_nll": 1.11132,
+          "test_accuracy": 0.54263,
+          "test_ece": 0.01475
+        }
+      },
+      "delta_vqc_vs_poe": -0.0004,
+      "delta_vqc_vs_gated": 0.00182
+    },
+    {
+      "split_id": 1,
+      "seed": 101,
+      "arms": {
+        "quantum": {
+          "winner_idx": 31,
+          "winner_config": [
+            6,
+            0.5,
+            1.0,
+            0.01
+          ],
+          "winner_file": "C2_quantum_31.npz",
+          "calibration_nll": 1.05323,
+          "temperature": 0.9808,
+          "test_nll": 1.11419,
+          "test_accuracy": 0.54114,
+          "test_ece": 0.02961
+        },
+        "classical": {
+          "winner_idx": 0,
+          "winner_config": [
+            0.003,
+            0.0,
+            0.01
+          ],
+          "winner_file": "C2_classical_00.npz",
+          "calibration_nll": 1.05688,
+          "temperature": 1.0058,
+          "test_nll": 1.11358,
+          "test_accuracy": 0.54226,
+          "test_ece": 0.02442
+        },
+        "learnable": {
+          "winner_idx": 23,
+          "winner_config": [
+            0.1,
+            1e-05,
+            1.0
+          ],
+          "winner_file": "C2_learnable_23.npz",
+          "calibration_nll": 1.05155,
+          "temperature": 0.9642,
+          "test_nll": 1.11331,
+          "test_accuracy": 0.54056,
+          "test_ece": 0.02447
+        }
+      },
+      "delta_vqc_vs_poe": 0.00061,
+      "delta_vqc_vs_gated": 0.00088
+    },
+    {
+      "split_id": 2,
+      "seed": 102,
+      "arms": {
+        "quantum": {
+          "winner_idx": 12,
+          "winner_config": [
+            3,
+            0.5,
+            1.0,
+            0.01
+          ],
+          "winner_file": "C2_quantum_12.npz",
+          "calibration_nll": 1.02196,
+          "temperature": 0.9344,
+          "test_nll": 1.11375,
+          "test_accuracy": 0.54006,
+          "test_ece": 0.0355
+        },
+        "classical": {
+          "winner_idx": 6,
+          "winner_config": [
+            0.01,
+            0.0,
+            0.01
+          ],
+          "winner_file": "C2_classical_06.npz",
+          "calibration_nll": 1.02373,
+          "temperature": 0.9732,
+          "test_nll": 1.11497,
+          "test_accuracy": 0.54304,
+          "test_ece": 0.03309
+        },
+        "learnable": {
+          "winner_idx": 8,
+          "winner_config": [
+            0.01,
+            1e-05,
+            0.1
+          ],
+          "winner_file": "C2_learnable_08.npz",
+          "calibration_nll": 1.01665,
+          "temperature": 0.946,
+          "test_nll": 1.1125,
+          "test_accuracy": 0.54263,
+          "test_ece": 0.02971
+        }
+      },
+      "delta_vqc_vs_poe": -0.00122,
+      "delta_vqc_vs_gated": 0.00125
+    },
+    {
+      "split_id": 3,
+      "seed": 103,
+      "arms": {
+        "quantum": {
+          "winner_idx": 24,
+          "winner_config": [
+            4,
+            1.0,
+            0.1,
+            0.01
+          ],
+          "winner_file": "C2_quantum_24.npz",
+          "calibration_nll": 1.05917,
+          "temperature": 0.9402,
+          "test_nll": 1.11847,
+          "test_accuracy": 0.54003,
+          "test_ece": 0.02163
+        },
+        "classical": {
+          "winner_idx": 1,
+          "winner_config": [
+            0.003,
+            0.0,
+            0.1
+          ],
+          "winner_file": "C2_classical_01.npz",
+          "calibration_nll": 1.06337,
+          "temperature": 1.0204,
+          "test_nll": 1.11332,
+          "test_accuracy": 0.54226,
+          "test_ece": 0.02171
+        },
+        "learnable": {
+          "winner_idx": 14,
+          "winner_config": [
+            0.05,
+            1e-05,
+            0.01
+          ],
+          "winner_file": "C2_learnable_14.npz",
+          "calibration_nll": 1.05731,
+          "temperature": 0.9886,
+          "test_nll": 1.11116,
+          "test_accuracy": 0.54297,
+          "test_ece": 0.01876
+        }
+      },
+      "delta_vqc_vs_poe": 0.00515,
+      "delta_vqc_vs_gated": 0.00731
+    },
+    {
+      "split_id": 4,
+      "seed": 104,
+      "arms": {
+        "quantum": {
+          "winner_idx": 30,
+          "winner_config": [
+            6,
+            0.5,
+            0.01,
+            0.01
+          ],
+          "winner_file": "C2_quantum_30.npz",
+          "calibration_nll": 1.05653,
+          "temperature": 0.993,
+          "test_nll": 1.11334,
+          "test_accuracy": 0.54151,
+          "test_ece": 0.02385
+        },
+        "classical": {
+          "winner_idx": 2,
+          "winner_config": [
+            0.003,
+            1e-05,
+            1.0
+          ],
+          "winner_file": "C2_classical_02.npz",
+          "calibration_nll": 1.06422,
+          "temperature": 1.0253,
+          "test_nll": 1.11348,
+          "test_accuracy": 0.54245,
+          "test_ece": 0.02096
+        },
+        "learnable": {
+          "winner_idx": 14,
+          "winner_config": [
+            0.05,
+            1e-05,
+            0.01
+          ],
+          "winner_file": "C2_learnable_14.npz",
+          "calibration_nll": 1.05639,
+          "temperature": 0.9907,
+          "test_nll": 1.11113,
+          "test_accuracy": 0.54297,
+          "test_ece": 0.0183
+        }
+      },
+      "delta_vqc_vs_poe": -0.00014,
+      "delta_vqc_vs_gated": 0.00221
+    },
+    {
+      "split_id": 5,
+      "seed": 105,
+      "arms": {
+        "quantum": {
+          "winner_idx": 31,
+          "winner_config": [
+            6,
+            0.5,
+            1.0,
+            0.01
+          ],
+          "winner_file": "C2_quantum_31.npz",
+          "calibration_nll": 1.06153,
+          "temperature": 0.9946,
+          "test_nll": 1.11388,
+          "test_accuracy": 0.54114,
+          "test_ece": 0.02594
+        },
+        "classical": {
+          "winner_idx": 7,
+          "winner_config": [
+            0.01,
+            0.0,
+            0.1
+          ],
+          "winner_file": "C2_classical_07.npz",
+          "calibration_nll": 1.06557,
+          "temperature": 1.0112,
+          "test_nll": 1.11377,
+          "test_accuracy": 0.543,
+          "test_ece": 0.02196
+        },
+        "learnable": {
+          "winner_idx": 8,
+          "winner_config": [
+            0.01,
+            1e-05,
+            0.1
+          ],
+          "winner_file": "C2_learnable_08.npz",
+          "calibration_nll": 1.05713,
+          "temperature": 0.9798,
+          "test_nll": 1.1115,
+          "test_accuracy": 0.54263,
+          "test_ece": 0.02121
+        }
+      },
+      "delta_vqc_vs_poe": 0.00011,
+      "delta_vqc_vs_gated": 0.00238
+    },
+    {
+      "split_id": 6,
+      "seed": 106,
+      "arms": {
+        "quantum": {
+          "winner_idx": 30,
+          "winner_config": [
+            6,
+            0.5,
+            0.01,
+            0.01
+          ],
+          "winner_file": "C2_quantum_30.npz",
+          "calibration_nll": 1.01309,
+          "temperature": 0.9217,
+          "test_nll": 1.11659,
+          "test_accuracy": 0.54151,
+          "test_ece": 0.04316
+        },
+        "classical": {
+          "winner_idx": 0,
+          "winner_config": [
+            0.003,
+            0.0,
+            0.01
+          ],
+          "winner_file": "C2_classical_00.npz",
+          "calibration_nll": 1.01533,
+          "temperature": 0.9453,
+          "test_nll": 1.11638,
+          "test_accuracy": 0.54226,
+          "test_ece": 0.04179
+        },
+        "learnable": {
+          "winner_idx": 14,
+          "winner_config": [
+            0.05,
+            1e-05,
+            0.01
+          ],
+          "winner_file": "C2_learnable_14.npz",
+          "calibration_nll": 1.00658,
+          "temperature": 0.9148,
+          "test_nll": 1.11459,
+          "test_accuracy": 0.54297,
+          "test_ece": 0.03857
+        }
+      },
+      "delta_vqc_vs_poe": 0.00021,
+      "delta_vqc_vs_gated": 0.002
+    },
+    {
+      "split_id": 7,
+      "seed": 107,
+      "arms": {
+        "quantum": {
+          "winner_idx": 24,
+          "winner_config": [
+            4,
+            1.0,
+            0.1,
+            0.01
+          ],
+          "winner_file": "C2_quantum_24.npz",
+          "calibration_nll": 1.05808,
+          "temperature": 0.9309,
+          "test_nll": 1.11867,
+          "test_accuracy": 0.54003,
+          "test_ece": 0.02344
+        },
+        "classical": {
+          "winner_idx": 0,
+          "winner_config": [
+            0.003,
+            0.0,
+            0.01
+          ],
+          "winner_file": "C2_classical_00.npz",
+          "calibration_nll": 1.06273,
+          "temperature": 1.0088,
+          "test_nll": 1.11351,
+          "test_accuracy": 0.54226,
+          "test_ece": 0.02323
+        },
+        "learnable": {
+          "winner_idx": 14,
+          "winner_config": [
+            0.05,
+            1e-05,
+            0.01
+          ],
+          "winner_file": "C2_learnable_14.npz",
+          "calibration_nll": 1.05058,
+          "temperature": 0.9715,
+          "test_nll": 1.11156,
+          "test_accuracy": 0.54297,
+          "test_ece": 0.02301
+        }
+      },
+      "delta_vqc_vs_poe": 0.00516,
+      "delta_vqc_vs_gated": 0.00711
+    },
+    {
+      "split_id": 8,
+      "seed": 108,
+      "arms": {
+        "quantum": {
+          "winner_idx": 30,
+          "winner_config": [
+            6,
+            0.5,
+            0.01,
+            0.01
+          ],
+          "winner_file": "C2_quantum_30.npz",
+          "calibration_nll": 1.04395,
+          "temperature": 0.9667,
+          "test_nll": 1.11405,
+          "test_accuracy": 0.54151,
+          "test_ece": 0.03174
+        },
+        "classical": {
+          "winner_idx": 0,
+          "winner_config": [
+            0.003,
+            0.0,
+            0.01
+          ],
+          "winner_file": "C2_classical_00.npz",
+          "calibration_nll": 1.04358,
+          "temperature": 0.9901,
+          "test_nll": 1.11403,
+          "test_accuracy": 0.54226,
+          "test_ece": 0.02945
+        },
+        "learnable": {
+          "winner_idx": 14,
+          "winner_config": [
+            0.05,
+            1e-05,
+            0.01
+          ],
+          "winner_file": "C2_learnable_14.npz",
+          "calibration_nll": 1.03735,
+          "temperature": 0.9606,
+          "test_nll": 1.11193,
+          "test_accuracy": 0.54297,
+          "test_ece": 0.02549
+        }
+      },
+      "delta_vqc_vs_poe": 2e-05,
+      "delta_vqc_vs_gated": 0.00212
+    },
+    {
+      "split_id": 9,
+      "seed": 109,
+      "arms": {
+        "quantum": {
+          "winner_idx": 24,
+          "winner_config": [
+            4,
+            1.0,
+            0.1,
+            0.01
+          ],
+          "winner_file": "C2_quantum_24.npz",
+          "calibration_nll": 1.01231,
+          "temperature": 0.8786,
+          "test_nll": 1.12119,
+          "test_accuracy": 0.54003,
+          "test_ece": 0.03972
+        },
+        "classical": {
+          "winner_idx": 2,
+          "winner_config": [
+            0.003,
+            1e-05,
+            1.0
+          ],
+          "winner_file": "C2_classical_02.npz",
+          "calibration_nll": 1.02121,
+          "temperature": 0.9562,
+          "test_nll": 1.11573,
+          "test_accuracy": 0.54245,
+          "test_ece": 0.03811
+        },
+        "learnable": {
+          "winner_idx": 23,
+          "winner_config": [
+            0.1,
+            1e-05,
+            1.0
+          ],
+          "winner_file": "C2_learnable_23.npz",
+          "calibration_nll": 1.00835,
+          "temperature": 0.9157,
+          "test_nll": 1.11535,
+          "test_accuracy": 0.54056,
+          "test_ece": 0.03901
+        }
+      },
+      "delta_vqc_vs_poe": 0.00546,
+      "delta_vqc_vs_gated": 0.00584
+    },
+    {
+      "split_id": 10,
+      "seed": 110,
+      "arms": {
+        "quantum": {
+          "winner_idx": 20,
+          "winner_config": [
+            4,
+            0.5,
+            0.01,
+            0.01
+          ],
+          "winner_file": "C2_quantum_20.npz",
+          "calibration_nll": 1.08378,
+          "temperature": 0.9779,
+          "test_nll": 1.1127,
+          "test_accuracy": 0.54167,
+          "test_ece": 0.01311
+        },
+        "classical": {
+          "winner_idx": 2,
+          "winner_config": [
+            0.003,
+            1e-05,
+            1.0
+          ],
+          "winner_file": "C2_classical_02.npz",
+          "calibration_nll": 1.0854,
+          "temperature": 1.0517,
+          "test_nll": 1.11349,
+          "test_accuracy": 0.54245,
+          "test_ece": 0.01864
+        },
+        "learnable": {
+          "winner_idx": 18,
+          "winner_config": [
+            0.05,
+            0.0001,
+            0.1
+          ],
+          "winner_file": "C2_learnable_18.npz",
+          "calibration_nll": 1.08221,
+          "temperature": 1.0093,
+          "test_nll": 1.11312,
+          "test_accuracy": 0.54203,
+          "test_ece": 0.01229
+        }
+      },
+      "delta_vqc_vs_poe": -0.00079,
+      "delta_vqc_vs_gated": -0.00042
+    },
+    {
+      "split_id": 11,
+      "seed": 111,
+      "arms": {
+        "quantum": {
+          "winner_idx": 31,
+          "winner_config": [
+            6,
+            0.5,
+            1.0,
+            0.01
+          ],
+          "winner_file": "C2_quantum_31.npz",
+          "calibration_nll": 1.06132,
+          "temperature": 1.0037,
+          "test_nll": 1.11375,
+          "test_accuracy": 0.54114,
+          "test_ece": 0.02373
+        },
+        "classical": {
+          "winner_idx": 0,
+          "winner_config": [
+            0.003,
+            0.0,
+            0.01
+          ],
+          "winner_file": "C2_classical_00.npz",
+          "calibration_nll": 1.06648,
+          "temperature": 1.0292,
+          "test_nll": 1.11323,
+          "test_accuracy": 0.54226,
+          "test_ece": 0.02122
+        },
+        "learnable": {
+          "winner_idx": 14,
+          "winner_config": [
+            0.05,
+            1e-05,
+            0.01
+          ],
+          "winner_file": "C2_learnable_14.npz",
+          "calibration_nll": 1.06072,
+          "temperature": 0.9956,
+          "test_nll": 1.11106,
+          "test_accuracy": 0.54297,
+          "test_ece": 0.01713
+        }
+      },
+      "delta_vqc_vs_poe": 0.00052,
+      "delta_vqc_vs_gated": 0.00269
+    },
+    {
+      "split_id": 12,
+      "seed": 112,
+      "arms": {
+        "quantum": {
+          "winner_idx": 20,
+          "winner_config": [
+            4,
+            0.5,
+            0.01,
+            0.01
+          ],
+          "winner_file": "C2_quantum_20.npz",
+          "calibration_nll": 1.07007,
+          "temperature": 0.9676,
+          "test_nll": 1.11264,
+          "test_accuracy": 0.54167,
+          "test_ece": 0.01433
+        },
+        "classical": {
+          "winner_idx": 0,
+          "winner_config": [
+            0.003,
+            0.0,
+            0.01
+          ],
+          "winner_file": "C2_classical_00.npz",
+          "calibration_nll": 1.07131,
+          "temperature": 1.0406,
+          "test_nll": 1.11319,
+          "test_accuracy": 0.54226,
+          "test_ece": 0.02062
+        },
+        "learnable": {
+          "winner_idx": 14,
+          "winner_config": [
+            0.05,
+            1e-05,
+            0.01
+          ],
+          "winner_file": "C2_learnable_14.npz",
+          "calibration_nll": 1.06632,
+          "temperature": 1.0081,
+          "test_nll": 1.11097,
+          "test_accuracy": 0.54297,
+          "test_ece": 0.01383
+        }
+      },
+      "delta_vqc_vs_poe": -0.00055,
+      "delta_vqc_vs_gated": 0.00167
+    },
+    {
+      "split_id": 13,
+      "seed": 113,
+      "arms": {
+        "quantum": {
+          "winner_idx": 26,
+          "winner_config": [
+            4,
+            1.0,
+            1.0,
+            0.01
+          ],
+          "winner_file": "C2_quantum_26.npz",
+          "calibration_nll": 1.10022,
+          "temperature": 1.046,
+          "test_nll": 1.11449,
+          "test_accuracy": 0.54197,
+          "test_ece": 0.01602
+        },
+        "classical": {
+          "winner_idx": 1,
+          "winner_config": [
+            0.003,
+            0.0,
+            0.1
+          ],
+          "winner_file": "C2_classical_01.npz",
+          "calibration_nll": 1.1082,
+          "temperature": 1.0741,
+          "test_nll": 1.11351,
+          "test_accuracy": 0.54226,
+          "test_ece": 0.01602
+        },
+        "learnable": {
+          "winner_idx": 14,
+          "winner_config": [
+            0.05,
+            1e-05,
+            0.01
+          ],
+          "winner_file": "C2_learnable_14.npz",
+          "calibration_nll": 1.09624,
+          "temperature": 1.0342,
+          "test_nll": 1.11109,
+          "test_accuracy": 0.54297,
+          "test_ece": 0.01014
+        }
+      },
+      "delta_vqc_vs_poe": 0.00098,
+      "delta_vqc_vs_gated": 0.0034
+    },
+    {
+      "split_id": 14,
+      "seed": 114,
+      "arms": {
+        "quantum": {
+          "winner_idx": 31,
+          "winner_config": [
+            6,
+            0.5,
+            1.0,
+            0.01
+          ],
+          "winner_file": "C2_quantum_31.npz",
+          "calibration_nll": 1.04694,
+          "temperature": 0.9752,
+          "test_nll": 1.11436,
+          "test_accuracy": 0.54114,
+          "test_ece": 0.03069
+        },
+        "classical": {
+          "winner_idx": 7,
+          "winner_config": [
+            0.01,
+            0.0,
+            0.1
+          ],
+          "winner_file": "C2_classical_07.npz",
+          "calibration_nll": 1.05017,
+          "temperature": 0.9974,
+          "test_nll": 1.11408,
+          "test_accuracy": 0.543,
+          "test_ece": 0.02659
+        },
+        "learnable": {
+          "winner_idx": 8,
+          "winner_config": [
+            0.01,
+            1e-05,
+            0.1
+          ],
+          "winner_file": "C2_learnable_08.npz",
+          "calibration_nll": 1.04015,
+          "temperature": 0.9601,
+          "test_nll": 1.11197,
+          "test_accuracy": 0.54263,
+          "test_ece": 0.02554
+        }
+      },
+      "delta_vqc_vs_poe": 0.00028,
+      "delta_vqc_vs_gated": 0.00239
+    },
+    {
+      "split_id": 15,
+      "seed": 115,
+      "arms": {
+        "quantum": {
+          "winner_idx": 20,
+          "winner_config": [
+            4,
+            0.5,
+            0.01,
+            0.01
+          ],
+          "winner_file": "C2_quantum_20.npz",
+          "calibration_nll": 1.05171,
+          "temperature": 0.9322,
+          "test_nll": 1.11304,
+          "test_accuracy": 0.54167,
+          "test_ece": 0.02385
+        },
+        "classical": {
+          "winner_idx": 8,
+          "winner_config": [
+            0.01,
+            1e-05,
+            0.1
+          ],
+          "winner_file": "C2_classical_08.npz",
+          "calibration_nll": 1.0564,
+          "temperature": 1.0062,
+          "test_nll": 1.11393,
+          "test_accuracy": 0.54321,
+          "test_ece": 0.02297
+        },
+        "learnable": {
+          "winner_idx": 8,
+          "winner_config": [
+            0.01,
+            1e-05,
+            0.1
+          ],
+          "winner_file": "C2_learnable_08.npz",
+          "calibration_nll": 1.04716,
+          "temperature": 0.9734,
+          "test_nll": 1.11162,
+          "test_accuracy": 0.54263,
+          "test_ece": 0.02258
+        }
+      },
+      "delta_vqc_vs_poe": -0.00089,
+      "delta_vqc_vs_gated": 0.00142
+    },
+    {
+      "split_id": 16,
+      "seed": 116,
+      "arms": {
+        "quantum": {
+          "winner_idx": 30,
+          "winner_config": [
+            6,
+            0.5,
+            0.01,
+            0.01
+          ],
+          "winner_file": "C2_quantum_30.npz",
+          "calibration_nll": 1.07933,
+          "temperature": 1.0111,
+          "test_nll": 1.11314,
+          "test_accuracy": 0.54151,
+          "test_ece": 0.02185
+        },
+        "classical": {
+          "winner_idx": 1,
+          "winner_config": [
+            0.003,
+            0.0,
+            0.1
+          ],
+          "winner_file": "C2_classical_01.npz",
+          "calibration_nll": 1.08182,
+          "temperature": 1.0384,
+          "test_nll": 1.11319,
+          "test_accuracy": 0.54226,
+          "test_ece": 0.02074
+        },
+        "learnable": {
+          "winner_idx": 2,
+          "winner_config": [
+            0.003,
+            1e-05,
+            1.0
+          ],
+          "winner_file": "C2_learnable_02.npz",
+          "calibration_nll": 1.07755,
+          "temperature": 1.0325,
+          "test_nll": 1.10996,
+          "test_accuracy": 0.54226,
+          "test_ece": 0.01451
+        }
+      },
+      "delta_vqc_vs_poe": -5e-05,
+      "delta_vqc_vs_gated": 0.00318
+    },
+    {
+      "split_id": 17,
+      "seed": 117,
+      "arms": {
+        "quantum": {
+          "winner_idx": 12,
+          "winner_config": [
+            3,
+            0.5,
+            1.0,
+            0.01
+          ],
+          "winner_file": "C2_quantum_12.npz",
+          "calibration_nll": 1.06759,
+          "temperature": 0.9825,
+          "test_nll": 1.1125,
+          "test_accuracy": 0.54006,
+          "test_ece": 0.02402
+        },
+        "classical": {
+          "winner_idx": 22,
+          "winner_config": [
+            0.1,
+            0.0,
+            0.01
+          ],
+          "winner_file": "C2_classical_22.npz",
+          "calibration_nll": 1.0714,
+          "temperature": 1.0172,
+          "test_nll": 1.11551,
+          "test_accuracy": 0.54228,
+          "test_ece": 0.02377
+        },
+        "learnable": {
+          "winner_idx": 2,
+          "winner_config": [
+            0.003,
+            1e-05,
+            1.0
+          ],
+          "winner_file": "C2_learnable_02.npz",
+          "calibration_nll": 1.06429,
+          "temperature": 1.0155,
+          "test_nll": 1.11002,
+          "test_accuracy": 0.54226,
+          "test_ece": 0.01809
+        }
+      },
+      "delta_vqc_vs_poe": -0.00301,
+      "delta_vqc_vs_gated": 0.00248
+    },
+    {
+      "split_id": 18,
+      "seed": 118,
+      "arms": {
+        "quantum": {
+          "winner_idx": 12,
+          "winner_config": [
+            3,
+            0.5,
+            1.0,
+            0.01
+          ],
+          "winner_file": "C2_quantum_12.npz",
+          "calibration_nll": 1.07232,
+          "temperature": 0.9865,
+          "test_nll": 1.11248,
+          "test_accuracy": 0.54006,
+          "test_ece": 0.0226
+        },
+        "classical": {
+          "winner_idx": 6,
+          "winner_config": [
+            0.01,
+            0.0,
+            0.01
+          ],
+          "winner_file": "C2_classical_06.npz",
+          "calibration_nll": 1.07162,
+          "temperature": 1.0255,
+          "test_nll": 1.11359,
+          "test_accuracy": 0.54304,
+          "test_ece": 0.01881
+        },
+        "learnable": {
+          "winner_idx": 23,
+          "winner_config": [
+            0.1,
+            1e-05,
+            1.0
+          ],
+          "winner_file": "C2_learnable_23.npz",
+          "calibration_nll": 1.06857,
+          "temperature": 0.991,
+          "test_nll": 1.11299,
+          "test_accuracy": 0.54056,
+          "test_ece": 0.01679
+        }
+      },
+      "delta_vqc_vs_poe": -0.00111,
+      "delta_vqc_vs_gated": -0.00051
+    },
+    {
+      "split_id": 19,
+      "seed": 119,
+      "arms": {
+        "quantum": {
+          "winner_idx": 12,
+          "winner_config": [
+            3,
+            0.5,
+            1.0,
+            0.01
+          ],
+          "winner_file": "C2_quantum_12.npz",
+          "calibration_nll": 1.07741,
+          "temperature": 1.005,
+          "test_nll": 1.11251,
+          "test_accuracy": 0.54006,
+          "test_ece": 0.01808
+        },
+        "classical": {
+          "winner_idx": 2,
+          "winner_config": [
+            0.003,
+            1e-05,
+            1.0
+          ],
+          "winner_file": "C2_classical_02.npz",
+          "calibration_nll": 1.08034,
+          "temperature": 1.049,
+          "test_nll": 1.11347,
+          "test_accuracy": 0.54245,
+          "test_ece": 0.01909
+        },
+        "learnable": {
+          "winner_idx": 14,
+          "winner_config": [
+            0.05,
+            1e-05,
+            0.01
+          ],
+          "winner_file": "C2_learnable_14.npz",
+          "calibration_nll": 1.07414,
+          "temperature": 1.0198,
+          "test_nll": 1.11097,
+          "test_accuracy": 0.54297,
+          "test_ece": 0.01228
+        }
+      },
+      "delta_vqc_vs_poe": -0.00096,
+      "delta_vqc_vs_gated": 0.00154
+    }
+  ]
+}

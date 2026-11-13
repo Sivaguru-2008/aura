@@ -54,7 +54,7 @@ ax1.set_xlim(-0.012, 0.026)
 ax1.set_xlabel("Paired Delta-NLL (nats), Quantum - Classical (positive = Quantum worse) ->")
 ax1.set_title("A  Analysis C1 & C1b: Confirmatory test under default matched protocol (N = 56,534 patients)", loc="left", fontweight="bold", fontsize=8.5)
 ax1.grid(axis="x", alpha=0.25)
-ax1.legend(loc="upper left", fontsize=7.5, frameon=False)
+ax1.legend(loc="upper left", fontsize=7.5, frameon=True, facecolor="white", framealpha=0.9, edgecolor="#E0E0E0")
 
 # Panel B: C2 Paired differences under 36-config symmetric tuning
 ax2 = fig.add_subplot(gs[1, 0])
@@ -85,11 +85,11 @@ for y, d, ci95, ci90 in zip(y_pos_b, deltas_b, cis95_b, cis90_b):
 ax2.set_yticks(y_pos_b)
 ax2.set_yticklabels(labels_b, fontsize=8)
 ax2.set_xlim(-0.012, 0.006)
-ax2.set_ylim(-0.6, 1.6)
+ax2.set_ylim(-0.8, 1.7)
 ax2.set_xlabel("Paired Delta-NLL (nats) <- Favors Quantum | Favors Classical ->")
 ax2.set_title("B  Analysis C2: Symmetric 36-config search", loc="left", fontweight="bold", fontsize=8.5)
 ax2.grid(axis="x", alpha=0.25)
-ax2.legend(loc="upper right", fontsize=7, frameon=False)
+ax2.legend(loc="upper left", fontsize=7, frameon=True, facecolor="white", framealpha=0.9, edgecolor="#E0E0E0")
 
 # Panel C: TOST sensitivity across margins
 ax3 = fig.add_subplot(gs[1, 1])
@@ -113,7 +113,7 @@ ax3.set_title("C  Equivalence margin sensitivity", loc="left", fontweight="bold"
 ax3.set_yscale("log")
 ax3.set_ylim(1e-10, 1.5)
 ax3.grid(True, alpha=0.25, which="both")
-ax3.legend(loc="lower left", fontsize=7, frameon=False)
+ax3.legend(loc="lower left", fontsize=7, frameon=True, facecolor="white", framealpha=0.9, edgecolor="#E0E0E0")
 
 fig.savefig(FIGDIR / "fig_v6_confirmatory.png", bbox_inches="tight")
 fig.savefig(FIGDIR / "fig_v6_confirmatory.pdf", bbox_inches="tight")

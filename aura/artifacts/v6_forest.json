@@ -91,7 +91,7 @@
       "n": 4800
     },
     {
-      "group": "Untouched patients, pre-specified protocol (n=56,534)",
+      "group": "Held-out patients, scored without selection (n=56,534)",
       "label": "matched optimiser, vs product-of-experts",
       "delta": 0.02049446662888257,
       "ci95": [
@@ -101,7 +101,7 @@
       "n": 56534
     },
     {
-      "group": "Untouched patients, pre-specified protocol (n=56,534)",
+      "group": "Held-out patients, scored without selection (n=56,534)",
       "label": "matched optimiser, vs gated head",
       "delta": 0.019643873492248557,
       "ci95": [
@@ -111,7 +111,7 @@
       "n": 56534
     },
     {
-      "group": "Untouched patients, pre-specified protocol (n=56,534)",
+      "group": "Held-out patients, scored without selection (n=56,534)",
       "label": "36-config search per arm, vs product-of-experts",
       "delta": -0.0026,
       "ci95": [

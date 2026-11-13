@@ -1,0 +1,317 @@
+{
+  "per_class_table": [
+    {
+      "class_id": 0,
+      "diagnosis": "Normal",
+      "n_patients": 17692,
+      "prevalence": 0.3129,
+      "observed_rate": 0.3129,
+      "mean_pred_prob": {
+        "vqc": 0.3256,
+        "poe": 0.3202,
+        "gated": 0.3264
+      },
+      "mean_nll": {
+        "vqc": 0.73786,
+        "poe": 0.75768,
+        "gated": 0.7329
+      },
+      "classwise_ece": {
+        "vqc": 0.0065,
+        "poe": 0.01,
+        "gated": 0.0077
+      },
+      "vqc_vs_poe": {
+        "delta_nll": -0.01981,
+        "ci95": [
+          -0.02167,
+          -0.01795
+        ]
+      },
+      "vqc_vs_gated": {
+        "delta_nll": 0.00497,
+        "ci95": [
+          0.00379,
+          0.00612
+        ]
+      }
+    },
+    {
+      "class_id": 5,
+      "diagnosis": "Pneumothorax",
+      "n_patients": 3108,
+      "prevalence": 0.055,
+      "observed_rate": 0.055,
+      "mean_pred_prob": {
+        "vqc": 0.0484,
+        "poe": 0.0507,
+        "gated": 0.0472
+      },
+      "mean_nll": {
+        "vqc": 2.57049,
+        "poe": 2.51561,
+        "gated": 2.58166
+      },
+      "classwise_ece": {
+        "vqc": 0.007,
+        "poe": 0.005,
+        "gated": 0.0084
+      },
+      "vqc_vs_poe": {
+        "delta_nll": 0.05488,
+        "ci95": [
+          0.05096,
+          0.05863
+        ]
+      },
+      "vqc_vs_gated": {
+        "delta_nll": -0.01118,
+        "ci95": [
+          -0.01683,
+          -0.00572
+        ]
+      }
+    },
+    {
+      "class_id": 4,
+      "diagnosis": "Malignancy",
+      "n_patients": 2192,
+      "prevalence": 0.0388,
+      "observed_rate": 0.0388,
+      "mean_pred_prob": {
+        "vqc": 0.0399,
+        "poe": 0.0487,
+        "gated": 0.0462
+      },
+      "mean_nll": {
+        "vqc": 2.899,
+        "poe": 2.7219,
+        "gated": 2.76863
+      },
+      "classwise_ece": {
+        "vqc": 0.0025,
+        "poe": 0.0102,
+        "gated": 0.0087
+      },
+      "vqc_vs_poe": {
+        "delta_nll": 0.1771,
+        "ci95": [
+          0.16807,
+          0.18612
+        ]
+      },
+      "vqc_vs_gated": {
+        "delta_nll": 0.13037,
+        "ci95": [
+          0.12129,
+          0.13937
+        ]
+      }
+    },
+    {
+      "class_id": 1,
+      "diagnosis": "Pneumonia",
+      "n_patients": 17052,
+      "prevalence": 0.3016,
+      "observed_rate": 0.3016,
+      "mean_pred_prob": {
+        "vqc": 0.3194,
+        "poe": 0.2912,
+        "gated": 0.3155
+      },
+      "mean_nll": {
+        "vqc": 1.02629,
+        "poe": 1.11918,
+        "gated": 1.03635
+      },
+      "classwise_ece": {
+        "vqc": 0.0049,
+        "poe": 0.0195,
+        "gated": 0.0089
+      },
+      "vqc_vs_poe": {
+        "delta_nll": -0.09289,
+        "ci95": [
+          -0.09429,
+          -0.09152
+        ]
+      },
+      "vqc_vs_gated": {
+        "delta_nll": -0.01007,
+        "ci95": [
+          -0.01122,
+          -0.00893
+        ]
+      }
+    },
+    {
+      "class_id": 2,
+      "diagnosis": "Heart Failure",
+      "n_patients": 16490,
+      "prevalence": 0.2917,
+      "observed_rate": 0.2917,
+      "mean_pred_prob": {
+        "vqc": 0.2668,
+        "poe": 0.2888,
+        "gated": 0.2644
+      },
+      "mean_nll": {
+        "vqc": 1.09257,
+        "poe": 1.01724,
+        "gated": 1.10601
+      },
+      "classwise_ece": {
+        "vqc": 0.0174,
+        "poe": 0.0195,
+        "gated": 0.0268
+      },
+      "vqc_vs_poe": {
+        "delta_nll": 0.07533,
+        "ci95": [
+          0.07417,
+          0.0765
+        ]
+      },
+      "vqc_vs_gated": {
+        "delta_nll": -0.01343,
+        "ci95": [
+          -0.01486,
+          -0.01198
+        ]
+      }
+    }
+  ],
+  "aggregate_metrics": {
+    "prevalence_weighted": {
+      "vqc_vs_poe": {
+        "mean": -0.00235,
+        "ci95": [
+          -0.00326,
+          -0.00146
+        ]
+      },
+      "vqc_vs_gated": {
+        "mean": -0.00096,
+        "ci95": [
+          -0.00176,
+          -0.00016
+        ]
+      }
+    },
+    "class_balanced_macro_mean": {
+      "vqc_vs_poe": {
+        "mean": 0.03892,
+        "ci90": [
+          0.03725,
+          0.04062
+        ],
+        "ci95": [
+          0.03692,
+          0.04098
+        ],
+        "equivalent_at_0_010": false
+      },
+      "vqc_vs_gated": {
+        "mean": 0.02013,
+        "ci90": [
+          0.01835,
+          0.02193
+        ],
+        "ci95": [
+          0.01799,
+          0.02226
+        ],
+        "equivalent_at_0_010": false
+      }
+    },
+    "worst_class": {
+      "vqc_vs_poe": {
+        "class": "Malignancy",
+        "mean": 0.1771,
+        "ci95": [
+          0.16807,
+          0.18612
+        ]
+      },
+      "vqc_vs_gated": {
+        "class": "Malignancy",
+        "mean": 0.13037,
+        "ci95": [
+          0.12129,
+          0.13937
+        ]
+      }
+    }
+  },
+  "vector_scaling_ablation": {
+    "parameters": {
+      "vqc": {
+        "weights": [
+          1.0394,
+          1.1711,
+          1.2634,
+          1.002,
+          1.2535,
+          1.0073
+        ],
+        "biases": [
+          -0.0045,
+          -0.081,
+          -0.2193,
+          -0.0002,
+          0.2874,
+          0.0176
+        ]
+      },
+      "poe": {
+        "weights": [
+          0.9449,
+          1.1,
+          1.0851,
+          1.2755,
+          1.1568,
+          1.0282
+        ],
+        "biases": [
+          0.1102,
+          0.0308,
+          -0.1722,
+          -0.0554,
+          0.0944,
+          -0.0079
+        ]
+      },
+      "gated": {
+        "weights": [
+          1.0239,
+          1.1657,
+          1.1059,
+          1.2621,
+          1.2372,
+          1.0793
+        ],
+        "biases": [
+          0.0305,
+          -0.1126,
+          -0.0515,
+          -0.056,
+          0.1028,
+          0.0867
+        ]
+      }
+    },
+    "test_nll": {
+      "vqc": 1.11537,
+      "poe": 1.11807,
+      "gated": 1.11515,
+      "delta_vqc_vs_poe": -0.0027,
+      "delta_vqc_vs_gated": 0.00022
+    },
+    "test_ece": {
+      "vqc": 0.0287,
+      "poe": 0.0281,
+      "gated": 0.029
+    },
+    "closes_calibration_asymmetry": true
+  }
+}

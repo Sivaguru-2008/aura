@@ -35,6 +35,8 @@ QUICK = [
     ("Drift tests: every manuscript number equals its artifact",
      [PY, "-m", "pytest", "-q", "aura/tests/test_manuscript_numbers.py",
       "aura/tests/test_doc_numbers.py"], "(test report)"),
+    ("Revision R4: Level A integrity verification of all new artifacts in results/revision_r4/manifest.json",
+     [PY, "bench/revision_r4/verify_manifest.py"], "results/revision_r4/manifest.json"),
 ]
 
 FULL = [
